@@ -1,0 +1,18 @@
+__pycache__
+*.mypy*
+*.swp
+*.log
+.venv
+venv/
+.DS_Store
+node_modules/
+p-*.sh
+tags
+# IDEs
+.idea/
+*eggs
+*egg-info
+.tox
+.coverage
+.python-version
+dist

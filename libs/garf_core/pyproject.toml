@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaarf-core"
+version = "0.0.2"
+dependencies = [
+    "python-dateutil",
+    "jinja2==3.1.4",
+    "typing-extensions",
+]
+authors = [
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+requires-python = ">=3.8"
+description = "Abstracts fetching data from API based on provided SQL-like query."
+readme = "README.md"
+license = {text = "Apache 2.0"}
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: Apache Software License",
+]
+
+[project.optional-dependencies]
+pandas=[
+  "pandas",
+]
+all = [
+  "gaarf-core[pandas]"
+]
