@@ -18,7 +18,7 @@ import datetime
 
 import pytest
 
-from gaarf_core import query_editor
+from garf_core import query_editor
 
 
 @pytest.fixture

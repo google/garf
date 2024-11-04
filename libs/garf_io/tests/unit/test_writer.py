@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from gaarf_io import writer
+from garf_io import writer
 
 
 @pytest.mark.parametrize('option', ['bq', 'bigquery'])

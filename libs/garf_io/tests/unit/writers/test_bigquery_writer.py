@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 from google.cloud import bigquery
 
-from gaarf_io.writers import bigquery_writer
+from garf_io.writers import bigquery_writer
 
 
 class TestBigQueryWriter:

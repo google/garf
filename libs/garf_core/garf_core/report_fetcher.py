@@ -14,7 +14,7 @@
 """Module for getting data from Ads API based on a query.
 
 AdsReportFetcher performs fetching data from Ads API, parsing it
-  and returning GaarfReport.
+  and returning GarfReport.
 """
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
 
@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from gaarf_core import (
+from garf_core import (
   api_clients,
   parsers,
   query_editor,
@@ -59,7 +59,7 @@ class ApiReportFetcher:
     query_specification: str | query_editor.QueryElements,
     args: dict[str, Any] | None = None,
     **kwargs: str,
-  ) -> report.GaarfReport:
+  ) -> report.GarfReport:
     """Asynchronously fetches data from Ads API based on query_specification.
 
     Args:
@@ -68,7 +68,7 @@ class ApiReportFetcher:
         args: Arguments that need to be passed to the query.
 
     Returns:
-        GaarfReport with results of query execution.
+        GarfReport with results of query execution.
     """
     return self.fetch(query_specification, args, **kwargs)
 
@@ -77,7 +77,7 @@ class ApiReportFetcher:
     query_specification: str | query_editor.QuerySpecification,
     args: dict[str, Any] | None = None,
     **kwargs: str,
-  ) -> report.GaarfReport:
+  ) -> report.GarfReport:
     """Fetches data from Ads API based on query_specification.
 
     Args:
@@ -86,10 +86,10 @@ class ApiReportFetcher:
         args: Arguments that need to be passed to the query.
 
     Returns:
-        GaarfReport with results of query execution.
+        GarfReport with results of query execution.
 
     Raises:
-        GaarfExecutorException:
+        GarfExecutorException:
             When customer_ids are not provided or Ads API returned error.
     """
     if not isinstance(query_specification, query_editor.QuerySpecification):
@@ -100,6 +100,6 @@ class ApiReportFetcher:
     query = query_specification.generate()
     response = self.api_client.get_response(query, **kwargs)
     parsed_response = self.parser.parse_response(response, query)
-    return report.GaarfReport(
+    return report.GarfReport(
       results=parsed_response, column_names=query.column_names
     )

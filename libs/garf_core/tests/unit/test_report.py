@@ -18,32 +18,32 @@ from collections import abc
 import pandas as pd
 import pytest
 
-from gaarf_core import report
+from garf_core import report
 
 
 @pytest.fixture
 def single_element_report():
-  return report.GaarfReport(results=[[1]], column_names=['campaign_id'])
+  return report.GarfReport(results=[[1]], column_names=['campaign_id'])
 
 
 @pytest.fixture
 def single_column_report():
-  return report.GaarfReport(
+  return report.GarfReport(
     results=[[1], [1], [3]], column_names=['campaign_id']
   )
 
 
 @pytest.fixture
 def multi_column_report():
-  return report.GaarfReport(
+  return report.GarfReport(
     results=[[1, 2], [2, 3], [3, 4]],
     column_names=['campaign_id', 'ad_group_id'],
   )
 
 
-class TestGaarfReport:
-  class TestGaarfReportIteration:
-    def test_single_element_report_returns_gaarf_row(
+class TestGarfReport:
+  class TestGarfReportIteration:
+    def test_single_element_report_returns_garf_row(
       self, single_element_report
     ):
       assert [row[0] for row in single_element_report] == [1]
@@ -51,10 +51,10 @@ class TestGaarfReport:
     def test_single_column_report_returns_sequence(self, single_column_report):
       assert [row[0] for row in single_column_report] == [1, 1, 3]
 
-    def test_multi_column_report_returns_gaarf_row(self, multi_column_report):
-      assert isinstance(list(multi_column_report)[0], report.GaarfRow)
+    def test_multi_column_report_returns_garf_row(self, multi_column_report):
+      assert isinstance(list(multi_column_report)[0], report.GarfRow)
 
-    def test_multi_column_report_support_iteration_with_gaarf_iterator(
+    def test_multi_column_report_support_iteration_with_garf_iterator(
       self,
       multi_column_report,
     ):
@@ -84,7 +84,7 @@ class TestGaarfReport:
       self,
       multi_column_report,
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         [row[99] for row in multi_column_report] == [1, 2, 3]
 
     def test_get_raises_attribute_error_for_missing_value(
@@ -115,7 +115,7 @@ class TestGaarfReport:
         False,
       ]
 
-  class TestGaarfReportMisc:
+  class TestGarfReportMisc:
     def test_get_report_length(self, multi_column_report):
       assert len(multi_column_report) == len(multi_column_report.results)
 
@@ -124,7 +124,7 @@ class TestGaarfReport:
       single_element_report.results = []
       assert not single_element_report
 
-  class TestGaarfReportAddition:
+  class TestGarfReportAddition:
     def test_add_two_reports(self, multi_column_report):
       added_report = multi_column_report + multi_column_report
       assert len(added_report) == len(multi_column_report.results) * 2
@@ -132,7 +132,7 @@ class TestGaarfReport:
     def test_add_report_and_non_report_raises_exception(
       self, multi_column_report
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         multi_column_report + 1
 
     def test_add_non_report_and_report_raises_exception(
@@ -144,81 +144,81 @@ class TestGaarfReport:
     def test_add_reports_with_different_columns_raises_exception(
       self, multi_column_report, single_element_report
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         multi_column_report + single_element_report
 
-  class TestGaarfReportSlicing:
-    def test_slicing_multi_column_gaarf_report_returns_gaarf_report(
+  class TestGarfReportSlicing:
+    def test_slicing_multi_column_garf_report_returns_garf_report(
       self,
       multi_column_report,
     ):
       new_report = multi_column_report[0:2]
-      assert new_report == report.GaarfReport(
+      assert new_report == report.GarfReport(
         results=[[1, 2], [2, 3]], column_names=['campaign_id', 'ad_group_id']
       )
 
-    def test_indexing_multi_column_gaarf_report_by_single_index_returns_gaarf_row(
+    def test_indexing_multi_column_garf_report_by_single_index_returns_garf_row(
       self,
       multi_column_report,
     ):
       new_report = multi_column_report[0]
-      assert new_report == report.GaarfRow(
+      assert new_report == report.GarfRow(
         data=[1, 2], column_names=['campaign_id', 'ad_group_id']
       )
 
-    def test_indexing_multi_column_gaarf_report_by_multi_index_returns_gaarf_report(
+    def test_indexing_multi_column_garf_report_by_multi_index_returns_garf_report(
       self,
       multi_column_report,
     ):
       new_report = multi_column_report[0:2]
-      assert new_report == report.GaarfReport(
+      assert new_report == report.GarfReport(
         results=[[1, 2], [2, 3]], column_names=['campaign_id', 'ad_group_id']
       )
 
-    def test_indexing_multi_column_gaarf_report_by_one_column_returns_gaarf_report(
+    def test_indexing_multi_column_garf_report_by_one_column_returns_garf_report(
       self,
       multi_column_report,
     ):
       new_report = multi_column_report['campaign_id']
-      assert new_report == report.GaarfReport(
+      assert new_report == report.GarfReport(
         results=[[1], [2], [3]], column_names=['campaign_id']
       )
 
-    def test_indexing_multi_column_gaarf_report_by_several_columns_returns_gaarf_report(
+    def test_indexing_multi_column_garf_report_by_several_columns_returns_garf_report(
       self,
       multi_column_report,
     ):
       new_report = multi_column_report[['campaign_id', 'ad_group_id']]
       assert new_report == multi_column_report
 
-    def test_indexing_multi_column_gaarf_report_by_non_existing_column_raises_exception(
+    def test_indexing_multi_column_garf_report_by_non_existing_column_raises_exception(
       self,
       multi_column_report,
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         multi_column_report[['campaign_id', 'ad_group']]
 
-    def test_slicing_single_column_gaarf_report_returns_report(
+    def test_slicing_single_column_garf_report_returns_report(
       self,
       single_column_report,
     ):
       single_column_report.disable_scalar_conversions()
       new_report = single_column_report[0:2]
-      expected_report = report.GaarfReport(
+      expected_report = report.GarfReport(
         results=[[1], [1]], column_names=['campaign_id']
       )
       assert new_report == expected_report
 
-    def test_slicing_single_column_gaarf_report_returns_row(
+    def test_slicing_single_column_garf_report_returns_row(
       self,
       single_column_report,
     ):
       single_column_report.disable_scalar_conversions()
       row = single_column_report[0]
-      expected_row = report.GaarfRow(data=[1], column_names=['campaign_id'])
+      expected_row = report.GarfRow(data=[1], column_names=['campaign_id'])
       assert row == expected_row
 
-    def test_slicing_single_column_gaarf_report_returns_slice(
+    def test_slicing_single_column_garf_report_returns_slice(
       self,
       single_column_report,
     ):
@@ -227,14 +227,14 @@ class TestGaarfReport:
         assert result == [1, 1]
         assert len(w) == 1
         assert str(w[0].message) == (
-          'Getting scalars from single column `GaarfReport` is discouraged and '
-          'will be deprecated in future releases of gaarf. To get scalar value '
+          'Getting scalars from single column `GarfReport` is discouraged and '
+          'will be deprecated in future releases of garf. To get scalar value '
           'use `get_value()` method instead. '
-          'Call `.disable_scalar_conversions()` to return GaarfRow '
-          'or GaarfReport.'
+          'Call `.disable_scalar_conversions()` to return GarfRow '
+          'or GarfReport.'
         )
 
-    def test_slicing_single_column_gaarf_report_returns_element(
+    def test_slicing_single_column_garf_report_returns_element(
       self,
       single_column_report,
     ):
@@ -243,36 +243,36 @@ class TestGaarfReport:
         assert result == [1]
         assert len(w) == 1
         assert str(w[0].message) == (
-          'Getting scalars from single column `GaarfReport` is discouraged and '
-          'will be deprecated in future releases of gaarf. To get scalar value '
+          'Getting scalars from single column `GarfReport` is discouraged and '
+          'will be deprecated in future releases of garf. To get scalar value '
           'use `get_value()` method instead. '
-          'Call `.disable_scalar_conversions()` to return GaarfRow '
-          'or GaarfReport.'
+          'Call `.disable_scalar_conversions()` to return GarfRow '
+          'or GarfReport.'
         )
 
-    def test_set_existing_attribute_gaarf_multiple_rows_updates_columns(
+    def test_set_existing_attribute_garf_multiple_rows_updates_columns(
       self,
       multi_column_report,
     ):
       for row in multi_column_report:
         row.campaign_id = row.campaign_id * 100
-      assert multi_column_report == report.GaarfReport(
+      assert multi_column_report == report.GarfReport(
         results=[[100, 2], [200, 3], [300, 4]],
         column_names=['campaign_id', 'ad_group_id'],
       )
 
-    def test_set_non_existing_attribute_gaarf_rows_get_new_columns(
+    def test_set_non_existing_attribute_garf_rows_get_new_columns(
       self,
       multi_column_report,
     ):
       for row in multi_column_report:
         row.campaign_id_new = row.campaign_id * 100
-      assert multi_column_report == report.GaarfReport(
+      assert multi_column_report == report.GarfReport(
         results=[[1, 2, 100], [2, 3, 200], [3, 4, 300]],
         column_names=['campaign_id', 'ad_group_id', 'campaign_id_new'],
       )
 
-  class TestGaarfReportConversions:
+  class TestGarfReportConversions:
     def test_single_column_report_returns_flattened_list(
       self, single_column_report
     ):
@@ -323,7 +323,7 @@ class TestGaarfReport:
     ):
       key_column = 'missing_column'
       value_column = 'ad_group_id'
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         multi_column_report.to_dict(
           key_column=key_column,
           value_column=value_column,
@@ -336,7 +336,7 @@ class TestGaarfReport:
     ):
       key_column = 'campaign_id'
       value_column = 'missing_column'
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         multi_column_report.to_dict(
           key_column=key_column,
           value_column=value_column,
@@ -369,7 +369,7 @@ class TestGaarfReport:
     def test_to_list_incorrect_row_type_raises_exception(
       self, multi_column_report
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         multi_column_report.to_list(row_type='tuple')
 
     def test_empty_report_converted_to_dict_with_key_column(
@@ -392,8 +392,8 @@ class TestGaarfReport:
       values = [[1, 2], [3, 4]]
       column_names = ['one', 'two']
       df = pd.DataFrame(data=values, columns=column_names)
-      report_from_df = report.GaarfReport.from_pandas(df)
-      expected_report = report.GaarfReport(
+      report_from_df = report.GarfReport.from_pandas(df)
+      expected_report = report.GarfReport(
         results=values, column_names=column_names
       )
       assert report_from_df == expected_report
@@ -423,17 +423,17 @@ class TestGaarfReport:
       self,
       single_element_report,
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         single_element_report.get_value(column_index=1)
 
     def test_get_value_raises_exception_when_row_index_out_of_bound(
       self,
       single_element_report,
     ):
-      with pytest.raises(report.GaarfReportError):
+      with pytest.raises(report.GarfReportError):
         single_element_report.get_value(row_index=1)
 
-  class TestGaarfReportEquality:
+  class TestGarfReportEquality:
     def test_report_with_different_columns_not_equal(
       self, single_element_report, multi_column_report
     ):
@@ -442,7 +442,7 @@ class TestGaarfReport:
     def test_report_with_different_data_are_not_equal(
       self, multi_column_report
     ):
-      new_multi_column_report = report.GaarfReport(
+      new_multi_column_report = report.GarfReport(
         results=list(multi_column_report.results),
         column_names=list(multi_column_report.column_names),
       )
@@ -450,7 +450,7 @@ class TestGaarfReport:
       assert new_multi_column_report != multi_column_report
 
     def test_report_with_same_data_are_equal(self, multi_column_report):
-      new_multi_column_report = report.GaarfReport(
+      new_multi_column_report = report.GarfReport(
         results=list(multi_column_report.results),
         column_names=list(multi_column_report.column_names),
       )
@@ -459,43 +459,43 @@ class TestGaarfReport:
     def test_report_with_same_data_different_order_are_equal(
       self, multi_column_report
     ):
-      new_multi_column_report = report.GaarfReport(
+      new_multi_column_report = report.GarfReport(
         results=[[2, 1], [3, 2], [4, 3]],
         column_names=['ad_group_id', 'campaign_id'],
       )
       assert new_multi_column_report == multi_column_report
 
 
-class TestGaarfRow:
+class TestGarfRow:
   @pytest.fixture
   def test_row(self, multi_column_report):
     return multi_column_report[0]
 
-  def test_set_non_existing_item_gaarf_row_get_new_column(self, test_row):
+  def test_set_non_existing_item_garf_row_get_new_column(self, test_row):
     test_row['campaign_id_new'] = test_row['campaign_id'] * 100
-    assert test_row == report.GaarfRow(
+    assert test_row == report.GarfRow(
       data=[1, 2, 100],
       column_names=['campaign_id', 'ad_group_id', 'campaign_id_new'],
     )
 
-  def test_set_existing_item_gaarf_row_updates_column(self, test_row):
+  def test_set_existing_item_garf_row_updates_column(self, test_row):
     test_row['campaign_id'] = test_row['campaign_id'] * 100
-    assert test_row == report.GaarfRow(
+    assert test_row == report.GarfRow(
       data=[100, 2], column_names=['campaign_id', 'ad_group_id']
     )
 
-  def test_set_non_existing_attribute_gaarf_test_row_get_new_column(
+  def test_set_non_existing_attribute_garf_test_row_get_new_column(
     self,
     test_row,
   ):
     test_row.campaign_id_new = test_row.campaign_id * 100
-    assert test_row == report.GaarfRow(
+    assert test_row == report.GarfRow(
       data=[1, 2, 100],
       column_names=['campaign_id', 'ad_group_id', 'campaign_id_new'],
     )
 
-  def test_set_existing_attribute_gaarf_test_row_updates_column(self, test_row):
+  def test_set_existing_attribute_garf_test_row_updates_column(self, test_row):
     test_row.campaign_id = test_row.campaign_id * 100
-    assert test_row == report.GaarfRow(
+    assert test_row == report.GarfRow(
       data=[100, 2], column_names=['campaign_id', 'ad_group_id']
     )

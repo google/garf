@@ -27,33 +27,33 @@
 from __future__ import annotations
 
 
-class GaarfError(Exception):
+class GarfError(Exception):
   """Base exception."""
 
 
-class GaarfQueryException(GaarfError):
-  """Base exception for Gaarf queries."""
+class GarfQueryException(GarfError):
+  """Base exception for Garf queries."""
 
 
-class GaarfParserException(GaarfError):
-  """Base exception for Gaarf parsers."""
+class GarfParserException(GarfError):
+  """Base exception for Garf parsers."""
 
 
-class GaarfCustomizerException(GaarfParserException):
+class GarfCustomizerException(GarfParserException):
   """Specifies incorrect customizer."""
 
 
-class GaarfVirtualColumnException(GaarfParserException):
+class GarfVirtualColumnException(GarfParserException):
   """Specifies incorrect virtual column type."""
 
 
-class GaarfFieldException(GaarfQueryException):
+class GarfFieldException(GarfQueryException):
   """Specifies incorrect Google Ads API field."""
 
 
-class GaarfMacroException(GaarfQueryException):
-  """Specifies incorrect macro in Gaarf query."""
+class GarfMacroException(GarfQueryException):
+  """Specifies incorrect macro in Garf query."""
 
 
-class GaarfResourceException(GaarfQueryException):
+class GarfResourceException(GarfQueryException):
   """Specifies incorrect resource name in Google Ads API."""

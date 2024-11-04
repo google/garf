@@ -14,30 +14,22 @@
 
 from __future__ import annotations
 
-import datetime
-
-import pytest
-from garf_core import report
+from garf_executors import bq_executor
 
 
-@pytest.fixture
-def single_column_data():
-  results = [[1], [2], [3]]
-  columns = ['column_1']
-  return report.GarfReport(results, columns)
+def test_extract_datasets():
+  macros = {
+    'start_date': ':YYYYMMDD',
+    'bq_dataset': 'dataset_1',
+    'dataset_new': 'dataset_2',
+    'legacy_dataset_old': 'dataset_3',
+    'wrong_dts': 'dataset_4',
+  }
 
-
-@pytest.fixture
-def sample_data():
-  results = [[1, 'two', [3, 4]]]
-  columns = ['column_1', 'column_2', 'column_3']
-  return report.GarfReport(results, columns)
-
-
-@pytest.fixture
-def sample_data_with_dates():
-  results = [
-    [1, datetime.datetime.now(), datetime.datetime.now().date()],
+  expected = [
+    'dataset_1',
+    'dataset_2',
+    'dataset_3',
   ]
-  columns = ['column_1', 'datetime', 'date']
-  return report.GarfReport(results, columns)
+  datasets = bq_executor.extract_datasets(macros)
+  assert datasets == expected

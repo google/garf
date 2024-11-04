@@ -13,7 +13,7 @@
 # limitations under the License.
 import pathlib
 
-from gaarf_io.writers import file_writer
+from garf_io.writers import file_writer
 
 
 class TestFileWriter:

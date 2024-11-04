@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from gaarf_io.writers import null_writer
+from garf_io.writers import null_writer
 
 
 class TestNullWriter:

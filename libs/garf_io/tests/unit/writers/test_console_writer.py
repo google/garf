@@ -17,7 +17,7 @@ import json
 
 import pytest
 
-from gaarf_io.writers import console_writer
+from garf_io.writers import console_writer
 
 _TMP_NAME = 'test'
 

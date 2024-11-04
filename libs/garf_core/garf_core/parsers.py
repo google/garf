@@ -27,7 +27,7 @@ from typing import Union
 
 from typing_extensions import TypeAlias, override
 
-from gaarf_core import api_clients, exceptions, query_editor
+from garf_core import api_clients, exceptions, query_editor
 
 ApiRowElement: TypeAlias = Union[int, float, str, bool, list, None]
 
@@ -35,7 +35,7 @@ ApiRowElement: TypeAlias = Union[int, float, str, bool, list, None]
 class BaseParser(abc.ABC):
   @abc.abstractmethod
   def parse_response(
-    self, response: api_clients.GaarfApiResponse
+    self, response: api_clients.GarfApiResponse
   ) -> list[list[ApiRowElement]]:
     """Parses response."""
 
@@ -44,7 +44,7 @@ class ListParser(BaseParser):
   @override
   def parse_response(
     self,
-    response: api_clients.GaarfApiResponse,
+    response: api_clients.GarfApiResponse,
     query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
     del query_specification
@@ -55,13 +55,13 @@ class DictParser(BaseParser):
   @override
   def parse_response(
     self,
-    response: api_clients.GaarfApiResponse,
+    response: api_clients.GarfApiResponse,
     query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
     if not response.results:
       return [[]]
     if not isinstance(response.results[0], Mapping):
-      return GaarfParserError
+      return GarfParserError
     results = []
     for result in response.results:
       row = []
@@ -75,5 +75,5 @@ class DictParser(BaseParser):
     return functools.reduce(operator.getitem, key, dictionary)
 
 
-class GaarfParserError(exceptions.GaarfError):
+class GarfParserError(exceptions.GarfError):
   """Incorrect data format for parser."""

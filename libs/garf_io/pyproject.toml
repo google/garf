@@ -3,10 +3,10 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gaarf-io"
+name = "garf-io"
 version = "0.0.1"
 dependencies = [
-  'gaarf-core',
+  'garf-core',
   'smart_open',
   'rich',
 ]
@@ -14,7 +14,7 @@ authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
 requires-python = ">=3.8"
-description = "Handles reading queries and writing GaarfReport from gaarf-core package"
+description = "Handles reading queries and writing GaarfReport from garf-core package"
 readme = "README.md"
 license = {text = "Apache 2.0"}
 classifiers = [
@@ -51,5 +51,5 @@ sheets = [
   "gspread",
 ]
 all = [
-  "gaarf-io[bq,sheets,sqlalchemy]"
+  "garf-io[bq,sheets,sqlalchemy]"
 ]

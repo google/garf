@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from gaarf_io import reader
+from garf_io import reader
 
 
 def test_console_reader():

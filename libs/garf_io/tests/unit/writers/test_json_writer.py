@@ -17,7 +17,7 @@ import json
 
 import pytest
 
-from gaarf_io.writers import json_writer
+from garf_io.writers import json_writer
 
 _TMP_FILENAME = 'test.json'
 

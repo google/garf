@@ -14,7 +14,7 @@
 
 import pytest
 
-from gaarf_core import (
+from garf_core import (
   api_clients,
   parsers,
   report,
@@ -49,7 +49,7 @@ class TestApiReportFetcher:
     query = 'SELECT column as column_name FROM test'
     test_report = test_list_report_fetcher.fetch(query, None)
 
-    expected_report = report.GaarfReport(
+    expected_report = report.GarfReport(
       results=[[1], [2], [3]],
       column_names=['column_name'],
     )
@@ -62,7 +62,7 @@ class TestApiReportFetcher:
     query = 'SELECT column.name, other_column FROM test'
     test_report = test_dict_report_fetcher.fetch(query, None)
 
-    expected_report = report.GaarfReport(
+    expected_report = report.GarfReport(
       results=[[1, 2], [2, 2], [3, 2]],
       column_names=['column_name', 'other_column'],
     )

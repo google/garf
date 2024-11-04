@@ -3,18 +3,17 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "garf-core"
-version = "0.0.2"
+name = "garf-executors"
+version = "0.0.1"
 dependencies = [
-    "python-dateutil",
-    "jinja2==3.1.4",
-    "typing-extensions",
+  "garf_core==0.0.1",
+  "garf-io==0.0.1",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
 requires-python = ">=3.8"
-description = "Abstracts fetching data from API based on provided SQL-like query."
+description = "Executes queries against API and writes data to local/remote storage."
 readme = "README.md"
 license = {text = "Apache 2.0"}
 classifiers = [
@@ -31,9 +30,17 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-pandas=[
+bq=[
+  "garf-io[bq]",
+  "pandas",
+]
+sql=[
+  "garf-io[sqlalchemy]",
   "pandas",
 ]
 all = [
-  "garf-core[pandas]"
+  "garf-executors[bq,sql]"
 ]
+[project.scripts]
+garf-sql-executor="garf_executors.entrypoints.cli.sql:main"
+garf-bq-executor="garf_executors.entrypoints.cli.bq:main"

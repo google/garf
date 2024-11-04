@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for defining base class for Gaarf query classes.
+"""Module for defining base class for Garf query classes.
 
-Gaarf query classes can inherit from BaseQuery and have a simple way of
+Garf query classes can inherit from BaseQuery and have a simple way of
 being fetched from API.
 """
 
@@ -21,7 +21,7 @@ from __future__ import annotations
 
 
 class BaseQuery:
-  """Base class to inherit all Gaarf queries from.
+  """Base class to inherit all Garf queries from.
 
   Attributes:
     query_text: Contains query text or template.

@@ -14,10 +14,10 @@
 """Simples handling fetched data.
 
 Module exposes two classes:
-    * GaarfReport - contains all data from API response alongside methods
+    * GarfReport - contains all data from API response alongside methods
       for iteration, slicing and converting to/from common structures.
-    * GaarfRow - helper class for dealing with iteration over each response
-      row in GaarfReport.
+    * GarfRow - helper class for dealing with iteration over each response
+      row in GarfReport.
 """
 
 from __future__ import annotations
@@ -29,10 +29,10 @@ from collections import defaultdict
 from collections.abc import MutableSequence, Sequence
 from typing import Generator, Literal
 
-from gaarf_core import exceptions, parsers, query_editor
+from garf_core import exceptions, parsers, query_editor
 
 
-class GaarfReport:
+class GarfReport:
   """Provides convenient handler for working with results from API.
 
   Attributes:
@@ -52,7 +52,7 @@ class GaarfReport:
     query_specification: query_editor.BaseQuerySpecification | None = None,
     auto_convert_to_scalars: bool = True,
   ) -> None:
-    """Initializes GaarfReport from API response.
+    """Initializes GarfReport from API response.
 
     Args:
         results: Contains data from Ads API in a form of nested list
@@ -74,8 +74,8 @@ class GaarfReport:
   def disable_scalar_conversions(self):
     """Disables auto conversions of scalars of reports slices.
 
-    Ensures that slicing and indexing operations always return GaarfReport or
-    GaarfRow instead of underlying sequences and scalars
+    Ensures that slicing and indexing operations always return GarfReport or
+    GarfRow instead of underlying sequences and scalars
     """
     self.auto_convert_to_scalars = False
 
@@ -104,11 +104,11 @@ class GaarfReport:
         List of elements based on the report.
 
     Raises:
-        GaarfReportError: When incorrect row_type is specified.
+        GarfReportError: When incorrect row_type is specified.
     """
     if flatten:
       warnings.warn(
-        '`GaarfReport` will deprecate passing `flatten=True` '
+        '`GarfReport` will deprecate passing `flatten=True` '
         "to `to_list` method. Use row_type='scalar' instead.",
         category=DeprecationWarning,
         stacklevel=3,
@@ -130,7 +130,7 @@ class GaarfReport:
       if distinct:
         results = list(set(results))
       return results
-    raise GaarfReportError('incorrect row_type specified', row_type)
+    raise GarfReportError('incorrect row_type specified', row_type)
 
   def to_dict(
     self,
@@ -149,14 +149,14 @@ class GaarfReport:
         Mapping based on report elements.
 
     Raises:
-        GaarfReportError: When incorrect column_name specified.
+        GarfReportError: When incorrect column_name specified.
     """
     if key_column not in self.column_names:
-      raise GaarfReportError(
+      raise GarfReportError(
         f'column name {key_column} not found in the report'
       )
     if value_column and value_column not in self.column_names:
-      raise GaarfReportError(
+      raise GarfReportError(
         f'column name {value_column} not found in the report'
       )
     if value_column_output == 'list':
@@ -179,7 +179,7 @@ class GaarfReport:
         output[key].append(value)
       else:
         if key in output:
-          raise GaarfReportError(
+          raise GarfReportError(
             f'Non unique values found for key_column: {key}'
           )
         output[key] = value
@@ -217,16 +217,16 @@ class GaarfReport:
     """Extracts data from report as a scalar.
 
     Raises:
-      GaarfReportError: If row or column index are out of bounds.
+      GarfReportError: If row or column index are out of bounds.
     """
     if column_index >= len(self.column_names):
-      raise GaarfReportError(
+      raise GarfReportError(
         'Column %d of report is not found; report contains only %d columns.',
         column_index,
         len(self.column_names) + 1,
       )
     if row_index >= len(self):
-      raise GaarfReportError(
+      raise GarfReportError(
         'Row %d of report is not found; report contains only %d rows.',
         row_index,
         len(self) + 1,
@@ -237,19 +237,19 @@ class GaarfReport:
     """Returns number of rows in the report."""
     return len(self.results)
 
-  def __iter__(self) -> Generator[GaarfRow, None, None] | None:
-    """Returns GaarfRow for each element in GaarfReport.
+  def __iter__(self) -> Generator[GarfRow, None, None] | None:
+    """Returns GarfRow for each element in GarfReport.
 
     If report contains results_placeholder return None immediately.
 
     Yields:
-        GaarfRow for each sub-list in the report.
+        GarfRow for each sub-list in the report.
 
     """
     if self.results_placeholder:
       return None
     for result in self.results:
-      yield GaarfRow(result, self.column_names)
+      yield GarfRow(result, self.column_names)
 
   def __bool__(self):
     """Checks whether report results is not empty."""
@@ -260,7 +260,7 @@ class GaarfReport:
 
   def __getitem__(
     self, key: str | int | slice | MutableSequence[str]
-  ) -> GaarfReport | GaarfRow:
+  ) -> GarfReport | GarfRow:
     """Gets data from report based on a key.
 
     Data can be extract from report by rows and columns.
@@ -274,10 +274,10 @@ class GaarfReport:
         element to get from report. Could be index, slice or column_name(s).
 
     Returns:
-      New GaarfReport or GaarfRow.
+      New GarfReport or GarfRow.
 
     Raises:
-        GaarfReportError: When incorrect column_name specified.
+        GarfReportError: When incorrect column_name specified.
     """
     if isinstance(key, (MutableSequence, str)):
       return self._get_columns_slice(key)
@@ -285,22 +285,22 @@ class GaarfReport:
 
   def _get_rows_slice(
     self, key: slice | int
-  ) -> GaarfReport | GaarfRow | parsers.ApiRowElement:
+  ) -> GarfReport | GarfRow | parsers.ApiRowElement:
     """Gets one or several rows from the report.
 
     Args:
         key: Row(s) to get from report. Could be index or slice.
 
     Returns:
-      New GaarfReport or GaarfRow.
+      New GarfReport or GarfRow.
     """
     if not self._multi_column_report and self.auto_convert_to_scalars:
       warnings.warn(
-        'Getting scalars from single column `GaarfReport` is discouraged and '
-        'will be deprecated in future releases of gaarf. To get scalar value '
+        'Getting scalars from single column `GarfReport` is discouraged and '
+        'will be deprecated in future releases of garf. To get scalar value '
         'use `get_value()` method instead. '
-        'Call `.disable_scalar_conversions()` to return GaarfRow '
-        'or GaarfReport.',
+        'Call `.disable_scalar_conversions()` to return GarfRow '
+        'or GarfReport.',
         category=FutureWarning,
         stacklevel=3,
       )
@@ -308,20 +308,20 @@ class GaarfReport:
         return [element[0] for element in self.results[key]]
       return self.results[key]
     if isinstance(key, slice):
-      return GaarfReport(self.results[key], self.column_names)
-    return GaarfRow(self.results[key], self.column_names)
+      return GarfReport(self.results[key], self.column_names)
+    return GarfRow(self.results[key], self.column_names)
 
-  def _get_columns_slice(self, key: str | MutableSequence[str]) -> GaarfReport:
+  def _get_columns_slice(self, key: str | MutableSequence[str]) -> GarfReport:
     """Gets one or several columns from the report.
 
     Args:
       key: Column(s) to get from the report.
 
     Returns:
-      New GaarfReport or GaarfRow.
+      New GarfReport or GarfRow.
 
     Raises:
-        GaarfReportError: When incorrect column_name specified.
+        GarfReportError: When incorrect column_name specified.
     """
     if isinstance(key, str):
       key = [key]
@@ -336,7 +336,7 @@ class GaarfReport:
           rows.append(row[index])
         results.append(rows)
       # TODO: propagate placeholders and query specification to new report
-      return GaarfReport(results, key)
+      return GarfReport(results, key)
     non_existing_keys = set(key).intersection(set(self.column_names))
     if len(non_existing_keys) > 1:
       message = (
@@ -346,7 +346,7 @@ class GaarfReport:
     message = (
       f"Column '{non_existing_keys.pop()}' " 'cannot be found in the report'
     )
-    raise GaarfReportError(message)
+    raise GarfReportError(message)
 
   def __eq__(self, other) -> bool:
     if not isinstance(other, self.__class__):
@@ -360,7 +360,7 @@ class GaarfReport:
         return False
     return True
 
-  def __add__(self, other: GaarfReport) -> GaarfReport:
+  def __add__(self, other: GarfReport) -> GarfReport:
     """Combines two reports into one.
 
     New report is build from two reports results variable; if either of reports
@@ -370,17 +370,17 @@ class GaarfReport:
         other: Report to be added to existing report.
 
     Return:
-        New GaarfReport with combined data.
+        New GarfReport with combined data.
 
     Raises:
-        GaarfReportError:
-            When columns are different or added instance is not GaarfReport.
+        GarfReportError:
+            When columns are different or added instance is not GarfReport.
     """
     if not isinstance(other, self.__class__):
-      raise GaarfReportError('Add operation is supported only for GaarfReport')
+      raise GarfReportError('Add operation is supported only for GarfReport')
     if self.column_names != other.column_names:
-      raise GaarfReportError('column_names should be the same in GaarfReport')
-    return GaarfReport(
+      raise GarfReportError('column_names should be the same in GarfReport')
+    return GarfReport(
       results=self.results + other.results,
       column_names=self.column_names,
       results_placeholder=self.results_placeholder
@@ -388,8 +388,8 @@ class GaarfReport:
     )
 
   @classmethod
-  def from_pandas(cls, df: 'pd.DataFrame') -> GaarfReport:
-    """Builds GaarfReport from pandas dataframe.
+  def from_pandas(cls, df: 'pd.DataFrame') -> GarfReport:
+    """Builds GarfReport from pandas dataframe.
 
     Args:
         df: Pandas dataframe to build report from.
@@ -410,8 +410,8 @@ class GaarfReport:
     return cls(results=df.values.tolist(), column_names=list(df.columns.values))
 
 
-class GaarfRow:
-  """Helper class to simplify iteration of GaarfReport.
+class GarfRow:
+  """Helper class to simplify iteration of GarfReport.
 
   Attributes:
       data: ...
@@ -421,7 +421,7 @@ class GaarfRow:
   def __init__(
     self, data: parsers.ApiRowElement, column_names: Sequence[str]
   ) -> None:
-    """Initializes new GaarfRow.
+    """Initializes new GarfRow.
 
     data: ...
     column_names: ...
@@ -437,10 +437,10 @@ class GaarfRow:
     """Extracts data from row as a scalar.
 
     Raises:
-      GaarfReportError: If column index is out of bounds.
+      GarfReportError: If column index is out of bounds.
     """
     if column_index >= len(self.column_names):
-      raise GaarfReportError(
+      raise GarfReportError(
         'Column %d of report is not found; report contains only %d columns.',
         column_index,
         len(self.column_names) + 1,
@@ -473,15 +473,15 @@ class GaarfRow:
         Found element.
 
     Raises:
-        GaarfReportError: If element not found in the position.
+        GarfReportError: If element not found in the position.
     """
     if isinstance(element, int):
       if element < len(self.column_names):
         return self.data[element]
-      raise GaarfReportError(f'cannot find data in position {element}!')
+      raise GarfReportError(f'cannot find data in position {element}!')
     if isinstance(element, str):
       return self.__getattr__(element)
-    raise GaarfReportError(f'cannot find {element} element!')
+    raise GarfReportError(f'cannot find {element} element!')
 
   def __setattr__(self, name: str, value: parsers.ApiRowElement) -> None:
     """Sets new value for an attribute.
@@ -532,8 +532,8 @@ class GaarfRow:
     return self.data == other.data
 
   def __repr__(self):
-    return f'GaarfRow(\n{self.to_dict()}\n)'
+    return f'GarfRow(\n{self.to_dict()}\n)'
 
 
-class GaarfReportError(exceptions.GaarfError):
-  """Base exception for Gaarf reports."""
+class GarfReportError(exceptions.GarfError):
+  """Base exception for Garf reports."""

@@ -23,12 +23,12 @@ from typing_extensions import override
 
 
 @dataclasses.dataclass
-class GaarfApiRequest:
+class GarfApiRequest:
   """Base class for specifying request."""
 
 
 @dataclasses.dataclass
-class GaarfApiResponse:
+class GarfApiResponse:
   """Base class for specifying response."""
 
   results: list
@@ -39,8 +39,8 @@ class BaseClient(abc.ABC):
 
   @abc.abstractmethod
   def get_response(
-    self, request: GaarfApiRequest = GaarfApiRequest()
-  ) -> GaarfApiResponse:
+    self, request: GarfApiRequest = GarfApiRequest()
+  ) -> GarfApiResponse:
     """Method for getting response."""
 
 
@@ -53,7 +53,7 @@ class FakeApiClient(BaseClient):
 
   @override
   def get_response(
-    self, request: GaarfApiRequest = GaarfApiRequest()
-  ) -> GaarfApiResponse:
+    self, request: GarfApiRequest = GarfApiRequest()
+  ) -> GarfApiResponse:
     del request
-    return GaarfApiResponse(results=self.results)
+    return GarfApiResponse(results=self.results)

@@ -26,7 +26,7 @@ import jinja2
 from dateutil import relativedelta
 from typing_extensions import Self
 
-from gaarf_core import exceptions
+from garf_core import exceptions
 
 
 @dataclasses.dataclass
@@ -93,7 +93,7 @@ class ProcessedField:
 
 @dataclasses.dataclass(frozen=True)
 class VirtualColumn:
-  """Represents element in Gaarf query that either calculated or plugged-in.
+  """Represents element in Garf query that either calculated or plugged-in.
 
   Virtual columns allow performing basic manipulation with metrics and
   dimensions (i.e. division or multiplication) as well as adding raw text
@@ -141,7 +141,7 @@ class VirtualColumn:
         substitute_expression=substitute_expression.replace('.', '_'),
       )
     if not _is_quoted_string(field):
-      raise exceptions.GaarfFieldException(f"Incorrect field '{field}'.")
+      raise exceptions.GarfFieldException(f"Incorrect field '{field}'.")
     field = field.replace("'", '').replace('"', '')
     field = field.format(**macros) if macros else field
     return VirtualColumn(type='built-in', value=field)
@@ -183,7 +183,7 @@ class ExtractedLineElements:
     else:
       customizer = {}
     if virtual_column and not alias:
-      raise exceptions.GaarfVirtualColumnException(
+      raise exceptions.GarfVirtualColumnException(
         'Virtual attributes should be aliased'
       )
     return ExtractedLineElements(
@@ -381,7 +381,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     try:
       self.query.text = query_text.format(**self.macros).strip()
     except KeyError as e:
-      raise exceptions.GaarfMacroException(
+      raise exceptions.GarfMacroException(
         f'No value provided for macro {str(e)}.'
       ) from e
     return self
@@ -417,14 +417,14 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       Found resource.
 
     Raises:
-      GaarfResourceException: If resource_name isn't found.
+      GarfResourceException: If resource_name isn't found.
     """
     if resource_name := re.findall(
       r'FROM\s+([\w.]+)', self.query.text, flags=re.IGNORECASE
     ):
       self.query.resource_name = str(resource_name[0]).strip()
       return self
-    raise exceptions.GaarfResourceException(
+    raise exceptions.GarfResourceException(
       f'No resource found in query: {self.query.text}'
     )
 

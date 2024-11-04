@@ -15,15 +15,15 @@
 from __future__ import annotations
 
 import pytest
-from gaarf_core import report as gaarf_report
+from garf_core import report as garf_report
 
-from gaarf_io import formatter
+from garf_io import formatter
 
 
 class TestFormatterWithoutPlaceholders:
   @pytest.fixture
   def report_without_arrays(self):
-    return gaarf_report.GaarfReport(
+    return garf_report.GarfReport(
       results=[
         [1, 2],
         [2, 3],
@@ -34,7 +34,7 @@ class TestFormatterWithoutPlaceholders:
 
   @pytest.fixture
   def report_with_arrays(self):
-    return gaarf_report.GaarfReport(
+    return garf_report.GarfReport(
       results=[
         [1, [2]],
         [2, [3]],
@@ -68,7 +68,7 @@ class TestFormatterWithoutPlaceholders:
     formatted_report = formatter.format_report_for_writing(
       report_with_arrays, [array_handling_strategy]
     )
-    expected_report = gaarf_report.GaarfReport(
+    expected_report = garf_report.GarfReport(
       results=[
         [1, '2'],
         [2, '3'],
@@ -88,7 +88,7 @@ class TestFormatterWithoutPlaceholders:
     formatted_report = formatter.format_report_for_writing(
       report_with_arrays, [array_handling_strategy]
     )
-    expected_report = gaarf_report.GaarfReport(
+    expected_report = garf_report.GarfReport(
       results=[
         [1, '2'],
         [2, '3'],
@@ -102,7 +102,7 @@ class TestFormatterWithoutPlaceholders:
 class TestFormatterWithPlaceholders:
   @pytest.fixture
   def report_without_arrays(self):
-    return gaarf_report.GaarfReport(
+    return garf_report.GarfReport(
       results=[
         [1, 2],
         [2, 3],
@@ -114,7 +114,7 @@ class TestFormatterWithPlaceholders:
 
   @pytest.fixture
   def report_with_arrays(self):
-    return gaarf_report.GaarfReport(
+    return garf_report.GarfReport(
       results=[
         [1, [2]],
         [2, [3]],
@@ -153,7 +153,7 @@ class TestFormatterWithPlaceholders:
     formatted_report = formatter.format_report_for_writing(
       report_with_arrays, [array_handling_strategy]
     )
-    expected_report = gaarf_report.GaarfReport(
+    expected_report = garf_report.GarfReport(
       results=[
         [1, '2'],
         [2, '3'],
