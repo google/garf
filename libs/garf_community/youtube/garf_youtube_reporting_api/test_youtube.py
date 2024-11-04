@@ -1,0 +1,34 @@
+# Copyright 2024 Google LLC
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from garf_youtube_reporting_api import api_clients, report_fetcher
+
+from garf_io import writer
+
+query = """
+  SELECT
+    dimensions.day AS date,
+    metrics.views AS views
+  FROM channel
+  WHERE
+    channel==MINE
+    AND startDate = 2010-01-01
+    AND endDate = 2024-01-01
+  """
+api_client = api_clients.YouTubeReportingApiClient()
+fetched_report = report_fetcher.YouTubeReportingApiReportFetcher(
+  api_client=api_client
+).fetch(query)
+
+json_writer = writer.create_writer('console')
+json_writer.write(fetched_report, 'output')

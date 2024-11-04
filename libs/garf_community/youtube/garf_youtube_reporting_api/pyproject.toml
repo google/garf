@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-youtube-reporting-api"
+version = "0.0.1"
+dependencies = [
+  "garf-core",
+  "garf-io",
+  "google-api-python-client",
+]
+requires-python = ">=3.8"
+description = "description"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+[options.extras_require]
+test =  [
+  "pytest",
+  "pytest-cov"
+]
+
+[project.scripts]
