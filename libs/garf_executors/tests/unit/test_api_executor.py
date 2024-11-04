@@ -17,10 +17,10 @@ import json
 import os
 
 import pytest
-from garf_core import api_clients, parsers, report_fetcher
-from garf_io.writers import json_writer
 
+from garf_core import api_clients, parsers, report_fetcher
 from garf_executors import api_executor
+from garf_io.writers import json_writer
 
 
 class TestApiQueryExecutor:

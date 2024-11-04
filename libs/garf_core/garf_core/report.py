@@ -152,9 +152,7 @@ class GarfReport:
         GarfReportError: When incorrect column_name specified.
     """
     if key_column not in self.column_names:
-      raise GarfReportError(
-        f'column name {key_column} not found in the report'
-      )
+      raise GarfReportError(f'column name {key_column} not found in the report')
     if value_column and value_column not in self.column_names:
       raise GarfReportError(
         f'column name {value_column} not found in the report'

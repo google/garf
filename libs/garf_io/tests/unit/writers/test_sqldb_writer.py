@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
-from garf_core import report as garf_report
 
+from garf_core import report as garf_report
 from garf_io.writers import sqldb_writer
 
 _TMP_NAME = 'test'

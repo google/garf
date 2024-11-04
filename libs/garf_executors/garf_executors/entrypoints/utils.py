@@ -27,8 +27,9 @@ from typing import Any, Callable, TypedDict
 import smart_open
 import yaml
 from dateutil import relativedelta
-from garf_core import query_editor
 from rich import logging as rich_logging
+
+from garf_core import query_editor
 
 
 class GarfQueryParameters(TypedDict):

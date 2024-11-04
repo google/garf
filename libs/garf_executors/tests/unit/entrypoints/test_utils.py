@@ -19,8 +19,8 @@ from unittest import mock
 import pytest
 import yaml
 from dateutil.relativedelta import relativedelta
-from garf_core.query_editor import CommonParametersMixin
 
+from garf_core.query_editor import CommonParametersMixin
 from garf_executors.entrypoints import utils
 
 

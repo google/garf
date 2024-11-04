@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "garf-executors"
 version = "0.0.1"
 dependencies = [
-  "garf_core==0.0.1",
-  "garf-io==0.0.1",
+  "garf_core",
+  "garf-io",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},

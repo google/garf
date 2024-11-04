@@ -26,8 +26,9 @@ except ImportError as e:
 import logging
 
 import pandas as pd
-from garf_core import query_editor
 from google.cloud import exceptions as google_cloud_exceptions
+
+from garf_core import query_editor
 
 logger = logging.getLogger(__name__)
 

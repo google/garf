@@ -1,0 +1,44 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+fail_fast: true
+default_stages: [commit]
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-added-large-files
+  - id: debug-statements
+  - id: double-quote-string-fixer
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.8.0
+  hooks:
+  - id: mypy
+    verbose: true
+    entry: bash -c 'mypy "$@" || true'
+    args: [--ignore-missing-imports]
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.4.6
+  hooks:
+    - id: ruff
+      args: [ --fix, --select, I]
+    - id: ruff-format
+- repo: local
+  hooks:
+  - id: pytest-check-core
+    name: pytest-check-core
+    entry: pytest -n auto libs/garf_core/tests/unit/
+    language: system
+    pass_filenames: false
+  - id: pytest-check-io
+    name: pytest-check-io
+    entry: pytest -n auto libs/garf_io/tests/unit/
+    language: system
+    pass_filenames: false
+  - id: pytest-check-executors
+    name: pytest-check-executors
+    entry: pytest -n auto libs/garf_executors/tests/unit/
+    language: system
+    pass_filenames: false
