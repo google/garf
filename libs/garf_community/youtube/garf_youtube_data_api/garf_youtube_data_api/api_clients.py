@@ -13,6 +13,8 @@
 # limitations under the License.
 """Creates API client for YouTube Data API."""
 
+import os
+
 from googleapiclient.discovery import build
 from typing_extensions import override
 
@@ -20,7 +22,9 @@ from garf_core import api_clients, query_editor
 
 
 class YouTubeDataApiClient(api_clients.BaseClient):
-  def __init__(self, api_key: str, api_version: str = 'v3') -> None:
+  def __init__(
+    self, api_key: str = os.getenv('GOOGLE_API_KEY'), api_version: str = 'v3'
+  ) -> None:
     """Initializes YouTubeDataApiClient."""
     self.api_key = api_key
     self.api_version = api_version
@@ -37,6 +41,27 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     fields = [field.split('.')[0] for field in request.fields]
-    sub_service = getattr(self.service, request.resource_name)
-    result = sub_service().list(part=','.join(fields), **kwargs).execute()
-    return api_clients.GarfApiResponse(results=result.get('items'))
+    sub_service = getattr(self.service, request.resource_name)()
+    part_str = ','.join(fields)
+    result = self._list(sub_service, part=part_str, **kwargs)
+    results = []
+    results.extend(result.get('items'))
+    while result.get('nextPageToken'):
+      result = self._list(
+        sub_service,
+        part=part_str,
+        next_page_token=result.get('nextPageToken'),
+        **kwargs,
+      )
+      results.extend(result.get('items'))
+
+    return api_clients.GarfApiResponse(results=results)
+
+  def _list(
+    self, service, part: str, next_page_token: str | None = None, **kwargs
+  ) -> list:
+    if next_page_token:
+      return service.list(
+        part=part, pageToken=next_page_token, **kwargs
+      ).execute()
+    return service.list(part=part, **kwargs).execute()

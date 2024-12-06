@@ -14,8 +14,22 @@
 
 """Defines report fetcher."""
 
-from garf_core import parsers, report_fetcher
+import functools
+import itertools
+import operator
+from collections.abc import Iterable
+from typing import Any
+
+from typing_extensions import override
+
+from garf_core import parsers, report, report_fetcher
 from garf_youtube_data_api.api_clients import YouTubeDataApiClient
+
+
+def _batched(iterable: Iterable[str], chunk_size: int):
+  iterator = iter(iterable)
+  while chunk := list(itertools.islice(iterator, chunk_size)):
+    yield chunk
 
 
 class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
@@ -23,8 +37,26 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
 
   def __init__(
     self,
-    api_client: YouTubeDataApiClient,
+    api_client: YouTubeDataApiClient = YouTubeDataApiClient(),
     parser: parsers.DictParser = parsers.DictParser,
   ) -> None:
     """Initializes YouTubeDataApiReportFetcher."""
     super().__init__(api_client, parser)
+
+  @override
+  def fetch(
+    self, query_specification, args: dict[str, Any] = None, **kwargs
+  ) -> report.GarfReport:
+    results = []
+    try:
+      ids = kwargs.pop('id')
+      name = 'id'
+    except KeyError:
+      ids = kwargs.pop('playlistId')
+      name = 'playlistId'
+    for batch in _batched(ids, 50):
+      if name == 'playlistId':
+        batch = batch[0]
+      _ids = {name: batch}
+      results.append(super().fetch(query_specification, args, **_ids, **kwargs))
+    return functools.reduce(operator.add, results)
