@@ -299,14 +299,16 @@ class ParamsParser:
     if not identifier or identifier not in key:
       return None
     provided_identifier, key = key.split('.')
-    if provided_identifier.replace('--', '') not in self.identifiers:
+    provided_identifier = provided_identifier.replace('--', '')
+    if provided_identifier not in self.identifiers:
       raise GarfParamsException(
         f'CLI argument {provided_identifier} is not supported'
         f", supported arguments {', '.join(self.identifiers)}"
       )
+    if provided_identifier != identifier:
+      return None
     key = key.replace('-', '_')
     if len(param) == 2:
-      # TODO: b/337860595 - Ensure that writer params are converted to int
       return {key: param[1]}
     raise GarfParamsException(
       f'{identifier} {key} is invalid,'
