@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "garf-executors"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
-  "garf_core",
+  "garf-core",
   "garf-io",
 ]
 authors = [
