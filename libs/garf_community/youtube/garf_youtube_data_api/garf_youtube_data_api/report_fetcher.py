@@ -18,12 +18,27 @@ import functools
 import itertools
 import operator
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Final
 
 from typing_extensions import override
 
-from garf_core import parsers, report, report_fetcher
+from garf_core import exceptions, parsers, report, report_fetcher
 from garf_youtube_data_api.api_clients import YouTubeDataApiClient
+
+ALLOWED_FILTERS: Final[set[str]] = (
+  'id',
+  'regionCode',
+  'videoCategoryId',
+  'chart',
+  'forHandle',
+  'forUserName',
+  'onBehalfOfContentOwner',
+  'playlistId',
+  'videoId',
+  'channelId',
+)
+
+MAX_BATCH_SIZE: Final[int] = 50
 
 
 def _batched(iterable: Iterable[str], chunk_size: int):
@@ -45,18 +60,27 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
 
   @override
   def fetch(
-    self, query_specification, args: dict[str, Any] = None, **kwargs
+    self,
+    query_specification,
+    args: dict[str, Any] = None,
+    **kwargs,
   ) -> report.GarfReport:
     results = []
-    try:
-      ids = kwargs.pop('id')
-      name = 'id'
-    except KeyError:
-      ids = kwargs.pop('playlistId')
-      name = 'playlistId'
-    for batch in _batched(ids, 50):
-      if name == 'playlistId':
-        batch = batch[0]
-      _ids = {name: batch}
-      results.append(super().fetch(query_specification, args, **_ids, **kwargs))
+    filter_identifier = list(
+      set(ALLOWED_FILTERS).intersection(set(kwargs.keys()))
+    )
+    if len(filter_identifier) > 1:
+      raise exceptions.GarfError(
+        'Multiple filtering identifiers found, '
+        f'allowed only one of {ALLOWED_FILTERS}'
+      )
+    if len(filter_identifier) == 1:
+      name = filter_identifier[0]
+      ids = kwargs.pop(name)
+
+    for batch in _batched(ids, MAX_BATCH_SIZE):
+      batch_ids = {name: batch[0]} if name != 'id' else {name: batch}
+      results.append(
+        super().fetch(query_specification, args, **batch_ids, **kwargs)
+      )
     return functools.reduce(operator.add, results)
