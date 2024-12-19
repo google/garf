@@ -72,7 +72,10 @@ class DictParser(BaseParser):
 
   def get_nested_field(self, dictionary, key):
     key = key.split('.')
-    return functools.reduce(operator.getitem, key, dictionary)
+    try:
+      return functools.reduce(operator.getitem, key, dictionary)
+    except KeyError:
+      return None
 
 
 class GarfParserError(exceptions.GarfError):
