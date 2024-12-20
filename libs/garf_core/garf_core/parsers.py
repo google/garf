@@ -20,9 +20,10 @@ strategies to each element of the row.
 from __future__ import annotations
 
 import abc
+import contextlib
 import functools
 import operator
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from typing import Union
 
 from typing_extensions import TypeAlias, override
@@ -74,6 +75,24 @@ class DictParser(BaseParser):
     key = key.split('.')
     try:
       return functools.reduce(operator.getitem, key, dictionary)
+    except KeyError:
+      return None
+
+
+class NumericConverterDictParser(DictParser):
+  def get_nested_field(self, dictionary, key):
+    def convert_field(value):
+      for type_ in (int, float):
+        with contextlib.suppress(ValueError):
+          return type_(value)
+      return value
+
+    key = key.split('.')
+    try:
+      field = functools.reduce(operator.getitem, key, dictionary)
+      if isinstance(field, MutableSequence) or field in (True, False):
+        return field
+      return convert_field(field)
     except KeyError:
       return None
 
