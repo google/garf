@@ -53,7 +53,7 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
   def __init__(
     self,
     api_client: YouTubeDataApiClient = YouTubeDataApiClient(),
-    parser: parsers.DictParser = parsers.DictParser,
+    parser: parsers.BaseParser = parsers.NumericConverterDictParser,
   ) -> None:
     """Initializes YouTubeDataApiReportFetcher."""
     super().__init__(api_client, parser)
