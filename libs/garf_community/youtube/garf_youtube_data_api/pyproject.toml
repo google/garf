@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "garf-youtube-data-api"
-version = "0.0.3"
 dependencies = [
   "garf-core",
   "garf-io",
@@ -22,10 +21,17 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
+dynamic=["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf_youtube_data_api.__version__"}
+
+
 [options.extras_require]
 test =  [
   "pytest",
-  "pytest-cov"
+  "pytest-cov",
+  "python-dotenv",
 ]
 
 [project.scripts]

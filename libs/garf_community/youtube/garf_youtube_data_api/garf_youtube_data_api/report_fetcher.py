@@ -22,7 +22,7 @@ from typing import Any, Final
 
 from typing_extensions import override
 
-from garf_core import exceptions, parsers, report, report_fetcher
+from garf_core import parsers, report, report_fetcher
 from garf_youtube_data_api.api_clients import YouTubeDataApiClient
 
 ALLOWED_FILTERS: Final[set[str]] = (
@@ -69,15 +69,11 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
     filter_identifier = list(
       set(ALLOWED_FILTERS).intersection(set(kwargs.keys()))
     )
-    if len(filter_identifier) > 1:
-      raise exceptions.GarfError(
-        'Multiple filtering identifiers found, '
-        f'allowed only one of {ALLOWED_FILTERS}'
-      )
     if len(filter_identifier) == 1:
       name = filter_identifier[0]
       ids = kwargs.pop(name)
-
+    else:
+      return super().fetch(query_specification, args, **kwargs)
     for batch in _batched(ids, MAX_BATCH_SIZE):
       batch_ids = {name: batch[0]} if name != 'id' else {name: batch}
       results.append(
