@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "garf-core"
-version = "0.0.4"
 dependencies = [
     "python-dateutil",
     "jinja2==3.1.4",
@@ -29,6 +28,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "License :: OSI Approved :: Apache Software License",
 ]
+dynamic=["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf_core.__version__"}
 
 [project.optional-dependencies]
 pandas=[

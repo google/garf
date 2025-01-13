@@ -317,6 +317,22 @@ class TestGarfReport:
       )
       assert output_dict == {1: 2, 2: 3, 3: 4}
 
+    def test_multi_column_report_with_duplicates_converted_to_dict_scalar_returns_unique_values(
+      self,
+    ):
+      multi_column_report = report.GarfReport(
+        results=[[1, 2], [2, 3], [3, 4], [3, 4]],
+        column_names=['campaign_id', 'ad_group_id'],
+      )
+      key_column = 'campaign_id'
+      value_column = 'ad_group_id'
+      output_dict = multi_column_report.to_dict(
+        key_column=key_column,
+        value_column=value_column,
+        value_column_output='scalar',
+      )
+      assert output_dict == {1: 2, 2: 3, 3: 4}
+
     def test_multi_column_report_converted_to_dict_raises_exception_on_non_existing_key_column(
       self,
       multi_column_report,

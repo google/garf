@@ -176,9 +176,9 @@ class GarfReport:
       if value_column_output == 'list':
         output[key].append(value)
       else:
-        if key in output:
+        if output.get(key) and output.get(key) != value:
           raise GarfReportError(
-            f'Non unique values found for key_column: {key}'
+            f'Non unique values found for key_column: {key_column}'
           )
         output[key] = value
     return output
