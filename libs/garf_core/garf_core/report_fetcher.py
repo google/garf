@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for getting data from Ads API based on a query.
+"""Module for getting data from API based on a query.
 
-AdsReportFetcher performs fetching data from Ads API, parsing it
+ApiReportFetcher performs fetching data from API, parsing it
   and returning GarfReport.
 """
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
@@ -34,10 +34,10 @@ logger = logging.getLogger(__name__)
 
 
 class ApiReportFetcher:
-  """Class responsible for getting data from Ads API.
+  """Class responsible for getting data from report API.
 
   Attributes:
-      api_client: a client used for connecting to Ads API.
+      api_client: a client used for connecting to API.
   """
 
   def __init__(
@@ -45,10 +45,10 @@ class ApiReportFetcher:
     api_client: api_clients.BaseApiClient,
     parser: parsers.BaseParser = parsers.ListParser,
   ) -> None:
-    """Instantiates AdsReportFetcher based on provided api client.
+    """Instantiates ApiReportFetcher based on provided api client.
 
     Args:
-      api_client: Instantiated GoogleAdsClient or GoogleAdsApiClient.
+      api_client: Instantiated api client.
       parser: Parser.
     """
     self.api_client = api_client
@@ -60,10 +60,10 @@ class ApiReportFetcher:
     args: dict[str, Any] | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
-    """Asynchronously fetches data from Ads API based on query_specification.
+    """Asynchronously fetches data from API based on query_specification.
 
     Args:
-        query_specification: Query text that will be passed to Ads API
+        query_specification: Query text that will be passed to API
             alongside column_names, customizers and virtual columns.
         args: Arguments that need to be passed to the query.
 
@@ -78,10 +78,10 @@ class ApiReportFetcher:
     args: dict[str, Any] | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
-    """Fetches data from Ads API based on query_specification.
+    """Fetches data from API based on query_specification.
 
     Args:
-        query_specification: Query text that will be passed to Ads API
+        query_specification: Query text that will be passed to API
             alongside column_names, customizers and virtual columns.
         args: Arguments that need to be passed to the query.
 
@@ -90,7 +90,7 @@ class ApiReportFetcher:
 
     Raises:
         GarfExecutorException:
-            When customer_ids are not provided or Ads API returned error.
+            When customer_ids are not provided or API returned error.
     """
     if not isinstance(query_specification, query_editor.QuerySpecification):
       query_specification = query_editor.QuerySpecification(
