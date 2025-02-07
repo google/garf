@@ -7,3 +7,7 @@ Currently the following executors are supports:
 * `ApiExecutor` - fetching data from reporting API and saves it to a requested destination.
 * `BigQueryExecutor` - executes SQL code in BigQuery.
 * `SqlExecutor` - executes SQL code in a SqlAlchemy supported DB.
+
+## Installation
+
+`pip install garf-executors`
