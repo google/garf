@@ -65,6 +65,12 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
     """
     report = self.format_for_write(report)
     destination = formatter.format_extension(destination)
+    dtypes = {}
+    for column in report.column_names:
+      if (report and isinstance(report[0][column], dict)) or (
+        not report and isinstance(report.results_placeholder[0][column], dict)
+      ):
+        dtypes.update({column: sqlalchemy.types.JSON})
     if not report:
       df = pd.DataFrame(
         data=report.results_placeholder, columns=report.column_names
@@ -78,6 +84,8 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
       'index': False,
       'if_exists': self.if_exists,
     }
+    if dtypes:
+      write_params.update({'dtype': dtypes})
     df.to_sql(**write_params)
     logging.debug('Writing to %s is completed', destination)
 

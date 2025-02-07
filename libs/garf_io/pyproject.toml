@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "garf-io"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
   'garf-core',
   'smart_open',
@@ -14,7 +14,7 @@ authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
 requires-python = ">=3.8"
-description = "Handles reading queries and writing GaarfReport from garf-core package"
+description = "Handles reading queries and writing GarfReport from garf-core package"
 readme = "README.md"
 license = {text = "Apache 2.0"}
 classifiers = [
