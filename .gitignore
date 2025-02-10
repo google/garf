@@ -16,3 +16,4 @@ tags
 .coverage
 .python-version
 dist
+build

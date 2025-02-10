@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "garf-executors"
-version = "0.0.2"
 dependencies = [
   "garf-core",
   "garf-io",
@@ -28,6 +27,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "License :: OSI Approved :: Apache Software License",
 ]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf_executors.__version__"}
 
 [project.optional-dependencies]
 bq=[
@@ -42,5 +45,4 @@ all = [
   "garf-executors[bq,sql]"
 ]
 [project.scripts]
-garf-sql-executor="garf_executors.entrypoints.cli.sql:main"
-garf-bq-executor="garf_executors.entrypoints.cli.bq:main"
+garf="garf_executors.entrypoints.cli:main"

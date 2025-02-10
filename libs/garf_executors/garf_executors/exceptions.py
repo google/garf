@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,20 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Defines simplified import of executors.
 
-Instead of importing `garf_executors.api_executor.ApiQueryExecutor`
-import like this `garf_executors.ApiQueryExecutor`
-"""
 
-from __future__ import annotations
-
-from garf_executors.api_executor import ApiQueryExecutor
-from garf_executors.fetchers import FETCHERS
-
-__all__ = [
-  'FETCHERS',
-  'ApiQueryExecutor',
-]
-
-__version__ = '0.0.3'
+class GarfExecutorError(Exception):
+  """Base class for garf executor exceptions."""
