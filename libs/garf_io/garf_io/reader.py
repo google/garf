@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import abc
-from typing import Dict
 
 import smart_open
 from typing_extensions import override
@@ -54,17 +53,13 @@ class NullReader(AbsReader):
     print('Unknown reader type!')
 
 
-class ReaderFactory:
-  reader_options: Dict[str, AbsReader] = {}
+_READER_OPTIONS = {
+  'file': FileReader,
+  'console': ConsoleReader,
+}
 
-  def __init__(self):
-    self.load_reader_options()
 
-  def load_reader_options(self):
-    self.reader_options['file'] = FileReader
-    self.reader_options['console'] = ConsoleReader
-
-  def create_reader(self, reader_option: str, **kwargs) -> AbsReader:
-    if reader_option in self.reader_options:
-      return self.reader_options[reader_option](**kwargs)
-    return NullReader(reader_option)
+def create_reader(reader_option: str, **kwargs) -> AbsReader:
+  if reader := _READER_OPTIONS.get(reader_option):
+    return reader(**kwargs)
+  return NullReader(reader_option)
