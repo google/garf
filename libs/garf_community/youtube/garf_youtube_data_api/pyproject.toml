@@ -26,6 +26,8 @@ dynamic=["version"]
 [tool.setuptools.dynamic]
 version = {attr = "garf_youtube_data_api.__version__"}
 
+[project.entry-points.garf]
+youtube-data-api = "garf_youtube_data_api.report_fetcher"
 
 [options.extras_require]
 test =  [
