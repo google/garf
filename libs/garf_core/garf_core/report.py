@@ -183,6 +183,18 @@ class GarfReport:
         output[key] = value
     return output
 
+  def to_polars(self) -> 'pl.DataFrame':
+    try:
+      import polars as pl
+    except ImportError as e:
+      raise ImportError(
+        'Please install garf-io with Polars support '
+        '- `pip install garf-io[polars]`'
+      ) from e
+    return pl.DataFrame(
+      data=self.results, schema=self.column_names, orient='row'
+    )
+
   def to_pandas(self) -> 'pd.DataFrame':
     """Converts report to Pandas dataframe.
 
@@ -196,8 +208,8 @@ class GarfReport:
       import pandas as pd
     except ImportError as e:
       raise ImportError(
-        'Please install google-ads-api-report-fetcher with Pandas support '
-        '- `pip install google-ads-api-report-fetcher[pandas]`'
+        'Please install garf-io with Pandas support '
+        '- `pip install garf-io[pandas]`'
       ) from e
     return pd.DataFrame(data=self.results, columns=self.column_names)
 
@@ -386,6 +398,30 @@ class GarfReport:
     )
 
   @classmethod
+  def from_polars(cls, df: 'pl.DataFrame') -> GarfReport:
+    """Builds GarfReport from polars dataframe.
+
+    Args:
+        df: Polars dataframe to build report from.
+
+    Returns:
+        Report build from dataframe data and columns.
+
+    Raises:
+        ImportError: If polars library not installed.
+    """
+    try:
+      import polars as pl
+    except ImportError as e:
+      raise ImportError(
+        'Please install garf-io with Polars support '
+        '- `pip install garf-io[polars]`'
+      ) from e
+    return cls(
+      results=df.to_numpy().tolist(), column_names=list(df.schema.keys())
+    )
+
+  @classmethod
   def from_pandas(cls, df: 'pd.DataFrame') -> GarfReport:
     """Builds GarfReport from pandas dataframe.
 
@@ -402,8 +438,8 @@ class GarfReport:
       import pandas as pd
     except ImportError as e:
       raise ImportError(
-        'Please install google-ads-api-report-fetcher with Pandas support '
-        '- `pip install google-ads-api-report-fetcher[pandas]`'
+        'Please install garf-io with Pandas support '
+        '- `pip install garf-io[pandas]`'
       ) from e
     return cls(results=df.values.tolist(), column_names=list(df.columns.values))
 

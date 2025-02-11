@@ -37,6 +37,9 @@ version = {attr = "garf_core.__version__"}
 pandas=[
   "pandas",
 ]
+polars=[
+  "polars",
+]
 all = [
-  "garf-core[pandas]"
+  "garf-core[pandas,polars]"
 ]

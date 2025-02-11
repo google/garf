@@ -16,6 +16,7 @@ from __future__ import annotations
 from collections import abc
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from garf_core import report
@@ -414,11 +415,29 @@ class TestGarfReport:
       )
       assert report_from_df == expected_report
 
+    def test_conversion_from_polars(
+      self,
+    ):
+      values = [[1, 2], [3, 4]]
+      column_names = ['one', 'two']
+      df = pl.DataFrame(data=values, schema=column_names, orient='row')
+      report_from_df = report.GarfReport.from_polars(df)
+      expected_report = report.GarfReport(
+        results=values, column_names=column_names
+      )
+      assert report_from_df == expected_report
+
     def test_convert_report_to_pandas(self, multi_column_report):
       expected = pd.DataFrame(
         data=[[1, 2], [2, 3], [3, 4]], columns=['campaign_id', 'ad_group_id']
       )
       assert multi_column_report.to_pandas().equals(expected)
+
+    def test_convert_report_to_polars(self, multi_column_report):
+      expected = pl.DataFrame(
+        data=[[1, 2], [2, 3], [3, 4]], schema=['campaign_id', 'ad_group_id']
+      )
+      assert multi_column_report.to_polars().equals(expected)
 
     def test_get_value_single_element_report_returns_correct_value(
       self,
