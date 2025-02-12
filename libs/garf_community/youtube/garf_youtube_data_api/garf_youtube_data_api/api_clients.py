@@ -23,11 +23,16 @@ from garf_core import api_clients, query_editor
 
 class YouTubeDataApiClient(api_clients.BaseClient):
   def __init__(
-    self, api_key: str = os.getenv('GOOGLE_API_KEY'), api_version: str = 'v3'
+    self,
+    api_key: str = os.getenv('GOOGLE_API_KEY'),
+    api_version: str = 'v3',
+    **kwargs: str,
   ) -> None:
     """Initializes YouTubeDataApiClient."""
     self.api_key = api_key
     self.api_version = api_version
+    self.api_key
+    self.query_args = kwargs
     self._service = None
 
   @property

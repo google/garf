@@ -54,9 +54,10 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
     self,
     api_client: YouTubeDataApiClient = YouTubeDataApiClient(),
     parser: parsers.BaseParser = parsers.NumericConverterDictParser,
+    **kwargs: str,
   ) -> None:
     """Initializes YouTubeDataApiReportFetcher."""
-    super().__init__(api_client, parser)
+    super().__init__(api_client, parser, **kwargs)
 
   @override
   def fetch(
