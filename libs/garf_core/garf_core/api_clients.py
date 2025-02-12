@@ -19,6 +19,7 @@ import abc
 import dataclasses
 from collections.abc import Sequence
 
+import requests
 from typing_extensions import override
 
 
@@ -34,14 +35,38 @@ class GarfApiResponse:
   results: list
 
 
+class GarfApiError(Exception):
+  """API specific exception."""
+
+
 class BaseClient(abc.ABC):
   """Base API client class."""
 
   @abc.abstractmethod
   def get_response(
-    self, request: GarfApiRequest = GarfApiRequest()
+    self, request: GarfApiRequest = GarfApiRequest(), **kwargs: str
   ) -> GarfApiResponse:
     """Method for getting response."""
+
+
+class RestApiClient(BaseClient):
+  """Specifies REST client."""
+
+  OK = 200
+
+  def __init__(self, endpoint: str, **kwargs: str) -> None:
+    """Initializes RestApiClient."""
+    self.endpoint = endpoint
+    self.query_args = kwargs
+
+  @override
+  def get_response(
+    self, request: GarfApiRequest = GarfApiRequest(), **kwargs: str
+  ) -> GarfApiResponse:
+    response = requests.get(f'{self.endpoint}/{request.resource_name}')
+    if response.status_code == self.OK:
+      return GarfApiResponse(response.json())
+    raise GarfApiError('Failed to get data from API')
 
 
 class FakeApiClient(BaseClient):

@@ -44,15 +44,17 @@ class ApiReportFetcher:
     self,
     api_client: api_clients.BaseApiClient,
     parser: parsers.BaseParser = parsers.ListParser,
+    **kwargs: str,
   ) -> None:
     """Instantiates ApiReportFetcher based on provided api client.
 
     Args:
       api_client: Instantiated api client.
-      parser: Parser.
+      parser: Type of parser to convert API response.
     """
     self.api_client = api_client
     self.parser = parser()
+    self.query_args = kwargs
 
   async def afetch(
     self,
@@ -103,3 +105,26 @@ class ApiReportFetcher:
     return report.GarfReport(
       results=parsed_response, column_names=query.column_names
     )
+
+
+class RestApiReportFetcher(ApiReportFetcher):
+  """Fetches data from an REST API endpoint.
+
+  Attributes:
+    api_client: Initialized RestApiClient.
+    parser: Type of parser to convert API response.
+  """
+
+  def __init__(
+    self,
+    endpoint: str,
+    parser: parsers.BaseParser = parsers.DictParser,
+  ) -> None:
+    """Instantiates RestApiReportFetcher.
+
+    Args:
+      endpoint: URL of API endpoint.
+      parser: Type of parser to convert API response.
+    """
+    self.api_client = api_clients.RestApiClient(endpoint)
+    self.parser = parser()
