@@ -81,8 +81,9 @@ def main():
   logger.debug('initialized config: %s', config)
 
   extra_parameters = utils.ParamsParser(['source']).parse(kwargs)
+  source_parameters = extra_parameters.get('source', {})
   query_executor = garf_executors.api_executor.ApiQueryExecutor(
-    concrete_api_fetcher()
+    concrete_api_fetcher(**source_parameters)
   )
   reader_client = reader.create_reader(args.input)
 
@@ -102,7 +103,7 @@ def main():
           query,
           writer_client,
           config.params,
-          **extra_parameters.get('source', {}),
+          **source_parameters,
         ): query
         for query in args.query
       }
@@ -118,7 +119,7 @@ def main():
         query,
         writer_client,
         config.params,
-        **extra_parameters.get('source', {}),
+        **source_parameters,
       )
       utils.garf_runner(query, callback, logger)
 
