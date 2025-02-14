@@ -17,7 +17,7 @@
 import functools
 import itertools
 import operator
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableSequence
 from typing import Any, Final
 
 from typing_extensions import override
@@ -73,6 +73,8 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
     if len(filter_identifier) == 1:
       name = filter_identifier[0]
       ids = kwargs.pop(name)
+      if not isinstance(ids, MutableSequence):
+        ids = ids.split(',')
     else:
       return super().fetch(query_specification, args, **kwargs)
     for batch in _batched(ids, MAX_BATCH_SIZE):
