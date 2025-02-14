@@ -17,6 +17,7 @@
 
 ## Usage
 
+### Run as a library
 ```
 from garf_youtube_data_api import report_fetcher
 from garf_io import writer
@@ -35,3 +36,29 @@ fetched_report = (
 console_writer = writer.create_writer('console')
 console_writer.write(fetched_report, 'output')
 ```
+
+### Run via CLI
+
+> Install `garf-executors` package to run queries via CLI (`pip install garf-executors`).
+
+```
+garf <PATH_TO_QUERIES> --source youtube-data-api \
+  --output <OUTPUT_TYPE> \
+  --source.<SOURCE_PARAMETER=VALUE>
+```
+
+where:
+
+* `<PATH_TO_QUERIES>` - local or remove files containing queries
+* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
+* `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
+
+## Available source parameters
+
+| name | values| comments |
+|----- | ----- | -------- |
+| `id`   | id of YouTube channel or videos| Multiple ids are supported, should be comma-separated|
+| `forHandle` | YouTube channel handle | i.e. @myChannel |
+| `forUsername` | YouTube channel name | i.e. myChannel |
+| `regionCode` | ISO 3166-1 alpha-2 country code | i.e. US |
+| `chart` | `mostPopular` | Gets most popular in `regionCode`, can be narrowed down with `videoCategoriId` |
