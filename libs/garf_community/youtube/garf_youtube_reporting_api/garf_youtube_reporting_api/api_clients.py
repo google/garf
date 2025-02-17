@@ -39,10 +39,10 @@ class YouTubeReportingApiClient(api_clients.BaseClient):
       return self._credentials
     return Credentials(
       None,
-      refresh_token=os.getenv('GARF_REFRESH_TOKEN'),
+      refresh_token=os.getenv('YT_REFRESH_TOKEN'),
       token_uri='https://oauth2.googleapis.com/token',
-      client_id=os.getenv('GARF_CLIENT_ID'),
-      client_secret=os.getenv('GARF_CLIENT_SECRET'),
+      client_id=os.getenv('YT_CLIENT_ID'),
+      client_secret=os.getenv('YT_CLIENT_SECRET'),
     )
 
   @property
