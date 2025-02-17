@@ -60,6 +60,7 @@ class YouTubeReportingApiClient(api_clients.BaseClient):
   ) -> api_clients.GarfApiResponse:
     metrics = []
     dimensions = []
+    filters = []
     for field in request.fields:
       if field.startswith('metrics'):
         metrics.append(field.replace('metrics.', ''))
@@ -72,12 +73,14 @@ class YouTubeReportingApiClient(api_clients.BaseClient):
         start_date = filter_statement.split('=')
       elif filter_statement.startswith('endDate'):
         end_date = filter_statement.split('=')
+      else:
+        filters.append(filter_statement)
     result = (
       self.service.reports()
       .query(
         dimensions=','.join(dimensions),
         metrics=','.join(metrics),
-        # filters='',
+        filters=';'.join(filters),
         ids=ids,
         startDate=start_date[1].strip(),
         endDate=end_date[1].strip(),
