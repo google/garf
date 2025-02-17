@@ -9,3 +9,11 @@ or use `garf-executors` package (install with `pip install garf-executors`).
     --source youtube-reporting-api --output console \
     --macros.start_date=:YYYYMMDD-30 \
     --macros.start_date=:YYYYMMDD-1
+  ```
+
+* [video_retention](video_retention.sql) - Gets retention for a single video for the last 30 days.
+  garf video_retention.sql \
+    --source youtube-reporting-api --output console \
+    --macros.video_id=<YOUR_VIDEO_ID_HERE> \
+    --macros.start_date=:YYYYMMDD-30 \
+    --macros.start_date=:YYYYMMDD-1
