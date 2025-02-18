@@ -23,7 +23,7 @@ from typing import Any, Final
 from typing_extensions import override
 
 from garf_core import parsers, report, report_fetcher
-from garf_knowledge_graph_api import KnowledgeGraphApiClient
+from garf_knowledge_graph_api import KnowledgeGraphApiClient, query_editor
 
 ALLOWED_QUERY_PARAMETERS: Final[set[str]] = (
   'query',
@@ -48,10 +48,11 @@ class KnowledgeGraphApiReportFetcher(report_fetcher.ApiReportFetcher):
     self,
     api_client: KnowledgeGraphApiClient = KnowledgeGraphApiClient(),
     parser: parsers.BaseParser = parsers.NumericConverterDictParser,
+    query_spec: query_editor.KnowledgeGraphApiQuery = query_editor.KnowledgeGraphApiQuery,
     **kwargs: str,
   ) -> None:
     """Initializes KnowledgeGraphApiReportFetcher."""
-    super().__init__(api_client, parser, **kwargs)
+    super().__init__(api_client, parser, query_spec, **kwargs)
 
   @override
   def fetch(
