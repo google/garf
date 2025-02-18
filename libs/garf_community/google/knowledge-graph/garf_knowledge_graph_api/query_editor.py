@@ -11,10 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Defines YouTubeDataApiQuery."""
+"""Defines KnowledgeGraphApiQuery."""
+
+from typing_extensions import Self
 
 from garf_core import query_editor
 
 
 class KnowledgeGraphApiQuery(query_editor.QuerySpecification):
   """Query to Knowledge Graph Search api."""
+
+  def __init__(
+    self,
+    text: str,
+    title: str | None = None,
+    args: dict[str, str] | None = None,
+    **kwargs,
+  ) -> None:
+    """Initializes KnowledgeGraphApiQuery."""
+    super().__init__(text, title, args, **kwargs)
+
+  def extract_column_names(self) -> Self:
+    """Removes extra symbols from column names."""
+    for line in self._extract_query_lines():
+      line_elements = query_editor.ExtractedLineElements.from_query_line(line)
+      self.query.column_names.append(line_elements.alias.replace('@', ''))
+    return self

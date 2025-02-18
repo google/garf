@@ -13,8 +13,9 @@
 -- limitations under the License.
 SELECT
   result_score,
-  @id AS id,
-  @type AS type,
+  @id,
+  @type,
+  name,
   description,
   image.url AS url
 FROM query
