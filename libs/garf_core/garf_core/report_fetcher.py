@@ -38,12 +38,17 @@ class ApiReportFetcher:
 
   Attributes:
       api_client: a client used for connecting to API.
+      parser: Type of parser to convert API response.
+      query_specification_builder: Class to perform query parsing.
   """
 
   def __init__(
     self,
     api_client: api_clients.BaseApiClient,
     parser: parsers.BaseParser = parsers.ListParser,
+    query_specification_builder: query_editor.QuerySpecification = (
+      query_editor.QuerySpecification
+    ),
     **kwargs: str,
   ) -> None:
     """Instantiates ApiReportFetcher based on provided api client.
@@ -51,9 +56,11 @@ class ApiReportFetcher:
     Args:
       api_client: Instantiated api client.
       parser: Type of parser to convert API response.
+      query_specification_builder: Class to perform query parsing.
     """
     self.api_client = api_client
     self.parser = parser()
+    self.query_specification_builder = query_specification_builder
     self.query_args = kwargs
 
   async def afetch(
@@ -65,12 +72,12 @@ class ApiReportFetcher:
     """Asynchronously fetches data from API based on query_specification.
 
     Args:
-        query_specification: Query text that will be passed to API
-            alongside column_names, customizers and virtual columns.
-        args: Arguments that need to be passed to the query.
+      query_specification: Query text that will be passed to API
+        alongside column_names, customizers and virtual columns.
+      args: Arguments that need to be passed to the query.
 
     Returns:
-        GarfReport with results of query execution.
+      GarfReport with results of query execution.
     """
     return self.fetch(query_specification, args, **kwargs)
 
@@ -83,19 +90,19 @@ class ApiReportFetcher:
     """Fetches data from API based on query_specification.
 
     Args:
-        query_specification: Query text that will be passed to API
-            alongside column_names, customizers and virtual columns.
-        args: Arguments that need to be passed to the query.
+      query_specification: Query text that will be passed to API
+        alongside column_names, customizers and virtual columns.
+      args: Arguments that need to be passed to the query.
 
     Returns:
-        GarfReport with results of query execution.
+      GarfReport with results of query execution.
 
     Raises:
-        GarfExecutorException:
-            When customer_ids are not provided or API returned error.
+      GarfExecutorException:
+        When customer_ids are not provided or API returned error.
     """
     if not isinstance(query_specification, query_editor.QuerySpecification):
-      query_specification = query_editor.QuerySpecification(
+      query_specification = self.query_specification_builder(
         text=str(query_specification),
         args=args,
       )
