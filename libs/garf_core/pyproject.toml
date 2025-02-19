@@ -8,6 +8,7 @@ dependencies = [
     "python-dateutil",
     "jinja2==3.1.4",
     "typing-extensions",
+    "requests",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
