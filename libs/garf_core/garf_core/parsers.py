@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,42 +34,47 @@ ApiRowElement: TypeAlias = Union[int, float, str, bool, list, None]
 
 
 class BaseParser(abc.ABC):
-  @abc.abstractmethod
   def parse_response(
-    self, response: api_clients.GarfApiResponse
+    self,
+    response: api_clients.GarfApiResponse,
+    query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
     """Parses response."""
+    if not response.results:
+      return [[]]
+    results = []
+    for result in response.results:
+      results.append(self.parse_row(result, query_specification))
+    return results
+
+  @abc.abstractmethod
+  def parse_row(self, row, query_specification):
+    """Parses single row from response."""
 
 
 class ListParser(BaseParser):
   @override
-  def parse_response(
+  def parse_row(
     self,
-    response: api_clients.GarfApiResponse,
+    row: list,
     query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
-    del query_specification
-    return response.results
+    return row
 
 
 class DictParser(BaseParser):
   @override
-  def parse_response(
+  def parse_row(
     self,
-    response: api_clients.GarfApiResponse,
+    row: list,
     query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
-    if not response.results:
-      return [[]]
-    if not isinstance(response.results[0], Mapping):
-      return GarfParserError
-    results = []
-    for result in response.results:
-      row = []
-      for field in query_specification.fields:
-        row.append(self.get_nested_field(result, field))
-      results.append(row)
-    return results
+    if not isinstance(row, Mapping):
+      raise GarfParserError
+    result = []
+    for field in query_specification.fields:
+      result.append(self.get_nested_field(row, field))
+    return result
 
   def get_nested_field(self, dictionary, key):
     key = key.split('.')
