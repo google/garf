@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for defining various parsing strategy for GoogleAdsRow elements.
-
-GoogleAdsRowParser parses a single GoogleAdsRow and applies different parsing
-strategies to each element of the row.
-"""
+"""Module for defining various parsing strategy for API response."""
 
 from __future__ import annotations
 
@@ -24,7 +20,7 @@ import contextlib
 import functools
 import operator
 from collections.abc import Mapping, MutableSequence
-from typing import Union
+from typing import Any, Union
 
 from typing_extensions import TypeAlias, override
 
@@ -34,6 +30,8 @@ ApiRowElement: TypeAlias = Union[int, float, str, bool, list, None]
 
 
 class BaseParser(abc.ABC):
+  """An interface for all parsers to implement."""
+
   def parse_response(
     self,
     response: api_clients.GarfApiResponse,
@@ -53,6 +51,8 @@ class BaseParser(abc.ABC):
 
 
 class ListParser(BaseParser):
+  """Returns API results as is."""
+
   @override
   def parse_row(
     self,
@@ -63,6 +63,8 @@ class ListParser(BaseParser):
 
 
 class DictParser(BaseParser):
+  """Extracts nested dict elements."""
+
   @override
   def parse_row(
     self,
@@ -76,7 +78,8 @@ class DictParser(BaseParser):
       result.append(self.get_nested_field(row, field))
     return result
 
-  def get_nested_field(self, dictionary, key):
+  def get_nested_field(self, dictionary: dict[str, Any], key: str):
+    """Returns nested fields from a dictionary."""
     key = key.split('.')
     try:
       return functools.reduce(operator.getitem, key, dictionary)
@@ -85,7 +88,11 @@ class DictParser(BaseParser):
 
 
 class NumericConverterDictParser(DictParser):
-  def get_nested_field(self, dictionary, key):
+  """Extracts nested dict elements with numerical conversions."""
+
+  def get_nested_field(self, dictionary: dict[str, Any], key: str):
+    """Extract nested field with int/float conversion."""
+
     def convert_field(value):
       for type_ in (int, float):
         with contextlib.suppress(ValueError):

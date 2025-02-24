@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLf
+# Copyright 2025 Google LLf
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -126,12 +126,17 @@ class RestApiReportFetcher(ApiReportFetcher):
     self,
     endpoint: str,
     parser: parsers.BaseParser = parsers.DictParser,
+    query_specification_builder: query_editor.QuerySpecification = (
+      query_editor.QuerySpecification
+    ),
+    **kwargs: str,
   ) -> None:
     """Instantiates RestApiReportFetcher.
 
     Args:
       endpoint: URL of API endpoint.
       parser: Type of parser to convert API response.
+      query_specification_builder: Class to perform query parsing.
     """
-    self.api_client = api_clients.RestApiClient(endpoint)
-    self.parser = parser()
+    api_client = api_clients.RestApiClient(endpoint)
+    super().__init__(api_client, parser, query_specification_builder, **kwargs)
