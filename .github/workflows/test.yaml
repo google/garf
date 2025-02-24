@@ -1,0 +1,36 @@
+name: Run tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'libs/**'
+env:
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        library: [garf_core, garf_io, garf_executors]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.4"
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv pip install pytest
+      - name: Test ${{ matrix.library }}
+        if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
+        run: |
+          cd libs/${{ matrix.library }}
+          uv pip install -e .[all]
+          pytest tests/unit
