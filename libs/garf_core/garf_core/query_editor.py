@@ -29,6 +29,30 @@ from typing_extensions import Self
 from garf_core import exceptions
 
 
+class GarfQueryError(exceptions.GarfError):
+  """Base exception for Garf queries."""
+
+
+class GarfCustomizerError(GarfQueryError):
+  """Specifies incorrect customizer."""
+
+
+class GarfVirtualColumnError(GarfQueryError):
+  """Specifies incorrect virtual column type."""
+
+
+class GarfFieldError(GarfQueryError):
+  """Specifies incorrect fields from API."""
+
+
+class GarfMacroError(GarfQueryError):
+  """Specifies incorrect macro in Garf query."""
+
+
+class GarfResourceError(GarfQueryError):
+  """Specifies incorrect resource name in the query."""
+
+
 @dataclasses.dataclass
 class ProcessedField:
   """Helper class to store fields with its customizers.
@@ -141,7 +165,7 @@ class VirtualColumn:
         substitute_expression=substitute_expression.replace('.', '_'),
       )
     if not _is_quoted_string(field):
-      raise exceptions.GarfFieldException(f"Incorrect field '{field}'.")
+      raise GarfFieldError(f"Incorrect field '{field}'.")
     field = field.replace("'", '').replace('"', '')
     field = field.format(**macros) if macros else field
     return VirtualColumn(type='built-in', value=field)
@@ -183,9 +207,7 @@ class ExtractedLineElements:
     else:
       customizer = {}
     if virtual_column and not alias:
-      raise exceptions.GarfVirtualColumnException(
-        'Virtual attributes should be aliased'
-      )
+      raise GarfVirtualColumnError('Virtual attributes should be aliased')
     return ExtractedLineElements(
       field=_format_type_field_name(field)
       if not virtual_column and field
@@ -381,9 +403,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     try:
       self.query.text = query_text.format(**self.macros).strip()
     except KeyError as e:
-      raise exceptions.GarfMacroException(
-        f'No value provided for macro {str(e)}.'
-      ) from e
+      raise GarfMacroError(f'No value provided for macro {str(e)}.') from e
     return self
 
   def remove_comments(self) -> Self:
@@ -424,9 +444,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     ):
       self.query.resource_name = str(resource_name[0]).strip()
       return self
-    raise exceptions.GarfResourceException(
-      f'No resource found in query: {self.query.text}'
-    )
+    raise GarfResourceError(f'No resource found in query: {self.query.text}')
 
   def extract_fields(self) -> Self:
     for line in self._extract_query_lines():

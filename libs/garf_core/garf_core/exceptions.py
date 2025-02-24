@@ -29,31 +29,3 @@ from __future__ import annotations
 
 class GarfError(Exception):
   """Base exception."""
-
-
-class GarfQueryException(GarfError):
-  """Base exception for Garf queries."""
-
-
-class GarfParserException(GarfError):
-  """Base exception for Garf parsers."""
-
-
-class GarfCustomizerException(GarfParserException):
-  """Specifies incorrect customizer."""
-
-
-class GarfVirtualColumnException(GarfParserException):
-  """Specifies incorrect virtual column type."""
-
-
-class GarfFieldException(GarfQueryException):
-  """Specifies incorrect Google Ads API field."""
-
-
-class GarfMacroException(GarfQueryException):
-  """Specifies incorrect macro in Garf query."""
-
-
-class GarfResourceException(GarfQueryException):
-  """Specifies incorrect resource name in Google Ads API."""
