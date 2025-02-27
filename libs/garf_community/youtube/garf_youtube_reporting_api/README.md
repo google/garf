@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/garf-youtube-reporting-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube-reporting-api)
 [![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube-reporting-api?logo=pypi)](https://pypi.org/project/garf-youtube-reporting-api/)
 
-`garf-youtube-reporting-api` simplifies fetching data from YouTube Reporting API using SQL-like queries.
+`garf-youtube-reporting-api` simplifies fetching data from YouTube Reporting API using [SQL-like queries](../../../garf_core/docs/how-to-write-queries.md).
 
 ## Prerequisites
 

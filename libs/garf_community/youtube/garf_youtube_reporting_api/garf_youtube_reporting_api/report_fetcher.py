@@ -15,6 +15,7 @@
 """Defines report fetcher."""
 
 from garf_core import parsers, report_fetcher
+from garf_youtube_reporting_api import query_editor
 from garf_youtube_reporting_api.api_clients import YouTubeReportingApiClient
 
 
@@ -25,6 +26,9 @@ class YouTubeReportingApiReportFetcher(report_fetcher.ApiReportFetcher):
     self,
     api_client: YouTubeReportingApiClient = YouTubeReportingApiClient(),
     parser: parsers.DictParser = parsers.DictParser,
+    query_spec: query_editor.YouTubeReportingApiQuery = (
+      query_editor.YouTubeReportingApiQuery
+    ),
   ) -> None:
     """Initializes YouTubeDataApiReportFetcher."""
-    super().__init__(api_client, parser)
+    super().__init__(api_client, parser, query_spec)

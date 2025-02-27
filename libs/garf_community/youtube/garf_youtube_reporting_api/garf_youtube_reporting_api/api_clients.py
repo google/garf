@@ -21,6 +21,11 @@ from googleapiclient.discovery import build
 from typing_extensions import override
 
 from garf_core import api_clients, query_editor
+from garf_youtube_reporting_api import exceptions
+
+
+class YouTubeReportingApiClientError(exceptions.GarfYouTubeReportingApiError):
+  """API client specific exception."""
 
 
 class YouTubeReportingApiClient(api_clients.BaseClient):
@@ -28,6 +33,15 @@ class YouTubeReportingApiClient(api_clients.BaseClient):
 
   def __init__(self, api_version: str = 'v2') -> None:
     """Initializes YouTubeReportingApiClient."""
+    if (
+      not os.getenv('YT_REFRESH_TOKEN')
+      or not os.getenv('YT_CLIENT_ID')
+      or not os.getenv('YT_CLIENT_SECRET')
+    ):
+      raise YouTubeReportingApiClientError(
+        'YouTubeReportingApiClient requests all ENV variables to be set up: '
+        'YT_REFRESH_TOKEN, YT_CLIENT_ID, YT_CLIENT_SECRET'
+      )
     self.api_version = api_version
     self._credentials = None
     self._service = None
