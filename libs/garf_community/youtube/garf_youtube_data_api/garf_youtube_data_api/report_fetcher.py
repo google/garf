@@ -23,6 +23,7 @@ from typing import Any, Final
 from typing_extensions import override
 
 from garf_core import parsers, report, report_fetcher
+from garf_youtube_data_api import query_editor
 from garf_youtube_data_api.api_clients import YouTubeDataApiClient
 
 ALLOWED_FILTERS: Final[set[str]] = (
@@ -54,10 +55,13 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
     self,
     api_client: YouTubeDataApiClient = YouTubeDataApiClient(),
     parser: parsers.BaseParser = parsers.NumericConverterDictParser,
+    query_spec: query_editor.YouTubeDataApiQuery = (
+      query_editor.YouTubeDataApiQuery
+    ),
     **kwargs: str,
   ) -> None:
     """Initializes YouTubeDataApiReportFetcher."""
-    super().__init__(api_client, parser, **kwargs)
+    super().__init__(api_client, parser, query_spec, **kwargs)
 
   @override
   def fetch(

@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines simplified imports."""
+"""Defines common library exceptions."""
 
-from __future__ import annotations
 
-from garf_youtube_data_api.api_clients import YouTubeDataApiClient
-from garf_youtube_data_api.report_fetcher import YouTubeDataApiReportFetcher
-
-__all__ = [
-  'YouTubeDataApiClient',
-  'YouTubeDataApiReportFetcher',
-]
-
-__version__ = '0.0.6'
+class GarfYouTubeDataApiError(Exception):
+  """Base class for all library exceptions."""

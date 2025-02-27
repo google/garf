@@ -18,10 +18,16 @@ import os
 from googleapiclient.discovery import build
 from typing_extensions import override
 
-from garf_core import api_clients, query_editor
+from garf_core import api_clients, exceptions, query_editor
+
+
+class YouTubeDataApiClientError(exceptions.GarfYouTubeDataApiError):
+  """API client specific exception."""
 
 
 class YouTubeDataApiClient(api_clients.BaseClient):
+  """Handles fetching data form YouTube Data API."""
+
   def __init__(
     self,
     api_key: str = os.getenv('GOOGLE_API_KEY'),
@@ -29,6 +35,11 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     **kwargs: str,
   ) -> None:
     """Initializes YouTubeDataApiClient."""
+    if not api_key:
+      raise YouTubeDataApiClientError(
+        'api_key is not found. Either pass to YouTubeDataApiClient as api_key '
+        'parameter or expose as GOOGLE_API_KEY ENV varible'
+      )
     self.api_key = api_key
     self.api_version = api_version
     self.api_key
