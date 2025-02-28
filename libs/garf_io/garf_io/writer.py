@@ -15,9 +15,15 @@
 
 from __future__ import annotations
 
-from importlib import import_module
+import inspect
+from importlib.metadata import entry_points
 
+from garf_io import exceptions
 from garf_io.writers import abs_writer
+
+
+class GarfIoWriterError(exceptions.GarfIoError):
+  """Writer specific exception."""
 
 
 def create_writer(
@@ -35,22 +41,16 @@ def create_writer(
   Returns:
       Concrete instantiated writer.
   """
-  if writer_option in ('bq', 'bigquery'):
-    writer_module = import_module('garf_io.writers.bigquery_writer')
-    return writer_module.BigQueryWriter(**kwargs)
-  if writer_option == 'sqldb':
-    writer_module = import_module('garf_io.writers.sqldb_writer')
-    return writer_module.SqlAlchemyWriter(**kwargs)
-  if writer_option in ('sheet', 'sheets'):
-    writer_module = import_module('garf_io.writers.sheets_writer')
-    return writer_module.SheetWriter(**kwargs)
-  if writer_option == 'console':
-    writer_module = import_module('garf_io.writers.console_writer')
-    return writer_module.ConsoleWriter(**kwargs)
-  if writer_option == 'csv':
-    writer_module = import_module('garf_io.writers.csv_writer')
-    return writer_module.CsvWriter(**kwargs)
-  if writer_option == 'json':
-    writer_module = import_module('garf_io.writers.json_writer')
-    return writer_module.JsonWriter(**kwargs)
-  return import_module('garf_io.writers.null_writer').NullWriter(writer_option)
+  writers = entry_points(group='garf_writer')
+  found_writers = {}
+  for writer in writers:
+    try:
+      writer_module = writer.load()
+      for name, obj in inspect.getmembers(writer_module):
+        if inspect.isclass(obj) and issubclass(obj, abs_writer.AbsWriter):
+          found_writers[writer.name] = getattr(writer_module, name)
+    except ModuleNotFoundError:
+      continue
+  if concrete_writer := found_writers.get(writer_option):
+    return concrete_writer(**kwargs)
+  raise GarfIoWriterError(f'{writer_option} is unknown writer type!')

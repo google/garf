@@ -56,5 +56,5 @@ def test_create_writer_returns_correct_fields_for_json_option():
 
 
 def test_null_writer_raises_unknown_writer_error():
-  with pytest.raises(ValueError):
+  with pytest.raises(writer.GarfIoWriterError):
     writer.create_writer('non-existing-option')
