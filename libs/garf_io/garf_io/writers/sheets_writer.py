@@ -21,8 +21,8 @@ try:
   import gspread
 except ImportError as e:
   raise ImportError(
-    'Please install google-ads-api-report-fetcher with sheets support - '
-    '`pip install google-ads-api-report-fetcher[sheet]`'
+    'Please install garf-io with sheets support - '
+    '`pip install garf-io[sheets]`'
   ) from e
 
 import datetime
