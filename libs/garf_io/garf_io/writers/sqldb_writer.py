@@ -19,8 +19,8 @@ try:
   import sqlalchemy
 except ImportError as e:
   raise ImportError(
-    'Please install google-ads-api-report-fetcher with sqlalchemy support '
-    '- `pip install google-ads-api-report-fetcher[sqlalchemy]`'
+    'Please install garf-io with sqlalchemy support '
+    '- `pip install garf-io[sqlalchemy]`'
   ) from e
 
 import logging

@@ -19,8 +19,8 @@ try:
   from google.cloud import bigquery
 except ImportError as e:
   raise ImportError(
-    'Please install google-ads-api-report-fetcher with BigQuery support '
-    '- `pip install google-ads-api-report-fetcher[bq]`'
+    'Please install garf-io with BigQuery support '
+    '- `pip install garf-io[bq]`'
   ) from e
 
 import datetime
@@ -171,7 +171,7 @@ def _define_schema(
 
 def _get_result_types(
   report: garf_report.GarfReport,
-) -> dict[str, dict[str, parsers.GoogleAdsRowElement]]:
+) -> dict[str, dict[str, parsers.ApiRowElement]]:
   """Maps each column of report to BigQuery field type and repeated status.
 
   Fields types are inferred based on report results or results placeholder.
@@ -182,7 +182,7 @@ def _get_result_types(
   Returns:
     Mapping between each column of report and its field type.
   """
-  result_types: dict[str, dict[str, parsers.GoogleAdsRowElement]] = {}
+  result_types: dict[str, dict[str, parsers.ApiRowElement]] = {}
   column_names = report.column_names
   for row in report.results or report.results_placeholder:
     if set(column_names) == set(result_types.keys()):
@@ -209,7 +209,7 @@ def _get_result_types(
 
 
 def _get_bq_schema(
-  types: dict[str, dict[str, parsers.GoogleAdsRowElement]],
+  types: dict[str, dict[str, parsers.ApiRowElement]],
 ) -> list[bigquery.SchemaField]:
   """Converts report fields types to BigQuery schema fields.
 
