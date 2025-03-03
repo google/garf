@@ -35,11 +35,15 @@ def create_writer(
   to correctly instantiate it.
 
   Args:
-      writer_option: Type of writer.
-      kwargs: Any possible arguments needed o instantiate writer.
+    writer_option: Type of writer.
+    kwargs: Any possible arguments needed o instantiate writer.
 
   Returns:
-      Concrete instantiated writer.
+    Concrete instantiated writer.
+
+  Raises:
+    ImportError: When writer specific library is not installed.
+    GarfIoError: When incorrect writer option is specified.
   """
   writers = entry_points(group='garf_writer')
   found_writers = {}
@@ -50,6 +54,10 @@ def create_writer(
         if inspect.isclass(obj) and issubclass(obj, abs_writer.AbsWriter):
           found_writers[writer.name] = getattr(writer_module, name)
     except ModuleNotFoundError:
+      continue
+    except ImportError as e:
+      if writer_option == writer.name:
+        raise e
       continue
   if concrete_writer := found_writers.get(writer_option):
     return concrete_writer(**kwargs)
