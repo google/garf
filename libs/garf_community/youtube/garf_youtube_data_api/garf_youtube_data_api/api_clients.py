@@ -18,7 +18,8 @@ import os
 from googleapiclient.discovery import build
 from typing_extensions import override
 
-from garf_core import api_clients, exceptions, query_editor
+from garf_core import api_clients, query_editor
+from garf_youtube_data_api import exceptions
 
 
 class YouTubeDataApiClientError(exceptions.GarfYouTubeDataApiError):
