@@ -22,6 +22,8 @@ from collections.abc import Sequence
 import requests
 from typing_extensions import override
 
+from garf_core import exceptions
+
 
 @dataclasses.dataclass
 class GarfApiRequest:
@@ -35,7 +37,7 @@ class GarfApiResponse:
   results: list
 
 
-class GarfApiError(Exception):
+class GarfApiError(exceptions.GarfError):
   """API specific exception."""
 
 

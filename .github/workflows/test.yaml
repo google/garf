@@ -27,17 +27,17 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: |
-          uv pip install pytest
+          uv pip install pytest coverage
       - name: Test ${{ matrix.library }}
         if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |
           cd libs/${{ matrix.library }}
           uv pip install -e .[all]
           pytest tests/unit
-      - name: Generate Report
+      - name: Generate Report for ${{ matrix.library }}
+        if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |
-          uv pip install coverage
-          coverage run -m pytest
+          coverage run -m pytest libs/${{ matrix.library }}/tests/unit
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
