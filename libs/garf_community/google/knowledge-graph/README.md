@@ -3,12 +3,12 @@
 [![PyPI](https://img.shields.io/pypi/v/garf-knowledge-graph-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-knowledge-graph-api)
 [![Downloads PyPI](https://img.shields.io/pypi/dw/garf-knowledge-graph-api?logo=pypi)](https://pypi.org/project/garf-knowledge-graph-api/)
 
-`garf-knowledge-graph-api` simplifies fetching data from YouTube Data API using SQL-like queries.
+`garf-knowledge-graph-api` simplifies fetching data from Knowledge Graph Search API using SQL-like queries.
 
 ## Prerequisites
 
 * [Knowledge Graph Search API](https://console.cloud.google.com/apis/library/kgsearch.googleapis.com) enabled.
-* [API key](https://support.google.com/googleapi/answer/6158862?hl=en) to access to access YouTube Data API.
+* [API key](https://support.google.com/googleapi/answer/6158862?hl=en) to access to access Knowledge Graph Search API.
     > Once generated expose API key as `export KG_API_KEY=<YOUR_API_KEY>`
 
 ## Installation
