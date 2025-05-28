@@ -231,15 +231,14 @@ class BaseQueryElements:
   """Contains raw query and parsed elements.
 
   Attributes:
-      query_title: Title of the query that needs to be parsed.
-      query_text: Text of the query that needs to be parsed.
+      title: Title of the query that needs to be parsed.
+      text: Text of the query that needs to be parsed.
       resource_name: Name of Google Ads API reporting resource.
       fields: Ads API fields that need to be fetched.
       column_names: Friendly names for fields which are used when saving data
       column_names: Friendly names for fields which are used when saving data
       customizers: Attributes of fields that need to be be extracted.
       virtual_columns: Attributes of fields that need to be be calculated.
-      is_constant_resource: Whether resource considered a constant one.
       is_builtin_query: Whether query is built-in.
   """
 
@@ -256,6 +255,7 @@ class BaseQueryElements:
   virtual_columns: dict[str, VirtualColumn] = dataclasses.field(
     default_factory=dict
   )
+  is_builtin_query: bool = False
 
   def __eq__(self, other: BaseQueryElements) -> bool:  # noqa: D105
     return (
