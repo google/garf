@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "garf-core"
 dependencies = [
     "python-dateutil",
-    "jinja2==3.1.4",
+    "jinja2",
     "typing-extensions",
     "requests",
     "pyyaml",
