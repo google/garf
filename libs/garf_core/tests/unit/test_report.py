@@ -427,6 +427,92 @@ class TestGarfReport:
       )
       assert report_from_df == expected_report
 
+    def test_from_json_with_single_row_dict_returns_gaarf_report(self):
+      json_str = '{"ad_group_id": 2, "campaign_id": 1}'
+      gaarf_report = report.GarfReport.from_json(json_str)
+      expected_report = report.GarfReport(
+        results=[[2, 1]], column_names=['ad_group_id', 'campaign_id']
+      )
+      assert gaarf_report == expected_report
+
+    def test_from_json_with_list_of_dicts_returns_gaarf_report(self):
+      json_str = (
+        '[{"ad_group_id": 2, "campaign_id": 1}, {"ad_group_id": 3, '
+        '"campaign_id": 2}]'
+      )
+      gaarf_report = report.GarfReport.from_json(json_str)
+      expected_report = report.GarfReport(
+        results=[[2, 1], [3, 2]], column_names=['ad_group_id', 'campaign_id']
+      )
+      assert gaarf_report == expected_report
+
+    def test_from_json_with_empty_list_returns_empty_report(self):
+      json_str = '[]'
+      gaarf_report = report.GarfReport.from_json(json_str)
+      expected_report = report.GarfReport(results=[], column_names=[])
+      assert gaarf_report == expected_report
+
+    def test_from_json_with_empty_dict_returns_empty_report(self):
+      json_str = '{}'
+      gaarf_report = report.GarfReport.from_json(json_str)
+      expected_report = report.GarfReport(results=[], column_names=[])
+      assert gaarf_report == expected_report
+
+    def test_from_json_with_inconsistent_keys_raises_value_error(self):
+      json_str = '[{"ad_group_id": 2}, {"campaign_id": 1}]'
+      with pytest.raises(
+        ValueError,
+        match='All dictionaries must have consistent keys in the same order.',
+      ):
+        report.GarfReport.from_json(json_str)
+
+    def test_from_json_with_unsupported_type_in_dict_raises_type_error(self):
+      json_str = '{"ad_group_id": {"nested": "value"}, "campaign_id": 1}'
+      with pytest.raises(
+        TypeError, match=r"Unsupported type <class 'dict'> for value"
+      ):
+        report.GarfReport.from_json(json_str)
+
+    def test_from_json_with_unsupported_type_in_list_raises_type_error(self):
+      json_str = (
+        '[{"ad_group_id": 2, "campaign_id": {"ad_group_id": 2, '
+        '"campaign_id": 1}}]'
+      )
+      with pytest.raises(
+        TypeError,
+        match=r"Unsupported type <class 'dict'> for value {'ad_group_id': 2, "
+        r"'campaign_id': 1}. Expected types: int, float, str, bool, list, or "
+        r'None.',
+      ):
+        report.GarfReport.from_json(json_str)
+
+    def test_from_json_with_inconsistent_column_order_raises_value_error(self):
+      json_str = (
+        '[{"ad_group_id": 2, "campaign_id": 1}, {"campaign_id": 2, '
+        '"ad_group_id": 3}]'
+      )
+
+      with pytest.raises(
+        ValueError,
+        match='All dictionaries must have consistent keys in the same order.',
+      ):
+        report.GarfReport.from_json(json_str)
+
+    def test_from_json_with_non_dict_or_list_raises_type_error(self):
+      json_str = '"invalid_data"'
+      with pytest.raises(
+        TypeError,
+        match='Input JSON must be a dictionary or a list of dictionaries.',
+      ):
+        report.GarfReport.from_json(json_str)
+
+    def test_from_json_with_non_dict_elements_in_list_raises_type_error(self):
+      json_str = '[{"ad_group_id": 2}, 123]'
+      with pytest.raises(
+        TypeError, match='All elements in the list must be dictionaries.'
+      ):
+        report.GarfReport.from_json(json_str)
+
     def test_convert_report_to_pandas(self, multi_column_report):
       expected = pd.DataFrame(
         data=[[1, 2], [2, 3], [3, 4]], columns=['campaign_id', 'ad_group_id']
