@@ -27,7 +27,7 @@ import json
 import warnings
 from collections import defaultdict
 from collections.abc import MutableSequence, Sequence
-from typing import Generator, Literal
+from typing import Generator, Literal, get_args
 
 from garf_core import exceptions, parsers, query_editor
 
@@ -414,8 +414,8 @@ class GarfReport:
       import polars as pl
     except ImportError as e:
       raise ImportError(
-        'Please install garf-io with Polars support '
-        '- `pip install garf-io[polars]`'
+        'Please install garf-core with Polars support '
+        '- `pip install garf-core[polars]`'
       ) from e
     return cls(
       results=df.to_numpy().tolist(), column_names=list(df.schema.keys())
@@ -438,10 +438,62 @@ class GarfReport:
       import pandas as pd
     except ImportError as e:
       raise ImportError(
-        'Please install garf-io with Pandas support '
-        '- `pip install garf-io[pandas]`'
+        'Please install garf-core with Pandas support '
+        '- `pip install garf-core[pandas]`'
       ) from e
     return cls(results=df.values.tolist(), column_names=list(df.columns.values))
+
+  @classmethod
+  def from_json(cls, json_str: str) -> GarfReport:
+    """Creates a GarfReport object from a JSON string.
+
+    Args:
+        json_str: JSON string representation of the data.
+
+    Returns:
+        Report build from a json string.
+
+    Raises:
+        TypeError: If any value in the JSON data is not a supported type.
+        ValueError: If `data` is a list but not all dictionaries
+        have the same keys.
+    """
+    data = json.loads(json_str)
+
+    def validate_value(value):
+      if not isinstance(value, get_args(parsers.ApiRowElement)):
+        raise TypeError(
+          f'Unsupported type {type(value)} for value {value}. '
+          'Expected types: int, float, str, bool, list, or None.'
+        )
+      return value
+
+    # Case 1: `data` is a dictionary
+    if isinstance(data, dict):
+      column_names = list(data.keys())
+      if not data.values():
+        results = []
+      else:
+        results = [[validate_value(value) for value in data.values()]]
+
+    # Case 2: `data` is a list of dictionaries, each representing a row
+    elif isinstance(data, list):
+      column_names = list(data[0].keys()) if data else []
+      for row in data:
+        if not isinstance(row, dict):
+          raise TypeError('All elements in the list must be dictionaries.')
+        if list(row.keys()) != column_names:
+          raise ValueError(
+            'All dictionaries must have consistent keys in the same order.'
+          )
+      results = [
+        [validate_value(value) for value in row.values()] for row in data
+      ]
+    else:
+      raise TypeError(
+        'Input JSON must be a dictionary or a list of dictionaries.'
+      )
+    return cls(results=results, column_names=column_names)
 
 
 class GarfRow:
