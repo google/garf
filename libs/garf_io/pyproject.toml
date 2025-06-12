@@ -46,6 +46,7 @@ bq=[
   "google-cloud-bigquery",
   "pandas",
   "smart_open[gcs]",
+  "pandas-gbq",
 ]
 sqlalchemy = [
   "sqlalchemy",
