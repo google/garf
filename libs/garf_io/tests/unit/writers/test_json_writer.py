@@ -48,6 +48,25 @@ class TestJsonWriter:
 
     assert data == expected
 
+  def test_write_single_column_report_returns_correct_data(
+    self, single_column_data, output_folder
+  ):
+    writer = json_writer.JsonWriter(output_folder, format='jsonl')
+    output = output_folder / 'test.jsonl'
+    expected = [
+      {'column_1': 1},
+      {'column_1': 2},
+      {'column_1': 3},
+    ]
+
+    writer.write(single_column_data, output)
+
+    with open(output, 'r') as f:
+      data = list(f)
+
+    for i, json_str in enumerate(data):
+      assert json.loads(json_str) == expected[i]
+
   def test_write_multi_column_report_returns_correct_data(
     self, json_writer, sample_data, output_folder
   ):

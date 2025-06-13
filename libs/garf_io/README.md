@@ -11,7 +11,7 @@ Currently it supports writing data to the following destination:
 |------------| ---------------- | -------- |
 | `console`  | ConsoleWriter    | `page-size=10`,`format=table\|json`|
 | `csv`      | CsvWriter        | `destination-folder` |
-| `json`     | JsonWriter       | `destination-folder` |
+| `json`     | JsonWriter       | `destination-folder`,`format=json\|jsonl`|
 | `bq`       | BigQueryWriter   | `project`, `dataset`, `location`, `write-disposition` |
 | `sqldb`    | SqlAlchemyWriter | `connection-string`, `if-exists=fail\|replace\|append` |
 | `sheets`   | SheetsWriter     | `share-with`, `credentials-file`, `spreadsheet-url`, `is_append=True\|False`|
