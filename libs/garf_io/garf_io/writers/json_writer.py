@@ -15,9 +15,9 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
+from typing import Literal
 
 import smart_open
 
@@ -34,15 +34,20 @@ class JsonWriter(file_writer.FileWriter):
   """
 
   def __init__(
-    self, destination_folder: str | os.PathLike = os.getcwd(), **kwargs: str
+    self,
+    destination_folder: str | os.PathLike = os.getcwd(),
+    format: Literal['json', 'jsonl'] = 'json',
+    **kwargs: str,
   ) -> None:
     """Initializes JsonWriter based on a destination_folder.
 
     Args:
       destination_folder: A local folder where JSON files are stored.
+      format: Format of json file ('json', 'jsonl').
       kwargs: Optional keyword arguments to initialize writer.
     """
     super().__init__(destination_folder=destination_folder, **kwargs)
+    self.format = format
 
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
     """Writes Garf report to a JSON file.
@@ -55,11 +60,14 @@ class JsonWriter(file_writer.FileWriter):
       Base filename where data are written.
     """
     report = self.format_for_write(report)
-    destination = formatter.format_extension(destination, new_extension='.json')
+    file_extension = '.json' if self.format == 'json' else '.jsonl'
+    destination = formatter.format_extension(
+      destination, new_extension=file_extension
+    )
     self.create_dir()
     logging.debug('Writing %d rows of data to %s', len(report), destination)
     output_path = os.path.join(self.destination_folder, destination)
     with smart_open.open(output_path, 'w', encoding='utf-8') as f:
-      json.dump(report.to_list(row_type='dict'), f)
+      f.write(report.to_json(output=self.format))
     logging.debug('Writing to %s is completed', output_path)
     return f'[JSON] - at {output_path}'
