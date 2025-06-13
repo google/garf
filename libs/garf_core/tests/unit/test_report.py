@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import json
 from collections import abc
 
 import pandas as pd
@@ -402,6 +403,43 @@ class TestGarfReport:
         value_column_output='scalar',
       )
       assert output_dict == {key_column: None}
+
+    def test_multi_column_report_converted_to_json(
+      self,
+      multi_column_report,
+    ):
+      output_json = multi_column_report.to_json()
+      assert json.loads(output_json) == [
+        {'campaign_id': 1, 'ad_group_id': 2},
+        {'campaign_id': 2, 'ad_group_id': 3},
+        {'campaign_id': 3, 'ad_group_id': 4},
+      ]
+
+    def test_multi_column_report_converted_to_json_with_jsonl_output(
+      self,
+      multi_column_report,
+    ):
+      output_json = multi_column_report.to_json(output='jsonl')
+      expected_rows = [
+        {'campaign_id': 1, 'ad_group_id': 2},
+        {'campaign_id': 2, 'ad_group_id': 3},
+        {'campaign_id': 3, 'ad_group_id': 4},
+      ]
+      for i, json_str in enumerate(output_json.split('\n')):
+        assert json.loads(json_str) == expected_rows[i]
+
+    def test_multi_column_report_converted_to_jsonl(
+      self,
+      multi_column_report,
+    ):
+      output_json = multi_column_report.to_jsonl()
+      expected_rows = [
+        {'campaign_id': 1, 'ad_group_id': 2},
+        {'campaign_id': 2, 'ad_group_id': 3},
+        {'campaign_id': 3, 'ad_group_id': 4},
+      ]
+      for i, json_str in enumerate(output_json.split('\n')):
+        assert json.loads(json_str) == expected_rows[i]
 
     def test_conversion_from_pandas(
       self,
