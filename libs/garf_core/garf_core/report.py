@@ -213,13 +213,22 @@ class GarfReport:
       ) from e
     return pd.DataFrame(data=self.results, columns=self.column_names)
 
-  def to_json(self) -> str:
+  def to_jsonl(self) -> str:
+    """Converts report to JSON Lines."""
+    return self.to_json(output='jsonl')
+
+  def to_json(self, output: Literal['json', 'jsonl'] = 'json') -> str:
     """Converts report to JSON.
+
+    Args:
+      output: Format of json file (json or jsonl).
 
     Returns:
         JSON from report results and column_names.
     """
-    return json.dumps(self.to_list(row_type='dict'))
+    if output == 'json':
+      return json.dumps(self.to_list(row_type='dict'))
+    return '\n'.join(json.dumps(row) for row in self.to_list(row_type='dict'))
 
   def get_value(
     self, column_index: int = 0, row_index: int = 0
