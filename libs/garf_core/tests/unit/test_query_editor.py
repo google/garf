@@ -90,3 +90,16 @@ class TestQuerySpecification:
     )
 
     assert test_query_spec.query == expected_query_elements
+
+  def test_generate_returns_builtin_query(self):
+    query = 'SELECT test FROM builtin.test'
+    test_query_spec = query_editor.QuerySpecification(text=query, title='test')
+    test_query_spec.generate()
+    expected_query_elements = query_editor.BaseQueryElements(
+      title='test',
+      text=query,
+      resource_name='builtin.test',
+      is_builtin_query=True,
+    )
+
+    assert test_query_spec.query == expected_query_elements

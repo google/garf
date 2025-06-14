@@ -11,17 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# pylint: disable=C0330, g-bad-import-order, g-multiple-import
+
 """Module for getting data from API based on a query.
 
 ApiReportFetcher performs fetching data from API, parsing it
   and returning GarfReport.
 """
-# pylint: disable=C0330, g-bad-import-order, g-multiple-import
 
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from garf_core import (
   api_clients,
@@ -49,6 +51,8 @@ class ApiReportFetcher:
     query_specification_builder: query_editor.QuerySpecification = (
       query_editor.QuerySpecification
     ),
+    builtin_queries: dict[str, Callable[[ApiReportFetcher], report.GarfReport]]
+    | None = None,
     **kwargs: str,
   ) -> None:
     """Instantiates ApiReportFetcher based on provided api client.
@@ -57,11 +61,21 @@ class ApiReportFetcher:
       api_client: Instantiated api client.
       parser: Type of parser to convert API response.
       query_specification_builder: Class to perform query parsing.
+      builtin_queries:
+        Mapping between query name and function for generating GarfReport.
     """
     self.api_client = api_client
     self.parser = parser()
     self.query_specification_builder = query_specification_builder
     self.query_args = kwargs
+    self.builtin_queries = builtin_queries or {}
+
+  def add_builtin_queries(
+    self,
+    builtin_queries: dict[str, Callable[[ApiReportFetcher], report.GarfReport]],
+  ) -> None:
+    """Adds new built-in queries to the fetcher."""
+    self.builtin_queries.update(builtin_queries)
 
   async def afetch(
     self,
@@ -107,6 +121,13 @@ class ApiReportFetcher:
         args=args,
       )
     query = query_specification.generate()
+    if query.is_builtin_query:
+      if not (builtin_report := self.builtin_queries.get(query.title)):
+        raise query_editor.GarfBuiltInQueryError(
+          f'Cannot find the built-in query "{query.title}"'
+        )
+      return builtin_report(self, **kwargs)
+
     response = self.api_client.get_response(query, **kwargs)
     parsed_response = self.parser.parse_response(response, query)
     return report.GarfReport(
