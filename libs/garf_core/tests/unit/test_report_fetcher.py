@@ -68,3 +68,18 @@ class TestApiReportFetcher:
     )
 
     assert test_report == expected_report
+
+  def test_fetch_builtin_query_returns_correct_builtin_report(
+    self, test_dict_report_fetcher
+  ):
+    test_report = report.GarfReport(results=[[1]], column_names=['test'])
+
+    def test_builtin_query(report_fetcher):
+      return test_report
+
+    test_dict_report_fetcher.add_builtin_queries({'test': test_builtin_query})
+
+    query = 'SELECT test FROM builtin.test'
+    fetched_report = test_dict_report_fetcher.fetch(query, None)
+
+    assert fetched_report == test_report

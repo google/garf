@@ -53,6 +53,10 @@ class GarfResourceError(GarfQueryError):
   """Specifies incorrect resource name in the query."""
 
 
+class GarfBuiltInQueryError(GarfQueryError):
+  """Specifies non-existing builtin query."""
+
+
 @dataclasses.dataclass
 class ProcessedField:
   """Helper class to store fields with its customizers.
@@ -383,19 +387,24 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     return common_params
 
   def generate(self) -> BaseQueryElements:
-    return (
-      self.remove_comments()
-      .expand()
-      .extract_resource_name()
-      .remove_trailing_comma()
+    self.remove_comments().expand().extract_resource_name()
+    if self.query.resource_name.startswith('builtin'):
+      return BaseQueryElements(
+        title=self.query.resource_name.replace('builtin.', ''),
+        text=self.query.text,
+        resource_name=self.query.resource_name,
+        is_builtin_query=True,
+      )
+    (
+      self.remove_trailing_comma()
       .extract_fields()
       .extract_filters()
       .extract_sorts()
       .extract_column_names()
       .extract_virtual_columns()
       .extract_customizers()
-      .query
     )
+    return self.query
 
   def expand(self) -> Self:
     """Applies necessary transformations to query."""
