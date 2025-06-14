@@ -23,7 +23,7 @@ from typing import Any, Final
 from typing_extensions import override
 
 from garf_core import parsers, report, report_fetcher
-from garf_youtube_data_api import query_editor
+from garf_youtube_data_api import builtins, query_editor
 from garf_youtube_data_api.api_clients import YouTubeDataApiClient
 
 ALLOWED_FILTERS: Final[set[str]] = (
@@ -32,7 +32,7 @@ ALLOWED_FILTERS: Final[set[str]] = (
   'videoCategoryId',
   'chart',
   'forHandle',
-  'forUserName',
+  'forUsername',
   'onBehalfOfContentOwner',
   'playlistId',
   'videoId',
@@ -58,12 +58,13 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
     query_spec: query_editor.YouTubeDataApiQuery = (
       query_editor.YouTubeDataApiQuery
     ),
+    builtin_queries=builtins.BUILTIN_QUERIES,
     **kwargs: str,
   ) -> None:
     """Initializes YouTubeDataApiReportFetcher."""
     if not api_client:
       api_client = YouTubeDataApiClient()
-    super().__init__(api_client, parser, query_spec, **kwargs)
+    super().__init__(api_client, parser, query_spec, builtin_queries, **kwargs)
 
   @override
   def fetch(
@@ -85,7 +86,6 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
       return super().fetch(query_specification, args, **kwargs)
     for batch in _batched(ids, MAX_BATCH_SIZE):
       batch_ids = {name: batch[0]} if name != 'id' else {name: batch}
-      results.append(
-        super().fetch(query_specification, args, **batch_ids, **kwargs)
-      )
+      res = super().fetch(query_specification, args, **batch_ids, **kwargs)
+      results.append(res)
     return functools.reduce(operator.add, results)
