@@ -22,10 +22,45 @@ from __future__ import annotations
 
 import logging
 
-from garf_core import report_fetcher
-from garf_io.writers import abs_writer, console_writer
+import pydantic
+
+from garf_core import query_editor, report_fetcher
+from garf_executors import exceptions
+from garf_io import writer
+from garf_io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
+
+
+class ApiExecutionContext(pydantic.BaseModel):
+  """Common context for executing one or more queries.
+
+  Attributes:
+    query_parameters: Parameters to dynamically change query text.
+    fetcher_parameters: Parameters to specify fetching setup.
+    writer: Type of writer to use.
+    writer_parameters: Optional parameters to setup writer.
+  """
+
+  query_parameters: query_editor.GarfQueryParameters | None = None
+  fetcher_parameters: dict[str, str] | None = None
+  writer: str = 'console'
+  writer_parameters: dict[str, str] | None = None
+
+  def model_post_init(self, __context__) -> None:
+    if self.fetcher_parameters is None:
+      self.fetcher_parameters = {}
+    if self.writer_parameters is None:
+      self.writer_parameters = {}
+
+  @property
+  def writer_client(self) -> abs_writer.AbsWriter:
+    writer_client = writer.create_writer(self.writer, **self.writer_parameters)
+    if self.writer == 'bq':
+      _ = writer_client.create_or_get_dataset()
+    if self.writer == 'sheet':
+      writer_client.init_client()
+    return writer_client
 
 
 class ApiQueryExecutor:
@@ -36,7 +71,7 @@ class ApiQueryExecutor:
   """
 
   def __init__(self, fetcher: report_fetcher.ApiReportFetcher) -> None:
-    """Initializes QueryExecutor.
+    """Initializes ApiQueryExecutor.
 
     Args:
         fetcher: Instantiated report fetcher.
@@ -44,55 +79,54 @@ class ApiQueryExecutor:
     self.fetcher = fetcher
 
   async def aexecute(
-    self,
-    query_text: str,
-    query_name: str,
-    writer_client: abs_writer.AbsWriter = console_writer.ConsoleWriter(),
-    args: dict[str, str] | None = None,
-    **kwargs: str,
+    self, query: str, context: ApiExecutionContext, **kwargs: str
   ) -> None:
     """Reads query, extract results and stores them in a specified location.
 
     Args:
-        query_text: Text for the query.
-        query_name: Identifier of a query.
-        customer_ids: All accounts for which query will be executed.
-        writer_client: Client responsible for writing data to local/remote
-            location.
-        args: Arguments that need to be passed to the query.
-        optimize_performance: strategy for speeding up query execution
-            ("NONE", "PROTOBUF", "BATCH", "BATCH_PROTOBUF").
+      query: Location of the query.
+      context: Query execution context.
     """
-    self.execute(query_text, query_name, writer_client, args, **kwargs)
+    self.execute(query, context, **kwargs)
 
   def execute(
     self,
-    query_text: str,
-    query_name: str,
-    writer_client: abs_writer.AbsWriter = console_writer.ConsoleWriter(),
-    args: dict[str, str] | None = None,
-    **kwargs: str,
+    query: str,
+    title: str,
+    context: ApiExecutionContext,
   ) -> None:
     """Reads query, extract results and stores them in a specified location.
 
     Args:
-        query_text: Text for the query.
-        query_name: Identifier of a query.
-        writer_client: Client responsible for writing data to local/remote
-            location.
-        args: Arguments that need to be passed to the query.
+      query: Location of the query.
+      title: Name of the query.
+      context: Query execution context.
+
+    Raises:
+      GarfExecutorError: When failed to execute query.
     """
-    results = self.fetcher.fetch(
-      query_specification=query_text, args=args, **kwargs
-    )
-    logger.debug(
-      'Start writing data for query %s via %s writer',
-      query_name,
-      type(writer_client),
-    )
-    writer_client.write(results, query_name)
-    logger.debug(
-      'Finish writing data for query %s via %s writer',
-      query_name,
-      type(writer_client),
-    )
+    try:
+      logger.debug('starting query %s', query)
+      results = self.fetcher.fetch(
+        query_specification=query,
+        args=context.query_parameters,
+        **context.fetcher_parameters,
+      )
+      writer_client = context.writer_client
+      logger.debug(
+        'Start writing data for query %s via %s writer',
+        title,
+        type(writer_client),
+      )
+      writer_client.write(results, title)
+      logger.debug(
+        'Finish writing data for query %s via %s writer',
+        title,
+        type(writer_client),
+      )
+      logger.info('%s executed successfully', title)
+    except Exception as e:
+      logger.error('%s generated an exception: %s', title, str(e))
+      raise exceptions.GarfExecutorError(
+        '%s generated an exception: %s', title, str(e)
+      ) from e

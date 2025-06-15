@@ -8,9 +8,11 @@ dependencies = [
   "garf-core",
   "garf-io",
   "pyyaml",
+  "pydantic",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+  {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
 ]
 requires-python = ">=3.8"
 description = "Executes queries against API and writes data to local/remote storage."
@@ -43,8 +45,11 @@ sql=[
   "garf-io[sqlalchemy]",
   "pandas",
 ]
+server=[
+  "fastapi[standard]",
+]
 all = [
-  "garf-executors[bq,sql]"
+  "garf-executors[bq,sql,server]"
 ]
 [project.scripts]
 garf="garf_executors.entrypoints.cli:main"

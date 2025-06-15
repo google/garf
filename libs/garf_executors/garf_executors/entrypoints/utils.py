@@ -20,9 +20,8 @@ import datetime
 import logging
 import os
 import sys
-import traceback
 from collections.abc import MutableSequence, Sequence
-from typing import Any, Callable, TypedDict
+from typing import Any, TypedDict
 
 import smart_open
 import yaml
@@ -427,25 +426,6 @@ def _remove_empty_values(dict_object: dict[str, Any]) -> dict[str, Any]:
     }
   if isinstance(dict_object, (int, str, MutableSequence)):
     return dict_object
-
-
-def garf_runner(query: str, callback: Callable, logger) -> None:
-  try:
-    logger.debug('starting query %s', query)
-    callback()
-    logger.info('%s executed successfully', query)
-  except Exception as e:
-    traceback.print_tb(e.__traceback__)
-    logger.error('%s generated an exception: %s', query, str(e))
-
-
-def postprocessor_runner(query: str, callback: Callable, logger) -> None:
-  try:
-    logger.debug('starting query %s', query)
-    callback()
-    logger.info('%s executed successfully', query)
-  except Exception as e:
-    logger.error('%s generated an exception: %s', query, str(e))
 
 
 def init_logging(

@@ -20,14 +20,13 @@ storage.
 from __future__ import annotations
 
 import argparse
-import functools
 import sys
 from concurrent import futures
 
 import garf_executors
 from garf_executors import exceptions
 from garf_executors.entrypoints import utils
-from garf_io import reader, writer
+from garf_io import reader
 
 
 def main():
@@ -35,7 +34,7 @@ def main():
   parser.add_argument('query', nargs='*')
   parser.add_argument('-c', '--config', dest='garf_config', default=None)
   parser.add_argument('--source', dest='source', default=None)
-  parser.add_argument('--output', dest='output', default=None)
+  parser.add_argument('--output', dest='output', default='console')
   parser.add_argument('--input', dest='input', default='file')
   parser.add_argument('--log', '--loglevel', dest='loglevel', default='info')
   parser.add_argument('--logger', dest='logger', default='local')
@@ -72,7 +71,6 @@ def main():
     raise exceptions.GarfExecutorError(
       'Please provide one or more queries to run'
     )
-
   config = utils.ConfigBuilder('garf').build(vars(args), kwargs)
   logger.debug('config: %s', config)
 
@@ -82,17 +80,17 @@ def main():
 
   extra_parameters = utils.ParamsParser(['source']).parse(kwargs)
   source_parameters = extra_parameters.get('source', {})
+  reader_client = reader.create_reader(args.input)
+
+  context = garf_executors.api_executor.ApiExecutionContext(
+    query_parameters=config.params,
+    writer=args.output,
+    writer_parameters=config.writer_params,
+    fetcher_parameters=source_parameters,
+  )
   query_executor = garf_executors.api_executor.ApiQueryExecutor(
     concrete_api_fetcher(**source_parameters)
   )
-  reader_client = reader.create_reader(args.input)
-
-  writer_client = writer.create_writer(config.output, **config.writer_params)
-  if config.output == 'bq':
-    _ = writer_client.create_or_get_dataset()
-  if config.output == 'sheet':
-    writer_client.init_client()
-
   if args.parallel_queries:
     logger.info('Running queries in parallel')
     with futures.ThreadPoolExecutor(args.parallel_threshold) as executor:
@@ -101,27 +99,16 @@ def main():
           query_executor.execute,
           reader_client.read(query),
           query,
-          writer_client,
-          config.params,
-          **source_parameters,
+          context,
         ): query
         for query in args.query
       }
       for future in futures.as_completed(future_to_query):
-        query = future_to_query[future]
-        utils.garf_runner(query, future.result, logger)
+        future.result()
   else:
     logger.info('Running queries sequentially')
     for query in args.query:
-      callback = functools.partial(
-        query_executor.execute,
-        reader_client.read(query),
-        query,
-        writer_client,
-        config.params,
-        **source_parameters,
-      )
-      utils.garf_runner(query, callback, logger)
+      query_executor.execute(reader_client.read(query), query, context)
 
 
 if __name__ == '__main__':
