@@ -42,7 +42,7 @@ class TestApiQueryExecutor:
   def test_json_writer(self, tmp_path):
     return json_writer.JsonWriter(destination_folder=tmp_path)
 
-  def test_execute_returns_success(self, executor, test_json_writer):
+  def test_execute_returns_success(self, executor, tmp_path):
     query_text = 'SELECT customer.id FROM customer'
     expected_result = [
       {'customer_id': 1},
@@ -50,13 +50,17 @@ class TestApiQueryExecutor:
       {'customer_id': 3},
     ]
 
+    context = api_executor.ApiExecutionContext(
+      writer='json',
+      writer_parameters={'destination_folder': str(tmp_path)},
+    )
     executor.execute(
-      query_text=query_text,
-      query_name='test',
-      writer_client=test_json_writer,
+      query=query_text,
+      title='test',
+      context=context,
     )
     with open(
-      os.path.join(test_json_writer.destination_folder, 'test.json'),
+      os.path.join(context.writer_client.destination_folder, 'test.json'),
       'r',
       encoding='utf-8',
     ) as f:
