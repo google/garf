@@ -10,9 +10,11 @@ dependencies = [
     "typing-extensions",
     "requests",
     "pyyaml",
+    "pydantic",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+  {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
 ]
 requires-python = ">=3.8"
 description = "Abstracts fetching data from API based on provided SQL-like query."

@@ -80,7 +80,7 @@ class ApiReportFetcher:
   async def afetch(
     self,
     query_specification: str | query_editor.QueryElements,
-    args: dict[str, Any] | None = None,
+    args: query_editor.GarfQueryParameters | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
     """Asynchronously fetches data from API based on query_specification.
@@ -98,7 +98,7 @@ class ApiReportFetcher:
   def fetch(
     self,
     query_specification: str | query_editor.QuerySpecification,
-    args: dict[str, Any] | None = None,
+    args: query_editor.GarfQueryParameters | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
     """Fetches data from API based on query_specification.
@@ -115,6 +115,8 @@ class ApiReportFetcher:
       GarfExecutorException:
         When customer_ids are not provided or API returned error.
     """
+    if args is None:
+      args = query_editor.GarfQueryParameters()
     if not isinstance(query_specification, query_editor.QuerySpecification):
       query_specification = self.query_specification_builder(
         text=str(query_specification),
