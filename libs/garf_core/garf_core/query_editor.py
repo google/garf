@@ -23,10 +23,26 @@ import re
 from typing import Generator
 
 import jinja2
+import pydantic
 from dateutil import relativedelta
 from typing_extensions import Self
 
 from garf_core import exceptions
+
+QueryParameters = dict[str, str | float | int]
+
+
+class GarfQueryParameters(pydantic.BaseModel):
+  """Parameters for dynamically changing text of a query."""
+
+  macro: QueryParameters | None = None
+  template: QueryParameters | None = None
+
+  def model_post_init(self, __context__) -> None:
+    if self.macro is None:
+      self.macro = {}
+    if self.template is None:
+      self.template = {}
 
 
 class GarfQueryError(exceptions.GarfError):
@@ -57,9 +73,8 @@ class GarfBuiltInQueryError(GarfQueryError):
   """Specifies non-existing builtin query."""
 
 
-@dataclasses.dataclass
-class ProcessedField:
-  """Helper class to store fields with its customizers.
+class ProcessedField(pydantic.BaseModel):
+  """Sore field with its customizers.
 
   Attributes:
     field: Extractable field.
@@ -140,7 +155,7 @@ class VirtualColumn:
   substitute_expression: str | None = None
 
   @classmethod
-  def from_raw(cls, field: str, macros: dict) -> VirtualColumn:
+  def from_raw(cls, field: str, macros: QueryParameters) -> VirtualColumn:
     """Converts a field to virtual column."""
     if field.isdigit():
       field = int(field)
@@ -193,16 +208,16 @@ class ExtractedLineElements:
 
   @classmethod
   def from_query_line(
-    cls, line: str, macros: dict = {}
+    cls,
+    line: str,
+    macros: QueryParameters | None = None,
   ) -> ExtractedLineElements:
+    if macros is None:
+      macros = {}
     field, *alias = re.split(' [Aa][Ss] ', line)
     processed_field = ProcessedField.from_raw(field)
     field = processed_field.field
-    if field:
-      # if field.is_valid:
-      virtual_column = None
-    else:
-      virtual_column = VirtualColumn.from_raw(field, macros)
+    virtual_column = None if field else VirtualColumn.from_raw(field, macros)
     if alias and processed_field.customizer_type:
       customizer = {
         'type': processed_field.customizer_type,
@@ -304,11 +319,11 @@ class CommonParametersMixin:
 
 class TemplateProcessorMixin:
   def replace_params_template(
-    self, query_text: str, params: dict | None = None
+    self, query_text: str, params: GarfQueryParameters | None = None
   ) -> str:
     logging.debug('Original query text:\n%s', query_text)
     if params:
-      if templates := params.get('template'):
+      if templates := params.template:
         query_templates = {
           name: value for name, value in templates.items() if name in query_text
         }
@@ -319,7 +334,7 @@ class TemplateProcessorMixin:
           query_text = self.expand_jinja(query_text, {})
       else:
         query_text = self.expand_jinja(query_text, {})
-      if macros := params.get('macro'):
+      if macros := params.macro:
         query_text = query_text.format(**macros)
         logging.debug('Query text after macro substitution:\n%s', query_text)
     else:
@@ -327,7 +342,7 @@ class TemplateProcessorMixin:
     return query_text
 
   def expand_jinja(
-    self, query_text: str, template_params: dict | None = None
+    self, query_text: str, template_params: QueryParameters | None = None
   ) -> str:
     file_inclusions = ('% include', '% import', '% extend')
     if any(file_inclusion in query_text for file_inclusion in file_inclusions):
@@ -364,7 +379,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     self,
     text: str,
     title: str | None = None,
-    args: dict | None = None,
+    args: GarfQueryParameters | None = GarfQueryParameters(),
     **kwargs: str,
   ) -> None:
     """Instantiates QuerySpecification based on text, title and optional args.
@@ -375,14 +390,14 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       args: Optional parameters to be dynamically injected into query text.
       api_version: Version of Google Ads API.
     """
-    self.args = args or {}
+    self.args = args or GarfQueryParameters()
     self.query = BaseQueryElements(title=title, text=text)
 
   @property
-  def macros(self) -> dict[str, str]:
+  def macros(self) -> QueryParameters:
     """Returns macros with injected common parameters."""
     common_params = dict(self.common_params)
-    if macros := self.args.get('macro'):
+    if macros := self.args.macro:
       common_params.update(macros)
     return common_params
 
@@ -408,7 +423,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
   def expand(self) -> Self:
     """Applies necessary transformations to query."""
-    query_text = self.expand_jinja(self.query.text, self.args.get('template'))
+    query_text = self.expand_jinja(self.query.text, self.args.template)
     try:
       self.query.text = query_text.format(**self.macros).strip()
     except KeyError as e:
