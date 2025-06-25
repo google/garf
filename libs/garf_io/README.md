@@ -16,6 +16,11 @@ Currently it supports writing data to the following destination:
 | `sqldb`    | SqlAlchemyWriter | `connection-string`, `if-exists=fail\|replace\|append` |
 | `sheets`   | SheetsWriter     | `share-with`, `credentials-file`, `spreadsheet-url`, `is_append=True\|False`|
 
+Each of writer also support two options for dealing with arrays:
+
+* `WRITER.array-handling` - arrays handling method: "strings" (default)  - store arrays as strings (items combined via a separator, e.g. "item1|item2"), "arrays" - store arrays as arrays.
+* `WRITER.array-separator` - a separator symbol for joining arrays as strings, by default '|'.
+
 ## Installation
 
 `pip install garf-io`
