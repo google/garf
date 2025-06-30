@@ -58,21 +58,26 @@ class ConsoleWriter(abs_writer.AbsWriter):
     """
     report = self.format_for_write(report)
     if self.format == 'table':
-      output_table = table.Table(
-        title=f"showing results for query <{destination.split('/')[-1]}>",
-        caption=(
-          f'showing rows 1-{min(self.page_size, len(report))} '
-          f'out of total {len(report)}'
-        ),
-        box=rich.box.MARKDOWN,
-      )
-      for header in report.column_names:
-        output_table.add_column(header)
-      for i, row in enumerate(report):
-        if i < self.page_size:
-          output_table.add_row(*[str(field) for field in row])
+      self._write_rich_table(report, destination)
     elif self.format == 'json':
-      output_table = report.to_json()
+      print(report.to_json())
     elif self.format == 'jsonl':
-      output_table = report.to_jsonl()
+      print(report.to_jsonl())
+
+  def _write_rich_table(
+    self, report: garf_report.GarfReport, destination: str
+  ) -> None:
+    output_table = table.Table(
+      title=f'showing results for query <{destination.split("/")[-1]}>',
+      caption=(
+        f'showing rows 1-{min(self.page_size, len(report))} '
+        f'out of total {len(report)}'
+      ),
+      box=rich.box.MARKDOWN,
+    )
+    for header in report.column_names:
+      output_table.add_column(header)
+    for i, row in enumerate(report):
+      if i < self.page_size:
+        output_table.add_row(*[str(field) for field in row])
     console.Console().print(output_table)
