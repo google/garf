@@ -15,9 +15,10 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import rich
 from rich import console, table
-from rich import json as rich_json
 
 from garf_core import report as garf_report
 from garf_io.writers import abs_writer
@@ -32,13 +33,16 @@ class ConsoleWriter(abs_writer.AbsWriter):
   """
 
   def __init__(
-    self, page_size: int = 10, format: str = 'table', **kwargs: str
+    self,
+    page_size: int = 10,
+    format: Literal['table', 'json', 'jsonl'] = 'table',
+    **kwargs: str,
   ) -> None:
     """Initializes ConsoleWriter.
 
     Args:
         page_size: How many row of report should be written
-        format: Type of output ('table', 'json').
+        format: Type of output.
         kwargs: Optional parameter to initialize writer.
     """
     super().__init__(**kwargs)
@@ -68,5 +72,7 @@ class ConsoleWriter(abs_writer.AbsWriter):
         if i < self.page_size:
           output_table.add_row(*[str(field) for field in row])
     elif self.format == 'json':
-      output_table = rich_json.JSON(report.to_json())
+      output_table = report.to_json()
+    elif self.format == 'jsonl':
+      output_table = report.to_jsonl()
     console.Console().print(output_table)

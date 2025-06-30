@@ -9,7 +9,7 @@ Currently it supports writing data to the following destination:
 
 | identifier | Writer           | Options  |
 |------------| ---------------- | -------- |
-| `console`  | ConsoleWriter    | `page-size=10`,`format=table\|json`|
+| `console`  | ConsoleWriter    | `page-size=10`,`format=table\|json\|jsonl`|
 | `csv`      | CsvWriter        | `destination-folder` |
 | `json`     | JsonWriter       | `destination-folder`,`format=json\|jsonl`|
 | `bq`       | BigQueryWriter   | `project`, `dataset`, `location`, `write-disposition` |
