@@ -94,3 +94,30 @@ class TestConsoleJsonWriter:
     expected_result = json.loads(sample_data.to_json())
     res = json.loads(prepared_output.replace("'", '"'))
     assert res == expected_result
+
+
+class TestConsoleJsonlWriter:
+  @pytest.fixture
+  def console_writer(self):
+    return console_writer.ConsoleWriter(format='jsonl')
+
+  def test_write_multi_column_report_returns_arrays(
+    self, capsys, console_writer, sample_data
+  ):
+    console_writer.array_handling = 'arrays'
+    console_writer.write(sample_data, _TMP_NAME)
+    output = capsys.readouterr().out.strip()
+    for i, res in enumerate(output.split('\n')):
+      expected_result = sample_data[i].to_dict()
+      assert json.loads(res) == expected_result
+
+  def test_write_multi_column_report_with_arrays_returns_concatenated_strings(
+    self, capsys, console_writer, sample_data
+  ):
+    console_writer.array_handling = 'strings'
+    console_writer.write(sample_data, _TMP_NAME)
+    output = capsys.readouterr().out.strip()
+    for i, res in enumerate(output.split('\n')):
+      expected_result = sample_data[i].to_dict()
+      expected_result['column_3'] = '3|4'
+      assert json.loads(res) == expected_result
