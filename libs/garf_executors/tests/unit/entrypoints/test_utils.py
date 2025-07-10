@@ -105,54 +105,68 @@ def test_wrong_convert_date():
     utils.convert_date(date_day)
 
 
-@pytest.fixture
-def param_parser():
-  return utils.ParamsParser(['macro', 'template'])
+class TestParamsParser:
+  @pytest.fixture
+  def param_parser(self):
+    return utils.ParamsParser(['macro', 'template'])
 
+  def test_if_incorrect_param_is_provided(self, param_parser):
+    with pytest.raises(utils.GarfParamsException):
+      param_parser.parse(
+        ['--macros.start_date=2022-01-01', '--fake_param.end_date=2022-12-31']
+      )
 
-def test_if_incorrect_param_is_provided(param_parser):
-  with pytest.raises(utils.GarfParamsException):
-    param_parser.parse(
-      ['--macros.start_date=2022-01-01', '--fake_param.end_date=2022-12-31']
+  def test_parse_raises_error_on_missing_identifier(self, param_parser):
+    with pytest.raises(utils.GarfParamsException, match='correct formats'):
+      param_parser.parse(['--macro.'])
+
+  def test_parse_raises_error_on_incorrect_format(self, param_parser):
+    with pytest.raises(utils.GarfParamsException, match='correct formats'):
+      param_parser.parse(['--macro.key.sub_key=value'])
+
+  def test_identify_param_pair_existing(self, param_parser):
+    param_pair = param_parser._identify_param_pair(
+      'macro', ['--macro.start_date', '2022-01-01']
     )
+    assert param_pair == {'start_date': '2022-01-01'}
 
-
-def test_identify_param_pair_existing(param_parser):
-  param_pair = param_parser._identify_param_pair(
-    'macro', ['--macro.start_date', '2022-01-01']
-  )
-  assert param_pair == {'start_date': '2022-01-01'}
-
-
-def test_identify_param_pair_empty(param_parser):
-  param_pair = param_parser._identify_param_pair(
-    'macro', ['--missing_param.start_date', '2022-01-01']
-  )
-  assert param_pair is None
-
-
-def test_identify_param_pair_raises_error(param_parser):
-  with pytest.raises(utils.GarfParamsException):
-    param_parser._identify_param_pair(
-      'macro', ['--macro.start_date', ':YYYYMMDD', 'extra_element']
+  def test_identify_param_pair_empty(self, param_parser):
+    param_pair = param_parser._identify_param_pair(
+      'macro', ['--missing_param.start_date', '2022-01-01']
     )
+    assert param_pair is None
 
+  def test_identify_param_pair_raises_error(self, param_parser):
+    with pytest.raises(utils.GarfParamsException):
+      param_parser._identify_param_pair(
+        'macro', ['--macro.start_date', ':YYYYMMDD', 'extra_element']
+      )
 
-def test_parse_params(param_parser):
-  parsed_params = param_parser._parse_params(
-    'macro', ['--macro.start_date=2022-01-01', '--macro.end_date=2022-12-31']
-  )
-  assert parsed_params == {'start_date': '2022-01-01', 'end_date': '2022-12-31'}
+  def test_parse_params(self, param_parser):
+    parsed_params = param_parser._parse_params(
+      'macro', ['--macro.start_date=2022-01-01', '--macro.end_date=2022-12-31']
+    )
+    assert parsed_params == {
+      'start_date': '2022-01-01',
+      'end_date': '2022-12-31',
+    }
 
-
-def test_parse(param_parser):
-  parsed_params = param_parser.parse(
-    ['--macro.start_date=2022-01-01', '--macro.end_date=2022-12-31']
-  )
-  assert parsed_params == {
-    'macro': {'start_date': '2022-01-01', 'end_date': '2022-12-31'},
-    'template': {},
-  }
+  def test_parse(self, param_parser):
+    parsed_params = param_parser.parse(
+      [
+        '--macro.start_date=2022-01-01',
+        '--macro.end_date=2022-12-31',
+        '--macro.active',
+      ]
+    )
+    assert parsed_params == {
+      'macro': {
+        'start_date': '2022-01-01',
+        'end_date': '2022-12-31',
+        'active': True,
+      },
+      'template': {},
+    }
 
 
 @pytest.fixture

@@ -297,21 +297,36 @@ class ParamsParser:
     key = param[0]
     if not identifier or identifier not in key:
       return None
-    provided_identifier, key = key.split('.')
+    provided_identifier, *keys = key.split('.')
+    if len(keys) > 1:
+      raise GarfParamsException(
+        f'{key} is invalid format,'
+        f'`--{identifier}.key=value` or `--{identifier}.key` '
+        'are the correct formats'
+      )
     provided_identifier = provided_identifier.replace('--', '')
     if provided_identifier not in self.identifiers:
       raise GarfParamsException(
         f'CLI argument {provided_identifier} is not supported'
-        f", supported arguments {', '.join(self.identifiers)}"
+        f', supported arguments {", ".join(self.identifiers)}'
       )
     if provided_identifier != identifier:
       return None
-    key = key.replace('-', '_')
+    key = keys[0].replace('-', '_')
+    if not key:
+      raise GarfParamsException(
+        f'{identifier} {key} is invalid,'
+        f'`--{identifier}.key=value` or `--{identifier}.key` '
+        'are the correct formats'
+      )
     if len(param) == 2:
       return {key: param[1]}
+    if len(param) == 1:
+      return {key: True}
     raise GarfParamsException(
       f'{identifier} {key} is invalid,'
-      f'--{identifier}.key=value is the correct format'
+      f'`--{identifier}.key=value` or `--{identifier}.key` '
+      'are the correct formats'
     )
 
 
