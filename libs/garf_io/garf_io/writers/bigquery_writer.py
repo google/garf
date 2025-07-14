@@ -104,6 +104,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     report = self.format_for_write(report)
     schema = _define_schema(report)
     destination = formatter.format_extension(destination)
+    _ = self.create_or_get_dataset()
     table = self._create_or_get_table(
       f'{self.dataset_id}.{destination}', schema
     )
