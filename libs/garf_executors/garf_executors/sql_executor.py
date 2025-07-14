@@ -47,6 +47,13 @@ class SqlAlchemyQueryExecutor(query_editor.TemplateProcessorMixin):
     """
     self.engine = engine
 
+  @classmethod
+  def from_connection_string(
+    cls, connection_string: str
+  ) -> SqlAlchemyQueryExecutor:
+    engine = sqlalchemy.create_engine(connection_string)
+    return cls(engine)
+
   def execute(
     self,
     script_name: str | None,
