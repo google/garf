@@ -15,6 +15,11 @@ and transform them into a structure suitable for writing data.
 
 [`garf-community`](libs/garf_community) folder contains concrete implementation of the framework for various APIs.
 
+
+## Building your own libraries
+
+If you wish to build your own garf-based libraries please refer to [documentation](docs/creating-your-own-libraries.md).
+
 ## Disclaimer
 This is not an officially supported Google product. This project is not
 eligible for the [Google Open Source Software Vulnerability Rewards
