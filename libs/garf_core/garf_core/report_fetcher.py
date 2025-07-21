@@ -16,23 +16,27 @@
 
 """Module for getting data from API based on a query.
 
-ApiReportFetcher performs fetching data from API, parsing it
-  and returning GarfReport.
+ApiReportFetcher fetches data from API, parses it and returns GarfReport.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Callable
 
 from garf_core import (
   api_clients,
+  exceptions,
   parsers,
   query_editor,
   report,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ApiReportFetcherError(exceptions.GarfError):
+  """Base exception for all ApiReportFetchers."""
 
 
 class ApiReportFetcher:
@@ -47,7 +51,7 @@ class ApiReportFetcher:
   def __init__(
     self,
     api_client: api_clients.BaseApiClient,
-    parser: parsers.BaseParser = parsers.ListParser,
+    parser: parsers.BaseParser = parsers.DictParser,
     query_specification_builder: query_editor.QuerySpecification = (
       query_editor.QuerySpecification
     ),
@@ -135,31 +139,3 @@ class ApiReportFetcher:
     return report.GarfReport(
       results=parsed_response, column_names=query.column_names
     )
-
-
-class RestApiReportFetcher(ApiReportFetcher):
-  """Fetches data from an REST API endpoint.
-
-  Attributes:
-    api_client: Initialized RestApiClient.
-    parser: Type of parser to convert API response.
-  """
-
-  def __init__(
-    self,
-    endpoint: str,
-    parser: parsers.BaseParser = parsers.DictParser,
-    query_specification_builder: query_editor.QuerySpecification = (
-      query_editor.QuerySpecification
-    ),
-    **kwargs: str,
-  ) -> None:
-    """Instantiates RestApiReportFetcher.
-
-    Args:
-      endpoint: URL of API endpoint.
-      parser: Type of parser to convert API response.
-      query_specification_builder: Class to perform query parsing.
-    """
-    api_client = api_clients.RestApiClient(endpoint)
-    super().__init__(api_client, parser, query_specification_builder, **kwargs)

@@ -16,8 +16,14 @@
 from __future__ import annotations
 
 import abc
+import contextlib
+import csv
 import dataclasses
+import json
+import os
+import pathlib
 from collections.abc import Sequence
+from typing import Any
 
 import requests
 from typing_extensions import override
@@ -74,13 +80,93 @@ class RestApiClient(BaseClient):
 class FakeApiClient(BaseClient):
   """Fake class for specifying API client."""
 
-  def __init__(self, results: Sequence) -> None:
+  def __init__(self, results: Sequence[dict[str, Any]], **kwargs: str) -> None:
     """Initializes FakeApiClient."""
     self.results = list(results)
+    self.kwargs = kwargs
 
   @override
   def get_response(
-    self, request: GarfApiRequest = GarfApiRequest()
+    self, request: GarfApiRequest = GarfApiRequest(), **kwargs: str
   ) -> GarfApiResponse:
     del request
     return GarfApiResponse(results=self.results)
+
+  @classmethod
+  def from_file(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
+    """Initializes FakeApiClient from json or csv files.
+
+    Args:
+      file_location: Path of file with data.
+
+    Returns:
+      Initialized client.
+
+    Raises:
+      GarfApiError: When file with unsupported extension is provided.
+    """
+    if str(file_location).endswith('.json'):
+      return FakeApiClient.from_json(file_location)
+    if str(file_location).endswith('.csv'):
+      return FakeApiClient.from_csv(file_location)
+    raise GarfApiError(
+      'Unsupported file extension, only csv and json are supported.'
+    )
+
+  @classmethod
+  def from_json(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
+    """Initializes FakeApiClient from json file.
+
+    Args:
+      file_location: Path of file with data.
+
+    Returns:
+      Initialized client.
+
+    Raises:
+      GarfApiError: When file with data not found.
+    """
+    try:
+      with pathlib.Path.open(file_location, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        return FakeApiClient(data)
+    except FileNotFoundError as e:
+      raise GarfApiError(f'Failed to open {file_location}') from e
+
+  @classmethod
+  def from_csv(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
+    """Initializes FakeApiClient from csv file.
+
+    Args:
+      file_location: Path of file with data.
+
+    Returns:
+      Initialized client.
+
+    Raises:
+      GarfApiError: When file with data not found.
+    """
+    try:
+      with pathlib.Path.open(file_location, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        data = []
+        for row in reader:
+          data.append(
+            {key: _field_converter(value) for key, value in row.items()}
+          )
+        return FakeApiClient(data)
+    except FileNotFoundError as e:
+      raise GarfApiError(f'Failed to open {file_location}') from e
+
+
+def _field_converter(field: str):
+  if isinstance(field, str) and (lower_field := field.lower()) in (
+    'true',
+    'false',
+  ):
+    return lower_field == 'true'
+  with contextlib.suppress(ValueError):
+    return int(field)
+  with contextlib.suppress(ValueError):
+    return float(field)
+  return field
