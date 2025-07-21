@@ -298,6 +298,8 @@ class ParamsParser:
     if not identifier or identifier not in key:
       return None
     provided_identifier, *keys = key.split('.')
+    if not keys:
+      return None
     if len(keys) > 1:
       raise GarfParamsException(
         f'{key} is invalid format,'
@@ -306,9 +308,10 @@ class ParamsParser:
       )
     provided_identifier = provided_identifier.replace('--', '')
     if provided_identifier not in self.identifiers:
+      supported_arguments = ', '.join(self.identifiers)
       raise GarfParamsException(
         f'CLI argument {provided_identifier} is not supported'
-        f', supported arguments {", ".join(self.identifiers)}'
+        f', supported arguments {supported_arguments}'
       )
     if provided_identifier != identifier:
       return None
