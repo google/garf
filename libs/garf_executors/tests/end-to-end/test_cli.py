@@ -22,14 +22,37 @@ _SCRIPT_PATH = pathlib.Path(__file__).parent
 
 
 class TestApiQueryExecutor:
-  def test_fake_source(self):
+  query = (
+    'SELECT resource, dimensions.name AS name, metrics.clicks AS clicks '
+    'FROM resource'
+  )
+  expected_output = [
+    {
+      'resource': 'Campaign A',
+      'name': 'Ad Group 1',
+      'clicks': 1500,
+    },
+    {
+      'resource': 'Campaign B',
+      'name': 'Ad Group 2',
+      'clicks': 2300,
+    },
+    {
+      'resource': 'Campaign C',
+      'name': 'Ad Group 3',
+      'clicks': 800,
+    },
+    {
+      'resource': 'Campaign A',
+      'name': 'Ad Group 4',
+      'clicks': 3200,
+    },
+  ]
+
+  def test_fake_source_from_console(self):
     fake_data = _SCRIPT_PATH / 'test.json'
-    query = (
-      'SELECT resource, dimensions.name AS name, metrics.clicks AS clicks '
-      'FROM resource'
-    )
     command = (
-      f'garf "{query}" --input console --source fake '
+      f'garf "{self.query}" --input console --source fake '
       f'--source.data_location={fake_data} '
       '--output console --console.format=json '
       '--loglevel ERROR'
@@ -42,28 +65,27 @@ class TestApiQueryExecutor:
       text=True,
     )
 
-    expected_output = [
-      {
-        'resource': 'Campaign A',
-        'name': 'Ad Group 1',
-        'clicks': 1500,
-      },
-      {
-        'resource': 'Campaign B',
-        'name': 'Ad Group 2',
-        'clicks': 2300,
-      },
-      {
-        'resource': 'Campaign C',
-        'name': 'Ad Group 3',
-        'clicks': 800,
-      },
-      {
-        'resource': 'Campaign A',
-        'name': 'Ad Group 4',
-        'clicks': 3200,
-      },
-    ]
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == self.expected_output
+
+  def test_fake_source_from_file(self, tmp_path):
+    query_path = tmp_path / 'query.sql'
+    with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
+      f.write(self.query)
+    fake_data = _SCRIPT_PATH / 'test.json'
+    command = (
+      f'garf {str(query_path)} --source fake '
+      f'--source.data_location={fake_data} '
+      '--output console --console.format=json '
+      '--loglevel ERROR'
+    )
+    result = subprocess.run(
+      command,
+      shell=True,
+      check=False,
+      capture_output=True,
+      text=True,
+    )
 
     assert result.returncode == 0
-    assert json.loads(result.stdout) == expected_output
+    assert json.loads(result.stdout) == self.expected_output
