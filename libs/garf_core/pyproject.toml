@@ -39,7 +39,8 @@ dynamic=["version"]
 version = {attr = "garf_core.__version__"}
 
 [project.entry-points.garf]
-rest = "garf_core.report_fetcher"
+rest = "garf_core.fetchers.rest"
+fake = "garf_core.fetchers.fake"
 
 [project.optional-dependencies]
 pandas=[

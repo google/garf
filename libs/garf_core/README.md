@@ -8,15 +8,13 @@
 
 These abstractions are designed to be as modular and simple as possible:
 
-* `BaseApiClient` - an interface for connecting to APIs.
-* `BaseQuery` - encapsulates SQL-like request.
+* `BaseApiClient` - an interface for connecting to APIs. Check [default implementations](docs/builtin-functionality.md#apiclients)
+* `BaseParser` - an interface to parse results from the API. Check [default implementations](docs/builtin-functionality.md#parsers)
+* `ApiReportFetcher` - responsible for fetching and parsing data from reporting API. [Default implementations](docs/builtin-functionality.md#apireportfetchers)
+
 * `QuerySpecification` - parsed SQL-query into various elements.
-* `BaseParser` - an interface to parse results from the API. Have a couple of default implementations:
-    * `ListParser` - returns results from API as a raw list.
-    * `DictParser` - returns results from API as a formatted dict.
-        * `NumericDictParser` - returns results from API as a formatted dict with converted numeric values.
+* `BaseQuery` - protocol for all class based queries.
 * `GarfReport` - contains data from API in a format that is easy to write and interact with.
-* `ApiReportFetcher` - responsible for fetching and parsing data from reporting API.
 
 ## Installation
 
