@@ -15,6 +15,9 @@ and transform them into a structure suitable for writing data.
 
 [`garf-community`](libs/garf_community) folder contains concrete implementation of the framework for various APIs.
 
+## Usage
+
+Check usage of `garf` as a [library](docs/use-garf-as-a-library.md).
 
 ## Building your own libraries
 
