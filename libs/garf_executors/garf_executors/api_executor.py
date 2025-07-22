@@ -80,27 +80,30 @@ class ApiQueryExecutor:
 
   async def aexecute(
     self, query: str, context: ApiExecutionContext, **kwargs: str
-  ) -> None:
+  ) -> str:
     """Reads query, extract results and stores them in a specified location.
 
     Args:
       query: Location of the query.
       context: Query execution context.
     """
-    self.execute(query, context, **kwargs)
+    await self.execute(query, context, **kwargs)
 
   def execute(
     self,
     query: str,
     title: str,
     context: ApiExecutionContext,
-  ) -> None:
+  ) -> str:
     """Reads query, extract results and stores them in a specified location.
 
     Args:
       query: Location of the query.
       title: Name of the query.
       context: Query execution context.
+
+    Returns:
+      Result of writing the report.
 
     Raises:
       GarfExecutorError: When failed to execute query.
@@ -118,13 +121,14 @@ class ApiQueryExecutor:
         title,
         type(writer_client),
       )
-      writer_client.write(results, title)
+      result = writer_client.write(results, title)
       logger.debug(
         'Finish writing data for query %s via %s writer',
         title,
         type(writer_client),
       )
       logger.info('%s executed successfully', title)
+      return result
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
       raise exceptions.GarfExecutorError(
