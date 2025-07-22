@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Defines simplified import of executors.
-
-Instead of importing `garf_executors.api_executor.ApiQueryExecutor`
-import like this `garf_executors.ApiQueryExecutor`
-"""
+"""Executors to fetch data from various APIS and postprocess them."""
 
 from __future__ import annotations
 
@@ -27,4 +23,4 @@ __all__ = [
   'ApiQueryExecutor',
 ]
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
