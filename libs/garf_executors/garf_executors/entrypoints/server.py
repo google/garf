@@ -20,6 +20,7 @@ import uvicorn
 
 import garf_executors
 from garf_executors import exceptions
+from garf_io import reader
 
 
 class ApiExecutorRequest(pydantic.BaseModel):
@@ -27,15 +28,31 @@ class ApiExecutorRequest(pydantic.BaseModel):
 
   Attributes:
     source: Type of API to interact with.
-    query: Query to execute.
     title: Name of the query used as an output for writing.
+    query: Query to execute.
+    query_path: Local or remote path to query.
     context: Execution context.
   """
 
   source: str
-  query: str
-  title: str
+  title: str | None = None
+  query: str | None = None
+  query_path: str | None = None
   context: garf_executors.api_executor.ApiExecutionContext
+
+  @pydantic.model_validator(mode='after')
+  def check_query_specified(self):
+    if not self.query_path and not self.query:
+      raise exceptions.GarfExecutorError(
+        'Missing one of required parameters: query, query_path'
+      )
+    return self
+
+  def model_post_init(self, __context__) -> None:
+    if self.query_path:
+      self.query = reader.FileReader().read(self.query_path)
+    if not self.title:
+      self.title = str(self.query_path)
 
 
 router = fastapi.APIRouter(prefix='/api')
@@ -52,10 +69,10 @@ async def execute(request: ApiExecutorRequest) -> dict[str, str]:
     concrete_api_fetcher(**request.context.fetcher_parameters)
   )
 
-  query_executor.execute(request.query, request.title, request.context)
+  result = query_executor.execute(request.query, request.title, request.context)
 
   return fastapi.responses.JSONResponse(
-    content=fastapi.encoders.jsonable_encoder({'result': 'success'})
+    content=fastapi.encoders.jsonable_encoder({'result': result})
   )
 
 
