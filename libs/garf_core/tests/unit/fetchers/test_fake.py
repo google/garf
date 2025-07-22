@@ -27,7 +27,7 @@ class TestFakeApiReportFetcher:
   ]
 
   def test_fetch_from_data_returns_correct_result(self):
-    fetcher = FakeApiReportFetcher(data=self.data)
+    fetcher = FakeApiReportFetcher.from_data(self.data)
 
     result = fetcher.fetch(
       'SELECT field1.subfield AS column_name FROM resource_name'

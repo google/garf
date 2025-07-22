@@ -40,11 +40,12 @@ class RestApiReportFetcher(report_fetcher.ApiReportFetcher):
 
   def __init__(
     self,
-    endpoint: str,
+    api_client: api_clients.RestApiClient | None = None,
     parser: parsers.BaseParser = parsers.DictParser,
     query_specification_builder: query_editor.QuerySpecification = (
       query_editor.QuerySpecification
     ),
+    endpoint: str | None = None,
     **kwargs: str,
   ) -> None:
     """Instantiates RestApiReportFetcher.
@@ -54,5 +55,17 @@ class RestApiReportFetcher(report_fetcher.ApiReportFetcher):
       parser: Type of parser to convert API response.
       query_specification_builder: Class to perform query parsing.
     """
-    api_client = api_clients.RestApiClient(endpoint)
+    if not api_client and not endpoint:
+      raise report_fetcher.ApiReportFetcherError(
+        'Missing api_client or endpoint for the fetcher.'
+      )
+    if not api_client:
+      api_client = api_clients.RestApiClient(endpoint)
     super().__init__(api_client, parser, query_specification_builder, **kwargs)
+
+  @classmethod
+  def from_endpoint(cls, endpoint: str) -> RestApiReportFetcher:
+    """Initializes RestApiReportFetcher: from an API endpoint."""
+    return RestApiReportFetcher(
+      api_client=api_clients.RestApiClient(endpoint=endpoint)
+    )
