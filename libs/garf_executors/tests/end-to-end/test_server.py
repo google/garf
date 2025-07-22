@@ -73,3 +73,32 @@ class TestApiQueryExecutor:
     assert response.status_code == fastapi.status.HTTP_200_OK
     expected_output = {'result': f'[CSV] - at {tmp_path}/query.csv'}
     assert response.json() == expected_output
+
+  def test_batch_fake_source_from_query_path(self, tmp_path):
+    query_path = tmp_path / 'query.sql'
+    with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
+      f.write(self.query)
+    fake_data = _SCRIPT_PATH / 'test.json'
+    request = {
+      'source': 'fake',
+      'query_path': [
+        str(query_path),
+        str(query_path),
+      ],
+      'context': {
+        'fetcher_parameters': {
+          'data_location': str(fake_data),
+        },
+        'writer': 'csv',
+        'writer_parameters': {'destination_folder': str(tmp_path)},
+      },
+    }
+    response = client.post('/api/execute:batch', json=request)
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    expected_output = {
+      'result': [
+        f'[CSV] - at {tmp_path}/query.csv',
+        f'[CSV] - at {tmp_path}/query.csv',
+      ]
+    }
+    assert response.json() == expected_output
