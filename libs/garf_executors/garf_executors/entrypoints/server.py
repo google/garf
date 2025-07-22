@@ -14,6 +14,8 @@
 
 """FastAPI endpoint for executing queries."""
 
+from concurrent import futures
+
 import fastapi
 import pydantic
 import uvicorn
@@ -37,7 +39,7 @@ class ApiExecutorRequest(pydantic.BaseModel):
   source: str
   title: str | None = None
   query: str | None = None
-  query_path: str | None = None
+  query_path: str | list[str] | None = None
   context: garf_executors.api_executor.ApiExecutionContext
 
   @pydantic.model_validator(mode='after')
@@ -49,7 +51,7 @@ class ApiExecutorRequest(pydantic.BaseModel):
     return self
 
   def model_post_init(self, __context__) -> None:
-    if self.query_path:
+    if self.query_path and isinstance(self.query_path, str):
       self.query = reader.FileReader().read(self.query_path)
     if not self.title:
       self.title = str(self.query_path)
@@ -73,6 +75,36 @@ async def execute(request: ApiExecutorRequest) -> dict[str, str]:
 
   return fastapi.responses.JSONResponse(
     content=fastapi.encoders.jsonable_encoder({'result': result})
+  )
+
+
+@router.post('/execute:batch')
+async def execute_batch(request: ApiExecutorRequest) -> dict[str, str]:
+  if not (concrete_api_fetcher := garf_executors.FETCHERS.get(request.source)):
+    raise exceptions.GarfExecutorError(
+      f'Source {request.source} is not available.'
+    )
+
+  query_executor = garf_executors.api_executor.ApiQueryExecutor(
+    concrete_api_fetcher(**request.context.fetcher_parameters)
+  )
+  file_reader = reader.FileReader()
+  results = []
+  with futures.ThreadPoolExecutor() as executor:
+    future_to_query = {
+      executor.submit(
+        query_executor.execute,
+        file_reader.read(query),
+        query,
+        request.context,
+      ): query
+      for query in request.query_path
+    }
+    for future in futures.as_completed(future_to_query):
+      results.append(future.result())
+
+  return fastapi.responses.JSONResponse(
+    content=fastapi.encoders.jsonable_encoder({'result': results})
   )
 
 
