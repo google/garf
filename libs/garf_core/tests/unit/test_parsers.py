@@ -16,31 +16,25 @@ import pytest
 
 from garf_core import api_clients, parsers, query_editor
 
+test_specification = query_editor.QuerySpecification(
+  'SELECT test_column_1 FROM test'
+).generate()
+
 
 class TestDictParser:
   @pytest.fixture
   def test_parser(self):
-    return parsers.DictParser()
+    return parsers.DictParser(test_specification)
 
-  @pytest.fixture
-  def test_specification(self):
-    return query_editor.QuerySpecification(
-      'SELECT test_column_1 FROM test'
-    ).generate()
-
-  def test_parse_row_returns_correct_result(
-    self, test_parser, test_specification
-  ):
+  def test_parse_row_returns_correct_result(self, test_parser):
     test_row = {'test_column_1': '1', 'test_column_2': 2}
 
-    parsed_row = test_parser.parse_row(test_row, test_specification)
+    parsed_row = test_parser.parse_row(test_row)
     expected_row = ['1']
 
     assert parsed_row == expected_row
 
-  def test_parse_results_returns_correct_result(
-    self, test_parser, test_specification
-  ):
+  def test_parse_results_returns_correct_result(self, test_parser):
     test_response = api_clients.GarfApiResponse(
       results=[
         {'test_column_1': '1', 'test_column_2': 2},
@@ -48,47 +42,39 @@ class TestDictParser:
       ]
     )
 
-    parsed_row = test_parser.parse_response(test_response, test_specification)
+    parsed_row = test_parser.parse_response(test_response)
     expected_row = [['1'], ['11']]
 
     assert parsed_row == expected_row
 
   def test_parse_results_returns_empty_list_on_missing_results(
-    self, test_parser, test_specification
+    self, test_parser
   ):
     test_response = api_clients.GarfApiResponse(results=[])
 
-    parsed_row = test_parser.parse_response(test_response, test_specification)
+    parsed_row = test_parser.parse_response(test_response)
     expected_row = [[]]
 
     assert parsed_row == expected_row
 
   def test_parse_results_raises_garf_parse_error_on_incorrect_items_in_response(
-    self, test_parser, test_specification
+    self, test_parser
   ):
     test_response = api_clients.GarfApiResponse(results=[[1, 2]])
 
     with pytest.raises(parsers.GarfParserError):
-      test_parser.parse_response(test_response, test_specification)
+      test_parser.parse_response(test_response)
 
 
 class TestNumericDictParser:
   @pytest.fixture
   def test_parser(self):
-    return parsers.NumericConverterDictParser()
+    return parsers.NumericConverterDictParser(test_specification)
 
-  @pytest.fixture
-  def test_specification(self):
-    return query_editor.QuerySpecification(
-      'SELECT test_column_1 FROM test'
-    ).generate()
-
-  def test_parse_row_returns_converted_numeric_values(
-    self, test_parser, test_specification
-  ):
+  def test_parse_row_returns_converted_numeric_values(self, test_parser):
     test_row = {'test_column_1': '1', 'test_column_2': 2}
 
-    parsed_row = test_parser.parse_row(test_row, test_specification)
+    parsed_row = test_parser.parse_row(test_row)
     expected_row = [1]
 
     assert parsed_row == expected_row
@@ -97,19 +83,11 @@ class TestNumericDictParser:
 class TestListParser:
   @pytest.fixture
   def test_parser(self):
-    return parsers.ListParser()
+    return parsers.ListParser(test_specification)
 
-  @pytest.fixture
-  def test_specification(self):
-    return query_editor.QuerySpecification(
-      'SELECT test_column_1 FROM test'
-    ).generate()
-
-  def test_parse_row_returns_converted_numeric_values(
-    self, test_parser, test_specification
-  ):
+  def test_parse_row_returns_converted_numeric_values(self, test_parser):
     test_row = {'test_column_1': '1', 'test_column_2': 2}
 
-    parsed_row = test_parser.parse_row(test_row, test_specification)
+    parsed_row = test_parser.parse_row(test_row)
 
     assert parsed_row == test_row

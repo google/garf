@@ -32,21 +32,26 @@ ApiRowElement: TypeAlias = Union[int, float, str, bool, list, None]
 class BaseParser(abc.ABC):
   """An interface for all parsers to implement."""
 
+  def __init__(
+    self, query_specification: query_editor.BaseQueryElements
+  ) -> None:
+    """Initializes BaseParser."""
+    self.query_spec = query_specification
+
   def parse_response(
     self,
     response: api_clients.GarfApiResponse,
-    query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
     """Parses response."""
     if not response.results:
       return [[]]
     results = []
     for result in response.results:
-      results.append(self.parse_row(result, query_specification))
+      results.append(self.parse_row(result))
     return results
 
   @abc.abstractmethod
-  def parse_row(self, row, query_specification):
+  def parse_row(self, row):
     """Parses single row from response."""
 
 
@@ -57,7 +62,6 @@ class ListParser(BaseParser):
   def parse_row(
     self,
     row: list,
-    query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
     return row
 
@@ -69,12 +73,11 @@ class DictParser(BaseParser):
   def parse_row(
     self,
     row: list,
-    query_specification: query_editor.BaseQueryElements,
   ) -> list[list[ApiRowElement]]:
     if not isinstance(row, Mapping):
       raise GarfParserError
     result = []
-    for field in query_specification.fields:
+    for field in self.query_spec.fields:
       result.append(self.get_nested_field(row, field))
     return result
 

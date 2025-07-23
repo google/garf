@@ -69,7 +69,7 @@ class ApiReportFetcher:
         Mapping between query name and function for generating GarfReport.
     """
     self.api_client = api_client
-    self.parser = parser()
+    self.parser = parser
     self.query_specification_builder = query_specification_builder
     self.query_args = kwargs
     self.builtin_queries = builtin_queries or {}
@@ -135,7 +135,7 @@ class ApiReportFetcher:
       return builtin_report(self, **kwargs)
 
     response = self.api_client.get_response(query, **kwargs)
-    parsed_response = self.parser.parse_response(response, query)
+    parsed_response = self.parser(query).parse_response(response)
     return report.GarfReport(
       results=parsed_response, column_names=query.column_names
     )
