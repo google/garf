@@ -25,16 +25,16 @@ except ImportError as e:
 
 import logging
 
-import pandas as pd
 from google.cloud import exceptions as google_cloud_exceptions
 
-from garf_core import query_editor
+from garf_core import query_editor, report
+from garf_executors import exceptions, execution_context
 
 logger = logging.getLogger(__name__)
 
 
-class BigQueryExecutorError(Exception):
-  """Error when executor fails to run query."""
+class BigQueryExecutorError(exceptions.GarfExecutorError):
+  """Error when BigQueryExecutor fails to run query."""
 
 
 class BigQueryExecutor(query_editor.TemplateProcessorMixin):
@@ -62,26 +62,48 @@ class BigQueryExecutor(query_editor.TemplateProcessorMixin):
     return bigquery.Client(self.project_id)
 
   def execute(
-    self, script_name: str, query_text: str, params: dict | None = None
-  ) -> pd.DataFrame:
+    self,
+    query: str,
+    title: str,
+    context: execution_context.ExecutionContext = (
+      execution_context.ExecutionContext()
+    ),
+  ) -> report.GarfReport:
     """Executes query in BigQuery.
 
     Args:
-        script_name: Script identifier.
-        query_text: Query to be executed.
-        params: Optional parameters to be replaced in query text.
+      query: Location of the query.
+      title: Name of the query.
+      context: Query execution context.
 
     Returns:
-        DataFrame if query returns some data otherwise empty DataFrame.
+      Report with data if query returns some data otherwise empty Report.
     """
-    query_text = self.replace_params_template(query_text, params)
+    query_text = self.replace_params_template(query, context.query_parameters)
     job = self.client.query(query_text)
     try:
       result = job.result()
-      logger.debug('%s launched successfully', script_name)
+      logger.debug('%s launched successfully', title)
       if result.total_rows:
-        return result.to_dataframe()
-      return pd.DataFrame()
+        results = report.GarfReport.from_pandas(result.to_dataframe())
+      else:
+        results = report.GarfReport()
+      if context.writer and results:
+        writer_client = context.writer_client
+        logger.debug(
+          'Start writing data for query %s via %s writer',
+          title,
+          type(writer_client),
+        )
+        writing_result = writer_client.write(results, title)
+        logger.debug(
+          'Finish writing data for query %s via %s writer',
+          title,
+          type(writer_client),
+        )
+        logger.info('%s executed successfully', title)
+        return writing_result
+      return results
     except google_cloud_exceptions.GoogleCloudError as e:
       raise BigQueryExecutorError(e) from e
 
@@ -92,7 +114,7 @@ class BigQueryExecutor(query_editor.TemplateProcessorMixin):
     are treated as dataset names.
 
     Args:
-        macros: Mapping containing data for query execution.
+      macros: Mapping containing data for query execution.
     """
     if macros and (datasets := extract_datasets(macros)):
       for dataset in datasets:
