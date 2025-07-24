@@ -15,12 +15,13 @@
 
 from __future__ import annotations
 
-from garf_executors.api_executor import ApiQueryExecutor
+from garf_executors.api_executor import ApiExecutionContext, ApiQueryExecutor
 from garf_executors.fetchers import FETCHERS
 
 __all__ = [
   'FETCHERS',
   'ApiQueryExecutor',
+  'ApiExecutionContext',
 ]
 
 __version__ = '0.0.7'
