@@ -22,6 +22,7 @@ import uvicorn
 
 import garf_executors
 from garf_executors import exceptions
+from garf_executors.entrypoints import utils
 from garf_io import reader
 
 
@@ -72,28 +73,17 @@ router = fastapi.APIRouter(prefix='/api')
 
 @router.post('/execute')
 async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
-  if not (concrete_api_fetcher := garf_executors.FETCHERS.get(request.source)):
-    raise exceptions.GarfExecutorError(
-      f'Source {request.source} is not available.'
-    )
-
-  query_executor = garf_executors.ApiQueryExecutor(
-    concrete_api_fetcher(**request.context.fetcher_parameters)
+  query_executor = garf_executors.setup_executor(
+    request.source, request.context.fetcher_parameters
   )
-
   result = query_executor.execute(request.query, request.title, request.context)
   return ApiExecutorResponse(results=[result])
 
 
 @router.post('/execute:batch')
 async def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
-  if not (concrete_api_fetcher := garf_executors.FETCHERS.get(request.source)):
-    raise exceptions.GarfExecutorError(
-      f'Source {request.source} is not available.'
-    )
-
-  query_executor = garf_executors.ApiQueryExecutor(
-    concrete_api_fetcher(**request.context.fetcher_parameters)
+  query_executor = garf_executors.setup_executor(
+    request.source, request.context.fetcher_parameters
   )
   file_reader = reader.FileReader()
   results = []

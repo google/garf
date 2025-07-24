@@ -24,7 +24,7 @@ import sys
 from concurrent import futures
 
 import garf_executors
-from garf_executors import exceptions
+from garf_executors import bq_executor, exceptions, sql_executor
 from garf_executors.entrypoints import utils
 from garf_io import reader
 
@@ -56,13 +56,6 @@ def main():
   if args.version:
     print(garf_executors.__version__)
     sys.exit()
-  if not (source := args.source):
-    raise exceptions.GarfExecutorError(
-      f'Select one of available sources: {list(garf_executors.FETCHERS.keys())}'
-    )
-  if not (concrete_api_fetcher := garf_executors.FETCHERS.get(source)):
-    raise exceptions.GarfExecutorError(f'Source {source} is not available.')
-
   logger = utils.init_logging(
     loglevel=args.loglevel.upper(), logger_type=args.logger
   )
@@ -88,8 +81,8 @@ def main():
     writer_parameters=config.writer_params,
     fetcher_parameters=source_parameters,
   )
-  query_executor = garf_executors.api_executor.ApiQueryExecutor(
-    concrete_api_fetcher(**source_parameters)
+  query_executor = garf_executors.setup_executor(
+    args.source, context.fetcher_parameters
   )
   if args.parallel_queries:
     logger.info('Running queries in parallel')

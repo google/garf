@@ -25,11 +25,17 @@ except ImportError as e:
 
 import logging
 import re
-from typing import Any
 
 import pandas as pd
 
-from garf_core import query_editor
+from garf_core import query_editor, report
+from garf_executors import exceptions, execution_context
+
+logger = logging.getLogger(__name__)
+
+
+class SqlAlchemyQueryExecutorError(exceptions.GarfExecutorError):
+  """Error when SqlAlchemyQueryExecutor fails to run query."""
 
 
 class SqlAlchemyQueryExecutor(query_editor.TemplateProcessorMixin):
@@ -56,31 +62,51 @@ class SqlAlchemyQueryExecutor(query_editor.TemplateProcessorMixin):
 
   def execute(
     self,
-    script_name: str | None,
-    query_text: str,
-    params: dict[str, Any] | None = None,
-  ) -> pd.DataFrame:
+    query: str,
+    title: str,
+    context: execution_context.ExecutionContext = (
+      execution_context.ExecutionContext()
+    ),
+  ) -> report.GarfReport:
     """Executes query in a given database via SqlAlchemy.
 
     Args:
-        script_name: Script identifier.
-        query_text: Query to be executed.
-        params: Optional parameters to be replaced in query text.
+      query: Location of the query.
+      title: Name of the query.
+      context: Query execution context.
 
     Returns:
-        DataFrame if query returns some data otherwise empty DataFrame.
+      Report with data if query returns some data otherwise empty Report.
     """
-    logging.info('Executing script: %s', script_name)
-    query_text = self.replace_params_template(query_text, params)
+    logging.info('Executing script: %s', title)
+    query_text = self.replace_params_template(query, context.query_parameters)
     with self.engine.begin() as conn:
       if re.findall(r'(create|update) ', query_text.lower()):
         conn.connection.executescript(query_text)
-        return pd.DataFrame()
-      temp_table_name = f'temp_{script_name}'.replace('.', '_')
-      query_text = f'CREATE TABLE {temp_table_name} AS {query_text}'
-      conn.connection.executescript(query_text)
-      try:
-        result = pd.read_sql(f'SELECT * FROM {temp_table_name}', conn)
-      finally:
-        conn.connection.execute(f'DROP TABLE {temp_table_name}')
-      return result
+        results = report.GarfReport()
+      else:
+        temp_table_name = f'temp_{title}'.replace('.', '_')
+        query_text = f'CREATE TABLE {temp_table_name} AS {query_text}'
+        conn.connection.executescript(query_text)
+        try:
+          results = report.GarfReport.from_pandas(
+            pd.read_sql(f'SELECT * FROM {temp_table_name}', conn)
+          )
+        finally:
+          conn.connection.execute(f'DROP TABLE {temp_table_name}')
+      if context.writer and results:
+        writer_client = context.writer_client
+        logger.debug(
+          'Start writing data for query %s via %s writer',
+          title,
+          type(writer_client),
+        )
+        writing_result = writer_client.write(results, title)
+        logger.debug(
+          'Finish writing data for query %s via %s writer',
+          title,
+          type(writer_client),
+        )
+        logger.info('%s executed successfully', title)
+        return writing_result
+      return results
