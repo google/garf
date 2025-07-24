@@ -13,7 +13,14 @@
 # limitations under the License.
 """Defines MerchantQuery."""
 
+from typing_extensions import Self
+
 from garf_core import query_editor
+
+
+def _to_camel_case(field: str) -> str:
+  first, *others = field.split('_')
+  return ''.join([first.lower(), *map(str.title, others)])
 
 
 class MerchantApiQuery(query_editor.QuerySpecification):
@@ -28,3 +35,12 @@ class MerchantApiQuery(query_editor.QuerySpecification):
   ) -> None:
     """Initializes MerchantApiQuery."""
     super().__init__(text, title, args, **kwargs)
+
+  def extract_fields(self) -> Self:
+    for line in self._extract_query_lines():
+      line_elements = query_editor.ExtractedLineElements.from_query_line(line)
+      if field := line_elements.field:
+        self.query.fields.append(
+          _to_camel_case(field) if '_' in field else field
+        )
+    return self

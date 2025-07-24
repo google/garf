@@ -46,6 +46,7 @@ class MerchantApiClient(api_clients.BaseClient):
     response = client.search(request=merchant_request)
     results = []
     for page in response:
-      for result in page.get('results'):
-        results.append(result)
+      for rows in page.get('results'):
+        for _, row in rows.items():
+          results.append(row)
     return api_clients.GarfApiResponse(results=results)
