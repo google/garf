@@ -50,7 +50,7 @@ class TestApiQueryExecutor:
     }
     response = client.post('/api/execute', json=request)
     assert response.status_code == fastapi.status.HTTP_200_OK
-    expected_output = {'result': f'[CSV] - at {tmp_path}/test.csv'}
+    expected_output = {'results': [f'[CSV] - at {tmp_path}/test.csv']}
     assert response.json() == expected_output
 
   def test_fake_source_from_query_path(self, tmp_path):
@@ -71,7 +71,7 @@ class TestApiQueryExecutor:
     }
     response = client.post('/api/execute', json=request)
     assert response.status_code == fastapi.status.HTTP_200_OK
-    expected_output = {'result': f'[CSV] - at {tmp_path}/query.csv'}
+    expected_output = {'results': [f'[CSV] - at {tmp_path}/query.csv']}
     assert response.json() == expected_output
 
   def test_batch_fake_source_from_query_path(self, tmp_path):
@@ -96,7 +96,7 @@ class TestApiQueryExecutor:
     response = client.post('/api/execute:batch', json=request)
     assert response.status_code == fastapi.status.HTTP_200_OK
     expected_output = {
-      'result': [
+      'results': [
         f'[CSV] - at {tmp_path}/query.csv',
         f'[CSV] - at {tmp_path}/query.csv',
       ]

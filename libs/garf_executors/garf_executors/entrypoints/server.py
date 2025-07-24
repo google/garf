@@ -40,7 +40,7 @@ class ApiExecutorRequest(pydantic.BaseModel):
   title: str | None = None
   query: str | None = None
   query_path: str | list[str] | None = None
-  context: garf_executors.api_executor.ApiExecutionContext
+  context: garf_executors.ApiExecutionContext
 
   @pydantic.model_validator(mode='after')
   def check_query_specified(self):
@@ -57,35 +57,42 @@ class ApiExecutorRequest(pydantic.BaseModel):
       self.title = str(self.query_path)
 
 
+class ApiExecutorResponse(pydantic.BaseModel):
+  """Response after executing a query.
+
+  Attributes:
+    results: Results of query execution.
+  """
+
+  results: list[str]
+
+
 router = fastapi.APIRouter(prefix='/api')
 
 
 @router.post('/execute')
-async def execute(request: ApiExecutorRequest) -> dict[str, str]:
+async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
   if not (concrete_api_fetcher := garf_executors.FETCHERS.get(request.source)):
     raise exceptions.GarfExecutorError(
       f'Source {request.source} is not available.'
     )
 
-  query_executor = garf_executors.api_executor.ApiQueryExecutor(
+  query_executor = garf_executors.ApiQueryExecutor(
     concrete_api_fetcher(**request.context.fetcher_parameters)
   )
 
   result = query_executor.execute(request.query, request.title, request.context)
-
-  return fastapi.responses.JSONResponse(
-    content=fastapi.encoders.jsonable_encoder({'result': result})
-  )
+  return ApiExecutorResponse(results=[result])
 
 
 @router.post('/execute:batch')
-async def execute_batch(request: ApiExecutorRequest) -> dict[str, str]:
+async def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
   if not (concrete_api_fetcher := garf_executors.FETCHERS.get(request.source)):
     raise exceptions.GarfExecutorError(
       f'Source {request.source} is not available.'
     )
 
-  query_executor = garf_executors.api_executor.ApiQueryExecutor(
+  query_executor = garf_executors.ApiQueryExecutor(
     concrete_api_fetcher(**request.context.fetcher_parameters)
   )
   file_reader = reader.FileReader()
@@ -102,10 +109,7 @@ async def execute_batch(request: ApiExecutorRequest) -> dict[str, str]:
     }
     for future in futures.as_completed(future_to_query):
       results.append(future.result())
-
-  return fastapi.responses.JSONResponse(
-    content=fastapi.encoders.jsonable_encoder({'result': results})
-  )
+  return ApiExecutorResponse(results=results)
 
 
 if __name__ == '__main__':
