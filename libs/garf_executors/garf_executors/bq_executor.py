@@ -28,7 +28,7 @@ import logging
 from google.cloud import exceptions as google_cloud_exceptions
 
 from garf_core import query_editor, report
-from garf_executors import exceptions, execution_context
+from garf_executors import exceptions, execution_context, executor
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class BigQueryExecutorError(exceptions.GarfExecutorError):
   """Error when BigQueryExecutor fails to run query."""
 
 
-class BigQueryExecutor(query_editor.TemplateProcessorMixin):
+class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
   """Handles query execution in BigQuery.
 
   Attributes:

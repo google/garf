@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 
 from garf_core import report_fetcher
-from garf_executors import exceptions, execution_context
+from garf_executors import exceptions, execution_context, executor
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class ApiExecutionContext(execution_context.ExecutionContext):
   writer: str = 'console'
 
 
-class ApiQueryExecutor:
+class ApiQueryExecutor(executor.Executor):
   """Gets data from API and writes them to local/remote storage.
 
   Attributes:
