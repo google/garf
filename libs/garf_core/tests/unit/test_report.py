@@ -24,6 +24,11 @@ from garf_core import report
 
 
 @pytest.fixture
+def empty_report():
+  return report.GarfReport()
+
+
+@pytest.fixture
 def single_element_report():
   return report.GarfReport(results=[[1]], column_names=['campaign_id'])
 
@@ -45,6 +50,9 @@ def multi_column_report():
 
 class TestGarfReport:
   class TestGarfReportIteration:
+    def test_empty_report_returns_empty_list(self, empty_report):
+      assert list(empty_report) == []
+
     def test_single_element_report_returns_garf_row(
       self, single_element_report
     ):
@@ -118,6 +126,9 @@ class TestGarfReport:
       ]
 
   class TestGarfReportMisc:
+    def test_empty_report_length(self, empty_report):
+      assert len(empty_report) == 0
+
     def test_get_report_length(self, multi_column_report):
       assert len(multi_column_report) == len(multi_column_report.results)
 
@@ -126,7 +137,14 @@ class TestGarfReport:
       single_element_report.results = []
       assert not single_element_report
 
+    def test_empty_report_bool_return_false(self, empty_report):
+      assert not empty_report
+
   class TestGarfReportAddition:
+    def test_add_two_empty_reports(self, empty_report):
+      added_report = empty_report + empty_report
+      assert len(added_report) == 0
+
     def test_add_two_reports(self, multi_column_report):
       added_report = multi_column_report + multi_column_report
       assert len(added_report) == len(multi_column_report.results) * 2
@@ -150,6 +168,15 @@ class TestGarfReport:
         multi_column_report + single_element_report
 
   class TestGarfReportSlicing:
+    def test_slicing_empty_garf_report_returns_empty_list(
+      self,
+      empty_report,
+    ):
+      with pytest.raises(
+        report.GarfReportError, match='Cannot get element from an empty report'
+      ):
+        empty_report[0:2]
+
     def test_slicing_multi_column_garf_report_returns_garf_report(
       self,
       multi_column_report,
@@ -177,6 +204,16 @@ class TestGarfReport:
         results=[[1, 2], [2, 3]], column_names=['campaign_id', 'ad_group_id']
       )
 
+    def test_indexing_empty_garf_report_by_one_column_returns_garf_report(
+      self,
+      empty_report,
+    ):
+      with pytest.raises(
+        report.GarfReportError,
+        match="Cannot get 'campaign_id' from an empty report",
+      ):
+        empty_report['campaign_id']
+
     def test_indexing_multi_column_garf_report_by_one_column_returns_garf_report(
       self,
       multi_column_report,
@@ -193,11 +230,14 @@ class TestGarfReport:
       new_report = multi_column_report[['campaign_id', 'ad_group_id']]
       assert new_report == multi_column_report
 
-    def test_indexing_multi_column_garf_report_by_non_existing_column_raises_exception(
+    def test_indexing_multi_column_garf_report_by_non_existing_column_raises_garf_report_error(
       self,
       multi_column_report,
     ):
-      with pytest.raises(report.GarfReportError):
+      with pytest.raises(
+        report.GarfReportError,
+        match="Columns 'ad_group' cannot be found in the report",
+      ):
         multi_column_report[['campaign_id', 'ad_group']]
 
     def test_slicing_single_column_garf_report_returns_report(
@@ -551,17 +591,38 @@ class TestGarfReport:
       ):
         report.GarfReport.from_json(json_str)
 
+    def test_convert_empty_report_to_pandas_returns_empty_dataframe(
+      self, empty_report
+    ):
+      expected = pd.DataFrame()
+      assert empty_report.to_pandas().equals(expected)
+
     def test_convert_report_to_pandas(self, multi_column_report):
       expected = pd.DataFrame(
         data=[[1, 2], [2, 3], [3, 4]], columns=['campaign_id', 'ad_group_id']
       )
       assert multi_column_report.to_pandas().equals(expected)
 
+    def test_convert_empty_report_to_polars_returns_empty_dataframe(
+      self, empty_report
+    ):
+      expected = pl.DataFrame()
+      assert empty_report.to_polars().equals(expected)
+
     def test_convert_report_to_polars(self, multi_column_report):
       expected = pl.DataFrame(
         data=[[1, 2], [2, 3], [3, 4]], schema=['campaign_id', 'ad_group_id']
       )
       assert multi_column_report.to_polars().equals(expected)
+
+    def test_get_value_empty_report_raises_garf_report_error(
+      self,
+      empty_report,
+    ):
+      with pytest.raises(
+        report.GarfReportError, match='Cannot get value from an empty report'
+      ):
+        empty_report.get_value()
 
     def test_get_value_single_element_report_returns_correct_value(
       self,
@@ -593,6 +654,9 @@ class TestGarfReport:
         single_element_report.get_value(row_index=1)
 
   class TestGarfReportEquality:
+    def test_empty_reports_are_equal(self):
+      assert report.GarfReport() == report.GarfReport()
+
     def test_report_with_different_columns_not_equal(
       self, single_element_report, multi_column_report
     ):

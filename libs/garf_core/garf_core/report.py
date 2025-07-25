@@ -45,25 +45,25 @@ class GarfReport:
 
   def __init__(
     self,
-    results: Sequence[Sequence[parsers.ApiRowElement]],
-    column_names: Sequence[str],
+    results: Sequence[Sequence[parsers.ApiRowElement]] | None = None,
+    column_names: Sequence[str] | None = None,
     results_placeholder: Sequence[Sequence[parsers.ApiRowElement]]
     | None = None,
-    query_specification: query_editor.BaseQuerySpecification | None = None,
+    query_specification: query_editor.BaseQueryElements | None = None,
     auto_convert_to_scalars: bool = True,
   ) -> None:
     """Initializes GarfReport from API response.
 
     Args:
-        results: Contains data from Ads API in a form of nested list
-        column_names: Maps in each element in sublist of results to name.
-        results_placeholder: Optional placeholder values for missing results.
-        query_specification: Specification used to get data from Ads API.
-        auto_convert_to_scalars: Whether to simplify slicing operations.
+      results: Contains data from Ads API in a form of nested list
+      column_names: Maps in each element in sublist of results to name.
+      results_placeholder: Optional placeholder values for missing results.
+      query_specification: Specification used to get data from Ads API.
+      auto_convert_to_scalars: Whether to simplify slicing operations.
     """
-    self.results = results
-    self.column_names = column_names
-    self._multi_column_report = len(column_names) > 1
+    self.results = results or []
+    self.column_names = column_names or []
+    self._multi_column_report = len(column_names) > 1 if column_names else False
     if results_placeholder:
       self.results_placeholder = list(results_placeholder)
     else:
@@ -238,6 +238,8 @@ class GarfReport:
     Raises:
       GarfReportError: If row or column index are out of bounds.
     """
+    if not self:
+      raise GarfReportError('Cannot get value from an empty report')
     if column_index >= len(self.column_names):
       raise GarfReportError(
         'Column %d of report is not found; report contains only %d columns.',
@@ -298,6 +300,10 @@ class GarfReport:
     Raises:
         GarfReportError: When incorrect column_name specified.
     """
+    if not self:
+      if isinstance(key, (MutableSequence, str)):
+        raise GarfReportError(f"Cannot get '{key}' from an empty report")
+      raise GarfReportError('Cannot get element from an empty report')
     if isinstance(key, (MutableSequence, str)):
       return self._get_columns_slice(key)
     return self._get_rows_slice(key)
@@ -342,6 +348,8 @@ class GarfReport:
     Raises:
         GarfReportError: When incorrect column_name specified.
     """
+    if not self:
+      return self
     if isinstance(key, str):
       key = [key]
     if set(key).issubset(set(self.column_names)):
@@ -356,15 +364,13 @@ class GarfReport:
         results.append(rows)
       # TODO: propagate placeholders and query specification to new report
       return GarfReport(results, key)
-    non_existing_keys = set(key).intersection(set(self.column_names))
+    non_existing_keys = set(key).difference(set(self.column_names))
     if len(non_existing_keys) > 1:
-      message = (
-        f"Columns '{', '.join(list(non_existing_keys))}' "
-        'cannot be found in the report'
-      )
-    message = (
-      f"Column '{non_existing_keys.pop()}' " 'cannot be found in the report'
-    )
+      missing_columns = ', '.join(list(non_existing_keys))
+    else:
+      missing_columns = non_existing_keys.pop()
+
+    message = f"Columns '{missing_columns}' cannot be found in the report"
     raise GarfReportError(message)
 
   def __eq__(self, other) -> bool:
