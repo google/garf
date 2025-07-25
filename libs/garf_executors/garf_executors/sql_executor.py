@@ -29,7 +29,7 @@ import re
 import pandas as pd
 
 from garf_core import query_editor, report
-from garf_executors import exceptions, execution_context
+from garf_executors import exceptions, execution_context, executor
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,9 @@ class SqlAlchemyQueryExecutorError(exceptions.GarfExecutorError):
   """Error when SqlAlchemyQueryExecutor fails to run query."""
 
 
-class SqlAlchemyQueryExecutor(query_editor.TemplateProcessorMixin):
+class SqlAlchemyQueryExecutor(
+  executor.Executor, query_editor.TemplateProcessorMixin
+):
   """Handles query execution via SqlAlchemy.
 
   Attributes:
@@ -57,6 +59,10 @@ class SqlAlchemyQueryExecutor(query_editor.TemplateProcessorMixin):
   def from_connection_string(
     cls, connection_string: str
   ) -> SqlAlchemyQueryExecutor:
+    """Creates executor from SqlAlchemy connection string.
+
+    https://docs.sqlalchemy.org/en/20/core/engines.html
+    """
     engine = sqlalchemy.create_engine(connection_string)
     return cls(engine)
 

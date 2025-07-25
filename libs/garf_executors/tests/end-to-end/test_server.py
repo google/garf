@@ -75,15 +75,18 @@ class TestApiQueryExecutor:
     assert response.json() == expected_output
 
   def test_batch_fake_source_from_query_path(self, tmp_path):
-    query_path = tmp_path / 'query.sql'
-    with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
+    query_path1 = tmp_path / 'query1.sql'
+    with pathlib.Path.open(query_path1, 'w', encoding='utf-8') as f:
+      f.write(self.query)
+    query_path2 = tmp_path / 'query2.sql'
+    with pathlib.Path.open(query_path2, 'w', encoding='utf-8') as f:
       f.write(self.query)
     fake_data = _SCRIPT_PATH / 'test.json'
     request = {
       'source': 'fake',
       'query_path': [
-        str(query_path),
-        str(query_path),
+        str(query_path1),
+        str(query_path2),
       ],
       'context': {
         'fetcher_parameters': {
@@ -97,8 +100,8 @@ class TestApiQueryExecutor:
     assert response.status_code == fastapi.status.HTTP_200_OK
     expected_output = {
       'results': [
-        f'[CSV] - at {tmp_path}/query.csv',
-        f'[CSV] - at {tmp_path}/query.csv',
+        f'[CSV] - at {tmp_path}/query1.csv',
+        f'[CSV] - at {tmp_path}/query2.csv',
       ]
     }
     assert response.json() == expected_output

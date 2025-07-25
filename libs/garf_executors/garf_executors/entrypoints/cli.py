@@ -21,10 +21,9 @@ from __future__ import annotations
 
 import argparse
 import sys
-from concurrent import futures
 
 import garf_executors
-from garf_executors import bq_executor, exceptions, sql_executor
+from garf_executors import exceptions
 from garf_executors.entrypoints import utils
 from garf_io import reader
 
@@ -86,18 +85,8 @@ def main():
   )
   if args.parallel_queries:
     logger.info('Running queries in parallel')
-    with futures.ThreadPoolExecutor(args.parallel_threshold) as executor:
-      future_to_query = {
-        executor.submit(
-          query_executor.execute,
-          reader_client.read(query),
-          query,
-          context,
-        ): query
-        for query in args.query
-      }
-      for future in futures.as_completed(future_to_query):
-        future.result()
+    batch = {query: reader_client.read(query) for query in args.query}
+    query_executor.execute_batch(batch, context, args.parallel_queries)
   else:
     logger.info('Running queries sequentially')
     for query in args.query:

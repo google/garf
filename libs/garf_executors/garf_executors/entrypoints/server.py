@@ -14,15 +14,12 @@
 
 """FastAPI endpoint for executing queries."""
 
-from concurrent import futures
-
 import fastapi
 import pydantic
 import uvicorn
 
 import garf_executors
 from garf_executors import exceptions
-from garf_executors.entrypoints import utils
 from garf_io import reader
 
 
@@ -85,20 +82,9 @@ async def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
   query_executor = garf_executors.setup_executor(
     request.source, request.context.fetcher_parameters
   )
-  file_reader = reader.FileReader()
-  results = []
-  with futures.ThreadPoolExecutor() as executor:
-    future_to_query = {
-      executor.submit(
-        query_executor.execute,
-        file_reader.read(query),
-        query,
-        request.context,
-      ): query
-      for query in request.query_path
-    }
-    for future in futures.as_completed(future_to_query):
-      results.append(future.result())
+  reader_client = reader.FileReader()
+  batch = {query: reader_client.read(query) for query in request.query_path}
+  results = query_executor.execute_batch(batch, request.context)
   return ApiExecutorResponse(results=results)
 
 
