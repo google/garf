@@ -15,7 +15,7 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 fail_fast: true
-default_stages: [commit]
+default_stages: [pre-commit]
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v3.2.0
@@ -35,7 +35,7 @@ repos:
     entry: bash -c 'mypy "$@" || true'
     args: [--ignore-missing-imports]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.4.6
+  rev: v0.12.5
   hooks:
     - id: ruff
       args: [ --fix, --select, I]
@@ -57,3 +57,10 @@ repos:
     entry: pytest -n auto libs/garf_executors/tests/unit/
     language: system
     pass_filenames: false
+  - id: executors-e2e
+    stages: [pre-push]
+    name: e2e
+    entry: pytest -n auto libs/garf_executors/tests/end-to-end/
+    language: system
+    pass_filenames: false
+    always_run: true

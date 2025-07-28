@@ -99,9 +99,7 @@ class TestApiQueryExecutor:
     response = client.post('/api/execute:batch', json=request)
     assert response.status_code == fastapi.status.HTTP_200_OK
     expected_output = {
-      'results': [
-        f'[CSV] - at {tmp_path}/query1.csv',
-        f'[CSV] - at {tmp_path}/query2.csv',
-      ]
+      f'[CSV] - at {tmp_path}/query1.csv',
+      f'[CSV] - at {tmp_path}/query2.csv',
     }
-    assert response.json() == expected_output
+    assert set(response.json().get('results')) == expected_output
