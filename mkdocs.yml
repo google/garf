@@ -1,0 +1,62 @@
+site_name: Garf
+site_url: https://github.com/google/garf
+repo_name: garf
+repo_url: https://github.com/google/garf
+copyright: Copyright Google 2025
+
+theme:
+  name: material
+  font:
+    text: Google Sans
+    code: Roboto Mono
+  palette:
+    - scheme: default
+      primary: white
+      accent: white
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: white
+      accent: white
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.footer
+    - navigation.tracking
+    - navigation.top
+    - navigation.path
+    - content.code.select
+    - content.code.copy
+markdown_extensions:
+  - md_in_html
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Get Started:
+    - get-started/index.md
+    - Installation: get-started/installation.md
+    - Quickstart:
+      - get-started/quickstart.md
+      - Library: get-started/library.md
+      - CLI: get-started/cli.md
+      - Server: get-started/server.md
+  - Customization:
+    - Create a library: customization/creating-your-own-libraries.md
+  - Fetchers:
+    - YouTube:
+      - Data API: fetchers/youtube-data-api.md
+      - Reporting API: fetchers/youtube-reporting-api.md
+    - Merchant Center: fetchers/merchant-center-api.md
