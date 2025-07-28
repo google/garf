@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for executing queries in BigQuery."""
+"""Executes queries in BigQuery."""
 
 from __future__ import annotations
+
+import os
 
 try:
   from google.cloud import bigquery  # type: ignore
@@ -46,13 +48,22 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
       client: BigQuery client.
   """
 
-  def __init__(self, project_id: str, location: str | None = None) -> None:
+  def __init__(
+    self,
+    project_id: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
+    location: str | None = None,
+  ) -> None:
     """Initializes BigQueryExecutor.
 
     Args:
         project_id: Google Cloud project id.
         location: BigQuery dataset location.
     """
+    if not project_id:
+      raise BigQueryExecutorError(
+        'project_id is required. Either provide it as project_id parameter '
+        'or GOOGLE_CLOUD_PROJECT env variable.'
+      )
     self.project_id = project_id
     self.location = location
 
