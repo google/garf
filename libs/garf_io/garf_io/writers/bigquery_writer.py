@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for writing data to BigQuery."""
+"""Writes GarfReport to BigQuery."""
 
 from __future__ import annotations
+
+import os
 
 try:
   from google.cloud import bigquery
 except ImportError as e:
   raise ImportError(
-    'Please install garf-io with BigQuery support '
-    '- `pip install garf-io[bq]`'
+    'Please install garf-io with BigQuery support - `pip install garf-io[bq]`'
   ) from e
 
 import datetime
@@ -34,8 +35,12 @@ from google.cloud import exceptions as google_cloud_exceptions
 
 from garf_core import parsers
 from garf_core import report as garf_report
-from garf_io import formatter
+from garf_io import exceptions, formatter
 from garf_io.writers import abs_writer
+
+
+class BigQueryWriterError(exceptions.GarfIoError):
+  """BigQueryWriter specific errors."""
 
 
 class BigQueryWriter(abs_writer.AbsWriter):
@@ -50,10 +55,10 @@ class BigQueryWriter(abs_writer.AbsWriter):
 
   def __init__(
     self,
-    project: str,
-    dataset: str,
+    project: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
+    dataset: str = 'garf',
     location: str = 'US',
-    write_disposition: bigquery.WriteDisposition = (
+    write_disposition: bigquery.WriteDisposition | str = (
       bigquery.WriteDisposition.WRITE_TRUNCATE
     ),
     **kwargs,
@@ -68,9 +73,18 @@ class BigQueryWriter(abs_writer.AbsWriter):
       kwargs: Optional keywords arguments.
     """
     super().__init__(**kwargs)
+    if not project:
+      raise BigQueryWriterError(
+        'project is required. Either provide it as project parameter '
+        'or GOOGLE_CLOUD_PROJECT env variable.'
+      )
     self.project = project
     self.dataset_id = f'{project}.{dataset}'
     self.location = location
+    if isinstance(write_disposition, str):
+      write_disposition = getattr(
+        bigquery.WriteDisposition, write_disposition.upper()
+      )
     self.write_disposition = write_disposition
 
   def __str__(self) -> str:
