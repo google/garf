@@ -1,18 +1,7 @@
 # Use garf as a library
 
-## Installation
 
-1. create virtual environment and install the tool
-
-```
-python3 -m venv garf
-source garf/bin/activate
-pip install garf-core garf-io
-```
-> Depending on your needs you might want to install additional libraries for [fetching](../libs/garf_community/) and [writing](../libs/garf_io/) data.
-
-
-### initialize subclass `ApiReportFetcher` to get reports
+## initialize subclass `ApiReportFetcher` to get reports
 
 > For simplicity we're going to use built-in `FakeApiReportFetcher`.
 
@@ -267,6 +256,3 @@ query_executor.execute(
     context=context
 )
 ```
-
-## Disclaimer
-This is not an officially supported Google product.
