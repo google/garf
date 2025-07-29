@@ -13,3 +13,23 @@ pip install garf-executors[server]
 ```bash
 python garf_executors.entrypoints.server
 ```
+
+## Query
+
+```
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "fake",
+  "title": "example",
+  "query": "SELECT campaign FROM campaign",
+  "context": {
+    "writer": "console",
+     "writer_params": {
+       "format": "json"
+     }
+  }
+}'
+```

@@ -34,7 +34,7 @@ markdown_extensions:
   - attr_list
   - admonition
   - pymdownx.details
-  - pymdownx.tabbed:
+  - pymdownx.blocks.tab:
       alternate_style: true
       slugify: !!python/object/apply:pymdownx.slugs.slugify
         kwds:
@@ -49,10 +49,19 @@ nav:
     - get-started/index.md
     - Installation: get-started/installation.md
     - Quickstart:
-      - get-started/quickstart.md
+      - get-started/index.md
       - Library: get-started/library.md
       - CLI: get-started/cli.md
       - Server: get-started/server.md
+  - Usage:
+    - Define Queries: usage/queries.md
+    - Reports: usage/reports.md
+    - Writing: usage/writers.md
+    - Executors:
+      - usage/executors.md
+      - API: usage/api-executor.md
+      - BigQuery: usage/bq-executor.md
+      - SQL: usage/sql-executor.md
   - Customization:
     - Create a library: customization/creating-your-own-libraries.md
   - Fetchers:
