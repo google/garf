@@ -14,6 +14,7 @@
 """Creates API client for YouTube Data API."""
 
 import os
+import warnings
 
 from googleapiclient.discovery import build
 from typing_extensions import override
@@ -31,15 +32,21 @@ class YouTubeDataApiClient(api_clients.BaseClient):
 
   def __init__(
     self,
-    api_key: str = os.getenv('GOOGLE_API_KEY'),
+    api_key: str = os.getenv('GARF_YOUTUBE_DATA_API_KEY'),
     api_version: str = 'v3',
     **kwargs: str,
   ) -> None:
     """Initializes YouTubeDataApiClient."""
+    if not api_key and os.getenv('GOOGLE_API_KEY'):
+      warnings.DeprecatingWarning(
+        'You are using deprecated GOOGLE_API_KEY variable to create '
+        'YouTubeDataApiClient. Use GARF_YOUTUBE_DATA_API_KEY variable instead'
+      )
+      api_key = os.getenv('GOOGLE_API_KEY')
     if not api_key:
       raise YouTubeDataApiClientError(
         'api_key is not found. Either pass to YouTubeDataApiClient as api_key '
-        'parameter or expose as GOOGLE_API_KEY ENV varible'
+        'parameter or expose as GARF_YOUTUBE_DATA_API_KEY ENV variable'
       )
     self.api_key = api_key
     self.api_version = api_version
