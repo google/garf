@@ -9,7 +9,7 @@
 
 * [YouTube Data API](https://console.cloud.google.com/apis/library/youtube.googleapis.com) enabled.
 * [API key](https://support.google.com/googleapi/answer/6158862?hl=en) to access to access YouTube Data API.
-    > Once generated expose API key as `export GOOGLE_API_KEY=<YOUR_API_KEY>`
+    > Once generated expose API key as `export GARF_YOUTUBE_DATA_API_KEY=<YOUR_API_KEY>`
 
 ## Installation
 
