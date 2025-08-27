@@ -1,4 +1,4 @@
-# Get Started
+# Overview
 
 Garf allows you to define SQL-like queries alongside aliases and custom extractors and specify where the results of such query should be stored.
 Based on such a query the library constructs the correct query to a reporting API of your choice, automatically extract all necessary fields from API schema
