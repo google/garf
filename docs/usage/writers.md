@@ -35,7 +35,7 @@ To install specific writers use:
 
 ## Usage
 
-```
+```python
 import garf_core import report
 from garf_io import writer
 

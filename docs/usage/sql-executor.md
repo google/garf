@@ -20,8 +20,8 @@ garf <QUERIES> --source sqldb \
 ```
 where
 
-* `<QUERIES>`- local or remote path(s) to files with queries.
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
+* `query`- local or remote path(s) to files with queries.
+* `output` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
 ///
 
 /// tab | Python

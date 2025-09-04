@@ -11,7 +11,7 @@ There are three ways how you can define a query:
 
 This is how a generic query might look like:
 
-```
+```sql
 SELECT
   ad_group.id,
   ad_group.name
@@ -27,7 +27,7 @@ as unselectable elements, complex messages and resource names.
 In order to simplify data extraction and processing when querying data from API
 we introduce additional syntax (see an example below):
 
-```
+```sql
 SELECT
     resource.attribute AS column_name_1,
     resource.attribute:nested.resource AS column_name_3
@@ -51,7 +51,7 @@ more user friendly, like `bidding_type`.
 
 Aliases are specified using `AS` keyword as shown below:
 
-```
+```sql
 SELECT
     campaign.app_campaign_setting.bidding_strategy_goal_type AS bidding_type
 FROM campaign
@@ -65,7 +65,7 @@ Some fields return structs, and if you want to get a nested attribute scalar val
 One particular example is working with `change_event` - `change_event.new_resource`
 consists of various changes made to an entity and looks something like that:
 
-```
+```json
 new_resource {
     campaign {
         target_cpa {
@@ -78,7 +78,7 @@ new_resource {
 In order to extract a particular element (i.e., final value for `target_cpa_micros`)
 we use the `:` syntax - `change_event.new_resource:campaign.target_cpa.target_cpas_micros`:
 
-```
+```sql
 SELECT
     change_event.old_resource:campaign.target_cpa.target_cpa_micros AS old_target_cpa,
     change_event.new_resource:campaign.target_cpa.target_cpa_micros AS new_target_cpa
@@ -98,7 +98,7 @@ If the resource you're selecting looks like this `customers/111/campaignAudience
 you can specify `campaign_audience_view.resource_name~1` to extract the second element (`333`).
 If you specify `campaign_audience_view.resource_name~0` you'll get '222' (the last resource id before ~).
 
-```
+```sql
 SELECT
     campaign_audience_view.resource_name~1 AS criterion_id
 FROM campaign_audience_view
@@ -108,7 +108,7 @@ FROM campaign_audience_view
 
 Virtual columns allow to specify in a query some fields or expressions that are not present in an API.
 
-```
+```sql
 SELECT
     1 AS counter,
     metrics.clicks / metrics.impressions AS ctr,
@@ -132,7 +132,7 @@ For constants columns they will be re-added into result after executing the quer
 You queries can contain macros.
 Macro is just a substitution in script text, i.e.
 
-```
+```sql
 SELECT
     campaign.id AS campaign_id,
     metrics.clicks AS clicks
@@ -148,7 +148,7 @@ When this query is executed it's expected that two macros `--macros.start_date=.
 Macros can be used not only in WHERE statements as in the example above but also in the SELECT statement.
 In that case this macros will be expanded and then treated as a virtual column.
 
-```
+```sql
 SELECT
     "{current_date}" AS date,
     campaign.id AS campaign_id,
@@ -171,7 +171,7 @@ This will return all campaign budgets and attach current date (i.e. 2023-06-01) 
 
 Your queries can use templates using [Jinja](https://jinja.palletsprojects.com) engine.
 
-```
+```sql
 SELECT
   customer_id AS
   {% if level == "0"  %}
@@ -189,7 +189,7 @@ This will create a column named either `root_account_id` since the specified lev
 
 Template are great when you need to create multiple column based on condition:
 
-```
+```sql
 SELECT
     {% for day in cohort_days %}
         SUM(GetCohort(lag_data.installs, {{day}})) AS installs_{{day}}_day,
@@ -207,7 +207,7 @@ It will create 4 columns (named `installs_0_day`, `installs_1_day`, etc).
 
 `garf` can also works with built-in queries, which use the following syntax:
 
-```
+```sql
 SELECT * FROM builtin.builtin_query_name
 ```
 
