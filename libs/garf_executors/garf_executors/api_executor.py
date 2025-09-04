@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 
 from garf_core import report_fetcher
-from garf_executors import exceptions, execution_context, executor
+from garf_executors import exceptions, execution_context, executor, fetchers
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,13 @@ class ApiQueryExecutor(executor.Executor):
         fetcher: Instantiated report fetcher.
     """
     self.fetcher = fetcher
+
+  @classmethod
+  def from_fetcher_alias(
+    cls, source: str, fetcher_parameters: dict[str, str]
+  ) -> ApiQueryExecutor:
+    concrete_api_fetcher = fetchers.get_report_fetcher(source)
+    return ApiQueryExecutor(concrete_api_fetcher(**fetcher_parameters))
 
   async def aexecute(
     self,
