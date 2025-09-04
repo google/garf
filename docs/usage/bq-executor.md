@@ -1,10 +1,12 @@
 # BigQuery Executor
 
+`BigQueryExecutor` allows you to execute SQL code in BigQuery.
+
 ## Install
 
 Ensure that `garf-executors` library is installed with BigQuery support:
 
-```
+```bash
 pip install garf-executors[bq]
 ```
 
@@ -13,15 +15,15 @@ pip install garf-executors[bq]
 After `garf-executors` is installed you can use `garf` utility to perform fetching.
 
 /// tab | bash
-```
+```bash
 garf <QUERIES> --source bq \
-  --output <OUTPUT_TYPE> \
-  --source.project_id=YOUR_GCP_PROJECT
+  --output csv \
+  --source.project_id=MY_PROJECT
 ```
 where
 
-* `<QUERIES>`- local or remote path(s) to files with queries.
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
+* `query`- local or remote path(s) to files with queries.
+* `output` - output supported by [`garf-io` library](../garf_io/README.md).
 ///
 
 /// tab | Python

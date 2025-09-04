@@ -87,7 +87,7 @@ campaigns_dict = campaigns.to_dict(
 
 `GarfReport` can be easily built from pandas or polars data frame:
 
-```
+```python
 import pandas as pd
 import polars as pl
 
