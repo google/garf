@@ -27,8 +27,10 @@ theme:
     - navigation.tracking
     - navigation.top
     - navigation.path
+    - content.code.annotate
     - content.code.select
     - content.code.copy
+    - content.tabs.link
 markdown_extensions:
   - md_in_html
   - attr_list
@@ -42,6 +44,11 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 
 nav:
   - Home: index.md
