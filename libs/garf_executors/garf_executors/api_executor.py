@@ -51,8 +51,10 @@ class ApiQueryExecutor(executor.Executor):
 
   @classmethod
   def from_fetcher_alias(
-    cls, source: str, fetcher_parameters: dict[str, str]
+    cls, source: str, fetcher_parameters: dict[str, str] | None = None
   ) -> ApiQueryExecutor:
+    if not fetcher_parameters:
+      fetcher_parameters = {}
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     return ApiQueryExecutor(concrete_api_fetcher(**fetcher_parameters))
 
