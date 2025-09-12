@@ -84,8 +84,16 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
         ids = ids.split(',')
     else:
       return super().fetch(query_specification, args, **kwargs)
-    for batch in _batched(ids, MAX_BATCH_SIZE):
-      batch_ids = {name: batch[0]} if name != 'id' else {name: batch}
-      res = super().fetch(query_specification, args, **batch_ids, **kwargs)
-      results.append(res)
+    if name == 'id':
+      for batch in _batched(ids, MAX_BATCH_SIZE):
+        res = super().fetch(
+          query_specification, args, **{name: batch}, **kwargs
+        )
+        results.append(res)
+    else:
+      for element in ids:
+        res = super().fetch(
+          query_specification, args, **{name: element}, **kwargs
+        )
+        results.append(res)
     return functools.reduce(operator.add, results)

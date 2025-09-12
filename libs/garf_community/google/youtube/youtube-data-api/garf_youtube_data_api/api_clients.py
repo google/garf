@@ -13,6 +13,7 @@
 # limitations under the License.
 """Creates API client for YouTube Data API."""
 
+import logging
 import os
 import warnings
 
@@ -21,6 +22,8 @@ from typing_extensions import override
 
 from garf_core import api_clients, query_editor
 from garf_youtube_data_api import exceptions
+
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 
 class YouTubeDataApiClientError(exceptions.GarfYouTubeDataApiError):
