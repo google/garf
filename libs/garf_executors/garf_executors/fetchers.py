@@ -18,20 +18,38 @@ from importlib.metadata import entry_points
 from garf_core import report_fetcher
 
 
-def get_report_fetchers() -> dict[str, report_fetcher.ApiReportFetcher]:
+def find_fetchers() -> set[str]:
+  """Identifiers all available report fetchers."""
+  return {fetcher.name for fetcher in entry_points(group='garf')}
+
+
+def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
+  """Loads report fetcher for a given source.
+
+  Args:
+    source: Alias for a source associated with a fetcher.
+
+  Returns:
+    Class for a found report fetcher.
+
+  Raises:
+    ApiReportFetcherError: When fetcher cannot be loaded.
+    MissingApiReportFetcherError: When fetcher not found.
+  """
+  if source not in find_fetchers():
+    raise report_fetcher.MissingApiReportFetcherError(source)
   fetchers = entry_points(group='garf')
-  found_fetchers = {}
   for fetcher in fetchers:
-    try:
-      fetcher_module = fetcher.load()
-      for name, obj in inspect.getmembers(fetcher_module):
-        if inspect.isclass(obj) and issubclass(
-          obj, report_fetcher.ApiReportFetcher
-        ):
-          found_fetchers[fetcher.name] = getattr(fetcher_module, name)
-    except ModuleNotFoundError:
-      continue
-  return found_fetchers
-
-
-FETCHERS = get_report_fetchers()
+    if fetcher.name == source:
+      try:
+        fetcher_module = fetcher.load()
+        for name, obj in inspect.getmembers(fetcher_module):
+          if inspect.isclass(obj) and issubclass(
+            obj, report_fetcher.ApiReportFetcher
+          ):
+            return getattr(fetcher_module, name)
+      except ModuleNotFoundError:
+        continue
+  raise report_fetcher.ApiReportFetcherError(
+    f'Failed to load fetcher for source "{source}"'
+  )

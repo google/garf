@@ -39,6 +39,17 @@ class ApiReportFetcherError(exceptions.GarfError):
   """Base exception for all ApiReportFetchers."""
 
 
+class MissingApiReportFetcherError(ApiReportFetcherError):
+  """Exception for not found report fetcher."""
+
+  def __init__(self, source: str) -> None:
+    """Initializes MissingApiReportFetcherError."""
+    self.source = source
+
+  def __str__(self) -> str:
+    return f'No fetcher available for the source "{self.source}"'
+
+
 class ApiReportFetcher:
   """Class responsible for getting data from report API.
 

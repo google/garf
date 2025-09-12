@@ -15,36 +15,25 @@
 
 from __future__ import annotations
 
-from garf_executors import bq_executor, exceptions, sql_executor
+from garf_executors import bq_executor, fetchers, sql_executor
 from garf_executors.api_executor import ApiExecutionContext, ApiQueryExecutor
-from garf_executors.fetchers import FETCHERS
 
 
 def setup_executor(source: str, fetcher_parameters: dict[str, str]):
   """Initializes executors based on a source and parameters."""
-  if source not in ('bq', 'sqldb') and not (
-    concrete_api_fetcher := FETCHERS.get(source)
-  ):
-    raise exceptions.GarfExecutorError(f'Source {source} is not available.')
   if source == 'bq':
-    query_executor = bq_executor.BigQueryExecutor(**fetcher_parameters)
-  elif source == 'sqldb':
-    query_executor = (
-      sql_executor.SqlAlchemyQueryExecutor.from_connection_string(
-        fetcher_parameters.get('connection_string')
-      )
+    return bq_executor.BigQueryExecutor(**fetcher_parameters)
+  if source == 'sqldb':
+    return sql_executor.SqlAlchemyQueryExecutor.from_connection_string(
+      fetcher_parameters.get('connection_string')
     )
-  else:
-    query_executor = ApiQueryExecutor(
-      concrete_api_fetcher(**fetcher_parameters)
-    )
-  return query_executor
+  concrete_api_fetcher = fetchers.get_report_fetcher(source)
+  return ApiQueryExecutor(concrete_api_fetcher(**fetcher_parameters))
 
 
 __all__ = [
-  'FETCHERS',
   'ApiQueryExecutor',
   'ApiExecutionContext',
 ]
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
