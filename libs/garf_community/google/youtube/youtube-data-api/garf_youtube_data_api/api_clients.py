@@ -38,9 +38,11 @@ class YouTubeDataApiClient(api_clients.BaseClient):
   ) -> None:
     """Initializes YouTubeDataApiClient."""
     if not api_key and os.getenv('GOOGLE_API_KEY'):
-      warnings.DeprecatingWarning(
+      warnings.warn(
         'You are using deprecated GOOGLE_API_KEY variable to create '
-        'YouTubeDataApiClient. Use GARF_YOUTUBE_DATA_API_KEY variable instead'
+        'YouTubeDataApiClient. Use GARF_YOUTUBE_DATA_API_KEY variable instead',
+        FutureWarning,
+        stacklevel=2,
       )
       api_key = os.getenv('GOOGLE_API_KEY')
     if not api_key:
