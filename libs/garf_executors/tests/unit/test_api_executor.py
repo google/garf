@@ -14,13 +14,22 @@
 from __future__ import annotations
 
 import json
-import os
+import pathlib
 
 import pytest
 
 from garf_core import api_clients, parsers, report_fetcher
+from garf_core.fetchers import fake as fake_fetcher
 from garf_executors import api_executor
 from garf_io.writers import json_writer
+
+_TEST_DATA = [
+  {'customer_id': 1},
+  {'customer_id': 2},
+  {'customer_id': 3},
+]
+
+_TEST_QUERY = 'SELECT customer.id FROM customer'
 
 
 class TestApiQueryExecutor:
@@ -43,27 +52,37 @@ class TestApiQueryExecutor:
     return json_writer.JsonWriter(destination_folder=tmp_path)
 
   def test_execute_returns_success(self, executor, tmp_path):
-    query_text = 'SELECT customer.id FROM customer'
-    expected_result = [
-      {'customer_id': 1},
-      {'customer_id': 2},
-      {'customer_id': 3},
-    ]
-
     context = api_executor.ApiExecutionContext(
       writer='json',
       writer_parameters={'destination_folder': str(tmp_path)},
     )
     executor.execute(
-      query=query_text,
+      query=_TEST_QUERY,
       title='test',
       context=context,
     )
-    with open(
-      os.path.join(context.writer_client.destination_folder, 'test.json'),
+    with pathlib.Path.open(
+      pathlib.Path(context.writer_client.destination_folder) / 'test.json',
       'r',
       encoding='utf-8',
     ) as f:
       result = json.load(f)
 
-    assert result == expected_result
+    assert result == _TEST_DATA
+
+  def test_from_fetcher_alias_returns_initialized_executor(self, tmp_path):
+    tmp_file = tmp_path / 'test.json'
+    with pathlib.Path.open(
+      tmp_file,
+      'w',
+      encoding='utf-8',
+    ) as f:
+      json.dump(_TEST_DATA, f)
+
+    executor = api_executor.ApiQueryExecutor.from_fetcher_alias(
+      source='fake',
+      fetcher_parameters={
+        'json_location': tmp_file,
+      },
+    )
+    assert isinstance(executor.fetcher, fake_fetcher.FakeApiReportFetcher)
