@@ -44,23 +44,23 @@ repos:
   hooks:
   - id: pytest-check-core
     name: pytest-check-core
-    entry: pytest -n auto libs/garf_core/tests/unit/
+    entry: pytest -n auto libs/core/tests/unit/
     language: system
     pass_filenames: false
   - id: pytest-check-io
     name: pytest-check-io
-    entry: pytest -n auto libs/garf_io/tests/unit/
+    entry: pytest -n auto libs/io/tests/unit/
     language: system
     pass_filenames: false
   - id: pytest-check-executors
     name: pytest-check-executors
-    entry: pytest -n auto libs/garf_executors/tests/unit/
+    entry: pytest -n auto libs/executors/tests/unit/
     language: system
     pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e
-    entry: pytest -n auto libs/garf_executors/tests/end-to-end/
+    entry: pytest -n auto libs/executors/tests/end-to-end/
     language: system
     pass_filenames: false
     always_run: true
