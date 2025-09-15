@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        library: [garf_core, garf_io, garf_executors]
+        library: [core, io, executors]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.11
