@@ -50,15 +50,9 @@ garf <PATH_TO_QUERIES> --source youtube-data-api \
 where:
 
 * `<PATH_TO_QUERIES>` - local or remove files containing queries
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
-* `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
+* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
+* `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](https://google.github.io/garf/fetchers/youtube-data-api/#available-source-parameters).
 
-## Available source parameters
+## Documentation
 
-| name | values| comments |
-|----- | ----- | -------- |
-| `id`   | id of YouTube channel or videos| Multiple ids are supported, should be comma-separated|
-| `forHandle` | YouTube channel handle | i.e. @myChannel |
-| `forUsername` | YouTube channel name | i.e. myChannel |
-| `regionCode` | ISO 3166-1 alpha-2 country code | i.e. US |
-| `chart` | `mostPopular` | Gets most popular in `regionCode`, can be narrowed down with `videoCategoriId` |
+You can find a documentation on `garf-youtube-data-api` [here](https://google.github.io/garf/fetchers/youtube-data-api/).
