@@ -83,6 +83,8 @@ class DictParser(BaseParser):
 
   def get_nested_field(self, dictionary: dict[str, Any], key: str):
     """Returns nested fields from a dictionary."""
+    if result := dictionary.get(key):
+      return result
     key = key.split('.')
     try:
       return functools.reduce(operator.getitem, key, dictionary)
@@ -101,6 +103,9 @@ class NumericConverterDictParser(DictParser):
         with contextlib.suppress(ValueError):
           return type_(value)
       return value
+
+    if result := dictionary.get(key):
+      return convert_field(result)
 
     key = key.split('.')
     try:
