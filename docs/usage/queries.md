@@ -141,7 +141,7 @@ WHERE
     segments.date BETWEEN "{start_date}" AND "{end_date}"
 ```
 
-When this query is executed it's expected that two macros `--macros.start_date=...` and `--macros.end_date=...` are supplied to `garf`.
+When this query is executed it's expected that two macros `--macro.start_date=...` and `--macro.end_date=...` are supplied to `garf`.
 
 ### Macros in virtual columns
 
@@ -216,41 +216,43 @@ SELECT * FROM builtin.builtin_query_name
 
 ## Queries as Python objects
 
+You can define queries in multiple ways.
+
+### As strings
+
 ```python
-from garf_core.base_query import BaseQuery
+query_string = "SELECT campaign.id FROM campaign"
+```
+### As files
+
+#### Local
+```python
 from garf_io import reader
 
-
-# 1. define query as a string an save in a variable
-query_string = "SELECT campaign.id FROM campaign"
-
-# 2. define path to a query file and read from it
-# path can be local
 query_path = "path/to/query.sql"
-# or remote
+
+# Instantiate reader
+reader_client = reader.FileReader()
+# And read from the path
+query = reader_client.read(query_path)
+```
+#### Remote
+```python
+from garf_io import reader
+
 query_path = "gs://PROJECT_ID/path/to/query.sql"
 
 # Instantiate reader
 reader_client = reader.FileReader()
 # And read from the path
 query = reader_client.read(query_path)
+```
 
-# 3. define query as a class
-
-# Native style
-class Campaigns(BaseQuery):
-  query_text  = """
-    SELECT
-      campaign.id
-    FROM campaign
-    WHERE campaign.status = {status}
-    """
-
-  def __init__(self, status: str = "ENABLED") -> None:
-    self.status = status
-
-# Dataclass style
+### As dataclasses
+```python
 from dataclasses import dataclass
+
+from garf_core.base_query import BaseQuery
 
 @dataclass
 class Campaigns(BaseQuery):
@@ -262,16 +264,46 @@ class Campaigns(BaseQuery):
     """
   status: str = "ENABLED"
 
-# Old style
+query = Campaigns(status='DISABLED')
+```
+
+
+### As Pydantic objects
+
+```python
+from typing import ClassVar
+from pydantic import BaseModel
+
+from garf_core.base_query import BaseQuery
+
+class Campaigns(BaseModel, BaseQuery):
+  query_text: ClassVar[str]  = """
+    SELECT
+      campaign.id
+    FROM campaign
+    WHERE campaign.status = {status}
+    """
+  status: str = "ENABLED"
+
+query = Campaigns(status='DISABLED')
+```
+
+### As plain python classes
+
+```python
+from garf_core.base_query import BaseQuery
+from garf_io import reader
+
 class Campaigns(BaseQuery):
-  def __init__(self, status: str = "ENABLED"):
-    self.query_text = f"""
+  query_text  = """
     SELECT
       campaign.id
     FROM campaign
     WHERE campaign.status = {status}
     """
 
-active_campaigns = report_fetcher.fetch(Campaigns())
-inactive_campaigns = report_fetcher.fetch(Campaigns("INACTIVE"))
+  def __init__(self, status: str = "ENABLED") -> None:
+    self.status = status
+
+query = Campaigns(status='DISABLED')
 ```
