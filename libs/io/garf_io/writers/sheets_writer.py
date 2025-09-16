@@ -25,13 +25,19 @@ except ImportError as e:
   ) from e
 
 import datetime
+import functools
 import logging
+import pathlib
 
 from garf_core import report as garf_report
 from typing_extensions import override
 
-from garf_io import formatter
+from garf_io import exceptions, formatter
 from garf_io.writers.abs_writer import AbsWriter
+
+
+class SheetWriterError(exceptions.GarfIoError):
+  """SheetWriterError specific errors."""
 
 
 class SheetWriter(AbsWriter):
@@ -39,8 +45,8 @@ class SheetWriter(AbsWriter):
 
   def __init__(
     self,
-    share_with: str,
-    credentials_file: str,
+    share_with: str | None = None,
+    credentials_file: str | None = None,
     spreadsheet_url: str | None = None,
     is_append: bool = False,
     **kwargs: str,
@@ -58,20 +64,17 @@ class SheetWriter(AbsWriter):
     self.credentials_file = credentials_file
     self.spreadsheet_url = spreadsheet_url
     self.is_append = is_append
-    self.client = None
-    self.spreadsheet = None
-    self.gspread_client = None
+    self._spreadsheet = None
 
   @override
   def write(
     self,
     report: garf_report.GarfReport,
-    destination: str = f'Report {datetime.datetime.utcnow()}',
+    destination: str = f'Report {datetime.datetime.now(datetime.UTC)}',
   ) -> str:
-    self._init_client()
     report = self.format_for_write(report)
     if not destination:
-      destination = f'Report {datetime.datetime.utcnow()}'
+      destination = f'Report {datetime.datetime.now(datetime.UTC)}'
     destination = formatter.format_extension(destination)
     num_data_rows = len(report) + 1
     try:
@@ -96,30 +99,46 @@ class SheetWriter(AbsWriter):
       self.spreadsheet.share(self.share_with, perm_type='user', role='writer')
     return success_msg
 
-  def _init_client(self) -> None:
-    if not self.client:
-      if not self.credentials_file:
-        raise ValueError(
-          'Provide path to service account via `credentials_file` option'
-        )
-      try:
-        self.gspread_client = gspread.service_account(
-          filename=self.credentials_file
-        )
-      except auth_exceptions.MalformedError:
-        self.gspread_client = gspread.oauth(
-          credentials_filename=self.credentials_file
-        )
-      self._open_sheet()
+  @functools.cached_property
+  def client(self) -> gspread.Client:
+    config_dir = pathlib.Path.home() / '.config/gspread'
+    if not self.credentials_file:
+      if (credentials_file := config_dir / 'credentials.json').is_file():
+        return gspread.oauth(credentials_filename=credentials_file)
+      if (credentials_file := config_dir / 'service_account.json').is_file():
+        return self._init_service_account(credential_file)
+      raise SheetWriterError(
+        'Failed to find either service_accounts.json or '
+        'credentials.json files.'
+        'Provide path to service account via `credentials_file` option'
+      )
+    try:
+      return self._init_service_account(self.credential_file)
+    except auth_exceptions.MalformedError:
+      return gspread.oauth(credentials_filename=self.credentials_file)
 
-  def _open_sheet(self) -> None:
-    if not self.spreadsheet:
-      if not self.spreadsheet_url:
-        self.spreadsheet = self.gspread_client.create(
-          f'Garf CSV {datetime.datetime.utcnow()}'
-        )
-      else:
-        self.spreadsheet = self.gspread_client.open_by_url(self.spreadsheet_url)
+  def _init_service_account(
+    self, credentials_file: str | pathlib.Path
+  ) -> gspread.Client:
+    client = gspread.service_account(filename=credentials_file)
+    if not self.spreadsheet_url:
+      raise SheetWriterError(
+        'Provide `spreadsheet_url` parameter when working with '
+        'service account authentication.'
+      )
+    return client
+
+  @property
+  def spreadsheet(self) -> gspread.spreadsheet.Spreadsheet:
+    if self._spreadsheet:
+      return self._spreadsheet
+    if not self.spreadsheet_url:
+      spreadsheet = self.client.create(
+        title=f'Garf CSV {datetime.datetime.now(datetime.UTC)}'
+      )
+      self.spreadsheet_url = spreadsheet.url
+      return spreadsheet
+    return self.client.open_by_url(self.spreadsheet_url)
 
   def _add_rows_if_needed(
     self, num_data_rows: int, sheet: gspread.worksheet.Worksheet
