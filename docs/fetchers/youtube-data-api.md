@@ -140,7 +140,54 @@ csv_writer.write(fetched_report, 'video_info')
 ```
 ///
 
+**Gets YouTube video(s) height and width.**
 
+/// tab | cli
+```bash hl_lines="12"
+echo "
+SELECT
+  id,
+  player.embedWidth AS width,
+  player.embedHeight AS height
+FROM videos
+" > video_orientation.sql
+
+garf video_orientation.sql --source youtube-data-api \
+  --output csv \
+  --source.id=YOUTUBE_VIDEO_ID_1,YOUTUBE_VIDEO_ID_2 \
+  --source.maxWidth=500
+```
+///
+
+/// tab | python
+
+```python hl_lines="19"
+import os
+
+from garf_io import writer
+from garf_youtube_data_api import YouTubeDataApiReportFetcher
+
+query = """
+SELECT
+  id,
+  player.embedWidth AS width,
+  player.embedHeight AS height
+FROM videos
+"""
+
+fetched_report = (
+  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  .fetch(
+    query,
+    id=[YOUTUBE_VIDEO_ID_1, YOUTUBE_VIDEO_ID_2],
+    maxWidth=500
+  )
+)
+
+csv_writer = writer.create_writer('csv')
+csv_writer.write(fetched_report, 'video_orientation')
+```
+///
 
 ### Channels
 

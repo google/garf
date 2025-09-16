@@ -37,6 +37,8 @@ console_writer = writer.create_writer('console')
 console_writer.write(fetched_report, 'output')
 ```
 
+Learn [more](https://google.github.io/garf/fetchers/youtube-data-api/#python) on library usage.
+
 ### Run via CLI
 
 > Install `garf-executors` package to run queries via CLI (`pip install garf-executors`).
@@ -53,6 +55,12 @@ where:
 * `<OUTPUT_TYPE>` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
 * `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](https://google.github.io/garf/fetchers/youtube-data-api/#available-source-parameters).
 
+Learn [more](https://google.github.io/garf/fetchers/youtube-data-api/#cli) on CLI usage.
+
 ## Documentation
 
 You can find a documentation on `garf-youtube-data-api` [here](https://google.github.io/garf/fetchers/youtube-data-api/).
+
+## Samples
+
+Sample queries for interacting with YouTube Data API are located in [`examples`](examples/') folder.
