@@ -20,7 +20,17 @@ Each of writer also support two options for dealing with arrays:
 
 ## Installation
 
-`pip install garf-io`
+/// tab | pip
+```bash
+pip install garf-io
+```
+///
+
+/// tab | uv
+```bash
+uv add garf-io
+```
+///
 
 By default  `garf-io` has only support for `console`, `csv` and `json` writers.
 
@@ -35,16 +45,201 @@ To install specific writers use:
 
 ## Usage
 
+!!!note
+    To use `cli` example you need to have `garf-executors` package installed.
+
+    ```bash
+    pip install garf-executors
+    ```
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output YOUR_WRITER
+```
+///
+
+/// tab | python
 ```python
-import garf_core import report
+from garf_core import report
 from garf_io import writer
 
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
-# Initialize CSV writer
-concrete_writer = writer.create_writer('csv', destination_folder='/tmp/')
-
-# Write data to /tmp/sample.csv
-concrete_writer.write(sample_report, 'sample')
+concrete_writer = writer.create_writer('YOUR_WRITER')
+concrete_writer.write(sample_report, 'query')
 ```
+///
+
+
+### Console
+
+`console` writer allows you to print `GarfReport` to standard output in the terminal.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output console
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import console_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = console_writer.ConsoleWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+
+### CSV
+
+`csv` writer allows you to save `GarfReport` as a CSV file to local or remote storage.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output csv
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import csv_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = csv_writer.CsvWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+### JSON
+
+`json` writer allows you to save `GarfReport` as JSON or JSONL file to local or remote storage.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output json
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import json_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = json_writer.JsonWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+### BigQuery
+
+!!! important
+    To save data to BigQuery install `garf-io` with BigQuery support
+
+    ```bash
+    pip install garf-io[bq]
+    ```
+
+
+`bq` writer allows you to save `GarfReport` to BigQuery table.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output bq
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import bigquery_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = bigquery_writer.BigQueryWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+### Google Sheets
+
+!!! important
+    To save data to Google Sheets install `garf-io` with Google Sheets support
+
+    ```bash
+    pip install garf-io[sheets]
+    ```
+
+
+`sheets` writer allows you to save `GarfReport` to Google Sheets.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output sheets
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import sheets_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = sheets_writer.SheetsWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+### SqlAlchemy
+
+!!! important
+    To save data to Google Sheets install `garf-io` with SqlAlchemy support
+
+    ```bash
+    pip install garf-io[sqlalchemy]
+    ```
+
+
+`sqldb` writer allows you to save `GarfReport` to SqlAlchemy supported table databases.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output sqldb
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import sqldb_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = sqldb_writer.SqlAlchemyWriter(
+  connection_string=SQLALCHEMY_CONNECTION_STRING
+)
+writer.write(sample_report, 'query')
+```
+///
