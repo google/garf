@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-google-analytics"
+dependencies = [
+  "garf-core",
+  "garf-io",
+  "google-analytics-data",
+]
+authors = [
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+license = {text = "Apache 2.0"}
+requires-python = ">=3.8"
+description = "Garf implementation for Google Analytics API"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python"
+]
+
+dynamic=["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf_google_analytics.__version__"}
+
+[project.entry-points.garf]
+google-analytics = "garf_google_analytics.report_fetcher"
+
+[options.extras_require]
+test =  [
+  "pytest",
+  "pytest-cov",
+  "python-dotenv",
+]
