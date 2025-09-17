@@ -1,6 +1,7 @@
 name: Run tests
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
@@ -13,13 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         library: [core, io, executors]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
         with:
