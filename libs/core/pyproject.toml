@@ -11,18 +11,18 @@ dependencies = [
     "requests",
     "pyyaml",
     "pydantic",
+    "eval_type_backport",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
   {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 description = "Abstracts fetching data from API based on provided SQL-like query."
 readme = "README.md"
 license = {text = "Apache 2.0"}
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

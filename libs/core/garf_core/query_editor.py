@@ -25,24 +25,18 @@ from typing import Generator, Union
 import jinja2
 import pydantic
 from dateutil import relativedelta
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
 from garf_core import exceptions
 
-QueryParameters = dict[str, Union[str | float | int]]
+QueryParameters: TypeAlias = dict[str, Union[str, float, int]]
 
 
 class GarfQueryParameters(pydantic.BaseModel):
   """Parameters for dynamically changing text of a query."""
 
-  macro: QueryParameters | None = None
-  template: QueryParameters | None = None
-
-  def model_post_init(self, __context__) -> None:
-    if self.macro is None:
-      self.macro = {}
-    if self.template is None:
-      self.template = {}
+  macro: QueryParameters = pydantic.Field(default_factory=dict)
+  template: QueryParameters = pydantic.Field(default_factory=dict)
 
 
 class GarfQueryError(exceptions.GarfError):
