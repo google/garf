@@ -155,7 +155,7 @@ class FakeApiClient(BaseClient):
             {key: _field_converter(value) for key, value in row.items()}
           )
         return FakeApiClient(data)
-    except FileNotFoundError as e:
+    except (AttributeError, FileNotFoundError) as e:
       raise GarfApiError(f'Failed to open {file_location}') from e
 
 
