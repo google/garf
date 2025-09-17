@@ -20,7 +20,7 @@ import dataclasses
 import datetime
 import logging
 import re
-from typing import Generator
+from typing import Generator, Union
 
 import jinja2
 import pydantic
@@ -29,7 +29,7 @@ from typing_extensions import Self
 
 from garf_core import exceptions
 
-QueryParameters = dict[str, str | float | int]
+QueryParameters = dict[str, Union[str | float | int]]
 
 
 class GarfQueryParameters(pydantic.BaseModel):
