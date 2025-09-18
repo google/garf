@@ -24,10 +24,10 @@ except ImportError as e:
     'Please install garf-io with sheets support - `pip install garf-io[sheets]`'
   ) from e
 
-import datetime
 import functools
 import logging
 import pathlib
+import uuid
 
 from garf_core import report as garf_report
 from typing_extensions import override
@@ -70,11 +70,11 @@ class SheetWriter(AbsWriter):
   def write(
     self,
     report: garf_report.GarfReport,
-    destination: str = f'Report {datetime.datetime.now(datetime.UTC)}',
+    destination: str = f'Report {uuid.uuid4().hex}',
   ) -> str:
     report = self.format_for_write(report)
     if not destination:
-      destination = f'Report {datetime.datetime.now(datetime.UTC)}'
+      destination = f'Report {uuid.uuid4().hex}'
     destination = formatter.format_extension(destination)
     num_data_rows = len(report) + 1
     try:
@@ -106,7 +106,7 @@ class SheetWriter(AbsWriter):
       if (credentials_file := config_dir / 'credentials.json').is_file():
         return gspread.oauth(credentials_filename=credentials_file)
       if (credentials_file := config_dir / 'service_account.json').is_file():
-        return self._init_service_account(credential_file)
+        return self._init_service_account(credentials_file)
       raise SheetWriterError(
         'Failed to find either service_accounts.json or '
         'credentials.json files.'
@@ -133,9 +133,7 @@ class SheetWriter(AbsWriter):
     if self._spreadsheet:
       return self._spreadsheet
     if not self.spreadsheet_url:
-      spreadsheet = self.client.create(
-        title=f'Garf CSV {datetime.datetime.now(datetime.UTC)}'
-      )
+      spreadsheet = self.client.create(title=f'Garf CSV {uuid.uuid4().hex}')
       self.spreadsheet_url = spreadsheet.url
       return spreadsheet
     return self.client.open_by_url(self.spreadsheet_url)
