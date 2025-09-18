@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,15 +15,21 @@
 
 from __future__ import annotations
 
-from garf_executors import bq_executor, fetchers, sql_executor
+import importlib
+
+from garf_executors import executor, fetchers
 from garf_executors.api_executor import ApiExecutionContext, ApiQueryExecutor
 
 
-def setup_executor(source: str, fetcher_parameters: dict[str, str]):
+def setup_executor(
+  source: str, fetcher_parameters: dict[str, str]
+) -> type[executor.Executor]:
   """Initializes executors based on a source and parameters."""
   if source == 'bq':
+    bq_executor = importlib.import_module('garf_executors.bq_executor')
     query_executor = bq_executor.BigQueryExecutor(**fetcher_parameters)
   elif source == 'sqldb':
+    sql_executor = importlib.import_module('garf_executors.sql_executor')
     query_executor = (
       sql_executor.SqlAlchemyQueryExecutor.from_connection_string(
         fetcher_parameters.get('connection_string')
@@ -42,4 +48,4 @@ __all__ = [
   'ApiExecutionContext',
 ]
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
