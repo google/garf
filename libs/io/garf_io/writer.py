@@ -48,7 +48,7 @@ def create_writer(
   """
   if sys.version_info.major == 3 and sys.version_info.minor == 9:
     try:
-      writers = entry_points(group='garf_writer')['garf_writer']
+      writers = entry_points()['garf_writer']
     except KeyError:
       writers = []
   else:
