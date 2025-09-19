@@ -11,14 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for writing data with CSV."""
+"""Writes GarfReport to CSV.
+
+Writing to remote storage systems (gs, s3, hadoop, stfp) is also supported.
+"""
 
 from __future__ import annotations
 
 import csv
 import logging
 import os
-from typing import Literal
+import pathlib
+from typing import Literal, Union
 
 import smart_open
 from garf_core import report as garf_report
@@ -31,15 +35,17 @@ class CsvWriter(file_writer.FileWriter):
   """Writes Garf Report to CSV.
 
   Attributes:
-      destination_folder: Destination where CSV files are stored.
-      delimiter: CSV delimiter.
-      quotechar: CSV writer quotechar.
-      quoting: CSV writer quoting.
+    destination_folder: Destination where CSV files are stored.
+    delimiter: CSV delimiter.
+    quotechar: CSV writer quotechar.
+    quoting: CSV writer quoting.
   """
 
   def __init__(
     self,
-    destination_folder: str | os.PathLike = os.getcwd(),
+    destination_folder: Union[
+      str, os.PathLike[str], pathlib.Path
+    ] = pathlib.Path.cwd(),
     delimiter: str = ',',
     quotechar: str = '"',
     quoting: Literal[0] = csv.QUOTE_MINIMAL,
@@ -68,8 +74,8 @@ class CsvWriter(file_writer.FileWriter):
     """Writes Garf report to a CSV file.
 
     Args:
-        report: Garf report.
-        destination: Base file name report should be written to.
+      report: Garf report.
+      destination: Base file name report should be written to.
 
     Returns:
         Full path where data are written.
@@ -78,7 +84,7 @@ class CsvWriter(file_writer.FileWriter):
     destination = formatter.format_extension(destination, new_extension='.csv')
     self.create_dir()
     logging.debug('Writing %d rows of data to %s', len(report), destination)
-    output_path = os.path.join(self.destination_folder, destination)
+    output_path = pathlib.Path(self.destination_folder) / destination
     with smart_open.open(
       output_path,
       encoding='utf-8',

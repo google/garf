@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Literal
+import pathlib
+from typing import Literal, Union
 
 import smart_open
 from garf_core import report as garf_report
@@ -30,12 +31,14 @@ class JsonWriter(file_writer.FileWriter):
   """Writes Garf Report to JSON.
 
   Attributes:
-      destination_folder: Destination where JSON files are stored.
+    destination_folder: Destination where JSON files are stored.
   """
 
   def __init__(
     self,
-    destination_folder: str | os.PathLike = os.getcwd(),
+    destination_folder: Union[
+      str, os.PathLike[str], pathlib.Path
+    ] = pathlib.Path.cwd(),
     format: Literal['json', 'jsonl'] = 'json',
     **kwargs: str,
   ) -> None:
@@ -66,7 +69,7 @@ class JsonWriter(file_writer.FileWriter):
     )
     self.create_dir()
     logging.debug('Writing %d rows of data to %s', len(report), destination)
-    output_path = os.path.join(self.destination_folder, destination)
+    output_path = pathlib.Path(self.destination_folder) / destination
     with smart_open.open(output_path, 'w', encoding='utf-8') as f:
       f.write(report.to_json(output=self.format))
     logging.debug('Writing to %s is completed', output_path)
