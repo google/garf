@@ -1,9 +1,9 @@
 # How to create your own garf-based library
 
 
-In order to create your own library follow the steps below:
+In order to create your own library follow the steps.
 
-## Project setup
+## Setup project
 * Create a folder `<YOUR-LIBRARY>` folder with a subfolder `garf_<YOUR_LIBRARY>_api` name.
 
 * Create `pyproject.toml` of the following structure:
@@ -42,7 +42,7 @@ classifiers = [
     your-api = "your_library.report_fetcher"
     ```
 
-## Mandatory classes
+## Implement classes
 
 Go to `garf_<YOUR_LIBRARY>_api` folder and create `report_fetcher.py` file.
 
@@ -89,7 +89,7 @@ class MyLibraryApiReportFetcher(report_fetcher.ApiReportFetcher):
 ```
 
 
-## Installing
+## Install
 
 To test your project install is as an editable package.
 ```bash
@@ -100,7 +100,7 @@ pip install -e .
 !!! note
     If you thing others will benefit from your package you can now upload your project to pypi.
 
-## Running
+## Run
 
 Once you installed the package you can run it with `garf` utility:
 

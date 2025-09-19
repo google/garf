@@ -1,6 +1,10 @@
 # GarfReport
 
-#### Iteration and slicing
+`ApiReportFetcher.fetch` returns you an instance of `GarfReport` object.
+
+It's a table like structure (resembling pandas DataFrame) which can easily be manipulated.
+
+#### Iteration
 
 `ApiReportFetcher.fetch` method returns an instance of `GarfReport` object which you can use to perform simple iteration.
 
@@ -24,6 +28,8 @@ for row in campaigns:
 ```
 
 
+#### Slicing
+
 You can easily slice the report
 
 ```python
@@ -38,7 +44,7 @@ first_campaign_row = campaigns[0]
 first_10_rows_from_campaigns = campaigns[0:10]
 ```
 
-#### Convert report
+#### Converting
 
 `GarfReport` can be easily converted to common data structures:
 
@@ -83,7 +89,7 @@ campaigns_dict = campaigns.to_dict(
 )
 ```
 
-#### Build report
+#### Building
 
 `GarfReport` can be easily built from pandas or polars data frame:
 
@@ -100,7 +106,7 @@ df = pl.DataFrame(data=[[1]], schema=["one"], orient='row')
 report = GarfReport.from_polars(df)
 ```
 
-#### Save report
+#### Saving
 
 `GarfReport` can be easily saved to local or remote storage:
 

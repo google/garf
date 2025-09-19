@@ -5,7 +5,8 @@
 `garf` is a framework for building various connectors to reporting API that provides
 users with a SQL-like interface to specify what needs to be extracted from the API.
 
-It allows you to define SQL-like queries alongside aliases and custom extractors and specify where the results of such query should be stored.\
+It allows you to define SQL-like queries alongside aliases and custom extractors
+and specify where the results of such query should be stored.
 Based on a query `garf` builds the correct request to a reporting API, parses response
 and transform it into a structure suitable for writing data.
 
