@@ -1,8 +1,6 @@
 # Overview
 
-Garf allows you to define SQL-like queries alongside aliases and custom extractors and specify where the results of such query should be stored.
-Based on such a query the library constructs the correct query to a reporting API of your choice, automatically extract all necessary fields from API schema
-and transform them into a structure suitable for writing data.
+`garf` can be used in a multiple ways.
 
 <div class="grid cards" markdown>
 

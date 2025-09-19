@@ -109,4 +109,4 @@ garf query.sql --source YOUR_API
 ```
 
 !!!note
-    Refer to [instructions](../libs/garf_executors/README.md#usage) for fetching data from your api via `garf` CLI tool.
+    Refer to [instructions](../usage/executors.md) for fetching data from your API via `garf` CLI tool.
