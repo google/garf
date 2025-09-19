@@ -29,7 +29,7 @@ from collections import defaultdict
 from collections.abc import MutableSequence, Sequence
 from typing import Generator, Literal, get_args
 
-from garf_core import exceptions, parsers, query_editor
+from garf_core import api_clients, exceptions, query_editor
 
 
 class GarfReport:
@@ -45,9 +45,9 @@ class GarfReport:
 
   def __init__(
     self,
-    results: Sequence[Sequence[parsers.ApiRowElement]] | None = None,
+    results: Sequence[Sequence[api_clients.ApiRowElement]] | None = None,
     column_names: Sequence[str] | None = None,
-    results_placeholder: Sequence[Sequence[parsers.ApiRowElement]]
+    results_placeholder: Sequence[Sequence[api_clients.ApiRowElement]]
     | None = None,
     query_specification: query_editor.BaseQueryElements | None = None,
     auto_convert_to_scalars: bool = True,
@@ -92,7 +92,7 @@ class GarfReport:
     row_type: Literal['list', 'dict', 'scalar'] = 'list',
     flatten: bool = False,
     distinct: bool = False,
-  ) -> list[parsers.ApiRowElement]:
+  ) -> list[api_clients.ApiRowElement]:
     """Converts report to a list.
 
     Args:
@@ -137,7 +137,7 @@ class GarfReport:
     key_column: str,
     value_column: str | None = None,
     value_column_output: Literal['scalar', 'list'] = 'list',
-  ) -> dict[str, parsers.ApiRowElement | list[parsers.ApiRowElement]]:
+  ) -> dict[str, api_clients.ApiRowElement | list[api_clients.ApiRowElement]]:
     """Converts report to dictionary.
 
     Args:
@@ -232,7 +232,7 @@ class GarfReport:
 
   def get_value(
     self, column_index: int = 0, row_index: int = 0
-  ) -> parsers.ApiRowElement:
+  ) -> api_clients.ApiRowElement:
     """Extracts data from report as a scalar.
 
     Raises:
@@ -310,7 +310,7 @@ class GarfReport:
 
   def _get_rows_slice(
     self, key: slice | int
-  ) -> GarfReport | GarfRow | parsers.ApiRowElement:
+  ) -> GarfReport | GarfRow | api_clients.ApiRowElement:
     """Gets one or several rows from the report.
 
     Args:
@@ -476,7 +476,7 @@ class GarfReport:
     data = json.loads(json_str)
 
     def validate_value(value):
-      if not isinstance(value, get_args(parsers.ApiRowElement)):
+      if not isinstance(value, get_args(api_clients.ApiRowElement)):
         raise TypeError(
           f'Unsupported type {type(value)} for value {value}. '
           'Expected types: int, float, str, bool, list, or None.'
@@ -520,7 +520,7 @@ class GarfRow:
   """
 
   def __init__(
-    self, data: parsers.ApiRowElement, column_names: Sequence[str]
+    self, data: api_clients.ApiRowElement, column_names: Sequence[str]
   ) -> None:
     """Initializes new GarfRow.
 
@@ -530,11 +530,11 @@ class GarfRow:
     super().__setattr__('data', data)
     super().__setattr__('column_names', column_names)
 
-  def to_dict(self) -> dict[str, parsers.ApiRowElement]:
+  def to_dict(self) -> dict[str, api_clients.ApiRowElement]:
     """Maps column names to corresponding data point."""
     return {x[1]: x[0] for x in zip(self.data, self.column_names)}
 
-  def get_value(self, column_index: int = 0) -> parsers.ApiRowElement:
+  def get_value(self, column_index: int = 0) -> api_clients.ApiRowElement:
     """Extracts data from row as a scalar.
 
     Raises:
@@ -548,7 +548,7 @@ class GarfRow:
       )
     return self.data[column_index]
 
-  def __getattr__(self, element: str) -> parsers.ApiRowElement:
+  def __getattr__(self, element: str) -> api_clients.ApiRowElement:
     """Gets element from row as an attribute.
 
     Args:
@@ -564,7 +564,7 @@ class GarfRow:
       return self.data[self.column_names.index(element)]
     raise AttributeError(f'cannot find {element} element!')
 
-  def __getitem__(self, element: str | int) -> parsers.ApiRowElement:
+  def __getitem__(self, element: str | int) -> api_clients.ApiRowElement:
     """Gets element from row by index.
 
     Args:
@@ -584,7 +584,7 @@ class GarfRow:
       return self.__getattr__(element)
     raise GarfReportError(f'cannot find {element} element!')
 
-  def __setattr__(self, name: str, value: parsers.ApiRowElement) -> None:
+  def __setattr__(self, name: str, value: api_clients.ApiRowElement) -> None:
     """Sets new value for an attribute.
 
     Args:
@@ -609,7 +609,7 @@ class GarfRow:
       self.data.append(value)
       self.column_names.append(name)
 
-  def get(self, item: str) -> parsers.ApiRowElement:
+  def get(self, item: str) -> api_clients.ApiRowElement:
     """Extracts value as dictionary get operation.
 
     Args:
@@ -620,7 +620,7 @@ class GarfRow:
     """
     return self.__getattr__(item)
 
-  def __iter__(self) -> parsers.ApiRowElement:
+  def __iter__(self) -> api_clients.ApiRowElement:
     """Yields each element of a row."""
     for field in self.data:
       yield field

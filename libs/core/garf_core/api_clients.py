@@ -18,29 +18,25 @@ from __future__ import annotations
 import abc
 import contextlib
 import csv
-import dataclasses
 import json
 import os
 import pathlib
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Union
 
+import pydantic
 import requests
-from typing_extensions import override
+from typing_extensions import TypeAlias, override
 
-from garf_core import exceptions
+from garf_core import exceptions, query_editor
 
-
-@dataclasses.dataclass
-class GarfApiRequest:
-  """Base class for specifying request."""
+ApiRowElement: TypeAlias = Union[int, float, str, bool, list, dict, None]
 
 
-@dataclasses.dataclass
-class GarfApiResponse:
+class GarfApiResponse(pydantic.BaseModel):
   """Base class for specifying response."""
 
-  results: list
+  results: list[ApiRowElement]
 
 
 class GarfApiError(exceptions.GarfError):
@@ -52,7 +48,7 @@ class BaseClient(abc.ABC):
 
   @abc.abstractmethod
   def get_response(
-    self, request: GarfApiRequest = GarfApiRequest(), **kwargs: str
+    self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> GarfApiResponse:
     """Method for getting response."""
 
@@ -69,7 +65,7 @@ class RestApiClient(BaseClient):
 
   @override
   def get_response(
-    self, request: GarfApiRequest = GarfApiRequest(), **kwargs: str
+    self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> GarfApiResponse:
     response = requests.get(f'{self.endpoint}/{request.resource_name}')
     if response.status_code == self.OK:
@@ -87,7 +83,7 @@ class FakeApiClient(BaseClient):
 
   @override
   def get_response(
-    self, request: GarfApiRequest = GarfApiRequest(), **kwargs: str
+    self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> GarfApiResponse:
     del request
     return GarfApiResponse(results=self.results)
