@@ -88,7 +88,7 @@ class DictParser(BaseParser):
     key = key.split('.')
     try:
       return functools.reduce(operator.getitem, key, dictionary)
-    except KeyError:
+    except (TypeError, KeyError):
       return None
 
 
