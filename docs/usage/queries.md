@@ -292,7 +292,6 @@ query = Campaigns(status='DISABLED')
 
 ```python
 from garf_core.base_query import BaseQuery
-from garf_io import reader
 
 class Campaigns(BaseQuery):
   query_text  = """

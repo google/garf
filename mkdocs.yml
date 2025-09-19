@@ -60,16 +60,22 @@ nav:
       - CLI: get-started/cli.md
       - Server: get-started/server.md
   - Usage:
-    - Define Queries: usage/queries.md
-    - Reports: usage/reports.md
-    - Writing: usage/writers.md
+    - Queries: usage/queries.md
+    - API Clients: usage/api-client.md
+    - Fetchers: usage/fetcher.md
+    - Parsers: usage/parsers.md
+    - Report: usage/reports.md
+    - Writers: usage/writers.md
     - Executors:
       - usage/executors.md
       - API: usage/api-executor.md
       - BigQuery: usage/bq-executor.md
       - SQL: usage/sql-executor.md
-  - Customization:
-    - Create a library: customization/creating-your-own-libraries.md
+  - Development:
+    - Overview: development/overview.md
+    - Create API client: development/create-api-client.md
+    - Create API response parser: development/create-api-response-parser.md
+    - Create a library: development/create-garf-library.md
   - Fetchers:
     - YouTube:
       - Data API: fetchers/youtube-data-api.md
