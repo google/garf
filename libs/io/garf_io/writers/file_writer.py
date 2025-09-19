@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for writing data to a file."""
+"""Module for writing GarfReport to a file."""
 
 import os
+import pathlib
+from typing import Union
 
 from garf_io.writers.abs_writer import AbsWriter
 
@@ -27,7 +29,9 @@ class FileWriter(AbsWriter):
 
   def __init__(
     self,
-    destination_folder: str | os.PathLike = os.getcwd(),
+    destination_folder: Union[
+      str, os.PathLike[str], pathlib.Path
+    ] = pathlib.Path.cwd(),
     **kwargs: str,
   ) -> None:
     """Initializes FileWriter based on destination folder."""
@@ -37,10 +41,10 @@ class FileWriter(AbsWriter):
   def create_dir(self) -> None:
     """Creates folders if needed or destination is not remote."""
     if (
-      not os.path.isdir(self.destination_folder)
+      not pathlib.Path(self.destination_folder).is_dir()
       and '://' not in self.destination_folder
     ):
-      os.makedirs(self.destination_folder)
+      pathlib.Path(self.destination_folder).mkdir(parents=True)
 
   def write(self) -> None:
     return
