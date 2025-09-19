@@ -33,7 +33,7 @@ class TestDictParser:
 
     assert parsed_row == expected_row
 
-  def test_parse_results_returns_correct_result(self, test_parser):
+  def test_parse_response_returns_correct_result(self, test_parser):
     test_response = api_clients.GarfApiResponse(
       results=[
         {'test_column_1': '1', 'test_column_2': 2},
@@ -46,7 +46,7 @@ class TestDictParser:
 
     assert parsed_row == expected_row
 
-  def test_parse_results_returns_empty_list_on_missing_results(
+  def test_parse_response_returns_empty_list_on_missing_results(
     self, test_parser
   ):
     test_response = api_clients.GarfApiResponse(results=[])
@@ -56,13 +56,30 @@ class TestDictParser:
 
     assert parsed_row == expected_row
 
-  def test_parse_results_raises_garf_parse_error_on_incorrect_items_in_response(
+  def test_parse_response_raises_garf_parse_error_on_incorrect_items(
     self, test_parser
   ):
     test_response = api_clients.GarfApiResponse(results=[[1, 2]])
 
     with pytest.raises(parsers.GarfParserError):
       test_parser.parse_response(test_response)
+
+  def test_parse_response_returns_none_for_missing_field(self):
+    test_specification = query_editor.QuerySpecification(
+      'SELECT test_column_1, missing_column.field FROM test'
+    ).generate()
+    parser = parsers.DictParser(test_specification)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'test_column_1': '1', 'test_column_2': 2},
+        {'test_column_1': '11', 'test_column_2': 22},
+      ]
+    )
+
+    parsed_row = parser.parse_response(test_response)
+    expected_row = [['1', None], ['11', None]]
+
+    assert parsed_row == expected_row
 
 
 class TestNumericDictParser:
