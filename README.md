@@ -1,18 +1,26 @@
-# garf - Framework for interacting with reporting APIs
+# garf - Python library for interacting with reporting APIs
 
-`garf` is a framework for building various connectors to reporting API that provides
+`garf` is a Python library for building various connectors to reporting API that provides
 users with a SQL-like interface to specify what needs to be extracted from the API.
 
-It allows you to define SQL-like queries alongside aliases and custom extractors and specify where the results of such query should be stored.\
-Based on a query `garf` builds the correct request to a reporting API, parses response
-and transform it into a structure suitable for writing data.
+Write a query and  `garf` will do the rest- build the correct request to an API, parse response
+and writes it virtually anywhere.
 
 ## Key features
 
-* SQL-like syntax to interact with reporting APIs
-* Built-in support for writing data into various local / remote storage
-* Available as library, CLI, FastAPI endpoint
-* Easily extendable to support various APIs
+* Rich [SQL-like syntax](https://google.github.io/garf/usage/queries/) to interact with reporting APIs.
+* Built-in support for [writing data](https://google.github.io/garf/usage/writers/) into various local / remote storage.
+* Built-in support for post-processing saved data in [BigQuery](https://google.github.io/garf/usage/bq-executor/) & [SQL](https://google.github.io/garf/usage/sql-executor/) databases.
+* Easily [extendable](https://google.github.io/garf/development/overview/) to support various APIs.
+* Available as library, CLI, FastAPI endpoint.
+
+
+## Supported APIs
+
+* [YouTube Data API](https://google.github.io/garf/fetchers/youtube-data-api/)
+* [YouTube Reporting API](https://google.github.io/garf/fetchers/youtube-reporting-api/)
+* [Google Analytics](https://google.github.io/garf/fetchers/google-analytics-api/)
+* [Google Merchant Center](https://google.github.io/garf/fetchers/merchant-center-api/)
 
 
 ## Installation
@@ -21,36 +29,34 @@ and transform it into a structure suitable for writing data.
 pip install garf-executors
 ```
 
-
 ## Usage
+
+### Use `garf` CLI tool to fetch data from an API
+
+```bash
+echo 'SELECT id, name AS model, data.color AS color FROM objects' > query.sql
+garf  query.sql --source rest --source.endpoint=https://api.restful-api.dev
+```
 
 ### Get data from API to use in your code
 
 ```python
-from garf_core import ApiReportFetcher
-from garf_core.api_clients import FakeApiClient
+from garf_core.report_fetcher import ApiReportFetcher
+from garf_core.api_clients import RestApiClient
 from garf_io import writer
 
-my_api_client = FakeApiClient(results=[{'field': 1}])
-fetcher = ApiReportFetcher(my_api_client)
-report = fetcher.fetch('SELECT field FROM resource_name')
+api_client = RestApiClient(endpoint='https://api.restful-api.dev')
+fetcher = ApiReportFetcher(api_client)
+query = 'SELECT id, name AS model, data.color AS color FROM objects'
+report = fetcher.fetch(query)
 
 # Convert to Pandas
 report.to_pandas()
 
 # Write to CSV
-writer.create_writer('csv').write(report, 'api_data')
-
+writer.create_writer('console').write(report, 'api_data')
 ```
 
-### Use `garf` CLI tool to fetch data from an API
-
-
-```bash
-garf /path/to/queries \
-  --source youtube --source.channel=MY_CHANNEL_ID \
-  --output csv
-```
 
 ## Documentation
 

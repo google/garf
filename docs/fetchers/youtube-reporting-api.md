@@ -4,23 +4,30 @@
 
 Install `garf-youtube-reporting-api` library
 
+/// tab | pip
 ```
 pip install garf-executors garf-youtube-reporting-api
 ```
+///
+
+/// tab | uv
+```
+uv add garf-executors garf-youtube-reporting-api
+```
+///
 
 ## Usage
 
 ```
 garf <PATH_TO_QUERIES> --source youtube-reporting-api \
-  --output <OUTPUT_TYPE> \
-  --source.<SOURCE_PARAMETER=VALUE>
+  --output csv \
+  --source.id=YOUTUBE_CHANNEL_ID
 ```
 
 where:
 
-* `<PATH_TO_QUERIES>` - local or remove files containing queries
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
-* `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
+* `query` - local or remote path(s) to files with queries.
+* `output` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
 
 ###  Available source parameters
 
