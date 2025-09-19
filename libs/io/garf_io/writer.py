@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import inspect
+import sys
 from importlib.metadata import entry_points
 
 from garf_io import exceptions
@@ -36,7 +37,7 @@ def create_writer(
 
   Args:
     writer_option: Type of writer.
-    kwargs: Any possible arguments needed o instantiate writer.
+    kwargs: Any possible arguments needed to instantiate writer.
 
   Returns:
     Concrete instantiated writer.
@@ -45,7 +46,13 @@ def create_writer(
     ImportError: When writer specific library is not installed.
     GarfIoError: When incorrect writer option is specified.
   """
-  writers = entry_points(group='garf_writer')
+  if sys.version_info.major == 3 and sys.version_info.minor == 9:
+    try:
+      writers = entry_points(group='garf_writer')['garf_writer']
+    except KeyError:
+      writers = []
+  else:
+    writers = entry_points(group='garf_writer')
   found_writers = {}
   for writer in writers:
     try:
