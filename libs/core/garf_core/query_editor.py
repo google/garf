@@ -445,7 +445,9 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     return self
 
   def remove_trailing_comma(self) -> Self:
-    self.text = re.sub(r',\s+from', ' FROM', self.query.text, re.IGNORECASE)
+    self.text = re.sub(
+      r',\s+from', ' FROM', self.query.text, count=0, flags=re.IGNORECASE
+    )
     return self
 
   def extract_resource_name(self) -> Self:

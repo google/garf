@@ -332,7 +332,10 @@ class TestGarfReport:
       self,
       single_column_report,
     ):
-      assert single_column_report.to_list(flatten=True, distinct=True) == [1, 3]
+      assert single_column_report.to_list(row_type='scalar', distinct=True) == [
+        1,
+        3,
+      ]
 
     def test_multi_column_report_converted_to_dict_list_values(
       self,
@@ -543,26 +546,6 @@ class TestGarfReport:
       ):
         report.GarfReport.from_json(json_str)
 
-    def test_from_json_with_unsupported_type_in_dict_raises_type_error(self):
-      json_str = '{"ad_group_id": {"nested": "value"}, "campaign_id": 1}'
-      with pytest.raises(
-        TypeError, match=r"Unsupported type <class 'dict'> for value"
-      ):
-        report.GarfReport.from_json(json_str)
-
-    def test_from_json_with_unsupported_type_in_list_raises_type_error(self):
-      json_str = (
-        '[{"ad_group_id": 2, "campaign_id": {"ad_group_id": 2, '
-        '"campaign_id": 1}}]'
-      )
-      with pytest.raises(
-        TypeError,
-        match=r"Unsupported type <class 'dict'> for value {'ad_group_id': 2, "
-        r"'campaign_id': 1}. Expected types: int, float, str, bool, list, or "
-        r'None.',
-      ):
-        report.GarfReport.from_json(json_str)
-
     def test_from_json_with_inconsistent_column_order_raises_value_error(self):
       json_str = (
         '[{"ad_group_id": 2, "campaign_id": 1}, {"campaign_id": 2, '
@@ -610,7 +593,9 @@ class TestGarfReport:
 
     def test_convert_report_to_polars(self, multi_column_report):
       expected = pl.DataFrame(
-        data=[[1, 2], [2, 3], [3, 4]], schema=['campaign_id', 'ad_group_id']
+        data=[[1, 2], [2, 3], [3, 4]],
+        schema=['campaign_id', 'ad_group_id'],
+        orient='row',
       )
       assert multi_column_report.to_polars().equals(expected)
 

@@ -20,13 +20,11 @@ import contextlib
 import functools
 import operator
 from collections.abc import Mapping, MutableSequence
-from typing import Any, Union
+from typing import Any
 
-from typing_extensions import TypeAlias, override
+from typing_extensions import override
 
 from garf_core import api_clients, exceptions, query_editor
-
-ApiRowElement: TypeAlias = Union[int, float, str, bool, list, None]
 
 
 class BaseParser(abc.ABC):
@@ -41,7 +39,7 @@ class BaseParser(abc.ABC):
   def parse_response(
     self,
     response: api_clients.GarfApiResponse,
-  ) -> list[list[ApiRowElement]]:
+  ) -> list[list[api_clients.ApiRowElement]]:
     """Parses response."""
     if not response.results:
       return [[]]
@@ -62,7 +60,7 @@ class ListParser(BaseParser):
   def parse_row(
     self,
     row: list,
-  ) -> list[list[ApiRowElement]]:
+  ) -> list[list[api_clients.ApiRowElement]]:
     return row
 
 
@@ -73,7 +71,7 @@ class DictParser(BaseParser):
   def parse_row(
     self,
     row: list,
-  ) -> list[list[ApiRowElement]]:
+  ) -> list[list[api_clients.ApiRowElement]]:
     if not isinstance(row, Mapping):
       raise GarfParserError
     result = []
