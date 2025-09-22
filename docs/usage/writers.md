@@ -1,8 +1,10 @@
-# Write GarfReport
+# Writing GarfReport
 
-`garf-io` handles reading queries and writing `GarfReport` to various local/remote storages.
+[![PyPI](https://img.shields.io/pypi/v/garf-io?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-io)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-io?logo=pypi)](https://pypi.org/project/garf-io/)
 
-Currently it supports writing data to the following destination:
+`garf-io` library is reponsible for writing [`GarfReport`](reports.md) to various local/remote storages.
+
 
 | CLI identifier | Writer Class           | Options  |
 |------------| ---------------- | -------- |
@@ -13,10 +15,6 @@ Currently it supports writing data to the following destination:
 | `sqldb`    | SqlAlchemyWriter | `connection-string`, `if-exists=fail|replace|append` |
 | `sheets`   | SheetsWriter     | `share-with`, `credentials-file`, `spreadsheet-url`, `is_append=True|False`|
 
-Each of writer also support two options for dealing with arrays:
-
-* `WRITER.array-handling` - arrays handling method: "strings" (default)  - store arrays as strings (items combined via a separator, e.g. "item1|item2"), "arrays" - store arrays as arrays.
-* `WRITER.array-separator` - a separator symbol for joining arrays as strings, by default '|'.
 
 ## Installation
 
@@ -97,6 +95,60 @@ writer.write(sample_report, 'query')
 ```
 ///
 
+#### Format
+
+For `console` writer you can specify the output format:
+
+* `table` - rich table (default).
+* `json` - JSON.
+* `jsonl` - JSON lines
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output console \
+  --console.format=json
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import console_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = console_writer.ConsoleWriter(format='json')
+writer.write(sample_report, 'query')
+```
+///
+
+#### Page size
+
+If you're using `console` writer with `table` format option, you can specify
+`page_size` parameter to print N rows to the console.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output console \
+  --console.page-size=100
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import console_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = console_writer.ConsoleWriter(page_size=100)
+writer.write(sample_report, 'query')
+```
+///
 
 ### CSV
 
@@ -122,6 +174,34 @@ writer.write(sample_report, 'query')
 ```
 ///
 
+#### Destination folder
+
+For `csv` writer you can specify the local or remote folder to store results.
+I.e. if you want to write results to Google Cloud Storage bucket `gs://PROJECT_ID/bucket`,
+you need to provide `destination_folder` parameter.
+
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output csv \
+  --csv.destination-folder=gs://PROJECT_ID/bucket
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import csv_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = csv_writer.CsvWriter(destination_folder='gs://PROJECT_ID/bucket/')
+writer.write(sample_report, 'query')
+```
+///
+
 ### JSON
 
 `json` writer allows you to save `GarfReport` as JSON or JSONL file to local or remote storage.
@@ -142,6 +222,62 @@ from garf_io.writers import json_writer
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = json_writer.JsonWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+#### Destination folder
+
+You can specify the local or remote folder to store results.
+I.e. if you want to write results to Google Cloud Storage bucket `gs://PROJECT_ID/bucket`,
+you need to provide `destination_folder` parameter.
+
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output json \
+  --json.destination-folder=gs://PROJECT_ID/bucket
+```
+///
+
+/// tab | python
+```python
+from garf_core import report
+from garf_io.writers import json_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = json_writer.JsonWriter(destination_folder='gs://PROJECT_ID/bucket/')
+writer.write(sample_report, 'query')
+```
+///
+
+#### Format
+
+You can specify the output format:
+
+* `json` - JSON (default)
+* `jsonl` - JSON lines
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output json \
+  --json.format=jsonl
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import json_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = json_writer.JsonWriter(format='jsonl')
 writer.write(sample_report, 'query')
 ```
 ///
@@ -174,6 +310,110 @@ from garf_io.writers import bigquery_writer
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = bigquery_writer.BigQueryWriter()
+writer.write(sample_report, 'query')
+```
+///
+
+#### Project
+
+By default reports are saved to `GOOGLE_CLOUD_PROJECT`.
+You can overwrite it with `project` parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.project=PROJECT_ID
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import bigquery_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = bigquery_writer.BigQueryWriter(project="PROJECT_ID")
+writer.write(sample_report, 'query')
+```
+///
+
+#### Dataset
+
+By default reports are saved to `garf` dataset.
+You can overwrite it with `dataset` parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.dataset=DATASET
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import bigquery_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = bigquery_writer.BigQueryWriter(dataset="DATASET")
+writer.write(sample_report, 'query')
+```
+///
+
+#### Location
+
+By default reports are saved to `US` location.
+You can overwrite it with `location` parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.location=LOCATION
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import bigquery_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = bigquery_writer.BigQueryWriter(location="LOCATION")
+writer.write(sample_report, 'query')
+```
+///
+
+#### Write disposition
+
+By default reports overwrite any existing data.
+You can overwrite it with [`write_disposition`](https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/BigQueryAuditMetadata.WriteDisposition) parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.write_disposition=DISPOSITION
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf_core import report
+from garf_io.writers import bigquery_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = bigquery_writer.BigQueryWriter(write_disposition="DISPOSITION")
 writer.write(sample_report, 'query')
 ```
 ///
@@ -243,3 +483,10 @@ writer = sqldb_writer.SqlAlchemyWriter(
 writer.write(sample_report, 'query')
 ```
 ///
+
+## Configuration
+
+Each of writer also support two options for dealing with arrays:
+
+* `WRITER.array-handling` - arrays handling method: "strings" (default)  - store arrays as strings (items combined via a separator, e.g. "item1|item2"), "arrays" - store arrays as arrays.
+* `WRITER.array-separator` - a separator symbol for joining arrays as strings, by default '|'.
