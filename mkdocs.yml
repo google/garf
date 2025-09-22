@@ -60,11 +60,13 @@ nav:
       - CLI: get-started/cli.md
       - Server: get-started/server.md
   - Usage:
-    - Queries: usage/queries.md
-    - API Clients: usage/api-client.md
-    - Fetchers: usage/fetcher.md
-    - Parsers: usage/parsers.md
-    - Report: usage/reports.md
+    - Core:
+      - usage/core.md
+      - Queries: usage/queries.md
+      - API Clients: usage/api-client.md
+      - Fetchers: usage/fetcher.md
+      - Parsers: usage/parsers.md
+      - Report: usage/reports.md
     - Writers: usage/writers.md
     - Executors:
       - usage/executors.md

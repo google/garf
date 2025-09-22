@@ -1,5 +1,7 @@
 # ApiReportFetcher
 
+ApiReportFetcher is reponsible for getting report from an API based on provided query.
+
 ## Initialization
 
 ### Api Client
