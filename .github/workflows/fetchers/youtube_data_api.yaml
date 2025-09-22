@@ -1,0 +1,33 @@
+name: Run e2e tests for garf-youtube-data-api
+
+on:
+  workflow_dispatch:
+
+env:
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.4"
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv pip install pytest
+      - name: Test ${{ matrix.library }}
+        run: |
+          cd libs/community/google/youtube/youtube-data-api/
+          uv pip install -e .
+          pytest tests/e2e
+        env:
+          GARF_YOUTUBE_DATA_API_KEY: ${{ secrets.GARF_YOUTUBE_DATA_API_KEY }}
+          YOUTUBE_ID: ${{ secrets.YOUTUBE_ID }}

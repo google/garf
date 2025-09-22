@@ -18,9 +18,7 @@ from garf_youtube_data_api import api_clients, report_fetcher
 
 dotenv.load_dotenv()
 
-api_client = api_clients.YouTubeDataApiClient(
-  api_key=os.getenv('YOUTUBE_DATA_API_KEY')
-)
+api_client = api_clients.YouTubeDataApiClient()
 fetcher = report_fetcher.YouTubeDataApiReportFetcher(api_client=api_client)
 
 
