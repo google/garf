@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import inspect
+import sys
 from importlib.metadata import entry_points
 
 from garf_core import exceptions, report_fetcher
@@ -20,7 +21,9 @@ from garf_core import exceptions, report_fetcher
 
 def find_fetchers() -> set[str]:
   """Identifiers all available report fetchers."""
-  return {fetcher.name for fetcher in entry_points(group='garf')}
+  if entrypoints := _get_entrypoints('garf'):
+    return {fetcher.name for fetcher in entrypoints}
+  return set()
 
 
 def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
@@ -38,8 +41,7 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   """
   if source not in find_fetchers():
     raise report_fetcher.MissingApiReportFetcherError(source)
-  fetchers = entry_points(group='garf')
-  for fetcher in fetchers:
+  for fetcher in _get_entrypoints('garf'):
     if fetcher.name == source:
       try:
         fetcher_module = fetcher.load()
@@ -53,3 +55,14 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   raise exceptions.ApiReportFetcherError(
     f'No fetcher available for the source "{source}"'
   )
+
+
+def _get_entrypoints(group='garf'):
+  if sys.version_info.major == 3 and sys.version_info.minor == 9:
+    try:
+      fetchers = entry_points()[group]
+    except KeyError:
+      fetchers = []
+  else:
+    fetchers = entry_points(group=group)
+  return fetchers
