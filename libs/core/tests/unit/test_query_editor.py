@@ -40,6 +40,7 @@ SELECT
     ad_group.id~1 AS ad_group,
     ad_group_ad.ad.id->asset AS ad,
     metrics.cost_micros * 1e6 AS cost,
+    'http://youtube.com/watch?v=' + video.video_id AS video_url,
     {% if selective == "true" %}
         campaign.selective_optimization AS selective_optimization,
     {% endif %}
@@ -57,16 +58,14 @@ class TestQuerySpecification:
       resource_name='ad_group_ad',
       text='',
       fields=[
-        '1',
-        "'2023-01-01'",
-        f"'{datetime.date.today().strftime('%Y-%m-%d')}'",
-        'metrics.clicks / metrics.impressions',
         'customer.id',
         'campaign.bidding_strategy_type',
         'campaign.id',
         'ad_group.id',
         'ad_group_ad.ad.id',
-        'metrics.cost_micros * 1e6',
+        # 'metrics.cost_micros',
+        # 'metrics.clicks',
+        # 'metrics.impressions',
       ],
       column_names=[
         'constant',
@@ -79,13 +78,40 @@ class TestQuerySpecification:
         'ad_group',
         'ad',
         'cost',
+        'video_url',
       ],
       customizers={
         'campaign': {'type': 'nested_field', 'value': 'nested'},
         'ad_group': {'type': 'resource_index', 'value': 1},
         'ad': {'type': 'pointer', 'value': 'asset'},
       },
-      virtual_columns={},
+      virtual_columns={
+        'constant': query_editor.VirtualColumn(type='built-in', value=1),
+        'date': query_editor.VirtualColumn(type='built-in', value='2023-01-01'),
+        'current_date': query_editor.VirtualColumn(
+          type='built-in', value=datetime.date.today().strftime('%Y-%m-%d')
+        ),
+        'ctr': query_editor.VirtualColumn(
+          type='expression',
+          value='metrics.clicks / metrics.impressions',
+          fields=['metrics.clicks', 'metrics.impressions'],
+          substitute_expression='{metrics_clicks} / {metrics_impressions}',
+        ),
+        'cost': query_editor.VirtualColumn(
+          type='expression',
+          value='metrics.cost_micros * 1e6',
+          fields=['metrics.cost_micros'],
+          substitute_expression='{metrics_cost_micros} * 1e6',
+        ),
+        'video_url': query_editor.VirtualColumn(
+          type='expression',
+          value="'http://youtube.com/watch?v=' + video.video_id",
+          fields=['video.video_id'],
+          substitute_expression=(
+            "'http://youtube.com/watch?v=' + {video_video_id}"
+          ),
+        ),
+      },
     )
 
     assert test_query_spec.query == expected_query_elements

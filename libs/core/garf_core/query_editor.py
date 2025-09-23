@@ -125,6 +125,8 @@ class ProcessedField(pydantic.BaseModel):
 
   @classmethod
   def _extract_nested_resource(cls, line_elements: str) -> list[str]:
+    if '://' in line_elements:
+      return []
     return re.split(':', line_elements)
 
 
@@ -160,22 +162,29 @@ class VirtualColumn:
       return VirtualColumn(type='built-in', value=field)
 
     operators = ('/', r'\*', r'\+', ' - ')
-    if len(expressions := re.split('|'.join(operators), field)) > 1:
+    if '://' in field:
+      expressions = re.split(r'\+', field)
+    else:
+      expressions = re.split('|'.join(operators), field)
+    if len(expressions) > 1:
       virtual_column_fields = []
       substitute_expression = field
       for expression in expressions:
         element = expression.strip()
-        if True:
-          # if self._is_valid_field(element):
+        if not _is_constant(element):
           virtual_column_fields.append(element)
           substitute_expression = substitute_expression.replace(
             element, f'{{{element}}}'
           )
+      pattern = r'\{([^}]*)\}'
+      substitute_expression = re.sub(
+        pattern, lambda m: m.group(0).replace('.', '_'), substitute_expression
+      )
       return VirtualColumn(
         type='expression',
         value=field.format(**macros) if macros else field,
         fields=virtual_column_fields,
-        substitute_expression=substitute_expression.replace('.', '_'),
+        substitute_expression=substitute_expression,
       )
     if not _is_quoted_string(field):
       raise GarfFieldError(f"Incorrect field '{field}'.")
@@ -211,7 +220,11 @@ class ExtractedLineElements:
     field, *alias = re.split(' [Aa][Ss] ', line)
     processed_field = ProcessedField.from_raw(field)
     field = processed_field.field
-    virtual_column = None if field else VirtualColumn.from_raw(field, macros)
+    virtual_column = (
+      VirtualColumn.from_raw(field, macros)
+      if _is_invalid_field(field)
+      else None
+    )
     if alias and processed_field.customizer_type:
       customizer = {
         'type': processed_field.customizer_type,
@@ -435,10 +448,10 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       if re.match('/\\*', line) or multiline_comment:
         multiline_comment = True
         continue
-      if re.match('^(#|--|//)', line):
+      if re.match('^(#|--|//) ', line):
         continue
       cleaned_query_line = re.sub(
-        ';$', '', re.sub('(--|//).*$', '', line).strip()
+        ';$', '', re.sub('(--|//) .*$', '', line).strip()
       )
       result.append(cleaned_query_line)
     self.query.text = ' '.join(result)
@@ -533,3 +546,17 @@ def _is_quoted_string(field_name: str) -> bool:
   return (field_name.startswith("'") and field_name.endswith("'")) or (
     field_name.startswith('"') and field_name.endswith('"')
   )
+
+
+def _is_constant(element) -> bool:
+  with contextlib.suppress(ValueError):
+    float(element)
+    return True
+  return _is_quoted_string(element)
+
+
+def _is_invalid_field(field) -> bool:
+  operators = ('/', '*', '+', ' - ')
+  is_constant = _is_constant(field)
+  has_operator = any(operator in field for operator in operators)
+  return is_constant or has_operator

@@ -47,7 +47,7 @@ class TestApiReportFetcher:
     self, test_list_report_fetcher
   ):
     query = 'SELECT column as column_name FROM test'
-    test_report = test_list_report_fetcher.fetch(query, None)
+    test_report = test_list_report_fetcher.fetch(query)
 
     expected_report = report.GarfReport(
       results=[[1], [2], [3]],
@@ -60,7 +60,7 @@ class TestApiReportFetcher:
     self, test_dict_report_fetcher
   ):
     query = 'SELECT column.name, other_column FROM test'
-    test_report = test_dict_report_fetcher.fetch(query, None)
+    test_report = test_dict_report_fetcher.fetch(query)
 
     expected_report = report.GarfReport(
       results=[[1, 2], [2, 2], [3, 2]],
@@ -80,6 +80,24 @@ class TestApiReportFetcher:
     test_dict_report_fetcher.add_builtin_queries({'test': test_builtin_query})
 
     query = 'SELECT test FROM builtin.test'
-    fetched_report = test_dict_report_fetcher.fetch(query, None)
+    fetched_report = test_dict_report_fetcher.fetch(query)
 
     assert fetched_report == test_report
+
+  @pytest.mark.skip('wip')
+  def test_fetch_parses_virtual_columns(self, test_dict_report_fetcher):
+    query = """
+      SELECT
+        column.name,
+        other_column,
+        column.name + other_column AS third_column
+      FROM test
+    """
+    test_report = test_dict_report_fetcher.fetch(query)
+
+    expected_report = report.GarfReport(
+      results=[[1, 2, 3], [2, 2, 4], [3, 2, 5]],
+      column_names=['column_name', 'other_column', 'third_column'],
+    )
+
+    assert test_report == expected_report
