@@ -69,7 +69,7 @@ class RestApiClient(BaseClient):
   ) -> GarfApiResponse:
     response = requests.get(f'{self.endpoint}/{request.resource_name}')
     if response.status_code == self.OK:
-      return GarfApiResponse(response.json())
+      return GarfApiResponse(results=response.json())
     raise GarfApiError('Failed to get data from API')
 
 
