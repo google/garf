@@ -31,6 +31,12 @@ pip install garf-executors[sql]
 ```
 ///
 
+/// tab | server
+```bash
+pip install garf-executors[server]
+```
+///
+
 ## Usage
 
 After `garf-executors` is installed you can use `garf` utility to perform fetching.
@@ -68,6 +74,31 @@ query_executor.execute(
   context=context
 )
 ```
+///
+
+/// tab | server
+
+!!!note
+    Ensure that API endpoint for `garf` is running.
+    ```bash
+    python garf_executors.entrypoints.server
+    ```
+
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "API_SOURCE",
+  "title": "query",
+  "query": "YOUR_QUERY_HERE",
+  "context": {
+    "writer": "OUTPUT_TYPE"
+  }
+}'
+```
+
 ///
 
 ## Customization
@@ -117,6 +148,7 @@ query_executor.execute(
   context=context
 )
 ```
+///
 
 ### Macro
 

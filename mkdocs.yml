@@ -52,13 +52,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Get Started:
-    - get-started/index.md
-    - Installation: get-started/installation.md
-    - Quickstart:
-      - Library: get-started/library.md
-      - CLI: get-started/cli.md
-      - Server: get-started/server.md
+  - Tutorial: get-started/index.md
   - Usage:
     - Core:
       - usage/core.md
