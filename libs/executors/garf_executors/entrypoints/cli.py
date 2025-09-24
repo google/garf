@@ -25,14 +25,14 @@ import sys
 from garf_io import reader
 
 import garf_executors
-from garf_executors import exceptions
+from garf_executors import config, exceptions
 from garf_executors.entrypoints import utils
 
 
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('query', nargs='*')
-  parser.add_argument('-c', '--config', dest='garf_config', default=None)
+  parser.add_argument('-c', '--config', dest='config', default=None)
   parser.add_argument('--source', dest='source', default=None)
   parser.add_argument('--output', dest='output', default='console')
   parser.add_argument('--input', dest='input', default='file')
@@ -64,34 +64,39 @@ def main():
     raise exceptions.GarfExecutorError(
       'Please provide one or more queries to run'
     )
-  config = utils.ConfigBuilder('garf').build(vars(args), kwargs)
-  logger.debug('config: %s', config)
-
-  if config.params:
-    config = utils.initialize_runtime_parameters(config)
-  logger.debug('initialized config: %s', config)
-
-  extra_parameters = utils.ParamsParser(['source']).parse(kwargs)
-  source_parameters = extra_parameters.get('source', {})
   reader_client = reader.create_reader(args.input)
-
-  context = garf_executors.api_executor.ApiExecutionContext(
-    query_parameters=config.params,
-    writer=args.output,
-    writer_parameters=config.writer_params,
-    fetcher_parameters=source_parameters,
-  )
-  query_executor = garf_executors.setup_executor(
-    args.source, context.fetcher_parameters
-  )
-  if args.parallel_queries:
-    logger.info('Running queries in parallel')
+  if config_file := args.config:
+    execution_config = config.Config.from_file(config_file)
+    if not (context := execution_config.sources.get(args.source)):
+      raise exceptions.GarfExecutorError('Missing context')
+    query_executor = garf_executors.setup_executor(
+      args.source, context.fetcher_parameters
+    )
     batch = {query: reader_client.read(query) for query in args.query}
     query_executor.execute_batch(batch, context, args.parallel_queries)
   else:
-    logger.info('Running queries sequentially')
-    for query in args.query:
-      query_executor.execute(reader_client.read(query), query, context)
+    extra_parameters = utils.ParamsParser(
+      ['source', args.writer, 'macro', 'template']
+    ).parse(kwargs)
+    source_parameters = extra_parameters.get('source', {})
+
+    context = garf_executors.api_executor.ApiExecutionContext(
+      query_parameters=config.params,
+      writer=args.output,
+      writer_parameters=config.writer_params,
+      fetcher_parameters=source_parameters,
+    )
+    query_executor = garf_executors.setup_executor(
+      args.source, context.fetcher_parameters
+    )
+    if args.parallel_queries:
+      logger.info('Running queries in parallel')
+      batch = {query: reader_client.read(query) for query in args.query}
+      query_executor.execute_batch(batch, context, args.parallel_queries)
+    else:
+      logger.info('Running queries sequentially')
+      for query in args.query:
+        query_executor.execute(reader_client.read(query), query, context)
 
 
 if __name__ == '__main__':
