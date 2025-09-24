@@ -26,13 +26,6 @@ from garf_core import (
 
 class TestApiReportFetcher:
   @pytest.fixture
-  def test_list_report_fetcher(self):
-    test_api_client = api_clients.FakeApiClient(results=[[1], [2], [3]])
-    return report_fetcher.ApiReportFetcher(
-      api_client=test_api_client, parser=parsers.ListParser
-    )
-
-  @pytest.fixture
   def test_dict_report_fetcher(self):
     test_api_client = api_clients.FakeApiClient(
       results=[
@@ -44,19 +37,6 @@ class TestApiReportFetcher:
     return report_fetcher.ApiReportFetcher(
       api_client=test_api_client, parser=parsers.DictParser
     )
-
-  def test_fetch_returns_correct_report_for_list_parser(
-    self, test_list_report_fetcher
-  ):
-    query = 'SELECT column as column_name FROM test'
-    test_report = test_list_report_fetcher.fetch(query)
-
-    expected_report = report.GarfReport(
-      results=[[1], [2], [3]],
-      column_names=['column_name'],
-    )
-
-    assert test_report == expected_report
 
   def test_fetch_returns_correct_report_for_dict_parser(
     self, test_dict_report_fetcher

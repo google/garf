@@ -31,12 +31,13 @@ from typing_extensions import TypeAlias, override
 from garf_core import exceptions, query_editor
 
 ApiRowElement: TypeAlias = Union[int, float, str, bool, list, dict, None]
+ApiResponseRow: TypeAlias = dict[str, ApiRowElement]
 
 
 class GarfApiResponse(pydantic.BaseModel):
   """Base class for specifying response."""
 
-  results: list[ApiRowElement]
+  results: list[ApiResponseRow]
 
 
 class GarfApiError(exceptions.GarfError):
