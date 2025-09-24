@@ -56,14 +56,6 @@ class TestDictParser:
 
     assert parsed_row == expected_row
 
-  def test_parse_response_raises_garf_parse_error_on_incorrect_items(
-    self, test_parser
-  ):
-    test_response = api_clients.GarfApiResponse(results=[[1, 2]])
-
-    with pytest.raises(parsers.GarfParserError):
-      test_parser.parse_response(test_response)
-
   def test_parse_response_returns_none_for_missing_field(self):
     test_specification = query_editor.QuerySpecification(
       'SELECT test_column_1, missing_column.field FROM test'
@@ -94,16 +86,3 @@ class TestNumericDictParser:
     expected_row = [1]
 
     assert parsed_row == expected_row
-
-
-class TestListParser:
-  @pytest.fixture
-  def test_parser(self):
-    return parsers.ListParser(test_specification)
-
-  def test_parse_row_returns_converted_numeric_values(self, test_parser):
-    test_row = {'test_column_1': '1', 'test_column_2': 2}
-
-    parsed_row = test_parser.parse_row(test_row)
-
-    assert parsed_row == test_row

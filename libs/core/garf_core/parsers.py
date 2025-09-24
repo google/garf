@@ -16,15 +16,22 @@
 from __future__ import annotations
 
 import abc
+import ast
 import contextlib
 import functools
 import operator
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
-from typing_extensions import override
-
 from garf_core import api_clients, exceptions, query_editor
+
+VALID_VIRTUAL_COLUMN_OPERATORS = (
+  ast.BinOp,
+  ast.UnaryOp,
+  ast.operator,
+  ast.Constant,
+  ast.Expression,
+)
 
 
 class BaseParser(abc.ABC):
@@ -48,44 +55,101 @@ class BaseParser(abc.ABC):
       results.append(self.parse_row(result))
     return results
 
-  @abc.abstractmethod
-  def parse_row(self, row):
-    """Parses single row from response."""
+  def _evalute_virtual_column(
+    self,
+    fields: list[str],
+    virtual_column_values: dict[str, Any],
+    substitute_expression: str,
+  ) -> api_clients.ApiRowElement:
+    virtual_column_replacements = {
+      field.replace('.', '_'): value
+      for field, value in zip(fields, virtual_column_values)
+    }
+    virtual_column_expression = substitute_expression.format(
+      **virtual_column_replacements
+    )
+    try:
+      tree = ast.parse(virtual_column_expression, mode='eval')
+      valid = all(
+        isinstance(node, VALID_VIRTUAL_COLUMN_OPERATORS)
+        for node in ast.walk(tree)
+      )
+      if valid:
+        return eval(
+          compile(tree, filename='', mode='eval'), {'__builtins__': None}
+        )
+    except ZeroDivisionError:
+      return 0
+    return None
 
+  def process_virtual_column(
+    self,
+    row: api_clients.ApiResponseRow,
+    virtual_column: query_editor.VirtualColumn,
+  ) -> api_clients.ApiRowElement:
+    if virtual_column.type == 'built-in':
+      return virtual_column.value
+    virtual_column_values = [
+      self.parse_row_element(row, field) for field in virtual_column.fields
+    ]
+    try:
+      result = self._evalute_virtual_column(
+        virtual_column.fields,
+        virtual_column_values,
+        virtual_column.substitute_expression,
+      )
+    except TypeError:
+      virtual_column_values = [
+        f"'{self.parse_row_element(row, field)}'"
+        for field in virtual_column.fields
+      ]
+      result = self._evalute_virtual_column(
+        virtual_column.fields,
+        virtual_column_values,
+        virtual_column.substitute_expression,
+      )
+    except SyntaxError:
+      return virtual_column.value
+    return result
 
-class ListParser(BaseParser):
-  """Returns API results as is."""
-
-  @override
   def parse_row(
     self,
-    row: list,
-  ) -> list[list[api_clients.ApiRowElement]]:
-    return row
+    row: api_clients.ApiResponseRow,
+  ) -> list[api_clients.ApiRowElement]:
+    """Parses single row from response."""
+    results = []
+    fields = self.query_spec.fields
+    index = 0
+    for column in self.query_spec.column_names:
+      if virtual_column := self.query_spec.virtual_columns.get(column):
+        result = self.process_virtual_column(row, virtual_column)
+      else:
+        result = self.parse_row_element(row, fields[index])
+        index = index + 1
+      results.append(result)
+    return results
+
+  @abc.abstractmethod
+  def parse_row_element(
+    self, row: api_clients.ApiResponseRow, key: str
+  ) -> api_clients.ApiRowElement:
+    """Returns nested fields from a dictionary."""
 
 
 class DictParser(BaseParser):
   """Extracts nested dict elements."""
 
-  @override
-  def parse_row(
-    self,
-    row: list,
-  ) -> list[list[api_clients.ApiRowElement]]:
+  def parse_row_element(
+    self, row: api_clients.ApiResponseRow, key: str
+  ) -> api_clients.ApiRowElement:
+    """Returns nested fields from a dictionary."""
     if not isinstance(row, Mapping):
       raise GarfParserError
-    result = []
-    for field in self.query_spec.fields:
-      result.append(self.get_nested_field(row, field))
-    return result
-
-  def get_nested_field(self, dictionary: dict[str, Any], key: str):
-    """Returns nested fields from a dictionary."""
-    if result := dictionary.get(key):
+    if result := row.get(key):
       return result
     key = key.split('.')
     try:
-      return functools.reduce(operator.getitem, key, dictionary)
+      return functools.reduce(operator.getitem, key, row)
     except (TypeError, KeyError):
       return None
 
@@ -93,7 +157,9 @@ class DictParser(BaseParser):
 class NumericConverterDictParser(DictParser):
   """Extracts nested dict elements with numerical conversions."""
 
-  def get_nested_field(self, dictionary: dict[str, Any], key: str):
+  def parse_row_element(
+    self, row: api_clients.ApiResponseRow, key: str
+  ) -> api_clients.ApiRowElement:
     """Extract nested field with int/float conversion."""
 
     def convert_field(value):
@@ -102,12 +168,12 @@ class NumericConverterDictParser(DictParser):
           return type_(value)
       return value
 
-    if result := dictionary.get(key):
+    if result := row.get(key):
       return convert_field(result)
 
     key = key.split('.')
     try:
-      field = functools.reduce(operator.getitem, key, dictionary)
+      field = functools.reduce(operator.getitem, key, row)
       if isinstance(field, MutableSequence) or field in (True, False):
         return field
       return convert_field(field)
