@@ -54,16 +54,18 @@ class ApiReportFetcher:
   """Class responsible for getting data from report API.
 
   Attributes:
-      api_client: a client used for connecting to API.
-      parser: Type of parser to convert API response.
+      api_client: Client used for connecting to API.
+      parser: Class of parser to convert API response.
       query_specification_builder: Class to perform query parsing.
+      builtin_queries:
+        Mapping between query name and function for generating GarfReport.
   """
 
   def __init__(
     self,
-    api_client: api_clients.BaseApiClient,
-    parser: parsers.BaseParser = parsers.DictParser,
-    query_specification_builder: query_editor.QuerySpecification = (
+    api_client: api_clients.BaseClient,
+    parser: type[parsers.BaseParser] = parsers.DictParser,
+    query_specification_builder: type[query_editor.QuerySpecification] = (
       query_editor.QuerySpecification
     ),
     builtin_queries: dict[str, Callable[[ApiReportFetcher], report.GarfReport]]
