@@ -63,9 +63,10 @@ class TestQuerySpecification:
         'campaign.id',
         'ad_group.id',
         'ad_group_ad.ad.id',
-        # 'metrics.cost_micros',
-        # 'metrics.clicks',
-        # 'metrics.impressions',
+        'metrics.clicks',
+        'metrics.impressions',
+        'metrics.cost_micros',
+        'video.video_id',
       ],
       column_names=[
         'constant',

@@ -519,6 +519,10 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       line_elements = ExtractedLineElements.from_query_line(line)
       if virtual_column := line_elements.virtual_column:
         self.query.virtual_columns[line_elements.alias] = virtual_column
+        if fields := virtual_column.fields:
+          for field in fields:
+            if field not in self.query.fields:
+              self.query.fields.append(field)
     return self
 
   def extract_customizers(self) -> Self:
