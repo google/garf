@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import abc
+import ast
 import contextlib
 import functools
 import operator
@@ -25,6 +26,14 @@ from typing import Any
 from typing_extensions import override
 
 from garf_core import api_clients, exceptions, query_editor
+
+VALID_VIRTUAL_COLUMN_OPERATORS = (
+  ast.BinOp,
+  ast.UnaryOp,
+  ast.operator,
+  ast.Constant,
+  ast.Expression,
+)
 
 
 class BaseParser(abc.ABC):
@@ -47,6 +56,56 @@ class BaseParser(abc.ABC):
     for result in response.results:
       results.append(self.parse_row(result))
     return results
+
+  def _process(self, fields, virtual_column_values, substitute_expression):
+    virtual_column_replacements = {
+      field.replace('.', '_'): value
+      for field, value in zip(fields, virtual_column_values)
+    }
+    virtual_column_expression = substitute_expression.format(
+      **virtual_column_replacements
+    )
+    try:
+      tree = ast.parse(virtual_column_expression, mode='eval')
+      valid = all(
+        isinstance(node, VALID_VIRTUAL_COLUMN_OPERATORS)
+        for node in ast.walk(tree)
+      )
+      if valid:
+        return eval(
+          compile(tree, filename='', mode='eval'), {'__builtins__': None}
+        )
+    except ZeroDivisionError:
+      return 0
+    return None
+
+  def process_virtual_column(
+    self, row, virtual_column: query_editor.VirtualColumn
+  ) -> api_clients.ApiRowElement:
+    if virtual_column.type == 'built-in':
+      return virtual_column.value
+    virtual_column_values = [
+      self.get_nested_field(row, field) for field in virtual_column.fields
+    ]
+    try:
+      result = self._process(
+        virtual_column.fields,
+        virtual_column_values,
+        virtual_column.substitute_expression,
+      )
+    except TypeError as e:
+      virtual_column_values = [
+        f"'{self.get_nested_field(row, field)}'"
+        for field in virtual_column.fields
+      ]
+      result = self._process(
+        virtual_column.fields,
+        virtual_column_values,
+        virtual_column.substitute_expression,
+      )
+    except SyntaxError:
+      return virtual_column.value
+    return result
 
   @abc.abstractmethod
   def parse_row(self, row):
@@ -74,10 +133,17 @@ class DictParser(BaseParser):
   ) -> list[list[api_clients.ApiRowElement]]:
     if not isinstance(row, Mapping):
       raise GarfParserError
-    result = []
-    for field in self.query_spec.fields:
-      result.append(self.get_nested_field(row, field))
-    return result
+    results = []
+    fields = self.query_spec.fields
+    index = 0
+    for column in self.query_spec.column_names:
+      if virtual_column := self.query_spec.virtual_columns.get(column):
+        result = self.process_virtual_column(row, virtual_column)
+      else:
+        result = self.get_nested_field(row, fields[index])
+        index = index + 1
+      results.append(result)
+    return results
 
   def get_nested_field(self, dictionary: dict[str, Any], key: str):
     """Returns nested fields from a dictionary."""

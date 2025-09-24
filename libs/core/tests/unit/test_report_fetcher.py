@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+import datetime
+
 import pytest
 from garf_core import (
   api_clients,
@@ -84,20 +86,34 @@ class TestApiReportFetcher:
 
     assert fetched_report == test_report
 
-  @pytest.mark.skip('wip')
   def test_fetch_parses_virtual_columns(self, test_dict_report_fetcher):
     query = """
       SELECT
         column.name,
         other_column,
-        column.name + other_column AS third_column
+        0 AS constant_column,
+        column.name + other_column AS calculated_column,
+        'http://example.com/' + column.name AS concat_column,
+        '{current_date}' AS magic_column
       FROM test
     """
     test_report = test_dict_report_fetcher.fetch(query)
 
+    current_date = datetime.date.today().strftime('%Y-%m-%d')
     expected_report = report.GarfReport(
-      results=[[1, 2, 3], [2, 2, 4], [3, 2, 5]],
-      column_names=['column_name', 'other_column', 'third_column'],
+      results=[
+        [1, 2, 0, 1 + 2, 'http://example.com/1', current_date],
+        [2, 2, 0, 2 + 2, 'http://example.com/2', current_date],
+        [3, 2, 0, 3 + 2, 'http://example.com/3', current_date],
+      ],
+      column_names=[
+        'column_name',
+        'other_column',
+        'constant_column',
+        'calculated_column',
+        'concat_column',
+        'magic_column',
+      ],
     )
 
     assert test_report == expected_report
