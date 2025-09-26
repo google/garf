@@ -14,6 +14,8 @@
 
 """FastAPI endpoint for executing queries."""
 
+from typing import Optional, Union
+
 import fastapi
 import pydantic
 import uvicorn
@@ -35,9 +37,9 @@ class ApiExecutorRequest(pydantic.BaseModel):
   """
 
   source: str
-  title: str | None = None
-  query: str | None = None
-  query_path: str | list[str] | None = None
+  title: Optional[str] = None
+  query: Optional[str] = None
+  query_path: Optional[Union[str, list[str]]] = None
   context: garf_executors.ApiExecutionContext
 
   @pydantic.model_validator(mode='after')
