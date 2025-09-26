@@ -68,7 +68,9 @@ def main():
   if config_file := args.config:
     execution_config = config.Config.from_file(config_file)
     if not (context := execution_config.sources.get(args.source)):
-      raise exceptions.GarfExecutorError('Missing context')
+      raise exceptions.GarfExecutorError(
+        f'No execution context found for source {args.source} in {config_file}'
+      )
     query_executor = garf_executors.setup_executor(
       args.source, context.fetcher_parameters
     )

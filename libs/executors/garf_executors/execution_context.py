@@ -14,6 +14,8 @@
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
 
+"""Captures parameters for fetching data from APIs."""
+
 from __future__ import annotations
 
 import os
@@ -37,14 +39,22 @@ class ExecutionContext(pydantic.BaseModel):
     writer_parameters: Optional parameters to setup writer.
   """
 
-  query_parameters: query_editor.GarfQueryParameters = pydantic.Field(
+  query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
     default_factory=dict
   )
-  fetcher_parameters: dict[str, str | list[str | int]] = pydantic.Field(
+  fetcher_parameters: dict[str, str | list[str | int]] | None = pydantic.Field(
     default_factory=dict
   )
   writer: str | None = None
-  writer_parameters: dict[str, str] = pydantic.Field(default_factory=dict)
+  writer_parameters: dict[str, str] | None = pydantic.Field(
+    default_factory=dict
+  )
+
+  def model_post_init(self, __context__) -> None:
+    if self.fetcher_parameters is None:
+      self.fetcher_parameters = {}
+    if self.writer_parameters is None:
+      self.writer_parameters = {}
 
   @classmethod
   def from_file(

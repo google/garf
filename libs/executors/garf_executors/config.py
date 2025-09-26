@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# pylint: disable=C0330, g-bad-import-order, g-multiple-import
+
+"""Stores mapping between API aliases and their execution context."""
+
 from __future__ import annotations
 
 import os
