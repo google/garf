@@ -1,5 +1,9 @@
 # garf - Python library for interacting with reporting APIs
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![codecov](https://codecov.io/gh/google/garf/graph/badge.svg?token=MlAODRbCRd)](https://codecov.io/gh/google/garf)
+[![tests](https://img.shields.io/github/actions/workflow/status/google/garf/test.yaml?branch=main&label=pytest&logo=python&logoColor=white&style=flat-square)](https://github.com/google/garf/actions/workflows/test.yaml?branch=main)
+
 `garf` is a Python library for building various connectors to reporting API that provides
 users with a SQL-like interface to specify what needs to be extracted from the API.
 
