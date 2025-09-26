@@ -1,8 +1,0 @@
-{
-  "libs/garf_core/garf_core/*.py": {"type": "core", "alternate": "libs/garf_core/tests/unit/test_{}.py"},
-  "libs/garf_core/tests/unit/test_*.py": {"alternate": "libs/garf_core/garf_core/{}.py"},
-  "libs/garf_io/garf_io/*.py": {"type": "io", "alternate": "libs/garf_io/tests/unit/test_{}.py"},
-  "libs/garf_io/tests/unit/test_*.py": {"alternate": "libs/garf_io/garf_io/{}.py"},
-  "libs/garf_executors/garf_executors/*.py": {"type": "exec", "alternate": "libs/garf_executors/tests/unit/test_{}.py"},
-  "libs/garf_executors/tests/unit/test_*.py": {"alternate": "libs/garf_executors/garf_executors/{}.py"},
-}
