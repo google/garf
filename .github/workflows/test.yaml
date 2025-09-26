@@ -19,7 +19,7 @@ jobs:
         library: [core, io, executors]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -34,9 +34,18 @@ jobs:
       - name: Test ${{ matrix.library }}
         if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[all]
+          uv pip install -e libs/executors/.[all]
           cd libs/${{ matrix.library }}
-          uv pip install -e .[all]
           pytest tests/unit
+      - name: End-to-end tests executor
+        run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[all]
+          uv pip install -e libs/executors/.[all]
+          cd libs/executors/
+          pytest tests/end-to-end/
       - name: Generate Report for ${{ matrix.library }}
         if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |

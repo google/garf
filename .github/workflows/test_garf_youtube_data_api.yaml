@@ -2,6 +2,10 @@ name: Run e2e tests for garf-youtube-data-api
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'libs/community/google/youtube/youtube-data-api/**'
 
 env:
   UV_SYSTEM_PYTHON: 1
