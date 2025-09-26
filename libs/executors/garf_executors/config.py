@@ -17,21 +17,30 @@ import os
 import pathlib
 
 import pydantic
+import smart_open
 import yaml
 
 from garf_executors.execution_context import ExecutionContext
 
 
 class Config(pydantic.BaseModel):
+  """Stores necessary parameters for one or multiple API sources.
+
+  Attributes:
+    source: Mapping between API source alias and execution parameters.
+  """
+
   sources: dict[str, ExecutionContext]
 
   @classmethod
   def from_file(cls, path: str | pathlib.Path | os.PathLike[str]) -> Config:
-    with open(path, 'r', encoding='utf-8') as f:
+    """Builds config from local or remote yaml file."""
+    with smart_open.open(path, 'r', encoding='utf-8') as f:
       data = yaml.safe_load(f)
     return Config(sources=data)
 
   def save(self, path: str | pathlib.Path | os.PathLike[str]) -> str:
-    with open(path, 'w', encoding='utf-8') as f:
+    """Saves config to local or remote yaml file."""
+    with smart_open.open(path, 'w', encoding='utf-8') as f:
       yaml.dump(self.model_dump().get('sources'), f, encoding='utf-8')
     return f'Config is saved to {str(path)}'

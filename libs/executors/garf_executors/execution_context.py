@@ -20,6 +20,7 @@ import os
 import pathlib
 
 import pydantic
+import smart_open
 import yaml
 from garf_core import query_editor
 from garf_io import writer
@@ -36,33 +37,27 @@ class ExecutionContext(pydantic.BaseModel):
     writer_parameters: Optional parameters to setup writer.
   """
 
-  query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
+  query_parameters: query_editor.GarfQueryParameters = pydantic.Field(
     default_factory=dict
   )
-  fetcher_parameters: dict[str, str | list[str | int]] | None = pydantic.Field(
+  fetcher_parameters: dict[str, str | list[str | int]] = pydantic.Field(
     default_factory=dict
   )
   writer: str | None = None
-  writer_parameters: dict[str, str] | None = pydantic.Field(
-    default_factory=dict
-  )
-
-  def model_post_init(self, __context__) -> None:
-    if self.fetcher_parameters is None:
-      self.fetcher_parameters = {}
-    if self.writer_parameters is None:
-      self.writer_parameters = {}
+  writer_parameters: dict[str, str] = pydantic.Field(default_factory=dict)
 
   @classmethod
   def from_file(
     cls, path: str | pathlib.Path | os.PathLike[str]
   ) -> ExecutionContext:
-    with open(path, 'r', encoding='utf-8') as f:
+    """Builds context from local or remote yaml file."""
+    with smart_open.open(path, 'r', encoding='utf-8') as f:
       data = yaml.safe_load(f)
     return ExecutionContext(**data)
 
   def save(self, path: str | pathlib.Path | os.PathLike[str]) -> str:
-    with open(path, 'w', encoding='utf-8') as f:
+    """Saves context to local or remote yaml file."""
+    with smart_open.open(path, 'w', encoding='utf-8') as f:
       yaml.dump(self.model_dump(), f, encoding='utf-8')
     return f'ExecutionContext is saved to {str(path)}'
 

@@ -14,7 +14,6 @@
 
 import yaml
 from garf_executors.config import Config
-from garf_executors.execution_context import ExecutionContext
 
 
 class TestConfig:
@@ -27,7 +26,7 @@ class TestConfig:
             'start_date': '2025-01-01',
           },
           'template': {
-            'cohorts': [1, 2, 3, 4],
+            'cohorts': '1',
           },
         },
         'fetcher_parameters': {
@@ -54,7 +53,7 @@ class TestConfig:
             'start_date': '2025-01-01',
           },
           'template': {
-            'cohorts': [1, 2, 3, 4],
+            'cohorts': '1',
           },
         },
         'fetcher_parameters': {
