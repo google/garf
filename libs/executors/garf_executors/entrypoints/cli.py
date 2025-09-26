@@ -76,14 +76,17 @@ def main():
     query_executor.execute_batch(batch, context, args.parallel_queries)
   else:
     extra_parameters = utils.ParamsParser(
-      ['source', args.writer, 'macro', 'template']
+      ['source', args.output, 'macro', 'template']
     ).parse(kwargs)
     source_parameters = extra_parameters.get('source', {})
 
     context = garf_executors.api_executor.ApiExecutionContext(
-      query_parameters=config.params,
+      query_parameters={
+        'macro': extra_parameters.get('macro'),
+        'template': extra_parameters.get('template'),
+      },
       writer=args.output,
-      writer_parameters=config.writer_params,
+      writer_parameters=extra_parameters.get(args.output),
       fetcher_parameters=source_parameters,
     )
     query_executor = garf_executors.setup_executor(
