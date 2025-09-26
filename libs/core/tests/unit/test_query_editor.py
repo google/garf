@@ -17,6 +17,7 @@ from __future__ import annotations
 import datetime
 
 import pytest
+from dateutil.relativedelta import relativedelta
 from garf_core import query_editor
 
 
@@ -129,3 +130,67 @@ class TestQuerySpecification:
     )
 
     assert test_query_spec.query == expected_query_elements
+
+  def test_generate_returns_macros(self):
+    query = 'SELECT test FROM resource WHERE start_date = {start_date}'
+    test_query_spec = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+      args=query_editor.GarfQueryParameters(
+        macro={'start_date': ':YYYYMMDD'},
+      ),
+    )
+    assert test_query_spec.macros.get(
+      'start_date'
+    ) == datetime.date.today().strftime('%Y-%m-%d')
+
+
+def test_convert_date_returns_correct_datestring():
+  current_date = datetime.datetime.today()
+  current_year = datetime.datetime(current_date.year, 1, 1)
+  current_month = datetime.datetime(current_date.year, current_date.month, 1)
+  last_year = current_year - relativedelta(years=1)
+  last_month = current_month - relativedelta(months=1)
+  yesterday = current_date - relativedelta(days=1)
+  tomorrow = current_date + relativedelta(days=1)
+  next_month = current_month + relativedelta(months=1)
+  next_year = current_year + relativedelta(years=1)
+
+  non_macro_date = '2022-01-01'
+  date_year = ':YYYY'
+  date_month = ':YYYYMM'
+  date_day = ':YYYYMMDD'
+  date_year_minus_one = ':YYYY-1'
+  date_month_minus_one = ':YYYYMM-1'
+  date_day_minus_one = ':YYYYMMDD-1'
+  date_day_plus_one = ':YYYYMMDD+1'
+  date_month_plus_one = ':YYYYMM+1'
+  date_year_plus_one = ':YYYY+1'
+
+  non_macro_date_converted = query_editor.convert_date(non_macro_date)
+  new_date_year = query_editor.convert_date(date_year)
+  new_date_month = query_editor.convert_date(date_month)
+  new_date_day = query_editor.convert_date(date_day)
+  new_date_year_minus_one = query_editor.convert_date(date_year_minus_one)
+  new_date_month_minus_one = query_editor.convert_date(date_month_minus_one)
+  new_date_day_minus_one = query_editor.convert_date(date_day_minus_one)
+  new_date_day_plus_one = query_editor.convert_date(date_day_plus_one)
+  new_date_month_plus_one = query_editor.convert_date(date_month_plus_one)
+  new_date_year_plus_one = query_editor.convert_date(date_year_plus_one)
+
+  assert non_macro_date_converted == non_macro_date
+  assert new_date_year == current_year.strftime('%Y-%m-%d')
+  assert new_date_month == current_month.strftime('%Y-%m-%d')
+  assert new_date_day == current_date.strftime('%Y-%m-%d')
+  assert new_date_year_minus_one == last_year.strftime('%Y-%m-%d')
+  assert new_date_month_minus_one == last_month.strftime('%Y-%m-%d')
+  assert new_date_day_minus_one == yesterday.strftime('%Y-%m-%d')
+  assert new_date_day_plus_one == tomorrow.strftime('%Y-%m-%d')
+  assert new_date_month_plus_one == next_month.strftime('%Y-%m-%d')
+  assert new_date_year_plus_one == next_year.strftime('%Y-%m-%d')
+
+
+@pytest.mark.parametrize('date', [':YYYYMMDD-N', ':YYYYMMDD-2-3', ':YYYMMDD'])
+def test_convert_date_raise_garf_macro_error(date):
+  with pytest.raises(query_editor.GarfMacroError):
+    query_editor.convert_date(date)
