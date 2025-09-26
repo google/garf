@@ -29,7 +29,7 @@ from typing_extensions import Self, TypeAlias
 
 from garf_core import exceptions
 
-QueryParameters: TypeAlias = dict[str, Union[str, float, int]]
+QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
 
 
 class GarfQueryParameters(pydantic.BaseModel):
@@ -386,7 +386,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     self,
     text: str,
     title: str | None = None,
-    args: GarfQueryParameters | None = GarfQueryParameters(),
+    args: GarfQueryParameters | None = None,
     **kwargs: str,
   ) -> None:
     """Instantiates QuerySpecification based on text, title and optional args.
