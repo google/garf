@@ -96,7 +96,7 @@ class ApiReportFetcher:
 
   async def afetch(
     self,
-    query_specification: str | query_editor.QueryElements,
+    query_specification: str | query_editor.QuerySpecification,
     args: query_editor.GarfQueryParameters | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
