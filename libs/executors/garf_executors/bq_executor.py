@@ -91,6 +91,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
       Report with data if query returns some data otherwise empty Report.
     """
     query_text = self.replace_params_template(query, context.query_parameters)
+    self.create_datasets(context.query_parameters.macro)
     job = self.client.query(query_text)
     try:
       result = job.result()
@@ -136,7 +137,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
           bq_dataset = bigquery.Dataset(dataset_id)
           bq_dataset.location = self.location
           self.client.create_dataset(bq_dataset, timeout=30)
-          logger.debug('Created new dataset %s', dataset_id)
+          logger.info('Created new dataset %s', dataset_id)
 
 
 def extract_datasets(macros: dict | None) -> list[str]:
