@@ -405,7 +405,10 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     """Returns macros with injected common parameters."""
     common_params = dict(self.common_params)
     if macros := self.args.macro:
-      common_params.update(macros)
+      converted_macros = {
+        key: convert_date(value) for key, value in macros.items()
+      }
+      common_params.update(converted_macros)
     return common_params
 
   def generate(self) -> BaseQueryElements:
@@ -564,3 +567,50 @@ def _is_invalid_field(field) -> bool:
   is_constant = _is_constant(field)
   has_operator = any(operator in field for operator in operators)
   return is_constant or has_operator
+
+
+def convert_date(date_string: str) -> str:
+  """Converts specific dates parameters to actual dates.
+
+  Returns:
+    Date string in YYYY-MM-DD format.
+
+  Raises:
+    GarfMacroError:
+     If dynamic lookback value (:YYYYMMDD-N) is incorrect.
+  """
+  if isinstance(date_string, list) or date_string.find(':Y') == -1:
+    return date_string
+  current_date = datetime.date.today()
+  base_date, *date_customizer = re.split('\\+|-', date_string)
+  if len(date_customizer) > 1:
+    raise GarfMacroError(
+      'Invalid format for date macro, should be in :YYYYMMDD-N format'
+    )
+  if not date_customizer:
+    days_lookback = 0
+  else:
+    try:
+      days_lookback = int(date_customizer[0])
+    except ValueError as e:
+      raise GarfMacroError(
+        'Must provide numeric value for a number lookback period, '
+        'i.e. :YYYYMMDD-1'
+      ) from e
+  if base_date == ':YYYY':
+    new_date = datetime.datetime(current_date.year, 1, 1)
+    delta = relativedelta.relativedelta(years=days_lookback)
+  elif base_date == ':YYYYMM':
+    new_date = datetime.datetime(current_date.year, current_date.month, 1)
+    delta = relativedelta.relativedelta(months=days_lookback)
+  elif base_date == ':YYYYMMDD':
+    new_date = current_date
+    delta = relativedelta.relativedelta(days=days_lookback)
+  else:
+    raise GarfMacroError(
+      'Invalid format for date macro, should be in :YYYYMMDD-N format'
+    )
+
+  if '-' in date_string:
+    return (new_date - delta).strftime('%Y-%m-%d')
+  return (new_date + delta).strftime('%Y-%m-%d')

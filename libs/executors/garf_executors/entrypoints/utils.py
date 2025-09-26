@@ -15,18 +15,11 @@
 
 from __future__ import annotations
 
-import dataclasses
-import datetime
 import logging
-import os
 import sys
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Sequence
 from typing import Any
 
-import smart_open
-import yaml
-from dateutil import relativedelta
-from garf_core import query_editor
 from rich import logging as rich_logging
 
 
@@ -94,43 +87,6 @@ class ParamsParser:
 
 class GarfParamsException(Exception):
   """Defines exception for incorrect parameters."""
-
-
-def convert_date(date_string: str) -> str:
-  """Converts specific dates parameters to actual dates.
-
-  Returns:
-      Date string in YYYY-MM-DD format.
-
-  Raises:
-      ValueError:
-          If dynamic lookback value (:YYYYMMDD-N) is incorrect.
-  """
-  if isinstance(date_string, list) or date_string.find(':YYYY') == -1:
-    return date_string
-  current_date = datetime.date.today()
-  date_object = date_string.split('-')
-  base_date = date_object[0]
-  if len(date_object) == 2:
-    try:
-      days_ago = int(date_object[1])
-    except ValueError as e:
-      raise ValueError(
-        'Must provide numeric value for a number lookback period, '
-        'i.e. :YYYYMMDD-1'
-      ) from e
-  else:
-    days_ago = 0
-  if base_date == ':YYYY':
-    new_date = datetime.datetime(current_date.year, 1, 1)
-    delta = relativedelta.relativedelta(years=days_ago)
-  elif base_date == ':YYYYMM':
-    new_date = datetime.datetime(current_date.year, current_date.month, 1)
-    delta = relativedelta.relativedelta(months=days_ago)
-  elif base_date == ':YYYYMMDD':
-    new_date = current_date
-    delta = relativedelta.relativedelta(days=days_ago)
-  return (new_date - delta).strftime('%Y-%m-%d')
 
 
 def init_logging(

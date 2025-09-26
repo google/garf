@@ -26,7 +26,7 @@ class TestConfig:
             'start_date': '2025-01-01',
           },
           'template': {
-            'cohorts': '1',
+            'cohorts': 1,
           },
         },
         'fetcher_parameters': {
@@ -53,7 +53,7 @@ class TestConfig:
             'start_date': '2025-01-01',
           },
           'template': {
-            'cohorts': '1',
+            'cohorts': 1,
           },
         },
         'fetcher_parameters': {

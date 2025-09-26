@@ -33,7 +33,7 @@ class TestExecutionContext:
           'start_date': '2025-01-01',
         },
         'template': {
-          'cohorts': [1, 2, 3, 4],
+          'cohorts': 1,
         },
       },
       'fetcher_parameters': {
@@ -58,7 +58,7 @@ class TestExecutionContext:
           'start_date': '2025-01-01',
         },
         'template': {
-          'cohorts': [1, 2, 3, 4],
+          'cohorts': 1,
         },
       },
       'fetcher_parameters': {
