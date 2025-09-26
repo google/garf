@@ -20,12 +20,12 @@ import contextlib
 import csv
 import json
 import os
-import pathlib
 from collections.abc import Sequence
 from typing import Any, Union
 
 import pydantic
 import requests
+import smart_open
 from typing_extensions import TypeAlias, override
 
 from garf_core import exceptions, query_editor
@@ -124,7 +124,7 @@ class FakeApiClient(BaseClient):
       GarfApiError: When file with data not found.
     """
     try:
-      with pathlib.Path.open(file_location, 'r', encoding='utf-8') as f:
+      with smart_open.open(file_location, 'r', encoding='utf-8') as f:
         data = json.load(f)
         return FakeApiClient(data)
     except FileNotFoundError as e:
@@ -144,7 +144,7 @@ class FakeApiClient(BaseClient):
       GarfApiError: When file with data not found.
     """
     try:
-      with pathlib.Path.open(file_location, 'r', encoding='utf-8') as f:
+      with smart_open.open(file_location, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         data = []
         for row in reader:
