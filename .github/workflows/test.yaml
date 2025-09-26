@@ -10,7 +10,7 @@ env:
   UV_SYSTEM_PYTHON: 1
 
 jobs:
-  test:
+  test-unit:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -39,13 +39,6 @@ jobs:
           uv pip install -e libs/executors/.[all]
           cd libs/${{ matrix.library }}
           pytest tests/unit
-      - name: End-to-end tests executor
-        run: |
-          uv pip install -e libs/core/.[all]
-          uv pip install -e libs/io/.[all]
-          uv pip install -e libs/executors/.[all]
-          cd libs/executors/
-          pytest tests/end-to-end/
       - name: Generate Report for ${{ matrix.library }}
         if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |
@@ -54,3 +47,30 @@ jobs:
         uses: codecov/codecov-action@v3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  test-e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.4"
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv pip install pytest coverage
+      - name: End-to-end tests executor
+        run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[all]
+          uv pip install -e libs/executors/.[all]
+          cd libs/executors/
+          pytest tests/end-to-end/
