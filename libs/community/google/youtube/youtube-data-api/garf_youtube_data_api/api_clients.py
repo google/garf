@@ -74,7 +74,8 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     part_str = ','.join(fields)
     result = self._list(sub_service, part=part_str, **kwargs)
     results = []
-    results.extend(result.get('items'))
+    if data := result.get('items'):
+      results.extend(data)
     while result.get('nextPageToken'):
       result = self._list(
         sub_service,
@@ -82,13 +83,14 @@ class YouTubeDataApiClient(api_clients.BaseClient):
         next_page_token=result.get('nextPageToken'),
         **kwargs,
       )
-      results.extend(result.get('items'))
+      if data := result.get('items'):
+        results.extend(data)
 
     return api_clients.GarfApiResponse(results=results)
 
   def _list(
     self, service, part: str, next_page_token: str | None = None, **kwargs
-  ) -> list:
+  ) -> dict:
     if next_page_token:
       return service.list(
         part=part, pageToken=next_page_token, **kwargs

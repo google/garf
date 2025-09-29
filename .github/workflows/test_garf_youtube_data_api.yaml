@@ -26,7 +26,7 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: |
-          uv pip install pytest
+          uv pip install pytest python-dotenv
       - name: Test ${{ matrix.library }}
         run: |
           cd libs/community/google/youtube/youtube-data-api/
