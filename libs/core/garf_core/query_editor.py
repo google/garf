@@ -444,14 +444,15 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     """Removes comments and converts text to lines."""
     result: list[str] = []
     multiline_comment = False
-    for line in self.query.text.split('\n'):
+    for raw_line in self.query.text.split('\n'):
+      line = raw_line.strip()
       if re.match('\\*/', line):
         multiline_comment = False
         continue
       if re.match('/\\*', line) or multiline_comment:
         multiline_comment = True
         continue
-      if re.match('^(#|--|//) ', line):
+      if re.match('^(#|--|//) ', line) or line in ('--', '#', '//'):
         continue
       cleaned_query_line = re.sub(
         ';$', '', re.sub('(--|//) .*$', '', line).strip()
