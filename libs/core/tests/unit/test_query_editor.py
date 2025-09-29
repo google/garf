@@ -25,6 +25,9 @@ from garf_core import query_editor
 def query():
   return """
 -- Comment
+--
+     #
+ //
 # Comment
 // Comment
 /* Multiline
