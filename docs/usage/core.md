@@ -24,6 +24,6 @@ pip install garf-core
 
 /// tab | uv
 ```bash
-uv add garf-core
+uv pip install garf-core
 ```
 ///

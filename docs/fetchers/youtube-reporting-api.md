@@ -12,7 +12,7 @@ pip install garf-executors garf-youtube-reporting-api
 
 /// tab | uv
 ```
-uv add garf-executors garf-youtube-reporting-api
+uv pip install garf-executors garf-youtube-reporting-api
 ```
 ///
 

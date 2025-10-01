@@ -58,7 +58,7 @@ report = fetcher.fetch(query)
 report.to_pandas()
 
 # Write to CSV
-writer.create_writer('console').write(report, 'api_data')
+writer.create_writer('csv').write(report, 'api_data')
 ```
 
 

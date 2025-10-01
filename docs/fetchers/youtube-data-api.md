@@ -14,7 +14,7 @@ pip install garf-executors garf-youtube-data-api
 
 /// tab | uv
 ```
-uv add garf-executors garf-youtube-data-api
+uv pip install garf-executors garf-youtube-data-api
 ```
 ///
 
