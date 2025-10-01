@@ -17,7 +17,7 @@ pip install garf-executors garf-google-analytics
 
 /// tab | uv
 ```
-uv add garf-executors garf-google-analytics
+uv pip install garf-executors garf-google-analytics
 ```
 ///
 

@@ -26,7 +26,7 @@ pip install garf-io
 
 /// tab | uv
 ```bash
-uv add garf-io
+uv pip install garf-io
 ```
 ///
 

@@ -12,7 +12,7 @@ pip install garf-executors
 
 /// tab | uv
 ```
-uv add garf-executors
+uv pip install garf-executors
 ```
 ///
 
