@@ -105,11 +105,10 @@ class BidManagerApiClient(api_clients.BaseClient):
       status['metadata']['googleCloudStoragePath'], 'r', encoding='utf-8'
     ) as f:
       data = f.readlines()
-    columns = data[0].strip().split(',')
     results = []
     for row in data[1:]:
       if row := row.strip():
-        result = dict(zip(columns, row.split(',')))
+        result = dict(zip(request.column_names, row.split(',')))
         results.append(result)
       else:
         break
