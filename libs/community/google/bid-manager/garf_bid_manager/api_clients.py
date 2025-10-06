@@ -34,11 +34,16 @@ _SERVICE_ACCOUNT_CREDENTIALS_FILE = (
 
 
 class BidManagerApiClientError(exceptions.BidManagerApiError):
-  """API client specific error."""
+  """Bid Manager API client specific error."""
 
 
 class BidManagerApiClient(api_clients.BaseClient):
-  def __init__(self, api_version: str = 'v2') -> None:
+  """Responsible for connecting to Bid Manager API."""
+
+  def __init__(
+    self,
+    api_version: str = 'v2',
+  ) -> None:
     """Initializes BidManagerApiClient."""
     self.api_version = api_version
     self._client = None
@@ -103,8 +108,11 @@ class BidManagerApiClient(api_clients.BaseClient):
     columns = data[0].strip().split(',')
     results = []
     for row in data[1:]:
-      result = dict(zip(columns, row.strip().split(',')))
-      results.append(result)
+      if row := row.strip():
+        result = dict(zip(columns, row.split(',')))
+        results.append(result)
+      else:
+        break
     return api_clients.GarfApiResponse(results=results)
 
   def get_service_account_credentials(self):
@@ -151,18 +159,20 @@ def build_request(request: query_editor.BidManagerApiQuery):
       data_range = value
     else:
       filters.append({'type': name, 'value': value})
-
-  return {
+  query = {
     'metadata': {
-      'title': request.title,
-      'dataRange': {'range': data_range},
+      'title': request.title or 'garf',
       'format': 'CSV',
     },
     'params': {
       'type': request.resource_name,
       'groupBys': group_bys,
       'filters': filters,
-      'metrics': metrics,
     },
     'schedule': {'frequency': 'ONE_TIME'},
   }
+  if metrics:
+    query['params']['metrics'] = metrics
+  if data_range:
+    query['metadata']['dataRange'] = {'range': data_range}
+  return query
