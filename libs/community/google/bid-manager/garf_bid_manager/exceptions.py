@@ -12,12 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from garf_bid_manager.api_clients import BidManagerApiClient
-from garf_bid_manager.report_fetcher import BidManagerApiReportFetcher
+from garf_core import exceptions
 
-__all__ = [
-  'BidManagerApiClient',
-  'BidManagerApiReportFetcher',
-]
 
-__version__ = '0.0.1'
+class BidManagerApiError(exceptions.GarfError):
+  """Base class for all library exceptions."""

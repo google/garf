@@ -15,7 +15,8 @@
 """Defines report fetcher for Bid Manager API."""
 
 from garf_core import parsers, report_fetcher
-from garf_google_analytics import BidManagerApiClient, query_editor
+
+from garf_bid_manager import BidManagerApiClient, query_editor
 
 
 class BidManagerApiReportFetcher(report_fetcher.ApiReportFetcher):
