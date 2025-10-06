@@ -17,13 +17,13 @@ import os
 import pathlib
 
 import smart_open
-from garf_core import api_clients, query_editor
+from garf_core import api_clients
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from typing_extensions import override
 
-from garf_bid_manager import exceptions
+from garf_bid_manager import exceptions, query_editor
 
 _API_URL = 'https://doubleclickbidmanager.googleapis.com/'
 _DEFAULT_API_SCOPES = ['https://www.googleapis.com/auth/doubleclickbidmanager']
@@ -65,42 +65,10 @@ class BidManagerApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.BidManagerApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
-    filters = {'type': 'FILTER_ADVERTISER', 'value': ''}
-    query_obj = {
-      'metadata': {
-        'title': 'test',
-        'dataRange': {'range': 'LAST_7_DAYS'},
-        'format': 'CSV',
-      },
-      'params': {
-        'type': 'STANDARD',
-        'groupBys': [
-          'FILTER_ADVERTISER_NAME',
-          'FILTER_ADVERTISER',
-          'FILTER_ADVERTISER_CURRENCY',
-          'FILTER_INSERTION_ORDER_NAME',
-          'FILTER_INSERTION_ORDER',
-          'FILTER_LINE_ITEM_NAME',
-          'FILTER_LINE_ITEM',
-        ],
-        'filters': filters,
-        'metrics': [
-          'METRIC_IMPRESSIONS',
-          'METRIC_BILLABLE_IMPRESSIONS',
-          'METRIC_CLICKS',
-          'METRIC_CTR',
-          'METRIC_TOTAL_CONVERSIONS',
-          'METRIC_LAST_CLICKS',
-          'METRIC_LAST_IMPRESSIONS',
-          'METRIC_REVENUE_ADVERTISER',
-          'METRIC_MEDIA_COST_ADVERTISER',
-        ],
-      },
-      'schedule': {'frequency': 'ONE_TIME'},
-    }
-    query_response = self.client.queries().create(body=query_obj).execute()
+    query = build_request(request)
+    query_response = self.client.queries().create(body=query).execute()
     report_response = (
       self.client.queries()
       .run(queryId=query_response['queryId'], synchronous=False)
@@ -164,3 +132,37 @@ class BidManagerApiClient(api_clients.BaseClient):
     raise BidManagerApiClientError(
       f'A service account key file could not be found at {credentials_file}.'
     )
+
+
+def build_request(request: query_editor.BidManagerApiQuery):
+  """Builds Bid Manager API query object from BidManagerApiQuery."""
+  metrics = []
+  group_bys = []
+  for field in request.fields:
+    if field.startswith('METRIC'):
+      metrics.append(field)
+    elif field.startswith('FILTER'):
+      group_bys.append(field)
+  filters = []
+  data_range = None
+  for field in request.filters:
+    name, operator, value = field.split()
+    if name.startswith('dataRange'):
+      data_range = value
+    else:
+      filters.append({'type': name, 'value': value})
+
+  return {
+    'metadata': {
+      'title': request.title,
+      'dataRange': {'range': data_range},
+      'format': 'CSV',
+    },
+    'params': {
+      'type': request.resource_name,
+      'groupBys': group_bys,
+      'filters': filters,
+      'metrics': metrics,
+    },
+    'schedule': {'frequency': 'ONE_TIME'},
+  }
