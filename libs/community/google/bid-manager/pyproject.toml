@@ -9,6 +9,7 @@ dependencies = [
   "garf-io",
   "google-api-python-client",
   "google_auth_oauthlib",
+  "tenacity",
 ]
 authors = [
   {name = "Andrei Markin", email = "amarkin@google.com"},

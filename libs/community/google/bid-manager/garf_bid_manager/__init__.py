@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 
 from garf_bid_manager.api_clients import BidManagerApiClient
 from garf_bid_manager.report_fetcher import BidManagerApiReportFetcher
@@ -21,3 +22,6 @@ __all__ = [
 ]
 
 __version__ = '0.0.1'
+
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+logging.getLogger('google_auth_oauthlib.flow').setLevel(logging.ERROR)

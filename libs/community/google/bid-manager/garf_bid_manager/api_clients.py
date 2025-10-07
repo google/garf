@@ -13,10 +13,12 @@
 # limitations under the License.
 """Creates API client for Bid Manager API."""
 
+import logging
 import os
 import pathlib
 
 import smart_open
+import tenacity
 from garf_core import api_clients
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -28,9 +30,7 @@ from garf_bid_manager import exceptions, query_editor
 _API_URL = 'https://doubleclickbidmanager.googleapis.com/'
 _DEFAULT_API_SCOPES = ['https://www.googleapis.com/auth/doubleclickbidmanager']
 
-_SERVICE_ACCOUNT_CREDENTIALS_FILE = (
-  str(pathlib.Path.home()) + '/configs/dbm.json'
-)
+_SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home()) + 'dbm.json'
 
 
 class BidManagerApiClientError(exceptions.BidManagerApiError):
@@ -43,16 +43,20 @@ class BidManagerApiClient(api_clients.BaseClient):
   def __init__(
     self,
     api_version: str = 'v2',
+    credentials_file: str | pathlib.Path = os.getenv(
+      'GARF_BID_MANAGER_CREDENTIALS_FILE', _SERVICE_ACCOUNT_CREDENTIALS_FILE
+    ),
   ) -> None:
     """Initializes BidManagerApiClient."""
     self.api_version = api_version
+    self.credentials_file = credentials_file
     self._client = None
     self._credentials = None
 
   @property
   def credentials(self):
     if not self._credentials:
-      self._credentials = self.get_credentials()
+      self._credentials = self._get_oauth_credentials()
     return self._credentials
 
   @property
@@ -72,7 +76,7 @@ class BidManagerApiClient(api_clients.BaseClient):
   def get_response(
     self, request: query_editor.BidManagerApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
-    query = build_request(request)
+    query = _build_request(request)
     query_response = self.client.queries().create(body=query).execute()
     report_response = (
       self.client.queries()
@@ -81,13 +85,13 @@ class BidManagerApiClient(api_clients.BaseClient):
     )
     query_id = report_response['key']['queryId']
     report_id = report_response['key']['reportId']
-    print(
-      f'Query {query_id} is running, report '
-      f'{report_id} has been created and is '
-      'currently being generated.'
+    logging.info(
+      'Query %s is running, report %s has been created and is '
+      'currently being generated.',
+      query_id,
+      report_id,
     )
 
-    # Configure the queries.reports.get request.
     get_request = (
       self.client.queries()
       .reports()
@@ -97,10 +101,11 @@ class BidManagerApiClient(api_clients.BaseClient):
       )
     )
 
-    status = get_request.execute()
-    state = status.get('metadata').get('status').get('state')
+    status = _check_if_report_is_done(get_request)
 
-    print(f'Report {report_id} generated successfully. Now downloading.')
+    logging.debug(
+      'Report %s generated successfully. Now downloading.', report_id
+    )
     with smart_open.open(
       status['metadata']['googleCloudStoragePath'], 'r', encoding='utf-8'
     ) as f:
@@ -108,40 +113,33 @@ class BidManagerApiClient(api_clients.BaseClient):
     results = []
     for row in data[1:]:
       if row := row.strip():
-        result = dict(zip(request.column_names, row.split(',')))
+        result = dict(zip(request.fields, row.split(',')))
         results.append(result)
       else:
         break
     return api_clients.GarfApiResponse(results=results)
 
-  def get_service_account_credentials(self):
-    """Steps through Service Account OAuth 2.0 flow to retrieve credentials."""
-    service_account_credentials_file = _SERVICE_ACCOUNT_CREDENTIALS_FILE
-
-    if os.path.isfile(service_account_credentials_file):
+  def _get_service_account_credentials(self):
+    if pathlib.Path(self.credentials_file).is_file():
       return service_account.Credentials.from_service_account_file(
-        service_account_credentials_file, scopes=_DEFAULT_API_SCOPES
+        self.credentials_file, scopes=_DEFAULT_API_SCOPES
       )
     raise BidManagerApiClientError(
       'A service account key file could not be found at '
-      f'{service_account_credentials_file}.'
+      f'{self.credentials_file}.'
     )
 
-  def get_credentials(self):
-    """Steps through installed app OAuth 2.0 flow to retrieve credentials."""
-    credentials_file = _SERVICE_ACCOUNT_CREDENTIALS_FILE
-
-    # Asks for path to credentials file is not found in default location.
-    if os.path.isfile(credentials_file):
+  def _get_oauth_credentials(self):
+    if pathlib.Path(self.credentials_file).is_file():
       return InstalledAppFlow.from_client_secrets_file(
-        credentials_file, _DEFAULT_API_SCOPES
+        self.credentials_file, _DEFAULT_API_SCOPES
       ).run_local_server(port=8088)
     raise BidManagerApiClientError(
-      f'A service account key file could not be found at {credentials_file}.'
+      f'Credentials file could not be found at {self.credentials_file}.'
     )
 
 
-def build_request(request: query_editor.BidManagerApiQuery):
+def _build_request(request: query_editor.BidManagerApiQuery):
   """Builds Bid Manager API query object from BidManagerApiQuery."""
   metrics = []
   group_bys = []
@@ -175,3 +173,17 @@ def build_request(request: query_editor.BidManagerApiQuery):
   if data_range:
     query['metadata']['dataRange'] = {'range': data_range}
   return query
+
+
+@tenacity.retry(
+  stop=tenacity.stop_after_attempt(100), wait=tenacity.wait_exponential()
+)
+def _check_if_report_is_done(get_request) -> bool:
+  status = get_request.execute()
+  state = status.get('metadata').get('status').get('state')
+  if state != 'DONE':
+    logging.debug(
+      'Report %s it not ready, retrying...', status['key']['reportId']
+    )
+    raise Exception
+  return status
