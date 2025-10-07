@@ -25,6 +25,7 @@ and writes it virtually anywhere.
 * [YouTube Reporting API](https://google.github.io/garf/fetchers/youtube-reporting-api/)
 * [Google Analytics](https://google.github.io/garf/fetchers/google-analytics-api/)
 * [Google Merchant Center](https://google.github.io/garf/fetchers/merchant-center-api/)
+* [Bid Manager](https://google.github.io/garf/fetchers/bid-manager/)
 
 
 ## Installation
