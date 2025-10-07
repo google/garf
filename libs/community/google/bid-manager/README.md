@@ -8,6 +8,7 @@
 ## Prerequisites
 
 * [Bid Manager API](https://console.cloud.google.com/apis/library/analytics.googleapis.com) enabled.
+* [Credentials](https://developers.google.com/bid-manager/guides/get-started/generate-credentials) configured.
 
 ## Installation
 
@@ -21,9 +22,17 @@ import garf_bid_manager
 from garf_io import writer
 
 # Fetch report
+query = """
+  SELECT
+    advertiser_name,
+    metric_clicks AS clicks
+  FROM standard
+  WHERE advertiser = 1
+    AND dataRange = LAST_7_DAYS
+"""
 fetched_report = (
   garf_bid_manager.BidManagerApiReportFetcher()
-  .fetch(query, query="<YOUR_QUERY_HERE">, property_id=PROPERTY_ID)
+  .fetch(query, query=query)
 )
 
 # Write report to console
@@ -51,4 +60,4 @@ where:
 
 | name | values| comments |
 |----- | ----- | -------- |
-| `property_id`   | Property to get data to | Multiple properties are supported, should be comma-separated|
+| `credentials_file`   | File with Oauth or service account credentials | You can expose `credentials_file` as `GARF_BID_MANAGER_CREDENTIALS_FILE` ENV variable|
