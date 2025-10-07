@@ -1,12 +1,12 @@
-name: Publish to PyPI - garf-core
+name: Publish to PyPI - garf-bid-manager
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'libs/core/**'
-      - '!libs/core/**/*.md'
+      - 'libs/community/google/bid-manager/**'
+      - '!libs/community/google/bid-manager/*.md'
 
 jobs:
   publish:
@@ -26,8 +26,8 @@ jobs:
       - name: Get versions and check for change
         id: version_check
         run: |
-          PREV_VERSION=$(git show HEAD~1:libs/core/garf_core/__init__.py | grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          CURRENT_VERSION=$(grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" libs/core/garf_core/__init__.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          PREV_VERSION=$(git show HEAD~1:libs/community/google/bid-manager/garf_bid_manager/__init__.py | grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          CURRENT_VERSION=$(grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" libs/community/google/bid-manager/garf_bid_manager/__init__.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 
           if [[ "$CURRENT_VERSION" != "$PREV_VERSION" ]]; then
             echo "Version change detected: $PREV_VERSION -> $CURRENT_VERSION"
@@ -40,8 +40,8 @@ jobs:
 
       - name: Build the package
         if: steps.version_check.outputs.should_publish == 'true'
-        run: uv build libs/core
+        run: uv build libs/community/google/bid-manager/
 
       - name: Publish to PyPI
         if: steps.version_check.outputs.should_publish == 'true'
-        run: uv publish libs/core/dist/*
+        run: uv publish libs/community/google/bid-manager/dist/*
