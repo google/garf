@@ -28,7 +28,7 @@ def test_build_request():
     """
   spec = query_editor.BidManagerApiQuery(text=query, title='test').generate()
 
-  api_request = api_clients.build_request(spec)
+  api_request = api_clients._build_request(spec)
 
   expected_request = {
     'metadata': {
