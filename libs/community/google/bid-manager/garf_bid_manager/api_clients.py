@@ -113,7 +113,10 @@ class BidManagerApiClient(api_clients.BaseClient):
     results = []
     for row in data[1:]:
       if row := row.strip():
-        result = dict(zip(request.fields, row.split(',')))
+        elements = row.split(',')
+        if not elements[0]:
+          break
+        result = dict(zip(request.fields, elements))
         results.append(result)
       else:
         break
