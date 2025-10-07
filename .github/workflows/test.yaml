@@ -5,7 +5,9 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'libs/**'
+      - 'libs/core/**'
+      - 'libs/io/**'
+      - 'libs/executors/**'
 env:
   UV_SYSTEM_PYTHON: 1
 
