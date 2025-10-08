@@ -147,6 +147,18 @@ class TestQuerySpecification:
       'start_date'
     ) == datetime.date.today().strftime('%Y-%m-%d')
 
+  @pytest.mark.parametrize('slice', ['[]', '[1]', '[1:2]', '[1:]', '[:2]'])
+  def test_generate_process_array_index(self, slice):
+    query = f'SELECT test{slice}.element AS column FROM resource'
+    test_query_spec = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+    ).generate()
+    assert test_query_spec.fields == ['test']
+    assert test_query_spec.customizers == {
+      'column': {'type': 'slice', 'value': 'element'},
+    }
+
 
 def test_convert_date_returns_correct_datestring():
   current_date = datetime.datetime.today()

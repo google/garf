@@ -20,7 +20,7 @@ import dataclasses
 import datetime
 import logging
 import re
-from typing import Generator, Union
+from typing import Generator, Literal, Union
 
 import jinja2
 import pydantic
@@ -30,6 +30,10 @@ from typing_extensions import Self, TypeAlias
 from garf_core import exceptions
 
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
+
+CustomerType: TypeAlias = Literal[
+  'resource_index', 'nested_field', 'pointer', 'slice'
+]
 
 
 class GarfQueryParameters(pydantic.BaseModel):
@@ -77,7 +81,7 @@ class ProcessedField(pydantic.BaseModel):
   """
 
   field: str
-  customizer_type: str | None = None
+  customizer_type: CustomerType | None = None
   customizer_value: int | str | None = None
 
   @classmethod
@@ -93,6 +97,13 @@ class ProcessedField(pydantic.BaseModel):
     raw_field = raw_field.replace(r'\s+', '').strip()
     if _is_quoted_string(raw_field):
       return ProcessedField(field=raw_field)
+    if len(slices := cls._extract_slices(raw_field)) > 1:
+      field_name, op, slice = slices
+      return ProcessedField(
+        field=field_name,
+        customizer_type='slice',
+        customizer_value=re.sub(r'^.', '', slice),
+      )
     if len(resources := cls._extract_resource_element(raw_field)) > 1:
       field_name, resource_index = resources
       return ProcessedField(
@@ -118,6 +129,10 @@ class ProcessedField(pydantic.BaseModel):
   @classmethod
   def _extract_resource_element(cls, line_elements: str) -> list[str]:
     return re.split('~', line_elements)
+
+  @classmethod
+  def _extract_slices(cls, line_elements: str) -> list[str]:
+    return re.split(r'\[\d*(:\d*)?\]', line_elements)
 
   @classmethod
   def _extract_pointer(cls, line_elements: str) -> list[str]:
