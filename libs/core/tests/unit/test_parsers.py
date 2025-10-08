@@ -73,6 +73,50 @@ class TestDictParser:
 
     assert parsed_row == expected_row
 
+  @pytest.mark.parametrize(
+    ('slice', 'results'),
+    [
+      (
+        '[]',
+        ([[1, 2]], [[11, 22]]),
+      ),
+      (
+        '[0]',
+        ([[1]], [[11]]),
+      ),
+      (
+        '[0:1]',
+        ([[1]], [[11]]),
+      ),
+      (
+        '[1:]',
+        ([[2]], [[22]]),
+      ),
+      (
+        '[:1]',
+        ([[1]], [[11]]),
+      ),
+    ],
+  )
+  def test_parse_response_returns_correct_result_for_arrays(
+    self, slice, results
+  ):
+    spec = query_editor.QuerySpecification(
+      f'SELECT test{slice}.element AS column FROM test'
+    ).generate()
+    test_parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'test': [{'element': 1}, {'element': 2}]},
+        {'test': [{'element': 11}, {'element': 22}]},
+      ]
+    )
+
+    parsed_row = test_parser.parse_response(test_response)
+    expected_row = list(results)
+
+    assert parsed_row == expected_row
+
 
 class TestNumericDictParser:
   @pytest.fixture

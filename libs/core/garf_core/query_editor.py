@@ -20,20 +20,16 @@ import dataclasses
 import datetime
 import logging
 import re
-from typing import Generator, Literal, Union
+from typing import Generator, Union
 
 import jinja2
 import pydantic
 from dateutil import relativedelta
 from typing_extensions import Self, TypeAlias
 
-from garf_core import exceptions
+from garf_core import exceptions, query_parser
 
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
-
-CustomerType: TypeAlias = Literal[
-  'resource_index', 'nested_field', 'pointer', 'slice'
-]
 
 
 class GarfQueryParameters(pydantic.BaseModel):
@@ -69,80 +65,6 @@ class GarfResourceError(GarfQueryError):
 
 class GarfBuiltInQueryError(GarfQueryError):
   """Specifies non-existing builtin query."""
-
-
-class ProcessedField(pydantic.BaseModel):
-  """Sore field with its customizers.
-
-  Attributes:
-    field: Extractable field.
-    customizer_type: Type of customizer to be applied to the field.
-    customizer_value: Value to be used in customizer.
-  """
-
-  field: str
-  customizer_type: CustomerType | None = None
-  customizer_value: int | str | None = None
-
-  @classmethod
-  def from_raw(cls, raw_field: str) -> ProcessedField:
-    """Process field to extract possible customizers.
-
-    Args:
-        raw_field: Unformatted field string value.
-
-    Returns:
-        ProcessedField that contains formatted field with customizers.
-    """
-    raw_field = raw_field.replace(r'\s+', '').strip()
-    if _is_quoted_string(raw_field):
-      return ProcessedField(field=raw_field)
-    if len(slices := cls._extract_slices(raw_field)) > 1:
-      field_name, op, slice = slices
-      return ProcessedField(
-        field=field_name,
-        customizer_type='slice',
-        customizer_value=re.sub(r'^.', '', slice),
-      )
-    if len(resources := cls._extract_resource_element(raw_field)) > 1:
-      field_name, resource_index = resources
-      return ProcessedField(
-        field=field_name,
-        customizer_type='resource_index',
-        customizer_value=int(resource_index),
-      )
-
-    if len(nested_fields := cls._extract_nested_resource(raw_field)) > 1:
-      field_name, nested_field = nested_fields
-      return ProcessedField(
-        field=field_name,
-        customizer_type='nested_field',
-        customizer_value=nested_field,
-      )
-    if len(pointers := cls._extract_pointer(raw_field)) > 1:
-      field_name, pointer = pointers
-      return ProcessedField(
-        field=field_name, customizer_type='pointer', customizer_value=pointer
-      )
-    return ProcessedField(field=raw_field)
-
-  @classmethod
-  def _extract_resource_element(cls, line_elements: str) -> list[str]:
-    return re.split('~', line_elements)
-
-  @classmethod
-  def _extract_slices(cls, line_elements: str) -> list[str]:
-    return re.split(r'\[\d*(:\d*)?\]', line_elements)
-
-  @classmethod
-  def _extract_pointer(cls, line_elements: str) -> list[str]:
-    return re.split('->', line_elements)
-
-  @classmethod
-  def _extract_nested_resource(cls, line_elements: str) -> list[str]:
-    if '://' in line_elements:
-      return []
-    return re.split(':', line_elements)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -233,7 +155,7 @@ class ExtractedLineElements:
     if macros is None:
       macros = {}
     field, *alias = re.split(' [Aa][Ss] ', line)
-    processed_field = ProcessedField.from_raw(field)
+    processed_field = query_parser.ProcessedField.from_raw(field)
     field = processed_field.field
     virtual_column = (
       VirtualColumn.from_raw(field, macros)

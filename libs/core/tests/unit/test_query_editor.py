@@ -19,6 +19,7 @@ import datetime
 import pytest
 from dateutil.relativedelta import relativedelta
 from garf_core import query_editor
+from garf_core.query_parser import SliceField
 
 
 @pytest.fixture
@@ -147,8 +148,17 @@ class TestQuerySpecification:
       'start_date'
     ) == datetime.date.today().strftime('%Y-%m-%d')
 
-  @pytest.mark.parametrize('slice', ['[]', '[1]', '[1:2]', '[1:]', '[:2]'])
-  def test_generate_process_array_index(self, slice):
+  @pytest.mark.parametrize(
+    ('slice', 'literal'),
+    [
+      ('[]', slice(None)),
+      ('[0]', slice(0, 1)),
+      ('[1:2]', slice(1, 2)),
+      ('[1:]', slice(1, None)),
+      ('[:2]', slice(0, 2)),
+    ],
+  )
+  def test_generate_process_array_index(self, slice, literal):
     query = f'SELECT test{slice}.element AS column FROM resource'
     test_query_spec = query_editor.QuerySpecification(
       text=query,
@@ -156,7 +166,10 @@ class TestQuerySpecification:
     ).generate()
     assert test_query_spec.fields == ['test']
     assert test_query_spec.customizers == {
-      'column': {'type': 'slice', 'value': 'element'},
+      'column': {
+        'type': 'slice',
+        'value': SliceField(sl=literal, value='element'),
+      },
     }
 
 

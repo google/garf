@@ -112,6 +112,15 @@ class BaseParser(abc.ABC):
       return virtual_column.value
     return result
 
+  def process_customizer(
+    self,
+    row: api_clients.ApiResponseRow,
+    customizer: dict,
+    field: str,
+  ) -> api_clients.ApiRowElement:
+    sl = customizer.get('value').sl
+    return [r.get(customizer.get('value').value) for r in row.get(field)[sl]]
+
   def parse_row(
     self,
     row: api_clients.ApiResponseRow,
@@ -123,6 +132,8 @@ class BaseParser(abc.ABC):
     for column in self.query_spec.column_names:
       if virtual_column := self.query_spec.virtual_columns.get(column):
         result = self.process_virtual_column(row, virtual_column)
+      elif customizer := self.query_spec.customizers.get(column):
+        result = self.process_customizer(row, customizer, fields[index])
       else:
         result = self.parse_row_element(row, fields[index])
         index = index + 1
