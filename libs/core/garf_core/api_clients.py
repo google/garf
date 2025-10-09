@@ -68,10 +68,18 @@ class RestApiClient(BaseClient):
   def get_response(
     self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> GarfApiResponse:
-    response = requests.get(f'{self.endpoint}/{request.resource_name}')
+    url = f'{self.endpoint}/{request.resource_name}'
+    params = {}
+    for param in request.filters:
+      key, value = param.split('=')
+      params[key.strip()] = value.strip()
+    response = requests.get(url, params=params, headers=kwargs)
     if response.status_code == self.OK:
-      return GarfApiResponse(results=response.json())
-    raise GarfApiError('Failed to get data from API')
+      results = response.json()
+      if not isinstance(results, list):
+        results = [results]
+      return GarfApiResponse(results=results)
+    raise GarfApiError('Failed to get data from API, reason: ', response.text)
 
 
 class FakeApiClient(BaseClient):
