@@ -18,7 +18,8 @@ import datetime
 
 import pytest
 from dateutil.relativedelta import relativedelta
-from garf_core import query_editor
+from garf_core import query_editor, query_parser
+from garf_core.query_parser import Customizer, SliceField
 
 
 @pytest.fixture
@@ -42,7 +43,6 @@ SELECT
     customer.id, -- Inline comment
     campaign.bidding_strategy_type AS campaign_type, campaign.id:nested AS campaign,
     ad_group.id~1 AS ad_group,
-    ad_group_ad.ad.id->asset AS ad,
     metrics.cost_micros * 1e6 AS cost,
     'http://youtube.com/watch?v=' + video.video_id AS video_url,
     {% if selective == "true" %}
@@ -66,7 +66,6 @@ class TestQuerySpecification:
         'campaign.bidding_strategy_type',
         'campaign.id',
         'ad_group.id',
-        'ad_group_ad.ad.id',
         'metrics.clicks',
         'metrics.impressions',
         'metrics.cost_micros',
@@ -81,34 +80,32 @@ class TestQuerySpecification:
         'campaign_type',
         'campaign',
         'ad_group',
-        'ad',
         'cost',
         'video_url',
       ],
       customizers={
-        'campaign': {'type': 'nested_field', 'value': 'nested'},
-        'ad_group': {'type': 'resource_index', 'value': 1},
-        'ad': {'type': 'pointer', 'value': 'asset'},
+        'campaign': Customizer(type='nested_field', value='nested'),
+        'ad_group': Customizer(type='resource_index', value=1),
       },
       virtual_columns={
-        'constant': query_editor.VirtualColumn(type='built-in', value=1),
-        'date': query_editor.VirtualColumn(type='built-in', value='2023-01-01'),
-        'current_date': query_editor.VirtualColumn(
+        'constant': query_parser.VirtualColumn(type='built-in', value=1),
+        'date': query_parser.VirtualColumn(type='built-in', value='2023-01-01'),
+        'current_date': query_parser.VirtualColumn(
           type='built-in', value=datetime.date.today().strftime('%Y-%m-%d')
         ),
-        'ctr': query_editor.VirtualColumn(
+        'ctr': query_parser.VirtualColumn(
           type='expression',
           value='metrics.clicks / metrics.impressions',
           fields=['metrics.clicks', 'metrics.impressions'],
           substitute_expression='{metrics_clicks} / {metrics_impressions}',
         ),
-        'cost': query_editor.VirtualColumn(
+        'cost': query_parser.VirtualColumn(
           type='expression',
           value='metrics.cost_micros * 1e6',
           fields=['metrics.cost_micros'],
           substitute_expression='{metrics_cost_micros} * 1e6',
         ),
-        'video_url': query_editor.VirtualColumn(
+        'video_url': query_parser.VirtualColumn(
           type='expression',
           value="'http://youtube.com/watch?v=' + video.video_id",
           fields=['video.video_id'],
@@ -146,6 +143,30 @@ class TestQuerySpecification:
     assert test_query_spec.macros.get(
       'start_date'
     ) == datetime.date.today().strftime('%Y-%m-%d')
+
+  @pytest.mark.parametrize(
+    ('slice', 'literal'),
+    [
+      ('[]', slice(None)),
+      ('[0]', slice(0, 1)),
+      ('[1:2]', slice(1, 2)),
+      ('[1:]', slice(1, None)),
+      ('[:2]', slice(0, 2)),
+    ],
+  )
+  def test_generate_process_array_index(self, slice, literal):
+    query = f'SELECT test{slice}.element AS column FROM resource'
+    test_query_spec = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+    ).generate()
+    assert test_query_spec.fields == ['test']
+    assert test_query_spec.customizers == {
+      'column': Customizer(
+        type='slice',
+        value=SliceField(slice_literal=literal, value='element'),
+      ),
+    }
 
 
 def test_convert_date_returns_correct_datestring():

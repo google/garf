@@ -23,7 +23,7 @@ import operator
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
-from garf_core import api_clients, exceptions, query_editor
+from garf_core import api_clients, exceptions, query_editor, query_parser
 
 VALID_VIRTUAL_COLUMN_OPERATORS = (
   ast.BinOp,
@@ -112,6 +112,20 @@ class BaseParser(abc.ABC):
       return virtual_column.value
     return result
 
+  def process_customizer(
+    self,
+    row: api_clients.ApiResponseRow,
+    customizer: query_parser.Customizer,
+    field: str,
+  ) -> api_clients.ApiRowElement:
+    if customizer.type == 'slice':
+      return self._process_customizer_slice(row, customizer, field)
+    return row
+
+  def _process_customizer_slice(self, row, customizer, field):
+    slice_object = customizer.value.slice_literal
+    return [r.get(customizer.value.value) for r in row.get(field)[slice_object]]
+
   def parse_row(
     self,
     row: api_clients.ApiResponseRow,
@@ -123,6 +137,8 @@ class BaseParser(abc.ABC):
     for column in self.query_spec.column_names:
       if virtual_column := self.query_spec.virtual_columns.get(column):
         result = self.process_virtual_column(row, virtual_column)
+      elif customizer := self.query_spec.customizers.get(column):
+        result = self.process_customizer(row, customizer, fields[index])
       else:
         result = self.parse_row_element(row, fields[index])
         index = index + 1
