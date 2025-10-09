@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-exporter"
+dependencies = [
+  "garf-executors",
+  "pyyaml",
+  "prometheus-client",
+  "pydantic",
+  "fastapi",
+  "uvicorn",
+]
+authors = [
+  {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+requires-python = ">=3.9"
+description = "Exports data from APIs to Prometheus"
+readme = "README.md"
+license = {text = "Apache 2.0"}
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: Apache Software License",
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf_exporter.__version__"}
+
+[project.scripts]
+garf-exporter="garf_exporter.entrypoints.cli:main"
