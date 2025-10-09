@@ -126,7 +126,9 @@ class GarfExporter:
       labelnames=('collector',),
       namespace=namespace,
     )
-    api_requests_counter = self._define_counter(name='api_requests_count')
+    api_requests_counter = self._define_counter(
+      namespace=namespace, name='api_requests_count'
+    )
     metrics = self._define_metrics(
       report.query_specification, suffix, namespace
     )
@@ -245,16 +247,19 @@ class GarfExporter:
       registry=self.registry,
     )
 
-  def _define_counter(self, name: str) -> prometheus_client.Counter:
+  def _define_counter(
+    self, namespace: str, name: str
+  ) -> prometheus_client.Counter:
     """Define Counter metric based on provided name.
 
     Args:
+      namespace: Global prefix for all Prometheus metrics.
       name: Name of the metric to be exposed to Prometheus (without prefix).
 
     Returns:
       An instance of Counter that associated with registry.
     """
-    counter_name = f'garf_core_{name}'
+    counter_name = f'{namespace}_{name}'
     if counter_name in self.registry._names_to_collectors:
       return self.registry._names_to_collectors.get(counter_name)
     return prometheus_client.Counter(

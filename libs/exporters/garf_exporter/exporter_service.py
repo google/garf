@@ -130,7 +130,7 @@ class GarfExporterService:
     for col in collectors:
       logging.info('Exporting from collector: %s', col.title)
       start = time()
-      report = self.fetcher.fetch(col.query)
+      report = self.fetcher.fetch(col.query, **self.source_parameters)
       end = time()
       exporter.report_fetcher_gauge.labels(collector=col.title).set(end - start)
       exporter.export(
