@@ -30,6 +30,8 @@ from garf_executors import fetchers
 import garf_exporter
 from garf_exporter import collector
 
+logger = logging.getLogger(__name__)
+
 
 class GarfExporterRuntimeOptions(pydantic.BaseModel):
   """Options to finetune exporting process.
@@ -121,14 +123,14 @@ class GarfExporterService:
       request: Complete request to fetch and expose data.
       exporter: Initialized GarfExporter.
     """
-    logging.info('Beginning export')
+    logger.info('Beginning export')
     start_export_time = time()
     exporter.export_started.set(start_export_time)
     collectors = request.collectors or collector.load_collector_data(
       request.collectors_config
     )
     for col in collectors:
-      logging.info('Exporting from collector: %s', col.title)
+      logger.info('Exporting from collector: %s', col.title)
       start = time()
       report = self.fetcher.fetch(col.query, **self.source_parameters)
       end = time()
@@ -138,7 +140,7 @@ class GarfExporterService:
         suffix=col.suffix,
         collector=col.title,
       )
-    logging.info('Export completed')
+    logger.info('Export completed')
     end_export_time = time()
     exporter.export_completed.set(end_export_time)
     exporter.total_export_time_gauge.set(end_export_time - start_export_time)

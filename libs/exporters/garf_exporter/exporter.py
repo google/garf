@@ -26,6 +26,8 @@ from collections.abc import Sequence
 import garf_core
 import prometheus_client
 
+logger = logging.getLogger(__name__)
+
 
 class GarfExporter:
   """Exposes reports from Ads API in Prometheus format.
@@ -181,7 +183,7 @@ class GarfExporter:
     if virtual_columns := query_specification.virtual_columns:
       for column, field in virtual_columns.items():
         metrics[column] = self._define_gauge(column, suffix, labels, namespace)
-    logging.debug('metrics: %s', metrics)
+    logger.debug('metrics: %s', metrics)
     return metrics
 
   def _define_labels(
@@ -205,7 +207,7 @@ class GarfExporter:
     for column, field in zip(non_virtual_columns, query_specification.fields):
       if 'metric' not in field and 'metric' not in column:
         labelnames.append(str(column))
-    logging.debug('labelnames: %s', labelnames)
+    logger.debug('labelnames: %s', labelnames)
     return labelnames
 
   def _define_gauge(
