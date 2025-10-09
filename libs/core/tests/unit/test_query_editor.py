@@ -43,7 +43,6 @@ SELECT
     customer.id, -- Inline comment
     campaign.bidding_strategy_type AS campaign_type, campaign.id:nested AS campaign,
     ad_group.id~1 AS ad_group,
-    ad_group_ad.ad.id->asset AS ad,
     metrics.cost_micros * 1e6 AS cost,
     'http://youtube.com/watch?v=' + video.video_id AS video_url,
     {% if selective == "true" %}
@@ -67,7 +66,6 @@ class TestQuerySpecification:
         'campaign.bidding_strategy_type',
         'campaign.id',
         'ad_group.id',
-        'ad_group_ad.ad.id',
         'metrics.clicks',
         'metrics.impressions',
         'metrics.cost_micros',
@@ -82,14 +80,12 @@ class TestQuerySpecification:
         'campaign_type',
         'campaign',
         'ad_group',
-        'ad',
         'cost',
         'video_url',
       ],
       customizers={
         'campaign': Customizer(type='nested_field', value='nested'),
         'ad_group': Customizer(type='resource_index', value=1),
-        'ad': Customizer(type='pointer', value='asset'),
       },
       virtual_columns={
         'constant': query_editor.VirtualColumn(type='built-in', value=1),

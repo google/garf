@@ -23,9 +23,7 @@ from typing_extensions import TypeAlias
 
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
 
-CustomizerType: TypeAlias = Literal[
-  'resource_index', 'nested_field', 'pointer', 'slice'
-]
+CustomizerType: TypeAlias = Literal['resource_index', 'nested_field', 'slice']
 
 
 class Customizer(pydantic.BaseModel):
@@ -106,12 +104,6 @@ class ProcessedField(pydantic.BaseModel):
         field=field_name,
         customizer=Customizer(type='nested_field', value=nested_field),
       )
-    if len(pointers := cls._extract_pointer(raw_field)) > 1:
-      field_name, pointer = pointers
-      return ProcessedField(
-        field=field_name,
-        customizer=Customizer(type='pointer', value=pointer),
-      )
     return ProcessedField(field=raw_field)
 
   @classmethod
@@ -127,10 +119,6 @@ class ProcessedField(pydantic.BaseModel):
     if op:
       slices[1] = op[0][0]
     return slices
-
-  @classmethod
-  def _extract_pointer(cls, line_elements: str) -> list[str]:
-    return re.split('->', line_elements)
 
   @classmethod
   def _extract_nested_resource(cls, line_elements: str) -> list[str]:

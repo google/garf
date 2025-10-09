@@ -118,6 +118,11 @@ class BaseParser(abc.ABC):
     customizer: query_parser.Customizer,
     field: str,
   ) -> api_clients.ApiRowElement:
+    if customizer.type == 'slice':
+      return self._process_customizer_slice(row, customizer, field)
+    return row
+
+  def _process_customizer_slice(self, row, customizer, field):
     sl = customizer.value.sl
     return [r.get(customizer.value.value) for r in row.get(field)[sl]]
 
