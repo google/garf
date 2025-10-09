@@ -19,7 +19,7 @@ import datetime
 import pytest
 from dateutil.relativedelta import relativedelta
 from garf_core import query_editor
-from garf_core.query_parser import SliceField
+from garf_core.query_parser import Customizer, SliceField
 
 
 @pytest.fixture
@@ -87,9 +87,9 @@ class TestQuerySpecification:
         'video_url',
       ],
       customizers={
-        'campaign': {'type': 'nested_field', 'value': 'nested'},
-        'ad_group': {'type': 'resource_index', 'value': 1},
-        'ad': {'type': 'pointer', 'value': 'asset'},
+        'campaign': Customizer(type='nested_field', value='nested'),
+        'ad_group': Customizer(type='resource_index', value=1),
+        'ad': Customizer(type='pointer', value='asset'),
       },
       virtual_columns={
         'constant': query_editor.VirtualColumn(type='built-in', value=1),
@@ -166,10 +166,10 @@ class TestQuerySpecification:
     ).generate()
     assert test_query_spec.fields == ['test']
     assert test_query_spec.customizers == {
-      'column': {
-        'type': 'slice',
-        'value': SliceField(sl=literal, value='element'),
-      },
+      'column': Customizer(
+        type='slice',
+        value=SliceField(sl=literal, value='element'),
+      ),
     }
 
 

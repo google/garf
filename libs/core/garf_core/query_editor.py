@@ -144,7 +144,7 @@ class ExtractedLineElements:
   field: str | None
   alias: str | None
   virtual_column: VirtualColumn | None
-  customizer: dict[str, str | int]
+  customizer: query_parser.Customizer | None
 
   @classmethod
   def from_query_line(
@@ -162,13 +162,8 @@ class ExtractedLineElements:
       if _is_invalid_field(field)
       else None
     )
-    if alias and processed_field.customizer_type:
-      customizer = {
-        'type': processed_field.customizer_type,
-        'value': processed_field.customizer_value,
-      }
-    else:
-      customizer = {}
+    if not (customizer := processed_field.customizer):
+      customizer = None
     if virtual_column and not alias:
       raise GarfVirtualColumnError('Virtual attributes should be aliased')
     return ExtractedLineElements(

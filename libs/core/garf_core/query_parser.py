@@ -28,6 +28,14 @@ CustomizerType: TypeAlias = Literal[
 ]
 
 
+class Customizer(pydantic.BaseModel):
+  type: CustomizerType | None = None
+  value: int | str | SliceField | None = None
+
+  def __bool__(self) -> bool:
+    return bool(self.type and self.value)
+
+
 class SliceField(pydantic.BaseModel):
   model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
   sl: slice
@@ -44,8 +52,7 @@ class ProcessedField(pydantic.BaseModel):
   """
 
   field: str
-  customizer_type: CustomizerType | None = None
-  customizer_value: int | str | SliceField | None = None
+  customizer: Customizer = Customizer()
 
   @classmethod
   def from_raw(cls, raw_field: str) -> ProcessedField:
@@ -82,28 +89,28 @@ class ProcessedField(pydantic.BaseModel):
           sl_obj = slice(op_, end)
       return ProcessedField(
         field=field_name,
-        customizer_type='slice',
-        customizer_value=SliceField(sl=sl_obj, value=re.sub(r'^.', '', sl)),
+        customizer=Customizer(
+          type='slice', value=SliceField(sl=sl_obj, value=re.sub(r'^.', '', sl))
+        ),
       )
     if len(resources := cls._extract_resource_element(raw_field)) > 1:
       field_name, resource_index = resources
       return ProcessedField(
         field=field_name,
-        customizer_type='resource_index',
-        customizer_value=int(resource_index),
+        customizer=Customizer(type='resource_index', value=int(resource_index)),
       )
 
     if len(nested_fields := cls._extract_nested_resource(raw_field)) > 1:
       field_name, nested_field = nested_fields
       return ProcessedField(
         field=field_name,
-        customizer_type='nested_field',
-        customizer_value=nested_field,
+        customizer=Customizer(type='nested_field', value=nested_field),
       )
     if len(pointers := cls._extract_pointer(raw_field)) > 1:
       field_name, pointer = pointers
       return ProcessedField(
-        field=field_name, customizer_type='pointer', customizer_value=pointer
+        field=field_name,
+        customizer=Customizer(type='pointer', value=pointer),
       )
     return ProcessedField(field=raw_field)
 
