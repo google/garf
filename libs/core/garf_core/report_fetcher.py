@@ -150,5 +150,7 @@ class ApiReportFetcher:
     response = self.api_client.get_response(query, **kwargs)
     parsed_response = self.parser(query).parse_response(response)
     return report.GarfReport(
-      results=parsed_response, column_names=query.column_names
+      results=parsed_response,
+      column_names=query.column_names,
+      query_specification=query,
     )
