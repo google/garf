@@ -20,18 +20,23 @@ and exposes them to Prometheus.
 
 from __future__ import annotations
 
-import argparse
 import asyncio
 import contextlib
 import datetime
+from typing import Literal
 
 import fastapi
-import garf_exporter
 import prometheus_client
 import requests
+import typer
 import uvicorn
 from garf_executors.entrypoints import utils as garf_utils
+from typing_extensions import Annotated
+
+import garf_exporter
 from garf_exporter import exporter_service
+
+typer_app = typer.Typer()
 
 
 class GarfExporterError(Exception):
@@ -80,12 +85,6 @@ exporter = garf_exporter.GarfExporter()
 metrics_app = prometheus_client.make_asgi_app(registry=exporter.registry)
 app.mount('/metrics', metrics_app)
 
-logger = garf_utils.init_logging(
-  loglevel='INFO',
-  logger_type='rich',
-  name='garf-exporter',
-)
-
 
 async def start_metric_generation(
   request: exporter_service.GarfExporterRequest,
@@ -129,44 +128,82 @@ def health(request: fastapi.Request):
     raise fastapi.HTTPException(status_code=404, detail='Not updated properly')
 
 
-def main() -> None:  # noqa: D103
-  parser = argparse.ArgumentParser()
-  parser.add_argument('-s', '--source', dest='source')
-  parser.add_argument('-c', '--config', dest='config', default=None)
-  parser.add_argument('--log', '--loglevel', dest='loglevel', default='info')
-  parser.add_argument(
-    '--expose-type',
-    dest='expose_type',
-    choices=['http', 'pushgateway'],
-    default='http',
+@typer_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True}
+)
+def main(
+  ctx: typer.Context,
+  source: Annotated[
+    str,
+    typer.Option(
+      '-s', '--source', help='API alias', prompt='Please add API alias'
+    ),
+  ],
+  config: Annotated[
+    str,
+    typer.Option(
+      '-c',
+      '--config',
+      help='Path to configuration file',
+      prompt='Please add path to config file.',
+    ),
+  ],
+  expose_type: Annotated[
+    str,
+    typer.Option(help='Type of metric expose'),
+  ] = 'http',
+  loglevel: Annotated[
+    str,
+    typer.Option(help='Level of logging'),
+  ] = 'INFO',
+  logger: Annotated[
+    str,
+    typer.Option(help='Type of logging'),
+  ] = 'rich',
+  namespace: Annotated[
+    str,
+    typer.Option(help='Namespace prefix for Prometheus'),
+  ] = 'garf',
+  host: Annotated[
+    str,
+    typer.Option(help='Host for exposing metrics'),
+  ] = '0.0.0.0',
+  port: Annotated[
+    int,
+    typer.Option(help='Port for exposing metrics'),
+  ] = 8000,
+  delay_minutes: Annotated[
+    int,
+    typer.Option(help='Delay in minutes between exports'),
+  ] = 15,
+  fetching_timeout: Annotated[
+    int,
+    typer.Option(help='Timeout in second for restarting stale exports'),
+  ] = 120,
+  iterations: Annotated[
+    int,
+    typer.Option(help='Stop export after N iterations'),
+  ] = 0,
+) -> None:
+  garf_utils.init_logging(
+    loglevel=loglevel,
+    logger_type=logger,
+    name='garf-exporter',
   )
-  parser.add_argument('--host', dest='host', default='0.0.0.0')
-  parser.add_argument('--port', dest='port', type=int, default=8000)
-  parser.add_argument('--logger', dest='logger', default='local')
-  parser.add_argument('--iterations', dest='iterations', default=None, type=int)
-  parser.add_argument('--delay-minutes', dest='delay', type=int, default=15)
-  parser.add_argument('--namespace', dest='namespace', default='garf')
-  parser.add_argument('--max-parallel', dest='parallel', default=None)
-  parser.add_argument(
-    '--fetching-timeout-seconds', dest='fetching_timeout', default=120, type=int
-  )
-  parser.add_argument('--collectors', dest='collectors', default='default')
-  parser.add_argument('-v', '--version', dest='version', action='store_true')
-  args, kwargs = parser.parse_known_args()
-  cli_parameters = garf_utils.ParamsParser(['macro', 'source']).parse(kwargs)
+  cli_parameters = garf_utils.ParamsParser(['macro', 'source']).parse(ctx.args)
   runtime_options = exporter_service.GarfExporterRuntimeOptions(
-    expose_type=args.expose_type,
-    host=args.host,
-    port=args.port,
-    namespace=args.namespace,
-    fetching_timeout=args.fetching_timeout,
-    iterations=args.iterations,
-    delay_minutes=args.delay,
+    expose_type=expose_type,
+    host=host,
+    port=port,
+    namespace=namespace,
+    fetching_timeout=fetching_timeout,
+    iterations=iterations,
+    delay_minutes=delay_minutes,
   )
   request = exporter_service.GarfExporterRequest(
-    source=args.source,
+    source=source,
     source_parameters=cli_parameters.get('source'),
-    collectors_config=args.config,
+    collectors_config=config,
     macros=cli_parameters.get('macro'),
     runtime_options=runtime_options,
   )
@@ -187,4 +224,4 @@ def main() -> None:  # noqa: D103
 
 
 if __name__ == '__main__':
-  main()
+  typer_app()

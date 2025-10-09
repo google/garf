@@ -11,6 +11,7 @@ dependencies = [
   "pydantic",
   "fastapi",
   "uvicorn",
+  "typer",
 ]
 authors = [
   {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
@@ -39,4 +40,4 @@ dynamic = ["version"]
 version = {attr = "garf_exporter.__version__"}
 
 [project.scripts]
-garf-exporter="garf_exporter.entrypoints.cli:main"
+garf-exporter="garf_exporter.entrypoints.cli:typer_app"
