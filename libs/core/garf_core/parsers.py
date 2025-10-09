@@ -123,8 +123,8 @@ class BaseParser(abc.ABC):
     return row
 
   def _process_customizer_slice(self, row, customizer, field):
-    sl = customizer.value.sl
-    return [r.get(customizer.value.value) for r in row.get(field)[sl]]
+    slice_object = customizer.value.slice_literal
+    return [r.get(customizer.value.value) for r in row.get(field)[slice_object]]
 
   def parse_row(
     self,

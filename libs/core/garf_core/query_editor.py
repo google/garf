@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import datetime
 import logging
@@ -27,7 +26,7 @@ import pydantic
 from dateutil import relativedelta
 from typing_extensions import Self, TypeAlias
 
-from garf_core import exceptions, query_parser
+from garf_core import query_parser
 
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
 
@@ -39,149 +38,16 @@ class GarfQueryParameters(pydantic.BaseModel):
   template: QueryParameters = pydantic.Field(default_factory=dict)
 
 
-class GarfQueryError(exceptions.GarfError):
-  """Base exception for Garf queries."""
-
-
-class GarfCustomizerError(GarfQueryError):
-  """Specifies incorrect customizer."""
-
-
-class GarfVirtualColumnError(GarfQueryError):
-  """Specifies incorrect virtual column type."""
-
-
-class GarfFieldError(GarfQueryError):
-  """Specifies incorrect fields from API."""
-
-
-class GarfMacroError(GarfQueryError):
+class GarfMacroError(query_parser.GarfQueryError):
   """Specifies incorrect macro in Garf query."""
 
 
-class GarfResourceError(GarfQueryError):
+class GarfResourceError(query_parser.GarfQueryError):
   """Specifies incorrect resource name in the query."""
 
 
-class GarfBuiltInQueryError(GarfQueryError):
+class GarfBuiltInQueryError(query_parser.GarfQueryError):
   """Specifies non-existing builtin query."""
-
-
-@dataclasses.dataclass(frozen=True)
-class VirtualColumn:
-  """Represents element in Garf query that either calculated or plugged-in.
-
-  Virtual columns allow performing basic manipulation with metrics and
-  dimensions (i.e. division or multiplication) as well as adding raw text
-  values directly into report.
-
-  Attributes:
-    type: Type of virtual column, either build-in or expression.
-    value: Value of the field after macro expansion.
-    fields: Possible fields participating in calculations.
-    substitute_expression: Formatted expression.
-  """
-
-  type: str
-  value: str
-  fields: list[str] | None = None
-  substitute_expression: str | None = None
-
-  @classmethod
-  def from_raw(cls, field: str, macros: QueryParameters) -> VirtualColumn:
-    """Converts a field to virtual column."""
-    if field.isdigit():
-      field = int(field)
-    else:
-      with contextlib.suppress(ValueError):
-        field = float(field)
-    if isinstance(field, (int, float)):
-      return VirtualColumn(type='built-in', value=field)
-
-    operators = ('/', r'\*', r'\+', ' - ')
-    if '://' in field:
-      expressions = re.split(r'\+', field)
-    else:
-      expressions = re.split('|'.join(operators), field)
-    if len(expressions) > 1:
-      virtual_column_fields = []
-      substitute_expression = field
-      for expression in expressions:
-        element = expression.strip()
-        if not _is_constant(element):
-          virtual_column_fields.append(element)
-          substitute_expression = substitute_expression.replace(
-            element, f'{{{element}}}'
-          )
-      pattern = r'\{([^}]*)\}'
-      substitute_expression = re.sub(
-        pattern, lambda m: m.group(0).replace('.', '_'), substitute_expression
-      )
-      return VirtualColumn(
-        type='expression',
-        value=field.format(**macros) if macros else field,
-        fields=virtual_column_fields,
-        substitute_expression=substitute_expression,
-      )
-    if not _is_quoted_string(field):
-      raise GarfFieldError(f"Incorrect field '{field}'.")
-    field = field.replace("'", '').replace('"', '')
-    field = field.format(**macros) if macros else field
-    return VirtualColumn(type='built-in', value=field)
-
-
-@dataclasses.dataclass
-class ExtractedLineElements:
-  """Helper class for parsing query lines.
-
-  Attributes:
-    fields: All fields extracted from the line.
-    alias: Optional alias assign to a field.
-    virtual_column: Optional virtual column extracted from query line.
-    customizer: Optional values for customizers associated with a field.
-  """
-
-  field: str | None
-  alias: str | None
-  virtual_column: VirtualColumn | None
-  customizer: query_parser.Customizer | None
-
-  @classmethod
-  def from_query_line(
-    cls,
-    line: str,
-    macros: QueryParameters | None = None,
-  ) -> ExtractedLineElements:
-    if macros is None:
-      macros = {}
-    field, *alias = re.split(' [Aa][Ss] ', line)
-    processed_field = query_parser.ProcessedField.from_raw(field)
-    field = processed_field.field
-    virtual_column = (
-      VirtualColumn.from_raw(field, macros)
-      if _is_invalid_field(field)
-      else None
-    )
-    if not (customizer := processed_field.customizer):
-      customizer = None
-    if virtual_column and not alias:
-      raise GarfVirtualColumnError('Virtual attributes should be aliased')
-    return ExtractedLineElements(
-      field=_format_type_field_name(field)
-      if not virtual_column and field
-      else None,
-      alias=_normalize_column_name(alias[0] if alias else field),
-      virtual_column=virtual_column,
-      customizer=customizer,
-    )
-
-
-def _format_type_field_name(field_name: str) -> str:
-  return re.sub(r'\.type', '.type_', field_name)
-
-
-def _normalize_column_name(column_name: str) -> str:
-  return re.sub(r'\.', '_', column_name)
 
 
 @dataclasses.dataclass
@@ -210,7 +76,7 @@ class BaseQueryElements:
   customizers: dict[str, dict[str, str]] = dataclasses.field(
     default_factory=dict
   )
-  virtual_columns: dict[str, VirtualColumn] = dataclasses.field(
+  virtual_columns: dict[str, query_parser.VirtualColumn] = dataclasses.field(
     default_factory=dict
   )
   is_builtin_query: bool = False
@@ -417,7 +283,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
   def extract_fields(self) -> Self:
     for line in self._extract_query_lines():
-      line_elements = ExtractedLineElements.from_query_line(line)
+      line_elements = query_parser.ExtractedLineElements.from_query_line(line)
       if field := line_elements.field:
         self.query.fields.append(field)
     return self
@@ -446,13 +312,13 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
   def extract_column_names(self) -> Self:
     for line in self._extract_query_lines():
-      line_elements = ExtractedLineElements.from_query_line(line)
+      line_elements = query_parser.ExtractedLineElements.from_query_line(line)
       self.query.column_names.append(line_elements.alias)
     return self
 
   def extract_virtual_columns(self) -> Self:
     for line in self._extract_query_lines():
-      line_elements = ExtractedLineElements.from_query_line(line)
+      line_elements = query_parser.ExtractedLineElements.from_query_line(line)
       if virtual_column := line_elements.virtual_column:
         self.query.virtual_columns[line_elements.alias] = virtual_column
         if fields := virtual_column.fields:
@@ -463,7 +329,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
   def extract_customizers(self) -> Self:
     for line in self._extract_query_lines():
-      line_elements = ExtractedLineElements.from_query_line(line)
+      line_elements = query_parser.ExtractedLineElements.from_query_line(line)
       if customizer := line_elements.customizer:
         self.query.customizers[line_elements.alias] = customizer
     return self
@@ -480,26 +346,6 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     for row in selected_rows:
       if non_empty_row := row.strip():
         yield non_empty_row
-
-
-def _is_quoted_string(field_name: str) -> bool:
-  return (field_name.startswith("'") and field_name.endswith("'")) or (
-    field_name.startswith('"') and field_name.endswith('"')
-  )
-
-
-def _is_constant(element) -> bool:
-  with contextlib.suppress(ValueError):
-    float(element)
-    return True
-  return _is_quoted_string(element)
-
-
-def _is_invalid_field(field) -> bool:
-  operators = ('/', '*', '+', ' - ')
-  is_constant = _is_constant(field)
-  has_operator = any(operator in field for operator in operators)
-  return is_constant or has_operator
 
 
 def convert_date(date_string: str) -> str:

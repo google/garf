@@ -18,7 +18,7 @@ import datetime
 
 import pytest
 from dateutil.relativedelta import relativedelta
-from garf_core import query_editor
+from garf_core import query_editor, query_parser
 from garf_core.query_parser import Customizer, SliceField
 
 
@@ -88,24 +88,24 @@ class TestQuerySpecification:
         'ad_group': Customizer(type='resource_index', value=1),
       },
       virtual_columns={
-        'constant': query_editor.VirtualColumn(type='built-in', value=1),
-        'date': query_editor.VirtualColumn(type='built-in', value='2023-01-01'),
-        'current_date': query_editor.VirtualColumn(
+        'constant': query_parser.VirtualColumn(type='built-in', value=1),
+        'date': query_parser.VirtualColumn(type='built-in', value='2023-01-01'),
+        'current_date': query_parser.VirtualColumn(
           type='built-in', value=datetime.date.today().strftime('%Y-%m-%d')
         ),
-        'ctr': query_editor.VirtualColumn(
+        'ctr': query_parser.VirtualColumn(
           type='expression',
           value='metrics.clicks / metrics.impressions',
           fields=['metrics.clicks', 'metrics.impressions'],
           substitute_expression='{metrics_clicks} / {metrics_impressions}',
         ),
-        'cost': query_editor.VirtualColumn(
+        'cost': query_parser.VirtualColumn(
           type='expression',
           value='metrics.cost_micros * 1e6',
           fields=['metrics.cost_micros'],
           substitute_expression='{metrics_cost_micros} * 1e6',
         ),
-        'video_url': query_editor.VirtualColumn(
+        'video_url': query_parser.VirtualColumn(
           type='expression',
           value="'http://youtube.com/watch?v=' + video.video_id",
           fields=['video.video_id'],
@@ -164,7 +164,7 @@ class TestQuerySpecification:
     assert test_query_spec.customizers == {
       'column': Customizer(
         type='slice',
-        value=SliceField(sl=literal, value='element'),
+        value=SliceField(slice_literal=literal, value='element'),
       ),
     }
 
