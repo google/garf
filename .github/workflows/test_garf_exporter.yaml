@@ -1,0 +1,41 @@
+name: Run tests for garf-exporter
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'libs/exporters/**'
+
+env:
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.4"
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv pip install pytest
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[all]
+          uv pip install -e libs/executors/.[all]
+      - name: Test garf-exporters
+        run: |
+          cd libs/exporters/
+          uv pip install -e .
+          pytest tests/unit

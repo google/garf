@@ -1,0 +1,47 @@
+name: Publish to PyPI - garf-exporter
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'libs/exporters/**'
+      - '!libs/exporters/**/*.md'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Get versions and check for change
+        id: version_check
+        run: |
+          PREV_VERSION=$(git show HEAD~1:libs/exporters/garf_exporter/__init__.py | grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          CURRENT_VERSION=$(grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" libs/exporters/garf_exporter/__init__.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+
+          if [[ "$CURRENT_VERSION" != "$PREV_VERSION" ]]; then
+            echo "Version change detected: $PREV_VERSION -> $CURRENT_VERSION"
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "No version change. Skipping publish."
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build the package
+        if: steps.version_check.outputs.should_publish == 'true'
+        run: uv build libs/exporters
+
+      - name: Publish to PyPI
+        if: steps.version_check.outputs.should_publish == 'true'
+        run: uv publish libs/exporters/dist/*

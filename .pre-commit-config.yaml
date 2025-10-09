@@ -57,6 +57,11 @@ repos:
     entry: pytest -n auto libs/executors/tests/unit/
     language: system
     pass_filenames: false
+  - id: pytest-check-exporters
+    name: pytest-check-exporters
+    entry: pytest -n auto libs/exporters/tests/unit/
+    language: system
+    pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e
