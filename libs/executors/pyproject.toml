@@ -9,6 +9,7 @@ dependencies = [
   "garf-io",
   "pyyaml",
   "pydantic",
+  "typer",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
@@ -52,4 +53,4 @@ all = [
   "garf-executors[bq,sql,server]"
 ]
 [project.scripts]
-garf="garf_executors.entrypoints.cli:main"
+garf="garf_executors.entrypoints.cli:typer_app"
