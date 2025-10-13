@@ -51,3 +51,18 @@ def test_build_request():
   }
 
   assert api_request == expected_request
+
+
+def test_process_api_response():
+  data = [
+    'value1,value2,value3',
+    'value1,"value1.5,value2.5",value3',
+  ]
+  result = api_clients._process_api_response(data, ['one', 'two', 'three'])
+
+  expected_result = [
+    {'one': 'value1', 'two': 'value2', 'three': 'value3'},
+    {'one': 'value1', 'two': 'value1.5,value2.5', 'three': 'value3'},
+  ]
+
+  assert result == expected_result
