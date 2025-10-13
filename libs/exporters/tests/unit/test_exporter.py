@@ -23,7 +23,7 @@ from prometheus_client import samples
 class TestGaaarfExporter:
   @pytest.fixture
   def garf_exporter(self):
-    return GarfExporter()
+    return GarfExporter(namespace='test')
 
   @pytest.fixture
   def report(self):
@@ -65,23 +65,22 @@ class TestGaaarfExporter:
   def test_export_returns_correct_metric_name(self, garf_exporter, report):
     garf_exporter.export(report)
     metrics = list(garf_exporter.registry.collect())
-    assert 'googleads_clicks' in [metric.name for metric in metrics]
+    assert 'test_clicks' in [metric.name for metric in metrics]
 
-  def test_export_returns_correct_metric_name_with_suffix_and_namespace(
+  def test_export_returns_correct_metric_name_with_suffix(
     self, garf_exporter, report
   ):
-    namespace = 'ads'
     suffix = 'performance'
-    garf_exporter.export(report=report, namespace=namespace, suffix=suffix)
+    garf_exporter.export(report=report, suffix=suffix)
     metrics = list(garf_exporter.registry.collect())
-    assert f'{namespace}_{suffix}_clicks' in [metric.name for metric in metrics]
+    assert f'test_{suffix}_clicks' in [metric.name for metric in metrics]
 
   def test_export_returns_correct_virtual_metric_name(
     self, garf_exporter, report_with_virtual_column
   ):
     garf_exporter.export(report=report_with_virtual_column)
     metrics = list(garf_exporter.registry.collect())
-    assert 'googleads_info' in [metric.name for metric in metrics]
+    assert 'test_info' in [metric.name for metric in metrics]
 
   def test_export_returns_correct_metric_documentation(
     self, garf_exporter, report
@@ -94,7 +93,7 @@ class TestGaaarfExporter:
     garf_exporter.export(report)
     metrics = list(garf_exporter.registry.collect())
     for metric in metrics:
-      if metric.name == 'googleads_clicks':
+      if metric.name == 'test_clicks':
         assert len(metric.samples) == len(report.results)
 
   @pytest.mark.parametrize(
@@ -102,10 +101,10 @@ class TestGaaarfExporter:
     [
       [
         samples.Sample(
-          name='googleads_clicks', labels={'campaign_id': '1'}, value=10.0
+          name='test_clicks', labels={'campaign_id': '1'}, value=10.0
         ),
         samples.Sample(
-          name='googleads_clicks', labels={'campaign_id': '2'}, value=20.0
+          name='test_clicks', labels={'campaign_id': '2'}, value=20.0
         ),
       ]
     ],
@@ -116,5 +115,5 @@ class TestGaaarfExporter:
     garf_exporter.export(report)
     metrics = list(garf_exporter.registry.collect())
     for metric in metrics:
-      if metric.name == 'googleads_clicks':
+      if metric.name == 'test_clicks':
         assert metric.samples == expected_samples

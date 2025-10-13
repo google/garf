@@ -23,7 +23,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import datetime
-from typing import Literal
 
 import fastapi
 import prometheus_client
@@ -203,8 +202,11 @@ def main(
   request = exporter_service.GarfExporterRequest(
     source=source,
     source_parameters=cli_parameters.get('source'),
-    collectors_config=config,
-    macros=cli_parameters.get('macro'),
+    collectors_config=args.config,
+    query_parameters={
+      'macro': cli_parameters.get('macro', {}),
+      'template': cli_parameters.get('template', {}),
+    },
     runtime_options=runtime_options,
   )
   exporter.namespace = request.runtime_options.namespace
