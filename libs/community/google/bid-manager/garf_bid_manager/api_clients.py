@@ -13,6 +13,8 @@
 # limitations under the License.
 """Creates API client for Bid Manager API."""
 
+import csv
+import io
 import logging
 import os
 import pathlib
@@ -103,23 +105,14 @@ class BidManagerApiClient(api_clients.BaseClient):
 
     status = _check_if_report_is_done(get_request)
 
-    logging.debug(
+    logging.info(
       'Report %s generated successfully. Now downloading.', report_id
     )
     with smart_open.open(
       status['metadata']['googleCloudStoragePath'], 'r', encoding='utf-8'
     ) as f:
       data = f.readlines()
-    results = []
-    for row in data[1:]:
-      if row := row.strip():
-        elements = row.split(',')
-        if not elements[0]:
-          break
-        result = dict(zip(request.fields, elements))
-        results.append(result)
-      else:
-        break
+    results = _process_api_response(data[1:], request.fields)
     return api_clients.GarfApiResponse(results=results)
 
   def _get_service_account_credentials(self):
@@ -176,6 +169,24 @@ def _build_request(request: query_editor.BidManagerApiQuery):
   if data_range:
     query['metadata']['dataRange'] = {'range': data_range}
   return query
+
+
+def _process_api_response(
+  data: list[str], fields
+) -> list[api_clients.ApiResponseRow]:
+  results = []
+  for row in data:
+    if row := row.strip():
+      f = io.StringIO(row)
+      reader = csv.reader(f)
+      elements = next(reader)
+      if not elements[0]:
+        break
+      result = dict(zip(fields, elements))
+      results.append(result)
+    else:
+      break
+  return results
 
 
 @tenacity.retry(
