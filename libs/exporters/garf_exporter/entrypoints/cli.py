@@ -202,7 +202,7 @@ def main(
   request = exporter_service.GarfExporterRequest(
     source=source,
     source_parameters=cli_parameters.get('source'),
-    collectors_config=args.config,
+    collectors_config=config,
     query_parameters={
       'macro': cli_parameters.get('macro', {}),
       'template': cli_parameters.get('template', {}),
