@@ -71,7 +71,7 @@ class GarfExporterRequest(pydantic.BaseModel):
     source: Type of API to get data from.
     source_parameters: Optional parameters to configure the API connection.
     collectors_config: Path to YAML file with collector definitions.
-    macros: Optional macros to refine queries in collectors.
+    query_parameters: Optional parameters to refine queries in collectors.
     runtime_options: Options to finetune exporting process.
   """
 
@@ -80,7 +80,7 @@ class GarfExporterRequest(pydantic.BaseModel):
     default_factory=dict
   )
   collectors_config: Union[os.PathLike[str], str, None] = None
-  macros: Optional[dict[str, str]] = None
+  query_parameters: Optional[garf_core.query_editor.GarfQueryParameters] = None
   runtime_options: GarfExporterRuntimeOptions = GarfExporterRuntimeOptions()
   collectors: list[collector.Collector] = pydantic.Field(default_factory=list)
 
@@ -132,7 +132,9 @@ class GarfExporterService:
     for col in collectors:
       logger.info('Exporting from collector: %s', col.title)
       start = time()
-      report = self.fetcher.fetch(col.query, **self.source_parameters)
+      report = self.fetcher.fetch(
+        col.query, args=request.query_parameters, **self.source_parameters
+      )
       end = time()
       exporter.report_fetcher_gauge.labels(collector=col.title).set(end - start)
       exporter.export(

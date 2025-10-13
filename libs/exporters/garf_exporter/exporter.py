@@ -40,7 +40,7 @@ class GarfExporter:
 
   def __init__(
     self,
-    namespace: str = 'googleads',
+    namespace: str = 'garf',
     job_name: str = 'garf_exporter',
     expose_metrics_with_zero_values: bool = False,
   ) -> None:
@@ -61,23 +61,17 @@ class GarfExporter:
   @property
   def export_started(self) -> prometheus_client.Gauge:
     """Gauge for tracking start of collectors export."""
-    return self._define_gauge(
-      'export_started_seconds', suffix='Remove', namespace=self.namespace
-    )
+    return self._define_gauge('export_started_seconds', suffix='Remove')
 
   @property
   def export_completed(self) -> prometheus_client.Gauge:
     """Gauge for tracking end of collectors export."""
-    return self._define_gauge(
-      'export_completed_seconds', suffix='Remove', namespace=self.namespace
-    )
+    return self._define_gauge('export_completed_seconds', suffix='Remove')
 
   @property
   def total_export_time_gauge(self) -> prometheus_client.Gauge:
     """Gauge for tracking exports in seconds."""
-    return self._define_gauge(
-      'exporting_seconds', suffix='Remove', namespace=self.namespace
-    )
+    return self._define_gauge('exporting_seconds', suffix='Remove')
 
   @property
   def report_fetcher_gauge(self) -> prometheus_client.Gauge:
@@ -86,15 +80,12 @@ class GarfExporter:
       name='report_fetching_seconds',
       suffix='Remove',
       labelnames=('collector',),
-      namespace=self.namespace,
     )
 
   @property
   def delay_gauge(self) -> prometheus_client.Gauge:
     """Gauge for exposing delay between exports."""
-    return self._define_gauge(
-      'delay_seconds', suffix='Remove', namespace=self.namespace
-    )
+    return self._define_gauge('delay_seconds', suffix='Remove')
 
   def reset_registry(self) -> None:
     """Removes all metrics from registry before export."""
@@ -104,7 +95,6 @@ class GarfExporter:
   def export(
     self,
     report: garf_core.GarfReport,
-    namespace: str | None = None,
     suffix: str = '',
     collector: str | None = None,
   ) -> None:
@@ -115,7 +105,6 @@ class GarfExporter:
 
     Args:
       report: Report with API data.
-      namespace: Global prefix for all Prometheus metrics.
       suffix: Common identifier to be added to a series of metrics.
       collector: Name of one of GarfExporter collectors attached to report.
     """
@@ -126,14 +115,9 @@ class GarfExporter:
       name='query_export_time_seconds',
       suffix='Remove',
       labelnames=('collector',),
-      namespace=namespace,
     )
-    api_requests_counter = self._define_counter(
-      namespace=namespace, name='api_requests_count'
-    )
-    metrics = self._define_metrics(
-      report.query_specification, suffix, namespace
-    )
+    api_requests_counter = self._define_counter(name='api_requests_count')
+    metrics = self._define_metrics(report.query_specification, suffix)
     labels = self._define_labels(report.query_specification)
     for row in report:
       label_values = []
@@ -158,7 +142,6 @@ class GarfExporter:
     self,
     query_specification: garf_core.query_editor.QuerySpecification,
     suffix: str,
-    namespace: str,
   ) -> dict[str, prometheus_client.Gauge]:
     """Defines metrics to be exposed Prometheus.
 
@@ -169,7 +152,6 @@ class GarfExporter:
       query_specification:
         QuerySpecification that contains all information about the query.
       suffix: Common identifier to be added to a series of metrics.
-      namespace: Global prefix for all Prometheus metrics.
 
     Returns:
       Mapping between metrics alias in report and Gauge.
@@ -179,11 +161,11 @@ class GarfExporter:
     non_virtual_columns = self._get_non_virtual_columns(query_specification)
     for column, field in zip(non_virtual_columns, query_specification.fields):
       if 'metric' in field or 'metric' in column:
-        metrics[column] = self._define_gauge(column, suffix, labels, namespace)
+        metrics[column] = self._define_gauge(column, suffix, labels)
     if virtual_columns := query_specification.virtual_columns:
       for column, field in virtual_columns.items():
-        metrics[column] = self._define_gauge(column, suffix, labels, namespace)
-    logger.debug('metrics: %s', metrics)
+        metrics[column] = self._define_gauge(column, suffix, labels)
+    logging.debug('metrics: %s', metrics)
     return metrics
 
   def _define_labels(
@@ -215,7 +197,6 @@ class GarfExporter:
     name: str,
     suffix: str,
     labelnames: Sequence[str] = (),
-    namespace: str | None = None,
   ) -> prometheus_client.Gauge:
     """Defines Gauge metric to be created in Prometheus and add labels to it.
 
@@ -229,17 +210,14 @@ class GarfExporter:
       name: Name of the metric to be exposed to Prometheus (without prefix).
       suffix: Common identifier to be added to a series of metrics.
       labelnames: Dimensions attached to metric (i.e. ad_group_id, account).
-      namespace: Global prefix for all Prometheus metrics.
 
     Returns:
       An instance of Counter that associated with registry.
     """
-    if not namespace:
-      namespace = self.namespace
     if suffix and suffix != 'Remove':
-      gauge_name = f'{namespace}_{suffix}_{name}'
+      gauge_name = f'{self.namespace}_{suffix}_{name}'
     else:
-      gauge_name = f'{namespace}_{name}'
+      gauge_name = f'{self.namespace}_{name}'
     if gauge_name in self.registry._names_to_collectors:
       return self.registry._names_to_collectors.get(gauge_name)
     return prometheus_client.Gauge(
@@ -249,19 +227,16 @@ class GarfExporter:
       registry=self.registry,
     )
 
-  def _define_counter(
-    self, namespace: str, name: str
-  ) -> prometheus_client.Counter:
+  def _define_counter(self, name: str) -> prometheus_client.Counter:
     """Define Counter metric based on provided name.
 
     Args:
-      namespace: Global prefix for all Prometheus metrics.
       name: Name of the metric to be exposed to Prometheus (without prefix).
 
     Returns:
       An instance of Counter that associated with registry.
     """
-    counter_name = f'{namespace}_{name}'
+    counter_name = f'{self.namespace}_{name}'
     if counter_name in self.registry._names_to_collectors:
       return self.registry._names_to_collectors.get(counter_name)
     return prometheus_client.Counter(
