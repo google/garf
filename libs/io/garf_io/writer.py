@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import enum
 import inspect
 import sys
 from importlib.metadata import entry_points
@@ -23,12 +24,36 @@ from garf_io import exceptions
 from garf_io.writers import abs_writer
 
 
+def _get_writers():
+  if sys.version_info.major == 3 and sys.version_info.minor == 9:
+    try:
+      writers = entry_points()['garf_writer']
+    except KeyError:
+      writers = []
+  else:
+    writers = entry_points(group='garf_writer')
+  return writers
+
+
+class StrEnumBase(str, enum.Enum):
+  """String enum."""
+
+
+_writer_options = {writer.name: writer.name for writer in _get_writers()}
+
+WriterOption = enum.Enum(
+  'WriterOption',
+  _writer_options,
+  type=StrEnumBase,
+)
+
+
 class GarfIoWriterError(exceptions.GarfIoError):
   """Writer specific exception."""
 
 
 def create_writer(
-  writer_option: str, **kwargs: str
+  writer_option: str | WriterOption, **kwargs: str
 ) -> type[abs_writer.AbsWriter]:
   """Factory function for creating concrete writer.
 
@@ -46,15 +71,12 @@ def create_writer(
     ImportError: When writer specific library is not installed.
     GarfIoError: When incorrect writer option is specified.
   """
-  if sys.version_info.major == 3 and sys.version_info.minor == 9:
-    try:
-      writers = entry_points()['garf_writer']
-    except KeyError:
-      writers = []
-  else:
-    writers = entry_points(group='garf_writer')
+  try:
+    WriterOption[writer_option]
+  except KeyError as e:
+    raise GarfIoWriterError(f'{writer_option} is unknown writer type!') from e
   found_writers = {}
-  for writer in writers:
+  for writer in _get_writers():
     try:
       writer_module = writer.load()
       for name, obj in inspect.getmembers(writer_module):
@@ -68,4 +90,4 @@ def create_writer(
       continue
   if concrete_writer := found_writers.get(writer_option):
     return concrete_writer(**kwargs)
-  raise GarfIoWriterError(f'{writer_option} is unknown writer type!')
+  raise GarfIoWriterError(f'Failed to load {writer_option}!')
