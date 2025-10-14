@@ -17,7 +17,10 @@ import pytest
 from garf_io import writer
 
 
-@pytest.mark.parametrize('option', ['bq', 'bigquery'])
+@pytest.mark.parametrize(
+  'option',
+  ['bq', 'bigquery', writer.WriterOption.bq, writer.WriterOption.bigquery],
+)
 def test_create_writer_returns_correct_fields_for_bq_option(option):
   bq_writer = writer.create_writer(
     option, project='fake_project', dataset='fake_dataset'
@@ -25,14 +28,22 @@ def test_create_writer_returns_correct_fields_for_bq_option(option):
   assert bq_writer.dataset_id == 'fake_project.fake_dataset'
 
 
-def test_create_writer_returns_correct_fields_for_csv_option():
-  csv_writer = writer.create_writer('csv', destination_folder='/fake_folder')
+@pytest.mark.parametrize(
+  'option',
+  ['csv', writer.WriterOption.csv],
+)
+def test_create_writer_returns_correct_fields_for_csv_option(option):
+  csv_writer = writer.create_writer(option, destination_folder='/fake_folder')
   assert csv_writer.destination_folder == '/fake_folder'
 
 
-def test_create_writer_returns_correct_fields_for_sheets_option():
+@pytest.mark.parametrize(
+  'option',
+  ['sheet', 'sheets', writer.WriterOption.sheet, writer.WriterOption.sheets],
+)
+def test_create_writer_returns_correct_fields_for_sheets_option(option):
   sheet_writer = writer.create_writer(
-    'sheet',
+    option,
     share_with='1@google.com',
     credentials_file='home/me/client_secret.json',
   )
@@ -40,17 +51,25 @@ def test_create_writer_returns_correct_fields_for_sheets_option():
   assert sheet_writer.credentials_file == 'home/me/client_secret.json'
 
 
-def test_create_writer_returns_correct_fields_for_sqldb_option():
+@pytest.mark.parametrize(
+  'option',
+  ['sqldb', writer.WriterOption.sqldb],
+)
+def test_create_writer_returns_correct_fields_for_sqldb_option(option):
   sqlalchemy_writer = writer.create_writer(
-    'sqldb', connection_string='protocol://user:password@host:port/db'
+    option, connection_string='protocol://user:password@host:port/db'
   )
   assert sqlalchemy_writer.connection_string == (
     'protocol://user:password@host:port/db'
   )
 
 
-def test_create_writer_returns_correct_fields_for_json_option():
-  json_writer = writer.create_writer('json', destination_folder='/fake_folder')
+@pytest.mark.parametrize(
+  'option',
+  ['json', writer.WriterOption.json],
+)
+def test_create_writer_returns_correct_fields_for_json_option(option):
+  json_writer = writer.create_writer(option, destination_folder='/fake_folder')
   assert json_writer.destination_folder == '/fake_folder'
 
 
