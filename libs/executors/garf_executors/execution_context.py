@@ -55,6 +55,8 @@ class ExecutionContext(pydantic.BaseModel):
       self.fetcher_parameters = {}
     if self.writer_parameters is None:
       self.writer_parameters = {}
+    if not self.query_parameters:
+      self.query_parameters = query_editor.GarfQueryParameters()
 
   @classmethod
   def from_file(

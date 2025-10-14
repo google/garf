@@ -13,10 +13,17 @@
 # limitations under the License.
 
 import yaml
+from garf_core import query_editor
 from garf_executors.execution_context import ExecutionContext
 
 
 class TestExecutionContext:
+  def test_default_execution_context_creates_correct_query_parameters(self):
+    context = ExecutionContext()
+    assert context.query_parameters == query_editor.GarfQueryParameters(
+      macro={}, template={}
+    )
+
   def test_from_file_returns_correct_context_from_empty_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
     data = {}
