@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import enum
 import logging
 import sys
 from collections.abc import Sequence
@@ -89,8 +90,15 @@ class GarfParamsException(Exception):
   """Defines exception for incorrect parameters."""
 
 
+class LoggerEnum(str, enum.Enum):
+  local = 'local'
+  rich = 'rich'
+
+
 def init_logging(
-  loglevel: str = 'INFO', logger_type: str = 'local', name: str = __name__
+  loglevel: str = 'INFO',
+  logger_type: str | LoggerEnum = 'local',
+  name: str = __name__,
 ) -> logging.Logger:
   if logger_type == 'rich':
     logging.basicConfig(

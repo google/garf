@@ -79,3 +79,11 @@ class TestParamsParser:
       },
       'template': {},
     }
+
+
+@pytest.mark.parametrize(
+  'logger_type',
+  ['local', 'rich', utils.LoggerEnum.local, utils.LoggerEnum.rich],
+)
+def test_init_logging(logger_type):
+  assert utils.init_logging(logger_type=logger_type)
