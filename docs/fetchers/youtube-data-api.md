@@ -1,5 +1,8 @@
 # garf for YouTube Data API
 
+[![PyPI](https://img.shields.io/pypi/v/garf-youtube-data-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube-data-api)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube-data-api?logo=pypi)](https://pypi.org/project/garf-youtube-data-api/)
+
 Interacts with [YouTube Data API](https://developers.google.com/youtube/v3/docs).
 
 ## Install

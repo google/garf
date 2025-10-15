@@ -1,5 +1,8 @@
 ## garf for Bid Manager API
 
+[![PyPI](https://img.shields.io/pypi/v/garf-bid-manager?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-bid-manager)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-bid-manager?logo=pypi)](https://pypi.org/project/garf-bid-manager/)
+
 Interacts with [Bid Manager API](https://developers.google.com/bid-manager).
 
 ## Install
@@ -74,3 +77,13 @@ csv_writer.write(fetched_report, 'query')
 | name | values| comments |
 |----- | ----- | -------- |
 | `credentials_file`   | File with Oauth or service account credentials | You can expose `credentials_file` as `GARF_BID_MANAGER_CREDENTIALS_FILE` ENV variable|
+
+## Query syntax
+
+`garf-bid-manager` uses simplified syntax for writing queries.
+
+|area | Bid Manager | garf|
+| --- |----- | ----- |
+| filters and metrics case | upper (FILTER_ADVERTISER)| any (filter_advertiser) |
+| prefix| mandatory (FILTER_ADVERTISER)| optional for filters (advertiser) |
+| resource case | upper (STANDARD)| any (standard) |
