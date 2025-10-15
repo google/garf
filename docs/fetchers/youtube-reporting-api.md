@@ -1,5 +1,8 @@
 # garf for YouTube Data API
 
+[![PyPI](https://img.shields.io/pypi/v/garf-youtube-reporting-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube-reporting-api)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube-reporting-api?logo=pypi)](https://pypi.org/project/garf-youtube-reporting-api/)
+
 ## Install
 
 Install `garf-youtube-reporting-api` library

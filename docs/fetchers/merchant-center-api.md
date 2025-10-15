@@ -1,5 +1,8 @@
 # garf for Merchant Center API
 
+[![PyPI](https://img.shields.io/pypi/v/garf-merchant-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-merchant-api)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-merchant-api?logo=pypi)](https://pypi.org/project/garf-merchant-api/)
+
 ## Install
 
 Install `garf-merchant-api` library
