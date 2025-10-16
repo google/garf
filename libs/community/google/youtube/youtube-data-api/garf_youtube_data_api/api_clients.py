@@ -19,6 +19,7 @@ import warnings
 
 from garf_core import api_clients, query_editor
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from typing_extensions import override
 
 from garf_youtube_data_api import exceptions
@@ -91,8 +92,11 @@ class YouTubeDataApiClient(api_clients.BaseClient):
   def _list(
     self, service, part: str, next_page_token: str | None = None, **kwargs
   ) -> dict:
-    if next_page_token:
-      return service.list(
-        part=part, pageToken=next_page_token, **kwargs
-      ).execute()
-    return service.list(part=part, **kwargs).execute()
+    try:
+      if next_page_token:
+        return service.list(
+          part=part, pageToken=next_page_token, **kwargs
+        ).execute()
+      return service.list(part=part, **kwargs).execute()
+    except HttpError:
+      return {'items': None}

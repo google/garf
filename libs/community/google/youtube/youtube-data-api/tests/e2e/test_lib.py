@@ -22,6 +22,13 @@ api_client = api_clients.YouTubeDataApiClient()
 fetcher = report_fetcher.YouTubeDataApiReportFetcher(api_client=api_client)
 
 
+def test_query_with_non_existing_id_returns_empty_report():
+  query = 'SELECT id, snippet.title AS title FROM videos'
+  test_youtube_id = 'no-existing-video-id'
+  fetched_report = fetcher.fetch(query, id=[test_youtube_id])
+  assert not fetched_report
+
+
 def test_query_with_ids_only():
   query = 'SELECT id, snippet.title AS title FROM videos'
   test_youtube_id = os.getenv('YOUTUBE_ID')
