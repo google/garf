@@ -403,6 +403,10 @@ class GarfReport:
     """
     if not isinstance(other, self.__class__):
       raise GarfReportError('Add operation is supported only for GarfReport')
+    if not other:
+      return self
+    if not self:
+      return other
     if self.column_names != other.column_names:
       raise GarfReportError('column_names should be the same in GarfReport')
     return GarfReport(
@@ -634,6 +638,9 @@ class GarfRow:
 
   def __repr__(self):
     return f'GarfRow(\n{self.to_dict()}\n)'
+
+  def __bool__(self) -> bool:
+    return bool(self.data)
 
 
 class GarfReportError(exceptions.GarfError):

@@ -144,6 +144,12 @@ class TestGarfReport:
       added_report = empty_report + empty_report
       assert len(added_report) == 0
 
+    def test_add_empty_report_to_non_emptry_report_returns_non_empty_report(
+      self, multi_column_report, empty_report
+    ):
+      added_report = empty_report + multi_column_report + empty_report
+      assert added_report == multi_column_report
+
     def test_add_two_reports(self, multi_column_report):
       added_report = multi_column_report + multi_column_report
       assert len(added_report) == len(multi_column_report.results) * 2
