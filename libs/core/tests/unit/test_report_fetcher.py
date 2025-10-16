@@ -51,6 +51,16 @@ class TestApiReportFetcher:
 
     assert test_report == expected_report
 
+  def test_fetch_returns_empty_report_for_empty_api_response(self):
+    test_api_client = api_clients.FakeApiClient(results=[])
+    fetcher = report_fetcher.ApiReportFetcher(
+      api_client=test_api_client, parser=parsers.DictParser
+    )
+    query = 'SELECT column.name, other_column FROM test'
+    test_report = fetcher.fetch(query)
+
+    assert not test_report
+
   def test_fetch_builtin_query_returns_correct_builtin_report(
     self, test_dict_report_fetcher
   ):

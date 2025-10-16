@@ -148,6 +148,9 @@ class ApiReportFetcher:
       return builtin_report(self, **kwargs)
 
     response = self.api_client.get_response(query, **kwargs)
+    if not response:
+      return report.GarfReport(query_specification=query)
+
     parsed_response = self.parser(query).parse_response(response)
     return report.GarfReport(
       results=parsed_response,
