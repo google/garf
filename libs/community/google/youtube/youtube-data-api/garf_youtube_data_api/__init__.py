@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines simplified imports."""
+"""Interacts with YouTube Data API via garf."""
 
 from __future__ import annotations
 
@@ -24,4 +24,4 @@ __all__ = [
   'YouTubeDataApiReportFetcher',
 ]
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
