@@ -30,6 +30,8 @@ from garf_core import report as garf_report
 from garf_io import formatter
 from garf_io.writers import file_writer
 
+logger = logging.getLogger(__name__)
+
 
 class CsvWriter(file_writer.FileWriter):
   """Writes Garf Report to CSV.
@@ -83,7 +85,7 @@ class CsvWriter(file_writer.FileWriter):
     report = self.format_for_write(report)
     destination = formatter.format_extension(destination, new_extension='.csv')
     self.create_dir()
-    logging.debug('Writing %d rows of data to %s', len(report), destination)
+    logger.debug('Writing %d rows of data to %s', len(report), destination)
     output_path = pathlib.Path(self.destination_folder) / destination
     with smart_open.open(
       output_path,
@@ -98,5 +100,5 @@ class CsvWriter(file_writer.FileWriter):
       )
       writer.writerow(report.column_names)
       writer.writerows(report.results)
-    logging.debug('Writing to %s is completed', output_path)
+    logger.debug('Writing to %s is completed', output_path)
     return f'[CSV] - at {output_path}'

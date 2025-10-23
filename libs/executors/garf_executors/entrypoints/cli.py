@@ -20,6 +20,7 @@ storage.
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 
 from garf_io import reader
@@ -38,6 +39,7 @@ def main():
   parser.add_argument('--input', dest='input', default='file')
   parser.add_argument('--log', '--loglevel', dest='loglevel', default='info')
   parser.add_argument('--logger', dest='logger', default='local')
+  parser.add_argument('--log-name', dest='log_name', default='garf')
   parser.add_argument(
     '--parallel-queries', dest='parallel_queries', action='store_true'
   )
@@ -57,7 +59,7 @@ def main():
     print(garf_executors.__version__)
     sys.exit()
   logger = utils.init_logging(
-    loglevel=args.loglevel.upper(), logger_type=args.logger
+    loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
   )
   if not args.query:
     logger.error('Please provide one or more queries to run')
@@ -102,6 +104,7 @@ def main():
       logger.info('Running queries sequentially')
       for query in args.query:
         query_executor.execute(reader_client.read(query), query, context)
+  logging.shutdown()
 
 
 if __name__ == '__main__':

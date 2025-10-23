@@ -165,7 +165,7 @@ class GarfExporter:
     if virtual_columns := query_specification.virtual_columns:
       for column, field in virtual_columns.items():
         metrics[column] = self._define_gauge(column, suffix, labels)
-    logging.debug('metrics: %s', metrics)
+    logger.debug('metrics: %s', metrics)
     return metrics
 
   def _define_labels(

@@ -93,6 +93,7 @@ class GarfParamsException(Exception):
 class LoggerEnum(str, enum.Enum):
   local = 'local'
   rich = 'rich'
+  gcloud = 'gcloud'
 
 
 def init_logging(
@@ -100,6 +101,7 @@ def init_logging(
   logger_type: str | LoggerEnum = 'local',
   name: str = __name__,
 ) -> logging.Logger:
+  loglevel = getattr(logging, loglevel)
   if logger_type == 'rich':
     logging.basicConfig(
       format='%(message)s',
@@ -108,6 +110,23 @@ def init_logging(
       handlers=[
         rich_logging.RichHandler(rich_tracebacks=True),
       ],
+    )
+  elif logger_type == 'gcloud':
+    try:
+      import google.cloud.logging as glogging
+    except ImportError as e:
+      raise ImportError(
+        'Please install garf-executors with Cloud logging support - '
+        '`pip install garf-executors[bq]`'
+      ) from e
+
+    client = glogging.Client()
+    handler = glogging.handlers.CloudLoggingHandler(client, name=name)
+    handler.close()
+    glogging.handlers.setup_logging(handler, log_level=loglevel)
+    logging.basicConfig(
+      level=loglevel,
+      handlers=[handler],
     )
   else:
     logging.basicConfig(
