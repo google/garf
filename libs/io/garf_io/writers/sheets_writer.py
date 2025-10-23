@@ -35,6 +35,8 @@ from typing_extensions import override
 from garf_io import exceptions, formatter
 from garf_io.writers.abs_writer import AbsWriter
 
+logger = logging.getLogger(__name__)
+
 
 class SheetWriterError(exceptions.GarfIoError):
   """SheetWriterError specific errors."""
@@ -94,7 +96,7 @@ class SheetWriter(AbsWriter):
       sheet.append_rows(report.results, value_input_option='RAW')
 
     success_msg = f'Report is saved to {sheet.url}'
-    logging.info(success_msg)
+    logger.info(success_msg)
     if self.share_with:
       self.spreadsheet.share(self.share_with, perm_type='user', role='writer')
     return success_msg

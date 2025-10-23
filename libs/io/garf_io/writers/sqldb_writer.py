@@ -31,6 +31,8 @@ from garf_core import report as garf_report
 from garf_io import formatter
 from garf_io.writers import abs_writer
 
+logger = logging.getLogger(__name__)
+
 
 class SqlAlchemyWriter(abs_writer.AbsWriter):
   """Handles writing GarfReports data to databases supported by SqlAlchemy.
@@ -77,7 +79,7 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
       ).head(0)
     else:
       df = report.to_pandas()
-    logging.debug('Writing %d rows of data to %s', len(df), destination)
+    logger.debug('Writing %d rows of data to %s', len(df), destination)
     write_params = {
       'name': destination,
       'con': self.engine,
@@ -87,7 +89,7 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
     if dtypes:
       write_params.update({'dtype': dtypes})
     df.to_sql(**write_params)
-    logging.debug('Writing to %s is completed', destination)
+    logger.debug('Writing to %s is completed', destination)
 
   @property
   def engine(self) -> sqlalchemy.engine.Engine:

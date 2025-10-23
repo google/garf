@@ -38,6 +38,8 @@ from google.cloud import exceptions as google_cloud_exceptions
 from garf_io import exceptions, formatter
 from garf_io.writers import abs_writer
 
+logger = logging.getLogger(__name__)
+
 
 class BigQueryWriterError(exceptions.GarfIoError):
   """BigQueryWriter specific errors."""
@@ -136,13 +138,13 @@ class BigQueryWriter(abs_writer.AbsWriter):
     else:
       df = report.to_pandas()
     df = df.replace({np.nan: None})
-    logging.debug('Writing %d rows of data to %s', len(df), destination)
+    logger.debug('Writing %d rows of data to %s', len(df), destination)
     job = self.client.load_table_from_dataframe(
       dataframe=df, destination=table, job_config=job_config
     )
     try:
       job.result()
-      logging.debug('Writing to %s is completed', destination)
+      logger.debug('Writing to %s is completed', destination)
     except google_cloud_exceptions.BadRequest as e:
       raise ValueError(f'Unable to save data to BigQuery! {str(e)}') from e
     return f'[BigQuery] - at {self.dataset_id}.{destination}'

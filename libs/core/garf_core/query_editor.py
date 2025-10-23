@@ -28,6 +28,8 @@ from typing_extensions import Self, TypeAlias
 
 from garf_core import query_parser
 
+logger = logging.getLogger(__name__)
+
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
 
 
@@ -126,7 +128,7 @@ class TemplateProcessorMixin:
   def replace_params_template(
     self, query_text: str, params: GarfQueryParameters | None = None
   ) -> str:
-    logging.debug('Original query text:\n%s', query_text)
+    logger.debug('Original query text:\n%s', query_text)
     if params:
       if templates := params.template:
         query_templates = {
@@ -134,14 +136,14 @@ class TemplateProcessorMixin:
         }
         if query_templates:
           query_text = self.expand_jinja(query_text, query_templates)
-          logging.debug('Query text after jinja expansion:\n%s', query_text)
+          logger.debug('Query text after jinja expansion:\n%s', query_text)
         else:
           query_text = self.expand_jinja(query_text, {})
       else:
         query_text = self.expand_jinja(query_text, {})
       if macros := params.macro:
         query_text = query_text.format(**macros)
-        logging.debug('Query text after macro substitution:\n%s', query_text)
+        logger.debug('Query text after macro substitution:\n%s', query_text)
     else:
       query_text = self.expand_jinja(query_text, {})
     return query_text
