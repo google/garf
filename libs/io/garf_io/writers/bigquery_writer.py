@@ -16,22 +16,20 @@
 from __future__ import annotations
 
 import os
+from typing import Literal
 
 try:
+  import pandas as pd
+  import pandas_gbq
   from google.cloud import bigquery
 except ImportError as e:
   raise ImportError(
     'Please install garf-io with BigQuery support - `pip install garf-io[bq]`'
   ) from e
 
-import datetime
 import logging
-from collections.abc import Sequence
 
 import numpy as np
-import pandas as pd
-import proto  # type: ignore
-from garf_core import parsers
 from garf_core import report as garf_report
 from google.cloud import exceptions as google_cloud_exceptions
 
@@ -39,6 +37,13 @@ from garf_io import exceptions, formatter
 from garf_io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
+
+_WRITE_DISPOSITION_MAPPING = {
+  'WRITE_TRUNCATE': 'replace',
+  'WRITE_TRUNCATE_DATA': 'replace',
+  'WRITE_APPEND': 'append',
+  'WRITE_EMPTY': 'fail',
+}
 
 
 class BigQueryWriterError(exceptions.GarfIoError):
@@ -60,9 +65,8 @@ class BigQueryWriter(abs_writer.AbsWriter):
     project: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
     dataset: str = 'garf',
     location: str = 'US',
-    write_disposition: bigquery.WriteDisposition | str = (
-      bigquery.WriteDisposition.WRITE_TRUNCATE
-    ),
+    write_disposition: bigquery.WriteDisposition
+    | Literal['append', 'replace', 'fail'] = 'replace',
     **kwargs,
   ):
     """Initializes BigQueryWriter.
@@ -83,11 +87,20 @@ class BigQueryWriter(abs_writer.AbsWriter):
     self.project = project
     self.dataset_id = f'{project}.{dataset}'
     self.location = location
-    if isinstance(write_disposition, str):
-      write_disposition = getattr(
-        bigquery.WriteDisposition, write_disposition.upper()
+    if write_disposition in ('replace', 'append', 'fail'):
+      self.write_disposition = write_disposition
+    elif isinstance(write_disposition, bigquery.WriteDisposition):
+      self.write_disposition = _WRITE_DISPOSITION_MAPPING.get(
+        write_disposition.name
       )
-    self.write_disposition = write_disposition
+    elif _WRITE_DISPOSITION_MAPPING.get(write_disposition.upper()):
+      self.write_disposition = _WRITE_DISPOSITION_MAPPING.get(
+        write_disposition.upper()
+      )
+    else:
+      raise BigQueryWriterError(
+        'Unsupported writer disposition, choose one of: replace, append, fail'
+      )
 
   def __str__(self) -> str:
     return f'[BigQuery] - {self.dataset_id} at {self.location} location.'
@@ -118,19 +131,9 @@ class BigQueryWriter(abs_writer.AbsWriter):
       Name of the table in `dataset.table` format.
     """
     report = self.format_for_write(report)
-    schema = _define_schema(report)
     destination = formatter.format_extension(destination)
     _ = self.create_or_get_dataset()
-    table = self._create_or_get_table(
-      f'{self.dataset_id}.{destination}', schema
-    )
-    job_config = bigquery.LoadJobConfig(
-      write_disposition=self.write_disposition,
-      schema=schema,
-      source_format='CSV',
-      max_bad_records=len(report),
-    )
-
+    table = f'{self.dataset_id}.{destination}'
     if not report:
       df = pd.DataFrame(
         data=report.results_placeholder, columns=report.column_names
@@ -139,123 +142,8 @@ class BigQueryWriter(abs_writer.AbsWriter):
       df = report.to_pandas()
     df = df.replace({np.nan: None})
     logger.debug('Writing %d rows of data to %s', len(df), destination)
-    job = self.client.load_table_from_dataframe(
-      dataframe=df, destination=table, job_config=job_config
+    pandas_gbq.to_gbq(
+      dataframe=df, destination_table=table, if_exists=self.write_disposition
     )
-    try:
-      job.result()
-      logger.debug('Writing to %s is completed', destination)
-    except google_cloud_exceptions.BadRequest as e:
-      raise ValueError(f'Unable to save data to BigQuery! {str(e)}') from e
+    logger.debug('Writing to %s is completed', destination)
     return f'[BigQuery] - at {self.dataset_id}.{destination}'
-
-  def _create_or_get_table(
-    self, table_name: str, schema: Sequence[bigquery.SchemaField]
-  ) -> bigquery.Table:
-    """Gets existing table or create a new one.
-
-    Args:
-      table_name: Name of the table in BigQuery.
-      schema: Schema of the table if one should be created.
-
-    Returns:
-      BigQuery table object.
-    """
-    try:
-      table = self.client.get_table(table_name)
-    except google_cloud_exceptions.NotFound:
-      table_ref = bigquery.Table(table_name, schema=schema)
-      table = self.client.create_table(table_ref)
-      table = self.client.get_table(table_name)
-    return table
-
-
-def _define_schema(
-  report: garf_report.GarfReport,
-) -> list[bigquery.SchemaField]:
-  """Infers schema from GarfReport.
-
-  Args:
-    report: GarfReport to infer schema from.
-
-  Returns:
-    Schema fields for a given report.
-
-  """
-  result_types = _get_result_types(report)
-  return _get_bq_schema(result_types)
-
-
-def _get_result_types(
-  report: garf_report.GarfReport,
-) -> dict[str, dict[str, parsers.ApiRowElement]]:
-  """Maps each column of report to BigQuery field type and repeated status.
-
-  Fields types are inferred based on report results or results placeholder.
-
-  Args:
-    report: GarfReport to infer field types from.
-
-  Returns:
-    Mapping between each column of report and its field type.
-  """
-  result_types: dict[str, dict[str, parsers.ApiRowElement]] = {}
-  column_names = report.column_names
-  for row in report.results or report.results_placeholder:
-    if set(column_names) == set(result_types.keys()):
-      break
-    for i, field in enumerate(row):
-      if field is None or column_names[i] in result_types:
-        continue
-      field_type = type(field)
-      if field_type in [
-        list,
-        proto.marshal.collections.repeated.RepeatedComposite,
-        proto.marshal.collections.repeated.Repeated,
-      ]:
-        repeated = True
-        field_type = str if len(field) == 0 else type(field[0])
-      else:
-        field_type = type(field)
-        repeated = False
-      result_types[column_names[i]] = {
-        'field_type': field_type,
-        'repeated': repeated,
-      }
-  return result_types
-
-
-def _get_bq_schema(
-  types: dict[str, dict[str, parsers.ApiRowElement]],
-) -> list[bigquery.SchemaField]:
-  """Converts report fields types to BigQuery schema fields.
-
-  Args:
-    types: Mapping between column names and its field type.
-
-  Returns:
-     BigQuery schema fields corresponding to GarfReport.
-  """
-  type_mapping = {
-    list: 'REPEATED',
-    str: 'STRING',
-    datetime.datetime: 'DATETIME',
-    datetime.date: 'DATE',
-    int: 'INT64',
-    float: 'FLOAT64',
-    bool: 'BOOL',
-    proto.marshal.collections.repeated.RepeatedComposite: 'REPEATED',
-    proto.marshal.collections.repeated.Repeated: 'REPEATED',
-  }
-
-  schema: list[bigquery.SchemaField] = []
-  for key, value in types.items():
-    field_type = type_mapping.get(value.get('field_type'))
-    schema.append(
-      bigquery.SchemaField(
-        name=key,
-        field_type=field_type if field_type else 'STRING',
-        mode='REPEATED' if value.get('repeated') else 'NULLABLE',
-      )
-    )
-  return schema

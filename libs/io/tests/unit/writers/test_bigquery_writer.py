@@ -13,46 +13,48 @@
 # limitations under the License.
 from __future__ import annotations
 
+import os
+
+import garf_core
 import pytest
 from garf_io.writers import bigquery_writer
 from google.cloud import bigquery
 
 
 class TestBigQueryWriter:
-  @pytest.fixture
-  def bq_writer(self):
-    return bigquery_writer.BigQueryWriter(project='test', dataset='test')
+  @pytest.mark.skipif(
+    not os.environ.get('GOOGLE_CLOUD_PROJECT'),
+    reason='GOOGLE_CLOUD_PROJECT env variable not set.',
+  )
+  def test_write(self):
+    writer = bigquery_writer.BigQueryWriter(array_handling='arrays')
+    report = garf_core.GarfReport(
+      results=[
+        [{'key': ['one', 'two']}, 'three'],
+      ],
+      column_names=['column1', 'column2'],
+    )
+    result = writer.write(report, 'test')
+    assert result
 
-  def test_get_results_types_returns_correct_mapping(self, sample_data):
-    result_types = bigquery_writer._get_result_types(sample_data)
-    assert result_types == {
-      'column_1': {'field_type': int, 'repeated': False},
-      'column_2': {'field_type': str, 'repeated': False},
-      'column_3': {'field_type': int, 'repeated': True},
-    }
-
-  def test_define_schema_returns_correct_schema_fields(self, sample_data):
-    schema = bigquery_writer._define_schema(sample_data)
-    assert schema == [
-      bigquery.SchemaField(
-        'column_1', 'INT64', 'NULLABLE', None, None, (), None
-      ),
-      bigquery.SchemaField(
-        'column_2', 'STRING', 'NULLABLE', None, None, (), None
-      ),
-      bigquery.SchemaField(
-        'column_3', 'INT64', 'REPEATED', None, None, (), None
-      ),
-    ]
-
-  def test_define_schema_correctly_handles_dates(self, sample_data_with_dates):
-    schema = bigquery_writer._define_schema(sample_data_with_dates)
-    assert schema == [
-      bigquery.SchemaField(
-        'column_1', 'INT64', 'NULLABLE', None, None, (), None
-      ),
-      bigquery.SchemaField(
-        'datetime', 'DATETIME', 'NULLABLE', None, None, (), None
-      ),
-      bigquery.SchemaField('date', 'DATE', 'NULLABLE', None, None, (), None),
-    ]
+  @pytest.mark.parametrize(
+    ('disposition', 'expected'),
+    [
+      ('append', 'append'),
+      ('replace', 'replace'),
+      ('fail', 'fail'),
+      ('write_append', 'append'),
+      ('write_truncate', 'replace'),
+      ('write_truncate_data', 'replace'),
+      ('write_empty', 'fail'),
+      (bigquery.WriteDisposition.WRITE_APPEND, 'append'),
+      (bigquery.WriteDisposition.WRITE_TRUNCATE, 'replace'),
+      (bigquery.WriteDisposition.WRITE_TRUNCATE_DATA, 'replace'),
+      (bigquery.WriteDisposition.WRITE_EMPTY, 'fail'),
+    ],
+  )
+  def test_init_creates_correct_write_disposition(self, disposition, expected):
+    writer = bigquery_writer.BigQueryWriter(
+      project='test', write_disposition=disposition
+    )
+    assert writer.write_disposition == expected
