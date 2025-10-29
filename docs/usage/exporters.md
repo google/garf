@@ -49,11 +49,24 @@ Once `garf-exporter` is running you can see exposed metrics at `localhost:8000/m
 
 ### Customization
 
+#### Exporter
+
 * `--config` - path to `garf_exporter.yaml`, can be taken from local or remote file.
 * `--expose-type` - type of exposition (`http` or `pushgateway`, `http` is used by default)
 * `--host` - address of your http server (`localhost` by default)
 * `--port` - port of your http server (`8000` by default)
 * `--delay-minutes` - delay in minutes between scrapings (`15` by default)
+
+#### Source
+
+Depending on a source selected you may need to provide source-specific parameters
+in `--source.key=value` format (i.e. `--source.credentials_file=/app/credentials.json`).
+
+#### Macro
+
+If queries contain [macros](queries.md#macros) you need provide them
+in `--macros.key=value` format (i.e. `--macro.start-date=20250101`).
+
 
 ## Examples
 
