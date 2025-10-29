@@ -18,6 +18,7 @@ import io
 import logging
 import os
 import pathlib
+from typing import Literal
 
 import smart_open
 import tenacity
@@ -32,7 +33,7 @@ from garf_bid_manager import exceptions, query_editor
 _API_URL = 'https://doubleclickbidmanager.googleapis.com/'
 _DEFAULT_API_SCOPES = ['https://www.googleapis.com/auth/doubleclickbidmanager']
 
-_SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home()) + 'dbm.json'
+_SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home() / 'dbm.json')
 
 
 class BidManagerApiClientError(exceptions.BidManagerApiError):
@@ -48,17 +49,25 @@ class BidManagerApiClient(api_clients.BaseClient):
     credentials_file: str | pathlib.Path = os.getenv(
       'GARF_BID_MANAGER_CREDENTIALS_FILE', _SERVICE_ACCOUNT_CREDENTIALS_FILE
     ),
+    auth_mode: Literal['oauth', 'service_account'] = 'oauth',
+    **kwargs: str,
   ) -> None:
     """Initializes BidManagerApiClient."""
     self.api_version = api_version
     self.credentials_file = credentials_file
+    self.auth_mode = auth_mode
+    self.kwargs = kwargs
     self._client = None
     self._credentials = None
 
   @property
   def credentials(self):
     if not self._credentials:
-      self._credentials = self._get_oauth_credentials()
+      self._credentials = (
+        self._get_oauth_credentials()
+        if self.auth_mode == 'oauth'
+        else self._get_service_account_credentials()
+      )
     return self._credentials
 
   @property
