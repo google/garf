@@ -77,6 +77,7 @@ csv_writer.write(fetched_report, 'query')
 | name | values| comments |
 |----- | ----- | -------- |
 | `credentials_file`   | File with Oauth or service account credentials | You can expose `credentials_file` as `GARF_BID_MANAGER_CREDENTIALS_FILE` ENV variable|
+| `auth_mode`   | Type of authentication: `oauth` or `service_account` | `oauth` is the default mode|
 
 ## Query syntax
 

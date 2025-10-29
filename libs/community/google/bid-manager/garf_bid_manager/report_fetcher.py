@@ -24,7 +24,7 @@ class BidManagerApiReportFetcher(report_fetcher.ApiReportFetcher):
 
   def __init__(
     self,
-    api_client: BidManagerApiClient = BidManagerApiClient(),
+    api_client: BidManagerApiClient | None = None,
     parser: parsers.DictParser = parsers.NumericConverterDictParser,
     query_spec: query_editor.BidManagerApiQuery = (
       query_editor.BidManagerApiQuery
@@ -32,4 +32,6 @@ class BidManagerApiReportFetcher(report_fetcher.ApiReportFetcher):
     **kwargs: str,
   ) -> None:
     """Initializes BidManagerApiReportFetcher."""
+    if not api_client:
+      api_client = BidManagerApiClient(**kwargs)
     super().__init__(api_client, parser, query_spec, **kwargs)
