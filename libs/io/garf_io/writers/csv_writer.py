@@ -86,7 +86,7 @@ class CsvWriter(file_writer.FileWriter):
     destination = formatter.format_extension(destination, new_extension='.csv')
     self.create_dir()
     logger.debug('Writing %d rows of data to %s', len(report), destination)
-    output_path = pathlib.Path(self.destination_folder) / destination
+    output_path = os.path.join(self.destination_folder, destination)
     with smart_open.open(
       output_path,
       encoding='utf-8',
