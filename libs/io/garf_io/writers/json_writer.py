@@ -71,7 +71,7 @@ class JsonWriter(file_writer.FileWriter):
     )
     self.create_dir()
     logger.debug('Writing %d rows of data to %s', len(report), destination)
-    output_path = pathlib.Path(self.destination_folder) / destination
+    output_path = os.path.join(self.destination_folder, destination)
     with smart_open.open(output_path, 'w', encoding='utf-8') as f:
       f.write(report.to_json(output=self.format))
     logger.debug('Writing to %s is completed', output_path)
