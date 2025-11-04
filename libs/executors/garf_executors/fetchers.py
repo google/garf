@@ -16,9 +16,13 @@ import inspect
 import sys
 from importlib.metadata import entry_points
 
-from garf_core import exceptions, report_fetcher
+from garf_core import report_fetcher
+from opentelemetry import trace
+
+from garf_executors.telemetry import tracer
 
 
+@tracer.start_as_current_span('find_fetchers')
 def find_fetchers() -> set[str]:
   """Identifiers all available report fetchers."""
   if entrypoints := _get_entrypoints('garf'):
@@ -26,6 +30,7 @@ def find_fetchers() -> set[str]:
   return set()
 
 
+@tracer.start_as_current_span('get_report_fetcher')
 def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   """Loads report fetcher for a given source.
 
@@ -44,7 +49,9 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   for fetcher in _get_entrypoints('garf'):
     if fetcher.name == source:
       try:
-        fetcher_module = fetcher.load()
+        with tracer.start_as_current_span('load_fetcher_module') as span:
+          fetcher_module = fetcher.load()
+          span.set_attribute('loaded_module', fetcher_module.__name__)
         for name, obj in inspect.getmembers(fetcher_module):
           if inspect.isclass(obj) and issubclass(
             obj, report_fetcher.ApiReportFetcher
@@ -52,7 +59,7 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
             return getattr(fetcher_module, name)
       except ModuleNotFoundError:
         continue
-  raise exceptions.ApiReportFetcherError(
+  raise report_fetcher.ApiReportFetcherError(
     f'No fetcher available for the source "{source}"'
   )
 

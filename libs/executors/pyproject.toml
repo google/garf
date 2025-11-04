@@ -9,6 +9,8 @@ dependencies = [
   "garf-io",
   "pyyaml",
   "pydantic",
+  "opentelemetry-api",
+  "opentelemetry-sdk",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
@@ -48,6 +50,8 @@ sql=[
 ]
 server=[
   "fastapi[standard]",
+  "opentelemetry-instrumentation-fastapi",
+  "opentelemetry-exporter-otlp",
 ]
 all = [
   "garf-executors[bq,sql,server]"

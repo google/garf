@@ -19,8 +19,10 @@ import importlib
 
 from garf_executors import executor, fetchers
 from garf_executors.api_executor import ApiExecutionContext, ApiQueryExecutor
+from garf_executors.telemetry import tracer
 
 
+@tracer.start_as_current_span('setup_executor')
 def setup_executor(
   source: str, fetcher_parameters: dict[str, str]
 ) -> type[executor.Executor]:
@@ -48,4 +50,4 @@ __all__ = [
   'ApiExecutionContext',
 ]
 
-__version__ = '0.0.13'
+__version__ = '0.1.0'

@@ -25,6 +25,7 @@ import logging
 from garf_core import report_fetcher
 
 from garf_executors import exceptions, execution_context, executor, fetchers
+from garf_executors.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ class ApiQueryExecutor(executor.Executor):
     """
     return await self.execute(query, context, title, context)
 
+  @tracer.start_as_current_span('api.execute')
   def execute(
     self,
     query: str,

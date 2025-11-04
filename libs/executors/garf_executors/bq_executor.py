@@ -31,6 +31,7 @@ from garf_core import query_editor, report
 from google.cloud import exceptions as google_cloud_exceptions
 
 from garf_executors import exceptions, execution_context, executor
+from garf_executors.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
     """Instantiates bigquery client."""
     return bigquery.Client(self.project_id)
 
+  @tracer.start_as_current_span('bq.execute')
   def execute(
     self,
     query: str,
@@ -119,6 +121,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
     except google_cloud_exceptions.GoogleCloudError as e:
       raise BigQueryExecutorError(e) from e
 
+  @tracer.start_as_current_span('bq.create_datasets')
   def create_datasets(self, macros: dict | None) -> None:
     """Creates datasets in BQ based on values in a dict.
 
