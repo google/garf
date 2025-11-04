@@ -34,6 +34,7 @@ from garf_core import report as garf_report
 from google.cloud import exceptions as google_cloud_exceptions
 
 from garf_io import exceptions, formatter
+from garf_io.telemetry import tracer
 from garf_io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
@@ -110,6 +111,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     """Instantiated BigQuery client."""
     return bigquery.Client(self.project)
 
+  @tracer.start_as_current_span('bq.create_or_get_dataset')
   def create_or_get_dataset(self) -> bigquery.Dataset:
     """Gets existing dataset or create a new one."""
     try:
@@ -120,6 +122,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       bq_dataset = self.client.create_dataset(bq_dataset, timeout=30)
     return bq_dataset
 
+  @tracer.start_as_current_span('bq.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
     """Writes Garf report to a BigQuery table.
 

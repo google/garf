@@ -24,6 +24,7 @@ import smart_open
 from garf_core import report as garf_report
 
 from garf_io import formatter
+from garf_io.telemetry import tracer
 from garf_io.writers import file_writer
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ class JsonWriter(file_writer.FileWriter):
     super().__init__(destination_folder=destination_folder, **kwargs)
     self.format = format
 
+  @tracer.start_as_current_span('json.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
     """Writes Garf report to a JSON file.
 

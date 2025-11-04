@@ -5,11 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-io"
 dependencies = [
-  'garf-core',
-  'smart_open',
-  'rich',
+  "garf-core",
+  "smart_open",
+  "rich",
+  "opentelemetry-api",
 ]
 authors = [
+  {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
 requires-python = ">=3.8"

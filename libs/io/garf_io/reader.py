@@ -17,6 +17,8 @@ import abc
 import smart_open
 from typing_extensions import override
 
+from garf_io.telemetry import tracer
+
 
 class AbsReader(abc.ABC):
   """Base class for reading queries."""
@@ -30,6 +32,7 @@ class FileReader(AbsReader):
   """Reads from file."""
 
   @override
+  @tracer.start_as_current_span('file.read')
   def read(self, query_path, **kwargs):
     with smart_open.open(query_path, 'r') as f:
       return f.read()
@@ -39,6 +42,7 @@ class ConsoleReader(AbsReader):
   """Read query from standard input."""
 
   @override
+  @tracer.start_as_current_span('console.read')
   def read(self, query_path, **kwargs):
     return query_path
 

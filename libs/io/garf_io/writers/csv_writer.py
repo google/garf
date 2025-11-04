@@ -28,6 +28,7 @@ import smart_open
 from garf_core import report as garf_report
 
 from garf_io import formatter
+from garf_io.telemetry import tracer
 from garf_io.writers import file_writer
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ class CsvWriter(file_writer.FileWriter):
       f'[CSV] - data are saved to {self.destination_folder} destination_folder.'
     )
 
+  @tracer.start_as_current_span('csv.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
     """Writes Garf report to a CSV file.
 

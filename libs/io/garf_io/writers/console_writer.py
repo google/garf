@@ -21,6 +21,7 @@ import rich
 from garf_core import report as garf_report
 from rich import console, table
 
+from garf_io.telemetry import tracer
 from garf_io.writers import abs_writer
 
 
@@ -49,6 +50,7 @@ class ConsoleWriter(abs_writer.AbsWriter):
     self.page_size = int(page_size)
     self.format = format
 
+  @tracer.start_as_current_span('console.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> None:
     """Writes Garf report to standard output.
 
