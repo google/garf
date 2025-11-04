@@ -12,6 +12,7 @@ dependencies = [
     "pyyaml",
     "pydantic",
     "eval_type_backport",
+    "opentelemetry-api",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
