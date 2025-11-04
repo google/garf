@@ -17,6 +17,7 @@ import os
 import pathlib
 from typing import Union
 
+from garf_io.telemetry import tracer
 from garf_io.writers.abs_writer import AbsWriter
 
 
@@ -38,6 +39,7 @@ class FileWriter(AbsWriter):
     super().__init__(**kwargs)
     self.destination_folder = str(destination_folder)
 
+  @tracer.start_as_current_span('file.create_dir')
   def create_dir(self) -> None:
     """Creates folders if needed or destination is not remote."""
     if (

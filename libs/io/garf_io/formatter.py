@@ -22,6 +22,8 @@ from typing import Callable, Union, get_args
 from garf_core import report as garf_report
 from typing_extensions import TypeAlias
 
+from garf_io.telemetry import tracer
+
 _NESTED_FIELD: TypeAlias = Union[list, tuple]
 
 
@@ -70,6 +72,7 @@ class ArrayHandlingStrategy(FormattingStrategy):
     self.type_ = self._cast_to_enum(ArrayHandling, type_)
     self.delimiter = delimiter
 
+  @tracer.start_as_current_span('apply_transformations')
   def apply_transformations(
     self, report: garf_report.GarfReport
   ) -> garf_report.GarfReport:
@@ -121,6 +124,7 @@ class ArrayHandlingStrategy(FormattingStrategy):
     return self.delimiter.join([str(element) for element in field])
 
 
+@tracer.start_as_current_span('format_report_for_writing')
 def format_report_for_writing(
   report: garf_report.GarfReport,
   formatting_strategies: list[FormattingStrategy],

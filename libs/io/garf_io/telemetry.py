@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Write GarfReport to anywhere."""
 
-__version__ = '0.1.0'
+# pylint: disable=C0330, g-bad-import-order, g-multiple-import
+from opentelemetry import trace
+
+tracer = trace.get_tracer(
+  instrumenting_module_name='garf_io',
+)

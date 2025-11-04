@@ -22,6 +22,7 @@ from typing import Literal
 from garf_core.report import GarfReport
 
 from garf_io import formatter
+from garf_io.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class AbsWriter(abc.ABC):
   def write(self, report: GarfReport, destination: str) -> str | None:
     """Writes report to destination."""
 
+  @tracer.start_as_current_span('format_for_write')
   def format_for_write(self, report: GarfReport) -> GarfReport:
     """Prepares report for writing."""
     array_handling_strategy = formatter.ArrayHandlingStrategy(

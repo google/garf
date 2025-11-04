@@ -29,6 +29,7 @@ import pandas as pd
 from garf_core import report as garf_report
 
 from garf_io import formatter
+from garf_io.telemetry import tracer
 from garf_io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
     self.connection_string = connection_string
     self.if_exists = if_exists
 
+  @tracer.start_as_current_span('sqldb.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> None:
     """Writes Garf report to the table.
 

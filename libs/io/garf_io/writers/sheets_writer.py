@@ -33,6 +33,7 @@ from garf_core import report as garf_report
 from typing_extensions import override
 
 from garf_io import exceptions, formatter
+from garf_io.telemetry import tracer
 from garf_io.writers.abs_writer import AbsWriter
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ class SheetWriter(AbsWriter):
     self._spreadsheet = None
 
   @override
+  @tracer.start_as_current_span('sheets.write')
   def write(
     self,
     report: garf_report.GarfReport,
