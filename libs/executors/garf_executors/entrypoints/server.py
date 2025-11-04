@@ -20,9 +20,15 @@ import fastapi
 import pydantic
 import uvicorn
 from garf_io import reader
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 import garf_executors
 from garf_executors import exceptions
+from garf_executors.entrypoints.tracer import initialize_tracer
+
+initialize_tracer()
+app = fastapi.FastAPI()
+FastAPIInstrumentor.instrument_app(app)
 
 
 class ApiExecutorRequest(pydantic.BaseModel):
@@ -40,7 +46,7 @@ class ApiExecutorRequest(pydantic.BaseModel):
   title: Optional[str] = None
   query: Optional[str] = None
   query_path: Optional[Union[str, list[str]]] = None
-  context: garf_executors.ApiExecutionContext
+  context: garf_executors.api_executor.ApiExecutionContext
 
   @pydantic.model_validator(mode='after')
   def check_query_specified(self):
@@ -67,10 +73,18 @@ class ApiExecutorResponse(pydantic.BaseModel):
   results: list[str]
 
 
-router = fastapi.APIRouter(prefix='/api')
+@app.get('/api/version')
+async def version() -> str:
+  return garf_executors.__version__
 
 
-@router.post('/execute')
+@app.get('/api/fetchers')
+async def get_fetchers() -> list[str]:
+  """Shows all available API sources."""
+  return list(garf_executors.fetchers.find_fetchers())
+
+
+@app.post('/api/execute')
 async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
   query_executor = garf_executors.setup_executor(
     request.source, request.context.fetcher_parameters
@@ -79,7 +93,7 @@ async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
   return ApiExecutorResponse(results=[result])
 
 
-@router.post('/execute:batch')
+@app.post('/api/execute:batch')
 async def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
   query_executor = garf_executors.setup_executor(
     request.source, request.context.fetcher_parameters
@@ -91,6 +105,4 @@ async def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
 
 
 if __name__ == '__main__':
-  app = fastapi.FastAPI()
-  app.include_router(router)
   uvicorn.run(app)

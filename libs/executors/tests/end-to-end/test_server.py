@@ -18,10 +18,8 @@ import pathlib
 
 import fastapi
 from fastapi import testclient
-from garf_executors.entrypoints.server import router
+from garf_executors.entrypoints.server import app
 
-app = fastapi.FastAPI()
-app.include_router(router)
 client = testclient.TestClient(app)
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent

@@ -28,8 +28,10 @@ import re
 
 import pandas as pd
 from garf_core import query_editor, report
+from opentelemetry import trace
 
 from garf_executors import exceptions, execution_context, executor
+from garf_executors.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +68,7 @@ class SqlAlchemyQueryExecutor(
     engine = sqlalchemy.create_engine(connection_string)
     return cls(engine)
 
+  @tracer.start_as_current_span('sql.execute')
   def execute(
     self,
     query: str,
@@ -84,6 +87,7 @@ class SqlAlchemyQueryExecutor(
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
+    span = trace.get_current_span()
     logging.info('Executing script: %s', title)
     query_text = self.replace_params_template(query, context.query_parameters)
     with self.engine.begin() as conn:
@@ -115,4 +119,5 @@ class SqlAlchemyQueryExecutor(
         )
         logger.info('%s executed successfully', title)
         return writing_result
+      span.set_attribute('execute.num_results', len(results))
       return results
