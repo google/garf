@@ -23,7 +23,13 @@ import operator
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
-from garf_core import api_clients, exceptions, query_editor, query_parser
+from garf_core import (
+  api_clients,
+  exceptions,
+  query_editor,
+  query_parser,
+)
+from garf_core.telemetry import tracer
 
 VALID_VIRTUAL_COLUMN_OPERATORS = (
   ast.BinOp,
@@ -48,12 +54,15 @@ class BaseParser(abc.ABC):
     response: api_clients.GarfApiResponse,
   ) -> list[list[api_clients.ApiRowElement]]:
     """Parses response."""
-    if not response.results:
-      return [[]]
-    results = []
-    for result in response.results:
-      results.append(self.parse_row(result))
-    return results
+    with tracer.start_as_current_span('parse_response') as span:
+      if not response.results:
+        span.set_attribute('num_results', 0)
+        return [[]]
+      results = []
+      for result in response.results:
+        results.append(self.parse_row(result))
+      span.set_attribute('num_results', len(results))
+      return results
 
   def _evalute_virtual_column(
     self,

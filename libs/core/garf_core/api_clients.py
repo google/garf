@@ -26,9 +26,11 @@ from typing import Any, Union
 import pydantic
 import requests
 import smart_open
+from opentelemetry import trace
 from typing_extensions import TypeAlias, override
 
 from garf_core import exceptions, query_editor
+from garf_core.telemetry import tracer
 
 ApiRowElement: TypeAlias = Union[int, float, str, bool, list, dict, None]
 ApiResponseRow: TypeAlias = dict[str, ApiRowElement]
@@ -49,6 +51,16 @@ class GarfApiError(exceptions.GarfError):
 
 class BaseClient(abc.ABC):
   """Base API client class."""
+
+  @tracer.start_as_current_span('call_api')
+  def call_api(
+    self, request: query_editor.BaseQueryElements, **kwargs: str
+  ) -> GarfApiResponse:
+    """Method for getting response."""
+    span = trace.get_current_span()
+    response = self.get_response(request, **kwargs)
+    span.set_attribute('num_rows_api_response', len(response.results))
+    return response
 
   @abc.abstractmethod
   def get_response(

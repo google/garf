@@ -11,19 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""`garf-core` contains the base abstractions for garf framework.
 
-These abstractions are used by an implementation for a concrete reporting API.
-"""
+# pylint: disable=C0330, g-bad-import-order, g-multiple-import
+from opentelemetry import trace
 
-from garf_core.base_query import BaseQuery
-from garf_core.report import GarfReport
-from garf_core.report_fetcher import ApiReportFetcher
-
-__all__ = [
-  'BaseQuery',
-  'GarfReport',
-  'ApiReportFetcher',
-]
-
-__version__ = '0.4.0'
+tracer = trace.get_tracer(
+  instrumenting_module_name='garf_core',
+)

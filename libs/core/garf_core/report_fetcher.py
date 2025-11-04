@@ -24,6 +24,8 @@ from __future__ import annotations
 import logging
 from typing import Callable
 
+from opentelemetry import trace
+
 from garf_core import (
   api_clients,
   exceptions,
@@ -31,6 +33,7 @@ from garf_core import (
   query_editor,
   report,
 )
+from garf_core.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +115,7 @@ class ApiReportFetcher:
     """
     return self.fetch(query_specification, args, **kwargs)
 
+  @tracer.start_as_current_span('fetch')
   def fetch(
     self,
     query_specification: str | query_editor.QuerySpecification,
@@ -132,6 +136,7 @@ class ApiReportFetcher:
       GarfExecutorException:
         When customer_ids are not provided or API returned error.
     """
+    span = trace.get_current_span()
     if args is None:
       args = query_editor.GarfQueryParameters()
     if not isinstance(query_specification, query_editor.QuerySpecification):
@@ -141,13 +146,14 @@ class ApiReportFetcher:
       )
     query = query_specification.generate()
     if query.is_builtin_query:
+      span.set_attribute('is_builtin_query', True)
       if not (builtin_report := self.builtin_queries.get(query.title)):
         raise query_editor.GarfBuiltInQueryError(
           f'Cannot find the built-in query "{query.title}"'
         )
       return builtin_report(self, **kwargs)
 
-    response = self.api_client.get_response(query, **kwargs)
+    response = self.api_client.call_api(query, **kwargs)
     if not response:
       return report.GarfReport(query_specification=query)
 
