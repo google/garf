@@ -1,0 +1,31 @@
+version: '3.8'
+networks:
+  default:
+    name: opentelemetry-demo
+    driver: bridge
+services:
+  garf:
+    build:
+      context: .
+    ports:
+      - "8001:8000"
+    environment:
+      - OTEL_SERVICE_NAME=garf
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - GARF_YOUTUBE_DATA_API_KEY=$GARF_YOUTUBE_DATA_API_KEY
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    user: 0:0
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - "${OTEL_COLLECTOR_CONFIG}:/etc/otel-collector-config.yml"
