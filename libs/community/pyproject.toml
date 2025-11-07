@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-community"
+dependencies = [
+  "garf-youtube-data-api",
+  "garf-youtube-reporting-api",
+  "garf-bid-manager",
+  "garf-merchant-api",
+  "garf-google-analytics",
+]
+version = "0.0.1"
+authors = [
+  {name = "Andrei Markin", email = "amarkin@google.com"},
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+license = {text = "Apache 2.0"}
+requires-python = ">=3.9"
+description = "Garf community libraries"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python"
+]
