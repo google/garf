@@ -40,5 +40,5 @@ jobs:
         with:
           context: libs/exporters/.
           push: true
-          tags: ${{ github.event.inputs.version }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}
           labels: ${{ github.event.inputs.version }}
