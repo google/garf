@@ -5,8 +5,7 @@ networks:
     driver: bridge
 services:
   garf:
-    build:
-      context: .
+    image: ghcr.io/google/garf:latest
     ports:
       - "8001:8000"
     environment:
