@@ -17,3 +17,19 @@ tags
 .python-version
 dist
 build
+/out-tsc
+/bazel-out
+
+# Node
+npm-debug.log
+yarn-error.log
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+.angular

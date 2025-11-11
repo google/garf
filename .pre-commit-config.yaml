@@ -25,6 +25,7 @@ repos:
   - id: check-yaml
     exclude: ^mkdocs\.yml$
   - id: check-added-large-files
+    exclude: package-lock.json
   - id: debug-statements
   - id: double-quote-string-fixer
 - repo: https://github.com/pre-commit/mirrors-mypy
@@ -42,30 +43,42 @@ repos:
     - id: ruff-format
 - repo: local
   hooks:
+  - id: prettier
+    name: prettier
+    entry: npx prettier --write  ui/garf/src/app/
+    language: system
+    pass_filenames: false
+- repo: local
+  hooks:
   - id: pytest-check-core
     name: pytest-check-core
     entry: pytest -n auto libs/core/tests/unit/
+    types: [python]
     language: system
     pass_filenames: false
   - id: pytest-check-io
     name: pytest-check-io
     entry: pytest -n auto libs/io/tests/unit/
+    types: [python]
     language: system
     pass_filenames: false
   - id: pytest-check-executors
     name: pytest-check-executors
     entry: pytest -n auto libs/executors/tests/unit/
+    types: [python]
     language: system
     pass_filenames: false
   - id: pytest-check-exporters
     name: pytest-check-exporters
     entry: pytest -n auto libs/exporters/tests/unit/
+    types: [python]
     language: system
     pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e
     entry: pytest -n auto libs/executors/tests/end-to-end/
+    types: [python]
     language: system
     pass_filenames: false
     always_run: true

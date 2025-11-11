@@ -1,0 +1,24 @@
+html {
+  height: 100vh;
+}
+body {
+  display: grid;
+  grid:
+    "header" 5em
+    "main  " 20em
+    "nav   " 5em;
+}
+
+header {
+  grid-area: header;
+  background-color: #303030;
+  text-align: center;
+  color: white;
+  padding: 5px;
+}
+nav {
+  grid-area: nav;
+}
+main {
+  grid-area: main;
+}
