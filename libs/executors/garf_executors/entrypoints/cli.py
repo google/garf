@@ -27,7 +27,9 @@ from garf_io import reader
 
 import garf_executors
 from garf_executors import config, exceptions
-from garf_executors.entrypoints import utils
+from garf_executors.entrypoints import tracer, utils
+
+tracer.initialize_tracer()
 
 
 def main():

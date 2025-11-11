@@ -34,11 +34,9 @@ def initialize_tracer():
 
   tracer_provider = TracerProvider(resource=resource)
 
-  otlp_processor = BatchSpanProcessor(
-    OTLPSpanExporter(
-      endpoint=os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'), insecure=True
+  if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+    otlp_processor = BatchSpanProcessor(
+      OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
     )
-  )
-  tracer_provider.add_span_processor(otlp_processor)
-
+    tracer_provider.add_span_processor(otlp_processor)
   trace.set_tracer_provider(tracer_provider)
