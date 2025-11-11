@@ -1,0 +1,35 @@
+networks:
+  default:
+    name: garf-exporter
+    driver: bridge
+services:
+  exporter:
+    image: ghcr.io/google/garf-exporter:latest
+    command:
+      - "--source=$GARF_EXPORTER_SOURCE"
+      - "--config=/app/config.yaml"
+      - "--logger=local"
+    environment:
+      - GARF_EXPORTER_SOURCE=${GARF_EXPORTER_SOURCE}
+      - OTEL_SERVICE_NAME=garf-exporter
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://garf-exporter-otel-collector:4317
+    ports:
+      - "8001:8000"
+    volumes:
+      - "${GARF_EXPORTER_CONFIG}:/app/config.yaml"
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: garf-exporter-otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    user: 0:0
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - "${OTEL_COLLECTOR_CONFIG}:/etc/otel-collector-config.yml"

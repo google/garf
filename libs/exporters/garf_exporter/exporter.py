@@ -26,6 +26,8 @@ from collections.abc import Sequence
 import garf_core
 import prometheus_client
 
+from garf_exporter.telemetry import tracer
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,6 +94,7 @@ class GarfExporter:
     self.registry._collector_to_names.clear()
     self.registry._names_to_collectors.clear()
 
+  @tracer.start_as_current_span('export')
   def export(
     self,
     report: garf_core.GarfReport,

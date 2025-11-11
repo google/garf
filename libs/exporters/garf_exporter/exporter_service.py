@@ -29,6 +29,7 @@ from garf_executors import fetchers
 
 import garf_exporter
 from garf_exporter import collector
+from garf_exporter.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,7 @@ class GarfExporterService:
     self._report_fetcher = fetcher(**self.source_parameters)
     return self._report_fetcher
 
+  @tracer.start_as_current_span('generate_metrics')
   def generate_metrics(
     self,
     request: GarfExporterRequest,
