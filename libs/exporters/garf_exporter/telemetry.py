@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Prometheus exporter for garf."""
 
-from garf_exporter.exporter import GarfExporter
+from opentelemetry import trace
 
-__all__ = [
-  'GarfExporter',
-]
-
-__version__ = '0.1.0'
+tracer = trace.get_tracer(
+  instrumenting_module_name='garf_exporter',
+)

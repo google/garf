@@ -12,6 +12,10 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "typer",
+  "opentelemetry-api",
+  "opentelemetry-sdk",
+  "opentelemetry-instrumentation-fastapi",
+  "opentelemetry-exporter-otlp",
 ]
 authors = [
   {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},

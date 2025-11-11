@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import datetime
+import logging
 
 import fastapi
 import prometheus_client
@@ -30,10 +31,12 @@ import requests
 import typer
 import uvicorn
 from garf_executors.entrypoints import utils as garf_utils
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from typing_extensions import Annotated
 
 import garf_exporter
 from garf_exporter import exporter_service
+from garf_exporter.entrypoints.tracer import initialize_tracer
 
 typer_app = typer.Typer()
 
@@ -49,8 +52,8 @@ def healthcheck(host: str, port: int) -> bool:
   the delay between exports. If this delta if greater than 1.5 check is failed.
 
   Args:
-    host: Hostname gaarf-exporter http server (i.e. localhost).
-    port: Port gaarf-exporter http server is running (i.e. 8000).
+    host: Hostname garf-exporter http server (i.e. localhost).
+    port: Port garf-exporter http server is running (i.e. 8000).
 
 
   Returns:
@@ -79,10 +82,12 @@ def healthcheck(host: str, port: int) -> bool:
   return not is_lagged_export
 
 
+initialize_tracer()
 app = fastapi.FastAPI(debug=False)
 exporter = garf_exporter.GarfExporter()
 metrics_app = prometheus_client.make_asgi_app(registry=exporter.registry)
 app.mount('/metrics', metrics_app)
+FastAPIInstrumentor.instrument_app(app)
 
 
 async def start_metric_generation(
@@ -158,7 +163,7 @@ def main(
   logger: Annotated[
     str,
     typer.Option(help='Type of logging'),
-  ] = 'rich',
+  ] = 'local',
   namespace: Annotated[
     str,
     typer.Option(help='Namespace prefix for Prometheus'),
@@ -223,6 +228,7 @@ def main(
     await server.serve()
 
   asyncio.run(start_uvicorn())
+  logging.shutdown()
 
 
 if __name__ == '__main__':
