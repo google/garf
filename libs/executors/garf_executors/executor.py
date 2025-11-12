@@ -17,11 +17,13 @@
 from concurrent import futures
 
 from garf_executors import execution_context
+from garf_executors.telemetry import tracer
 
 
 class Executor:
   """Defines common functionality between executors."""
 
+  @tracer.start_as_current_span('api.execute_batch')
   def execute_batch(
     self,
     batch: dict[str, str],

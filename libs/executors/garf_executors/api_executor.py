@@ -23,6 +23,7 @@ from __future__ import annotations
 import logging
 
 from garf_core import report_fetcher
+from opentelemetry import trace
 
 from garf_executors import exceptions, execution_context, executor, fetchers
 from garf_executors.telemetry import tracer
@@ -98,7 +99,12 @@ class ApiQueryExecutor(executor.Executor):
     Raises:
       GarfExecutorError: When failed to execute query.
     """
+    span = trace.get_current_span()
+    span.set_attribute('fetcher', self.fetcher.__class__.__name__)
+    span.set_attribute('api_client', self.fetcher.api_client.__class__.__name__)
     try:
+      span.set_attribute('query_title', title)
+      span.set_attribute('query_text', query)
       logger.debug('starting query %s', query)
       results = self.fetcher.fetch(
         query_specification=query,
