@@ -27,11 +27,14 @@ from garf_io import reader
 
 import garf_executors
 from garf_executors import config, exceptions
-from garf_executors.entrypoints import tracer, utils
+from garf_executors.entrypoints import utils
+from garf_executors.entrypoints.tracer import initialize_tracer
+from garf_executors.telemetry import tracer
 
-tracer.initialize_tracer()
+initialize_tracer()
 
 
+@tracer.start_as_current_span('garf.entrypoints.cli')
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('query', nargs='*')
