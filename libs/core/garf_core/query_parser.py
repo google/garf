@@ -238,8 +238,8 @@ class ExtractedLineElements(pydantic.BaseModel):
 
   field: str | None
   alias: str | None
-  virtual_column: VirtualColumn | None
-  customizer: Customizer | None
+  virtual_column: VirtualColumn | None = None
+  customizer: Customizer | None = None
 
   @classmethod
   def from_query_line(
@@ -260,7 +260,9 @@ class ExtractedLineElements(pydantic.BaseModel):
     if not (customizer := processed_field.customizer):
       customizer = None
     if virtual_column and not alias:
-      raise GarfVirtualColumnError('Virtual attributes should be aliased')
+      raise GarfVirtualColumnError(
+        f'Virtual attributes should be aliased: {virtual_column.value}'
+      )
     return ExtractedLineElements(
       field=_format_type_field_name(field)
       if not virtual_column and field
