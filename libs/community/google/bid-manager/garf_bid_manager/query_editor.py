@@ -15,7 +15,7 @@
 
 import re
 
-from garf_core import query_editor
+from garf_core import query_editor, query_parser
 from typing_extensions import Self
 
 
@@ -41,8 +41,19 @@ class BidManagerApiQuery(query_editor.QuerySpecification):
     for field in self.query.filters:
       if field.lower().startswith('datarange'):
         filters.append(field)
+      elif ' in ' in field.lower():
+        filter_name, *rest = field.lower().split(' in ')
+        values = re.findall(r'\((.*?)\)', field)
+        if not (values := values[0]):
+          raise query_parser.GarfQueryError(
+            'No values in IN statement: ' + field
+          )
+        for value in values.split(','):
+          filter_name = filter_name.strip()
+          filter_value = value.strip()
+          filters.append(_normalize_filter(f'{filter_name} = {filter_value}'))
       else:
-        filters.append(_normalize_field(field))
+        filters.append(_normalize_filter(field))
     self.query.filters = filters
     return self
 
@@ -51,3 +62,11 @@ def _normalize_field(field: str) -> str:
   if re.match('^(metric|filter)_*', field.lower(), re.IGNORECASE):
     return field.upper()
   return f'FILTER_{field.upper()}'
+
+
+def _normalize_filter(field: str) -> str:
+  name, operator, *value = field.split()
+  value = ' '.join(value)
+  if re.match('^(metric|filter)_*', name.lower(), re.IGNORECASE):
+    return f'{name.upper()} {operator} {value}'
+  return f'FILTER_{name.upper()} {operator} {value}'

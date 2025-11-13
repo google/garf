@@ -156,11 +156,11 @@ def _build_request(request: query_editor.BidManagerApiQuery):
   filters = []
   data_range = None
   for field in request.filters:
-    name, operator, value = field.split()
+    name, operator, *value = field.split()
     if name.startswith('dataRange'):
-      data_range = value
+      data_range = value[0]
     else:
-      filters.append({'type': name, 'value': value})
+      filters.append({'type': name, 'value': ' '.join(value)})
   query = {
     'metadata': {
       'title': request.title or 'garf',
