@@ -20,10 +20,14 @@ import inspect
 import sys
 from importlib.metadata import entry_points
 
+from opentelemetry import trace
+
 from garf_io import exceptions
+from garf_io.telemetry import tracer
 from garf_io.writers import abs_writer
 
 
+@tracer.start_as_current_span('get_writers')
 def _get_writers():
   if sys.version_info.major == 3 and sys.version_info.minor == 9:
     try:
@@ -52,6 +56,7 @@ class GarfIoWriterError(exceptions.GarfIoError):
   """Writer specific exception."""
 
 
+@tracer.start_as_current_span('create_writer')
 def create_writer(
   writer_option: str | WriterOption, **kwargs: str
 ) -> type[abs_writer.AbsWriter]:
@@ -71,6 +76,7 @@ def create_writer(
     ImportError: When writer specific library is not installed.
     GarfIoError: When incorrect writer option is specified.
   """
+  span = trace.get_current_span()
   try:
     WriterOption[writer_option]
   except KeyError as e:
@@ -78,6 +84,8 @@ def create_writer(
   found_writers = {}
   for writer in _get_writers():
     try:
+      if writer.name != writer_option:
+        continue
       writer_module = writer.load()
       for name, obj in inspect.getmembers(writer_module):
         if inspect.isclass(obj) and issubclass(obj, abs_writer.AbsWriter):
@@ -89,5 +97,8 @@ def create_writer(
         raise e
       continue
   if concrete_writer := found_writers.get(writer_option):
+    span.set_attribute('writer.alias', writer_option)
+    for k, v in kwargs.items():
+      span.set_attribute(f'{writer_option}.{k}', v)
     return concrete_writer(**kwargs)
   raise GarfIoWriterError(f'Failed to load {writer_option}!')
