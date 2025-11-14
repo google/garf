@@ -25,7 +25,7 @@ uv pip install garf-executors garf-bid-manager
 
 ### Prerequisites
 
-* [Bid Manager API](https://console.cloud.google.com/apis/library/analytics.googleapis.com) enabled.
+* [Bid Manager API](https://console.cloud.google.com/apis/library/doubleclickbidmanager.googleapis.com) enabled.
 * [Credentials](https://developers.google.com/bid-manager/guides/get-started/generate-credentials) configured, can be exposed  as `GARF_BID_MANAGER_CREDENTIALS_FILE` ENV variable
 
 /// tab | cli
