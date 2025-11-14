@@ -13,10 +13,13 @@
 # limitations under the License.
 """Defines Bid Manager API specific query parser."""
 
+import logging
 import re
 
 from garf_core import query_editor, query_parser
 from typing_extensions import Self
+
+logger = logging.getLogger(__name__)
 
 
 class BidManagerApiQuery(query_editor.QuerySpecification):
@@ -39,10 +42,31 @@ class BidManagerApiQuery(query_editor.QuerySpecification):
     super().extract_filters()
     filters = []
     for field in self.query.filters:
-      if field.lower().startswith('datarange'):
-        filters.append(field)
-      elif ' in ' in field.lower():
-        filter_name, *rest = field.lower().split(' in ')
+      field_lower = field.lower()
+      if field_lower.startswith('datarange'):
+        if 'in' in field_lower:
+          values = re.findall(r'\((.*?)\)', field)
+          if not (values := values[0]):
+            raise query_parser.GarfQueryError(
+              'No values in IN dataRange statement: ' + field
+            )
+          start_date, *end_date = values.split(',')
+          if not end_date:
+            logger.warning(
+              'End date is not specified in query, setting to today.'
+            )
+            end_date = query_editor.CommonParametersMixin().common_params.get(
+              'current_date'
+            )
+          else:
+            end_date = end_date[0]
+
+          filters.append(f'dataRange.customStartDate = {start_date.strip()}')
+          filters.append(f'dataRange.customEndDate = {end_date.strip()}')
+        else:
+          filters.append(field)
+      elif ' in ' in field_lower:
+        filter_name, *rest = field_lower.split(' in ')
         values = re.findall(r'\((.*?)\)', field)
         if not (values := values[0]):
           raise query_parser.GarfQueryError(

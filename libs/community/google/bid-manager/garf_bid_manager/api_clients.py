@@ -146,6 +146,17 @@ class BidManagerApiClient(api_clients.BaseClient):
 
 def _build_request(request: query_editor.BidManagerApiQuery):
   """Builds Bid Manager API query object from BidManagerApiQuery."""
+  query = {
+    'metadata': {
+      'title': request.title or 'garf',
+      'format': 'CSV',
+      'dataRange': {},
+    },
+    'params': {
+      'type': request.resource_name,
+    },
+    'schedule': {'frequency': 'ONE_TIME'},
+  }
   metrics = []
   group_bys = []
   for field in request.fields:
@@ -154,29 +165,26 @@ def _build_request(request: query_editor.BidManagerApiQuery):
     elif field.startswith('FILTER'):
       group_bys.append(field)
   filters = []
-  data_range = None
   for field in request.filters:
     name, operator, *value = field.split()
     if name.startswith('dataRange'):
-      data_range = value[0]
+      _, *date_identifier = name.split('.')
+      if not date_identifier:
+        query['metadata']['dataRange'] = {'range': value[0]}
+      else:
+        query['metadata']['dataRange']['range'] = 'CUSTOM_DATES'
+        year, month, day = value[0].split('-')
+        query['metadata']['dataRange'][date_identifier[0]] = {
+          'day': int(day),
+          'month': int(month),
+          'year': int(year),
+        }
     else:
       filters.append({'type': name, 'value': ' '.join(value)})
-  query = {
-    'metadata': {
-      'title': request.title or 'garf',
-      'format': 'CSV',
-    },
-    'params': {
-      'type': request.resource_name,
-      'groupBys': group_bys,
-      'filters': filters,
-    },
-    'schedule': {'frequency': 'ONE_TIME'},
-  }
+  query['params']['groupBys'] = group_bys
+  query['params']['filters'] = filters
   if metrics:
     query['params']['metrics'] = metrics
-  if data_range:
-    query['metadata']['dataRange'] = {'range': data_range}
   return query
 
 
