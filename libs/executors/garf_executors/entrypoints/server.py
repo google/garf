@@ -94,7 +94,7 @@ async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
 
 
 @app.post('/api/execute:batch')
-async def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
+def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
   query_executor = garf_executors.setup_executor(
     request.source, request.context.fetcher_parameters
   )

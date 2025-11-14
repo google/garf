@@ -54,7 +54,7 @@ def main():
   parser.add_argument('--dry-run', dest='dry_run', action='store_true')
   parser.add_argument('-v', '--version', dest='version', action='store_true')
   parser.add_argument(
-    '--parallel-threshold', dest='parallel_threshold', default=None, type=int
+    '--parallel-threshold', dest='parallel_threshold', default=10, type=int
   )
   parser.set_defaults(parallel_queries=True)
   parser.set_defaults(dry_run=False)
@@ -82,7 +82,7 @@ def main():
       args.source, context.fetcher_parameters
     )
     batch = {query: reader_client.read(query) for query in args.query}
-    query_executor.execute_batch(batch, context, args.parallel_queries)
+    query_executor.execute_batch(batch, context, args.parallel_threshold)
   else:
     extra_parameters = utils.ParamsParser(
       ['source', args.output, 'macro', 'template']
@@ -104,7 +104,7 @@ def main():
     if args.parallel_queries:
       logger.info('Running queries in parallel')
       batch = {query: reader_client.read(query) for query in args.query}
-      query_executor.execute_batch(batch, context, args.parallel_queries)
+      query_executor.execute_batch(batch, context, args.parallel_threshold)
     else:
       logger.info('Running queries sequentially')
       for query in args.query:

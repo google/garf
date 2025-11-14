@@ -74,6 +74,16 @@ query_executor.execute(
   context=context
 )
 ```
+!!!note
+    You can use `aexecute` method to run execute the query asynchronously
+    ```python
+    await query_executor.aexecute(
+      query=query_text,
+      title="query",
+      context=context
+    )
+    ```
+
 ///
 
 /// tab | server

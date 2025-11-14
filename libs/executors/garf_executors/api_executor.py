@@ -20,6 +20,7 @@ GarfReport and saving it to local/remote storage.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from garf_core import report_fetcher
@@ -77,7 +78,7 @@ class ApiQueryExecutor(executor.Executor):
     Returns:
       Result of writing the report.
     """
-    return await self.execute(query, context, title, context)
+    return await asyncio.to_thread(self.execute, query, title, context)
 
   @tracer.start_as_current_span('api.execute')
   def execute(
