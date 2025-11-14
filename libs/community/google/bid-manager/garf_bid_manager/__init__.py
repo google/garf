@@ -21,7 +21,7 @@ __all__ = [
   'BidManagerApiReportFetcher',
 ]
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 logging.getLogger('google_auth_oauthlib.flow').setLevel(logging.ERROR)

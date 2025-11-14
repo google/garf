@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
+
 import pytest
 from garf_bid_manager.query_editor import BidManagerApiQuery
 from garf_core import query_parser
@@ -59,3 +61,40 @@ class TestBidManagerApiQuery:
       match='No values in IN statement: line_item_id IN ()',
     ):
       BidManagerApiQuery(text=query, title='test').generate()
+
+  @pytest.mark.parametrize(
+    ('date_range', 'expected'),
+    [
+      (['2025-01-01', '2025-12-31'], ['2025-01-01', '2025-12-31']),
+      (
+        ['2025-01-01'],
+        ['2025-01-01', datetime.date.today().strftime('%Y-%m-%d')],
+      ),
+    ],
+  )
+  def test_generate_returns_correct_custom_date_filter(
+    self, date_range, expected
+  ):
+    data_range = ', '.join(date_range)
+    query = f"""
+    SELECT
+    advertiser AS advertiser,
+    metric_impressions AS impressions,
+    FROM standard
+    WHERE advertiser = 1
+    AND dataRange IN ({data_range})
+    """
+    spec = BidManagerApiQuery(text=query, title='test').generate()
+
+    assert spec.fields == [
+      'FILTER_ADVERTISER',
+      'METRIC_IMPRESSIONS',
+    ]
+
+    expected_start_date, expected_end_date = expected
+    expected_filters = [
+      'FILTER_ADVERTISER = 1',
+      f'dataRange.customStartDate = {expected_start_date}',
+      f'dataRange.customEndDate = {expected_end_date}',
+    ]
+    assert spec.filters == expected_filters

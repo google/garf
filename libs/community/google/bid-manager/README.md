@@ -28,7 +28,7 @@ query = """
     metric_clicks AS clicks
   FROM standard
   WHERE advertiser = 1
-    AND dataRange = LAST_7_DAYS
+    AND dataRange IN (2025-01-01, 2025-12-31)
 """
 fetched_report = (
   garf_bid_manager.BidManagerApiReportFetcher()

@@ -12,19 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import pytest
 from garf_bid_manager import api_clients, query_editor
 
 
-def test_build_request():
-  query = """
+@pytest.mark.parametrize(
+  ('data_range', 'expected'),
+  [
+    (
+      ' = LAST_7_DAYS',
+      {'dataRange': {'range': 'LAST_7_DAYS'}},
+    ),
+    (
+      ' IN (2025-01-01, 2025-01-31)',
+      {
+        'dataRange': {
+          'range': 'CUSTOM_DATES',
+          'customStartDate': {'year': 2025, 'month': 1, 'day': 1},
+          'customEndDate': {'year': 2025, 'month': 1, 'day': 31},
+        }
+      },
+    ),
+  ],
+)
+def test_build_request(data_range, expected):
+  query = f"""
     SELECT
     filter_advertiser_name AS advertiser_name,
     advertiser AS advertiser,
     metric_impressions AS impressions,
     FROM standard
     WHERE advertiser = 1
-    AND dataRange = LAST_7_DAYS
+    AND dataRange {data_range}
     """
   spec = query_editor.BidManagerApiQuery(text=query, title='test').generate()
 
@@ -33,7 +52,7 @@ def test_build_request():
   expected_request = {
     'metadata': {
       'title': 'test',
-      'dataRange': {'range': 'LAST_7_DAYS'},
+      'dataRange': expected.get('dataRange'),
       'format': 'CSV',
     },
     'params': {

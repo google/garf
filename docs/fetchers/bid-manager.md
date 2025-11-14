@@ -88,3 +88,5 @@ csv_writer.write(fetched_report, 'query')
 | filters and metrics case | upper (FILTER_ADVERTISER)| any (filter_advertiser) |
 | prefix| mandatory (FILTER_ADVERTISER)| optional for filters (advertiser) |
 | resource case | upper (STANDARD)| any (standard) |
+| `IN` in filters | list each case (i.e. `FILTER_ADVERTISER = 1 AND FILTER_ADVERTISER = 2`)| `advertiser IN (1, 2)` |
+| `CUSTOM_DATES` in `dataRange` | requires building complex [`DataRange`](https://developers.google.com/bid-manager/reference/rest/v2/queries#DataRange) object | `dateRange IN (2025-01-01, 2025-12-31)` |
