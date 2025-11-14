@@ -75,6 +75,12 @@ query = 'SELECT metric FROM resource'
 report = report_fetcher.fetch(query)
 ```
 
+!!!note
+    You can use `afetch` method to run execute the query asynchronously
+    ```python
+    report = await report_fetcher.afetch(query)
+    ```
+
 `fetch` method returns `GarfReport` which can be [processed](reports.md)  in Python
 or [written](writers.md) to local / remote storage.
 
