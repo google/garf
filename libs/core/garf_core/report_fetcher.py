@@ -21,6 +21,7 @@ ApiReportFetcher fetches data from API, parses it and returns GarfReport.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Callable
 
@@ -113,7 +114,9 @@ class ApiReportFetcher:
     Returns:
       GarfReport with results of query execution.
     """
-    return self.fetch(query_specification, args, **kwargs)
+    return await asyncio.to_thread(
+      self.fetch, query_specification, args, **kwargs
+    )
 
   @tracer.start_as_current_span('fetch')
   def fetch(

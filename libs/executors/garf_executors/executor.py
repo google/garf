@@ -14,7 +14,7 @@
 
 """Defines common functionality between executors."""
 
-from concurrent import futures
+import asyncio
 
 from garf_executors import execution_context
 from garf_executors.telemetry import tracer
@@ -40,17 +40,11 @@ class Executor:
     Returns:
       Results of execution.
     """
-    results = []
-    with futures.ThreadPoolExecutor(max_workers=parallel_threshold) as executor:
-      future_to_query = {
-        executor.submit(
-          self.execute,
-          query,
-          title,
-          context,
-        ): query
-        for title, query in batch.items()
-      }
-      for future in futures.as_completed(future_to_query):
-        results.append(future.result())
-    return results
+    return asyncio.run(self._run(batch, context))
+
+  async def _run(self, batch, context):
+    tasks = [
+      self.aexecute(query=query, title=title, context=context)
+      for title, query in batch.items()
+    ]
+    return await asyncio.gather(*tasks)
