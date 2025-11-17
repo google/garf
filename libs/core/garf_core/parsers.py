@@ -144,6 +144,9 @@ class BaseParser(abc.ABC):
     fields = self.query_spec.fields
     index = 0
     for column in self.query_spec.column_names:
+      if column == '_':
+        index += 1
+        continue
       if virtual_column := self.query_spec.virtual_columns.get(column):
         result = self.process_virtual_column(row, virtual_column)
       elif customizer := self.query_spec.customizers.get(column):

@@ -117,6 +117,24 @@ class TestDictParser:
 
     assert parsed_row == expected_row
 
+  def test_parse_response_skips_omitted_columns(self):
+    test_specification = query_editor.QuerySpecification(
+      'SELECT test_column_1 AS _, test_column_2 FROM test'
+    ).generate()
+
+    test_parser = parsers.DictParser(test_specification)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'test_column_1': '1', 'test_column_2': 2},
+        {'test_column_1': '11', 'test_column_2': 22},
+      ]
+    )
+
+    parsed_row = test_parser.parse_response(test_response)
+    expected_row = [[2], [22]]
+
+    assert parsed_row == expected_row
+
 
 class TestNumericDictParser:
   @pytest.fixture

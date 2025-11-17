@@ -118,6 +118,16 @@ class TestQuerySpecification:
 
     assert test_query_spec.query == expected_query_elements
 
+  def test_generate_raises_error_on_missing_column_names(self):
+    test_query_spec = query_editor.QuerySpecification(
+      text='SELECT column AS _ FROM resource'
+    )
+    with pytest.raises(
+      query_parser.GarfQueryError,
+      match='At least one column should be included into a query.',
+    ):
+      test_query_spec.generate()
+
   def test_generate_returns_builtin_query(self):
     query = 'SELECT test FROM builtin.test'
     test_query_spec = query_editor.QuerySpecification(text=query, title='test')

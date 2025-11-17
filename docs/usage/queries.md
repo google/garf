@@ -59,6 +59,19 @@ FROM campaign
 
 If you don't specify an alias it will be generated as full column name where "." replaced with "_".
 
+!!!important
+    If you don't want to include a field into a response but a concrete API
+    requires it to be included in request you can ignore it with `_` for a
+    for a column name.
+
+    ```sql
+    SELECT
+      column_1 AS _,
+      column_2
+    FROM resource
+    ```
+
+
 ### Nested Resources
 
 Some fields return structs, and if you want to get a nested attribute scalar value you can use nested resource selectors.
@@ -117,14 +130,22 @@ SELECT
 FROM campaign
 ```
 
-Virtual columns can contain constants (i.e. `1 AS counter` will add new column `counter` filled with `1`) or expressions.
-Expressions can contain field selectors, constants and any arithmetics operations with them.
-For example `metrics.clicks / metrics.impressions AS ctr` will calculate `metrics.clicks / metrics.impressions` for each row of API response and store the results in a new column `ctr`.
-For this the fields `metrics.clicks` and `metrics.impressions` will be fetched implicitly.
-Or for example `campaign.target_cpa.target_cpa_micros / 1000000 AS target_cpa` expression will fetch `campaign.target_cpa.target_cpa_micros` field but return the result of its division by 1000000.
+Virtual columns can contain **constants** (i.e. `1 AS counter` will add new column `counter` filled with `1`) or **expressions**.
 
-The query parser parses a query and remove all columns which are not simple field accessors (i.e. contains anything except field names).
-For constants columns they will be re-added into result after executing the query. For more complex columns with expressions (i.e. some operations with fields) the result will evaluated using the response from API.
+Expressions can contain field selectors, constants and any arithmetics operations with them.
+For example `metrics.clicks / metrics.impressions AS ctr` will calculate
+`metrics.clicks / metrics.impressions` for each row of API response and store the results in a new column `ctr`.
+For this the fields `metrics.clicks` and `metrics.impressions` will be fetched implicitly.
+
+Or for example `campaign.target_cpa.target_cpa_micros / 1000000 AS target_cpa`
+expression will fetch `campaign.target_cpa.target_cpa_micros` field but
+return the result of its division by 1000000.
+
+The query parser parses a query and remove all columns which are not simple
+field accessors (i.e. contains anything except field names).
+For constants columns they will be re-added into result after executing the
+query. For more complex columns with expressions (i.e. some operations with
+fields) the result will evaluated using the response from API.
 
 
 ## Macros
@@ -180,7 +201,6 @@ SELECT
   leaf_account_id
   {% endif %}
 FROM dataset1.table1
-WHERE name LIKE @name
 ```
 
 When this query is executed it's expected to have template `--template.level=...` is supplied to `garf`.
