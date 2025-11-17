@@ -36,7 +36,7 @@ jobs:
         if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |
           uv pip install -e libs/core/.[all]
-          uv pip install -e libs/io/.[all]
+          uv pip install -e libs/io/.[test,all]
           uv pip install -e libs/executors/.[all]
           cd libs/${{ matrix.library }}
           pytest tests/unit

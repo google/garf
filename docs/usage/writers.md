@@ -69,7 +69,11 @@ concrete_writer = writer.create_writer('YOUR_WRITER')
 concrete_writer.write(sample_report, 'query')
 ```
 ///
-
+!!!note
+    You can use `awrite` method to write report asynchronously.
+    ```python
+    await concrete_writer.awrite(sample_report, 'query')
+    ```
 
 ### Console
 

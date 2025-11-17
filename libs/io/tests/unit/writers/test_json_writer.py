@@ -47,7 +47,25 @@ class TestJsonWriter:
 
     assert data == expected
 
-  def test_write_single_column_report_returns_correct_data(
+  @pytest.mark.asyncio
+  async def test_awrite_single_column_report_returns_correct_data(
+    self, json_writer, single_column_data, output_folder
+  ):
+    output = output_folder / _TMP_FILENAME
+    expected = [
+      {'column_1': 1},
+      {'column_1': 2},
+      {'column_1': 3},
+    ]
+
+    await json_writer.awrite(single_column_data, _TMP_FILENAME)
+
+    with open(output, 'r') as f:
+      data = json.load(f)
+
+    assert data == expected
+
+  def test_write_single_column_report_returns_correct_jsonl_data(
     self, single_column_data, output_folder
   ):
     writer = json_writer.JsonWriter(output_folder, format='jsonl')
