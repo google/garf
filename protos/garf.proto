@@ -1,0 +1,33 @@
+syntax = "proto3";
+package garf;
+import "google/protobuf/struct.proto";
+
+
+service GarfService {
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse) {}
+}
+
+message ExecuteRequest {
+  string source = 1;
+  string title = 2;
+  string query = 3;
+  ExecutionContext context = 4;
+}
+
+
+message ExecutionContext {
+  QueryParameters query_parameters = 1;
+  google.protobuf.Struct fetcher_parameters = 2;
+  string writer = 3;
+  google.protobuf.Struct writer_parameters = 4;
+}
+
+
+message QueryParameters {
+  google.protobuf.Struct macro = 1;
+  google.protobuf.Struct template = 2;
+}
+
+message ExecuteResponse {
+  repeated string results = 1;
+}
