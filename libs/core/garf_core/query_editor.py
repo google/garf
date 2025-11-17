@@ -316,6 +316,12 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     for line in self._extract_query_lines():
       line_elements = query_parser.ExtractedLineElements.from_query_line(line)
       self.query.column_names.append(line_elements.alias)
+      if set(self.query.column_names) == {
+        '_',
+      } and len(self.query.fields) == len(self.query.column_names):
+        raise query_parser.GarfQueryError(
+          'At least one column should be included into a query.'
+        )
     return self
 
   def extract_virtual_columns(self) -> Self:
