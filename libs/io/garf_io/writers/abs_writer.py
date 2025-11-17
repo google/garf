@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import abc
+import asyncio
 import logging
 from typing import Literal
 
@@ -39,6 +40,13 @@ class AbsWriter(abc.ABC):
     """Initializes AbsWriter."""
     self.array_handling = array_handling
     self.array_separator = array_separator
+    self.kwargs = kwargs
+
+  async def awrite(self, report: GarfReport, destination: str) -> str | None:
+    """Writes report to destination."""
+    return await asyncio.to_thread(
+      self.write, report=report, destination=destination
+    )
 
   @abc.abstractmethod
   def write(self, report: GarfReport, destination: str) -> str | None:

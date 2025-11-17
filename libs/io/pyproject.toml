@@ -37,14 +37,13 @@ dynamic=["version"]
 [tool.setuptools.dynamic]
 version = {attr = "garf_io.__version__"}
 
-[options.extras_require]
+[project.optional-dependencies]
 test =  [
   "pytest",
   "pytest-cov",
+  "pytest-asyncio",
   "pandas"
 ]
-
-[project.optional-dependencies]
 bq=[
   "google-cloud-bigquery",
   "pandas",
