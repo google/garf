@@ -136,7 +136,7 @@ class GarfReport:
     self,
     key_column: str,
     value_column: str | None = None,
-    value_column_output: Literal['scalar', 'list'] = 'list',
+    value_column_output: Literal['scalar', 'list', 'dict'] = 'list',
   ) -> dict[str, api_clients.ApiRowElement | list[api_clients.ApiRowElement]]:
     """Converts report to dictionary.
 
@@ -174,7 +174,18 @@ class GarfReport:
       if not value_column:
         value = dict(zip(self.column_names, value))
       if value_column_output == 'list':
+        if not value_column:
+          del value[key_column]
         output[key].append(value)
+      elif value_column_output == 'dict':
+        del value[key_column]
+        if key not in output:
+          output[key] = value
+        else:
+          raise GarfReportError(
+            f'Non unique values found for key_column: {key_column}, '
+            'consider using `value_column_output="list"` instead'
+          )
       else:
         if output.get(key) and output.get(key) != value:
           raise GarfReportError(

@@ -416,10 +416,44 @@ class TestGarfReport:
       key_column = 'campaign_id'
       output_dict = multi_column_report.to_dict(key_column=key_column)
       assert output_dict == {
-        1: [{'campaign_id': 1, 'ad_group_id': 2}],
-        2: [{'campaign_id': 2, 'ad_group_id': 3}],
-        3: [{'campaign_id': 3, 'ad_group_id': 4}],
+        1: [{'ad_group_id': 2}],
+        2: [{'ad_group_id': 3}],
+        3: [{'ad_group_id': 4}],
       }
+
+      test_report = report.GarfReport(
+        results=[[1, 1], [1, 2], [1, 3]],
+        column_names=['campaign_id', 'ad_group_id'],
+      )
+      key_column = 'campaign_id'
+      output_dict = test_report.to_dict(
+        key_column=key_column, value_column_output='list'
+      )
+      assert output_dict == {
+        1: [{'ad_group_id': 1}, {'ad_group_id': 2}, {'ad_group_id': 3}]
+      }
+
+    def test_multi_column_report_converted_to_dict_with_dict_values(self):
+      test_report = report.GarfReport(
+        results=[[1, 1], [1, 2], [1, 3]],
+        column_names=['campaign_id', 'ad_group_id'],
+      )
+      key_column = 'ad_group_id'
+      output_dict = test_report.to_dict(
+        key_column=key_column, value_column_output='dict'
+      )
+      assert output_dict == {
+        1: {'campaign_id': 1},
+        2: {'campaign_id': 1},
+        3: {'campaign_id': 1},
+      }
+
+      key_column = 'campaign_id'
+      with pytest.raises(
+        report.GarfReportError,
+        match=f'Non unique values found for key_column: {key_column}',
+      ):
+        test_report.to_dict(key_column=key_column, value_column_output='dict')
 
     def test_multi_column_report_converted_to_dict_without_arguments(
       self,

@@ -84,9 +84,16 @@ campaigns_dict = campaigns.to_dict(
 # map campaign_id to campaign_name one-to-many
 campaigns_dict = campaigns.to_dict(
   key_column="campaign_id",
-  value_column="clicks",
   value_column_output="list",
 )
+
+# convert `campaigns` to dictionary
+# where values are another dictionary
+campaigns_dict = campaigns.to_dict(
+  key_column="campaign_id",
+  value_column_output="dict",
+)
+```
 ```
 
 #### Building
