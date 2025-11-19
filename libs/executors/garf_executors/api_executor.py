@@ -62,24 +62,6 @@ class ApiQueryExecutor(executor.Executor):
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     return ApiQueryExecutor(concrete_api_fetcher(**fetcher_parameters))
 
-  async def aexecute(
-    self,
-    query: str,
-    title: str,
-    context: ApiExecutionContext,
-  ) -> str:
-    """Performs query execution asynchronously.
-
-    Args:
-      query: Location of the query.
-      title: Name of the query.
-      context: Query execution context.
-
-    Returns:
-      Result of writing the report.
-    """
-    return await asyncio.to_thread(self.execute, query, title, context)
-
   @tracer.start_as_current_span('api.execute')
   def execute(
     self,

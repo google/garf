@@ -50,6 +50,24 @@ class Executor:
       )
     )
 
+  async def aexecute(
+    self,
+    query: str,
+    title: str,
+    context: execution_context.ExecutionContext,
+  ) -> str:
+    """Performs query execution asynchronously.
+
+    Args:
+      query: Location of the query.
+      title: Name of the query.
+      context: Query execution context.
+
+    Returns:
+      Result of writing the report.
+    """
+    return await asyncio.to_thread(self.execute, query, title, context)
+
   async def _run(
     self,
     batch: dict[str, str],
