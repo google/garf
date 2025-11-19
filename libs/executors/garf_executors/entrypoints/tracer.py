@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,8 +35,23 @@ def initialize_tracer():
   tracer_provider = TracerProvider(resource=resource)
 
   if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
-    otlp_processor = BatchSpanProcessor(
-      OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
-    )
-    tracer_provider.add_span_processor(otlp_processor)
+    if gcp_project_id := os.getenv('OTEL_EXPORTER_GCP_PROJECT_ID'):
+      try:
+        from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+      except ImportError as e:
+        raise ImportError(
+          'Please install garf_executors with GCP support '
+          '- `pip install garf_executors[gcp]`'
+        ) from e
+
+      cloud_span_processor = BatchSpanProcessor(
+        CloudTraceSpanExporter(project_id=gcp_project_id)
+      )
+      tracer_provider.add_span_processor(cloud_span_processor)
+    else:
+      otlp_processor = BatchSpanProcessor(
+        OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
+      )
+      tracer_provider.add_span_processor(otlp_processor)
+
   trace.set_tracer_provider(tracer_provider)
