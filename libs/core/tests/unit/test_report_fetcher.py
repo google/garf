@@ -14,6 +14,7 @@
 
 
 import datetime
+import logging
 
 import pytest
 from garf_core import (
@@ -50,6 +51,38 @@ class TestApiReportFetcher:
     )
 
     assert test_report == expected_report
+
+  def test_fetch_returns_saves_and_loads_cached_version(self, caplog, tmp_path):
+    test_api_client = api_clients.FakeApiClient(
+      results=[
+        {'column': {'name': 1}, 'other_column': 2},
+        {'column': {'name': 2}, 'other_column': 2},
+        {'column': {'name': 3}, 'other_column': 2},
+      ]
+    )
+    test_fetcher = report_fetcher.ApiReportFetcher(
+      api_client=test_api_client,
+      parser=parsers.DictParser,
+      enable_cache=True,
+      cache_path=tmp_path,
+    )
+    query = 'SELECT column.name, other_column FROM test'
+    expected_report = report.GarfReport(
+      results=[[1, 2], [2, 2], [3, 2]],
+      column_names=['column_name', 'other_column'],
+    )
+
+    with caplog.at_level(logging.DEBUG):
+      test_report = test_fetcher.fetch(query)
+      assert 'Report is saved to cache' in caplog.text
+      assert 'Cached version not found, generating' in caplog.text
+      assert test_report == expected_report
+
+    with caplog.at_level(logging.DEBUG):
+      test_report = test_fetcher.fetch(query)
+      assert 'Report is loaded from cache' in caplog.text
+      assert 'Cached version of report is loaded' in caplog.text
+      assert test_report == expected_report
 
   def test_fetch_returns_empty_report_for_empty_api_response(self):
     test_api_client = api_clients.FakeApiClient(results=[])

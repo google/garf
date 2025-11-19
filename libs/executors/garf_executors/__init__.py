@@ -24,7 +24,10 @@ from garf_executors.telemetry import tracer
 
 @tracer.start_as_current_span('setup_executor')
 def setup_executor(
-  source: str, fetcher_parameters: dict[str, str]
+  source: str,
+  fetcher_parameters: dict[str, str | int | bool],
+  enable_cache: bool = False,
+  cache_ttl_seconds: int = 3600,
 ) -> type[executor.Executor]:
   """Initializes executors based on a source and parameters."""
   if source == 'bq':
@@ -40,7 +43,11 @@ def setup_executor(
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     query_executor = ApiQueryExecutor(
-      concrete_api_fetcher(**fetcher_parameters)
+      concrete_api_fetcher(
+        **fetcher_parameters,
+        enable_cache=enable_cache,
+        cache_ttl_seconds=cache_ttl_seconds,
+      )
     )
   return query_executor
 
@@ -50,4 +57,4 @@ __all__ = [
   'ApiExecutionContext',
 ]
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'

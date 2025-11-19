@@ -15,8 +15,9 @@
 
 from __future__ import annotations
 
-import dataclasses
 import datetime
+import hashlib
+import json
 import logging
 import re
 from typing import Generator, Union
@@ -39,6 +40,11 @@ class GarfQueryParameters(pydantic.BaseModel):
   macro: QueryParameters = pydantic.Field(default_factory=dict)
   template: QueryParameters = pydantic.Field(default_factory=dict)
 
+  @property
+  def hash(self) -> str:
+    hash_fields = self.model_dump(exclude_none=True)
+    return hashlib.md5(json.dumps(hash_fields).encode('utf-8')).hexdigest()
+
 
 class GarfMacroError(query_parser.GarfQueryError):
   """Specifies incorrect macro in Garf query."""
@@ -52,33 +58,32 @@ class GarfBuiltInQueryError(query_parser.GarfQueryError):
   """Specifies non-existing builtin query."""
 
 
-@dataclasses.dataclass
-class BaseQueryElements:
+class BaseQueryElements(pydantic.BaseModel):
   """Contains raw query and parsed elements.
 
   Attributes:
-      title: Title of the query that needs to be parsed.
-      text: Text of the query that needs to be parsed.
-      resource_name: Name of Google Ads API reporting resource.
-      fields: Ads API fields that need to be fetched.
-      column_names: Friendly names for fields which are used when saving data
-      column_names: Friendly names for fields which are used when saving data
-      customizers: Attributes of fields that need to be be extracted.
-      virtual_columns: Attributes of fields that need to be be calculated.
-      is_builtin_query: Whether query is built-in.
+    title: Title of the query that needs to be parsed.
+    text: Text of the query that needs to be parsed.
+    resource_name: Name of Google Ads API reporting resource.
+    fields: Ads API fields that need to be fetched.
+    column_names: Friendly names for fields which are used when saving data
+    column_names: Friendly names for fields which are used when saving data
+    customizers: Attributes of fields that need to be be extracted.
+    virtual_columns: Attributes of fields that need to be be calculated.
+    is_builtin_query: Whether query is built-in.
   """
 
-  title: str
+  title: str | None
   text: str
   resource_name: str | None = None
-  fields: list[str] = dataclasses.field(default_factory=list)
-  filters: list[str] = dataclasses.field(default_factory=list)
-  sorts: list[str] = dataclasses.field(default_factory=list)
-  column_names: list[str] = dataclasses.field(default_factory=list)
-  customizers: dict[str, dict[str, str]] = dataclasses.field(
+  fields: list[str] = pydantic.Field(default_factory=list)
+  filters: list[str] = pydantic.Field(default_factory=list)
+  sorts: list[str] = pydantic.Field(default_factory=list)
+  column_names: list[str] = pydantic.Field(default_factory=list)
+  customizers: dict[str, query_parser.Customizer] = pydantic.Field(
     default_factory=dict
   )
-  virtual_columns: dict[str, query_parser.VirtualColumn] = dataclasses.field(
+  virtual_columns: dict[str, query_parser.VirtualColumn] = pydantic.Field(
     default_factory=dict
   )
   is_builtin_query: bool = False
@@ -87,12 +92,16 @@ class BaseQueryElements:
     return (
       self.column_names,
       self.fields,
+      self.filters,
+      self.sorts,
       self.resource_name,
       self.customizers,
       self.virtual_columns,
     ) == (
       other.column_names,
       other.fields,
+      other.filters,
+      other.sorts,
       other.resource_name,
       other.customizers,
       other.virtual_columns,
@@ -102,6 +111,11 @@ class BaseQueryElements:
   def request(self) -> str:
     """API request."""
     return ','.join(self.fields)
+
+  @property
+  def hash(self) -> str:
+    hash_fields = self.model_dump(exclude_none=True, exclude={'title', 'text'})
+    return hashlib.md5(json.dumps(hash_fields).encode('utf-8')).hexdigest()
 
 
 class CommonParametersMixin:
