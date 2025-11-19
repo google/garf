@@ -23,12 +23,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import pathlib
 from typing import Callable
 
 from opentelemetry import trace
 
 from garf_core import (
   api_clients,
+  cache,
   exceptions,
   parsers,
   query_editor,
@@ -63,6 +65,8 @@ class ApiReportFetcher:
       query_specification_builder: Class to perform query parsing.
       builtin_queries:
         Mapping between query name and function for generating GarfReport.
+      enable_cache: Whether to load / save report from / to cache.
+      cache: Cache object.
   """
 
   def __init__(
@@ -74,6 +78,9 @@ class ApiReportFetcher:
     ),
     builtin_queries: dict[str, Callable[[ApiReportFetcher], report.GarfReport]]
     | None = None,
+    enable_cache: bool = False,
+    cache_path: str | pathlib.Path | None = None,
+    cache_ttl_seconds: int = 3600,
     **kwargs: str,
   ) -> None:
     """Instantiates ApiReportFetcher based on provided api client.
@@ -84,11 +91,16 @@ class ApiReportFetcher:
       query_specification_builder: Class to perform query parsing.
       builtin_queries:
         Mapping between query name and function for generating GarfReport.
+      enable_cache: Whether to load / save report from / to cache.
+      cache_path: Optional path to cache folder.
+      cache_ttl_seconds: Maximum lifespan of cached reports.
     """
     self.api_client = api_client
     self.parser = parser
     self.query_specification_builder = query_specification_builder
     self.query_args = kwargs
+    self.enable_cache = enable_cache
+    self.cache = cache.GarfCache(cache_path, cache_ttl_seconds)
     self.builtin_queries = builtin_queries or {}
 
   def add_builtin_queries(
@@ -156,13 +168,24 @@ class ApiReportFetcher:
         )
       return builtin_report(self, **kwargs)
 
+    if self.enable_cache:
+      try:
+        cached_report = self.cache.load(query, args, kwargs)
+        logger.warning('Cached version of report is loaded')
+        span.set_attribute('is_cached_report', True)
+        return cached_report
+      except cache.GarfCacheFileNotFoundError:
+        logger.debug('Cached version not found, generating')
     response = self.api_client.call_api(query, **kwargs)
     if not response:
       return report.GarfReport(query_specification=query)
 
     parsed_response = self.parser(query).parse_response(response)
-    return report.GarfReport(
+    fetched_report = report.GarfReport(
       results=parsed_response,
       column_names=query.column_names,
       query_specification=query,
     )
+    if self.enable_cache:
+      self.cache.save(fetched_report, query, args, kwargs)
+    return fetched_report

@@ -42,8 +42,8 @@ class ExecutionContext(pydantic.BaseModel):
   query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
     default_factory=dict
   )
-  fetcher_parameters: dict[str, str | list[str | int]] | None = pydantic.Field(
-    default_factory=dict
+  fetcher_parameters: dict[str, str | bool | int | list[str | int]] | None = (
+    pydantic.Field(default_factory=dict)
   )
   writer: str | None = None
   writer_parameters: dict[str, str] | None = pydantic.Field(

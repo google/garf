@@ -56,7 +56,17 @@ def main():
   parser.add_argument(
     '--parallel-threshold', dest='parallel_threshold', default=10, type=int
   )
+  parser.add_argument(
+    '--enable-cache', dest='enable_cache', action='store_true'
+  )
+  parser.add_argument(
+    '--cache-ttl-seconds',
+    dest='cache_ttl_seconds',
+    default=3600,
+    type=int,
+  )
   parser.set_defaults(parallel_queries=True)
+  parser.set_defaults(enable_cache=False)
   parser.set_defaults(dry_run=False)
   args, kwargs = parser.parse_known_args()
 
@@ -79,7 +89,10 @@ def main():
         f'No execution context found for source {args.source} in {config_file}'
       )
     query_executor = garf_executors.setup_executor(
-      args.source, context.fetcher_parameters
+      source=args.source,
+      fetcher_parameters=context.fetcher_parameters,
+      enable_cache=args.enable_cache,
+      cache_ttl_seconds=args.cache_ttl_seconds,
     )
     batch = {query: reader_client.read(query) for query in args.query}
     query_executor.execute_batch(batch, context, args.parallel_threshold)
@@ -99,7 +112,10 @@ def main():
       fetcher_parameters=source_parameters,
     )
     query_executor = garf_executors.setup_executor(
-      args.source, context.fetcher_parameters
+      source=args.source,
+      fetcher_parameters=context.fetcher_parameters,
+      enable_cache=args.enable_cache,
+      cache_ttl_seconds=args.cache_ttl_seconds,
     )
     if args.parallel_queries:
       logger.info('Running queries in parallel')
