@@ -11,6 +11,7 @@ dependencies = [
   "pydantic",
   "opentelemetry-api",
   "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
@@ -48,13 +49,15 @@ sql=[
   "garf-io[sqlalchemy]",
   "pandas",
 ]
+gcp= [
+  "opentelemetry-exporter-gcp-trace",
+]
 server=[
   "fastapi[standard]",
   "opentelemetry-instrumentation-fastapi",
-  "opentelemetry-exporter-otlp",
 ]
 all = [
-  "garf-executors[bq,sql,server]"
+  "garf-executors[bq,sql,server,gcp]"
 ]
 [project.scripts]
 garf="garf_executors.entrypoints.cli:main"
