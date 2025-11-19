@@ -44,10 +44,14 @@ bq=[
   "garf-io[bq]",
   "pandas",
   "google-cloud-logging",
+  "smart_open[gcs]",
 ]
 sql=[
   "garf-io[sqlalchemy]",
   "pandas",
+]
+gcp= [
+  "opentelemetry-exporter-gcp-trace",
 ]
 server=[
   "fastapi[standard]",
@@ -55,7 +59,7 @@ server=[
   "typer",
 ]
 all = [
-  "garf-executors[bq,sql,server]"
+  "garf-executors[bq,sql,server,gcp]"
 ]
 [project.scripts]
 garf="garf_executors.entrypoints.cli:main"
