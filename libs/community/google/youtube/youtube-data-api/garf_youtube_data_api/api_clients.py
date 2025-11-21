@@ -20,9 +20,10 @@ import warnings
 from garf_core import api_clients, query_editor
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from opentelemetry import trace
 from typing_extensions import override
 
-from garf_youtube_data_api import exceptions
+from garf_youtube_data_api import exceptions, telemetry
 
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
@@ -67,9 +68,13 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     return build('youtube', self.api_version, developerKey=self.api_key)
 
   @override
+  @telemetry.tracer.start_as_current_span('youtube_data_api.get_response')
   def get_response(
     self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> api_clients.GarfApiResponse:
+    span = trace.get_current_span()
+    for k, v in kwargs.items():
+      span.set_attribute(f'youtube_data_api.kwargs.{k}', v)
     fields = [field.split('.')[0] for field in request.fields]
     sub_service = getattr(self.service, request.resource_name)()
     part_str = ','.join(fields)
