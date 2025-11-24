@@ -130,11 +130,42 @@ class BaseParser(abc.ABC):
   ) -> api_clients.ApiRowElement:
     if customizer.type == 'slice':
       return self._process_customizer_slice(row, customizer, field)
+    if customizer.type == 'nested_field':
+      return self._process_nested_field(row, customizer, field)
+    if customizer.type == 'resource_index':
+      return self._process_resource_index(row, customizer, field)
     return row
 
   def _process_customizer_slice(self, row, customizer, field):
     slice_object = customizer.value.slice_literal
     return [r.get(customizer.value.value) for r in row.get(field)[slice_object]]
+
+  def _process_nested_field(self, row, customizer, field):
+    nested_field = row.get(field)
+    try:
+      return operator.attrgetter(customizer.value)(nested_field)
+    except AttributeError as e:
+      raise query_parser.GarfCustomizerError(
+        f'nested field {customizer.value} is missing in row {row}'
+      ) from e
+
+  def _process_resource_index(self, row, customizer, field):
+    resource = row.get(field, '/')
+    _, *elements = row.get(field, '/').split('/')
+    if not elements:
+      raise query_parser.GarfCustomizerError(
+        f'Not a valid resource: {resource}'
+      )
+    resource_elements = elements[-1].split('~')
+    try:
+      try:
+        return int(resource_elements[customizer.value])
+      except ValueError:
+        return resource_elements[customizer.value]
+    except IndexError as e:
+      raise query_parser.GarfCustomizerError(
+        'Not a valid position in resource: %s, %d', resource, customizer.value
+      ) from e
 
   def parse_row(
     self,
