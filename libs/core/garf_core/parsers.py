@@ -65,6 +65,10 @@ class BaseParser(abc.ABC):
       span.set_attribute('num_results', len(results))
       return results
 
+  @abc.abstractmethod
+  def get_row_element(self, row, key):
+    """Defines how to get a single element from a row."""
+
   def _evalute_virtual_column(
     self,
     fields: list[str],
@@ -138,20 +142,31 @@ class BaseParser(abc.ABC):
 
   def _process_customizer_slice(self, row, customizer, field):
     slice_object = customizer.value.slice_literal
-    return [r.get(customizer.value.value) for r in row.get(field)[slice_object]]
+    elements = self.get_row_element(row, field)
+    results = []
+    for element in elements[slice_object]:
+      results.append(self.get_row_element(element, customizer.value.value))
+    return results
 
   def _process_nested_field(self, row, customizer, field):
-    nested_field = row.get(field)
+    nested_field = self.get_row_element(row, field)
+    if isinstance(nested_field, MutableSequence):
+      return list(
+        {
+          self.parse_row_element(field, customizer.value)
+          for field in nested_field
+        }
+      )
     try:
-      return operator.attrgetter(customizer.value)(nested_field)
+      return self.parse_row_element(field, customizer.value)
     except AttributeError as e:
       raise query_parser.GarfCustomizerError(
         f'nested field {customizer.value} is missing in row {row}'
       ) from e
 
   def _process_resource_index(self, row, customizer, field):
-    resource = row.get(field, '/')
-    _, *elements = row.get(field, '/').split('/')
+    resource = self.get_row_element(row, field)
+    _, *elements = resource.split('/')
     if not elements:
       raise query_parser.GarfCustomizerError(
         f'Not a valid resource: {resource}'
@@ -213,6 +228,10 @@ class DictParser(BaseParser):
     except (TypeError, KeyError):
       return None
 
+  def get_row_element(self, row, key):
+    """Gets element from a dict by key."""
+    return row.get(key)
+
 
 class NumericConverterDictParser(DictParser):
   """Extracts nested dict elements with numerical conversions."""
@@ -239,6 +258,25 @@ class NumericConverterDictParser(DictParser):
       return convert_field(field)
     except KeyError:
       return None
+
+
+class ProtoParser(BaseParser):
+  """Extracts attribute from Protobuf messages."""
+
+  def parse_row_element(
+    self, row: api_clients.ApiResponseRow, key: str
+  ) -> api_clients.ApiRowElement:
+    """Returns attributes from a Protobuf message based on a key."""
+    try:
+      return operator.attrgetter(key)(row)
+    except AttributeError as e:
+      raise query_parser.GarfFieldError(
+        f'field {key} is missing in row {row}'
+      ) from e
+
+  def get_row_element(self, row, key):
+    """Gets nested attribute from a Protobuf message."""
+    return operator.attrgetter(key)(row)
 
 
 class GarfParserError(exceptions.GarfError):

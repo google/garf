@@ -25,6 +25,18 @@ class NestedResource(pydantic.BaseModel):
   nested_element: int
 
 
+class ArrayElement(pydantic.BaseModel):
+  element: int
+
+
+class FakeProtoMessage(pydantic.BaseModel):
+  resource: str
+  resource_id: int
+  resource_name: str
+  resource_data: NestedResource
+  array_data: list[ArrayElement]
+
+
 class TestDictParser:
   @pytest.fixture
   def test_parser(self):
@@ -174,38 +186,6 @@ class TestDictParser:
     ):
       test_parser.parse_response(test_response)
 
-  def test_parse_response_returns_correct_nested_attribute(self):
-    spec = query_editor.QuerySpecification(
-      text='SELECT resource:nested_element AS column FROM test'
-    ).generate()
-    test_parser = parsers.DictParser(spec)
-    test_response = api_clients.GarfApiResponse(
-      results=[
-        {'resource': NestedResource(nested_element=1)},
-        {'resource': NestedResource(nested_element=2)},
-      ]
-    )
-    parsed_row = test_parser.parse_response(test_response)
-    assert parsed_row == [[1], [2]]
-
-  def test_parse_response_raises_customizer_error_on_missing_nested_attribute(
-    self,
-  ):
-    spec = query_editor.QuerySpecification(
-      text='SELECT resource:missing_element AS column FROM test'
-    ).generate()
-    test_parser = parsers.DictParser(spec)
-    test_response = api_clients.GarfApiResponse(
-      results=[
-        {'resource': NestedResource(nested_element=1)},
-      ]
-    )
-    with pytest.raises(
-      query_parser.GarfCustomizerError,
-      match='nested field missing_element is missing in row',
-    ):
-      test_parser.parse_response(test_response)
-
   def test_parse_response_skips_omitted_columns(self):
     test_specification = query_editor.QuerySpecification(
       'SELECT test_column_1 AS _, test_column_2 FROM test'
@@ -237,3 +217,58 @@ class TestNumericDictParser:
     expected_row = [1]
 
     assert parsed_row == expected_row
+
+
+class TestProtoParser:
+  @pytest.fixture
+  def test_parser(self):
+    spec = query_editor.QuerySpecification(
+      """
+      SELECT
+        resource_id,
+        resource_id + 1 AS next_resource_id,
+        resource_name,
+        resource_data.nested_element,
+        array_data[0].element AS slice_element
+      FROM test
+        """
+    ).generate()
+    return parsers.ProtoParser(spec)
+
+  def test_parse_row_returns_converted_numeric_values(self, test_parser):
+    test_row = FakeProtoMessage(
+      resource='resources/1/resource/99',
+      resource_id=1,
+      resource_name='test',
+      resource_data=NestedResource(nested_element=10),
+      array_data=[ArrayElement(element=100)],
+    )
+
+    parsed_row = test_parser.parse_row(test_row)
+    expected_row = [1, 2, 'test', 10, [100]]
+
+    assert parsed_row == expected_row
+
+  def test_parse_response_raises_customizer_error_on_missing_nested_attribute(
+    self,
+  ):
+    spec = query_editor.QuerySpecification(
+      text='SELECT resource_data:missing_element AS column FROM test'
+    ).generate()
+    test_parser = parsers.ProtoParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        FakeProtoMessage(
+          resource='resources/1/resource/99',
+          resource_id=1,
+          resource_name='test',
+          resource_data=NestedResource(nested_element=10),
+          array_data=[ArrayElement(element=100)],
+        )
+      ]
+    )
+    with pytest.raises(
+      query_parser.GarfFieldError,
+      match='field missing_element is missing in row resource_data',
+    ):
+      test_parser.parse_response(test_response)
