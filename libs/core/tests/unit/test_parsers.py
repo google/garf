@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pydantic
 import pytest
-from garf_core import api_clients, parsers, query_editor
+from garf_core import api_clients, parsers, query_editor, query_parser
 
 test_specification = query_editor.QuerySpecification(
   'SELECT test_column_1 FROM test'
 ).generate()
+
+
+class NestedResource(pydantic.BaseModel):
+  nested_element: int
 
 
 class TestDictParser:
@@ -116,6 +121,90 @@ class TestDictParser:
     expected_row = list(results)
 
     assert parsed_row == expected_row
+
+  @pytest.mark.parametrize(
+    ('index', 'expected'),
+    [
+      ('0', [[0], [1]]),
+      ('1', [['TEXT'], ['IMAGE']]),
+      ('2', [[54321], [12345]]),
+    ],
+  )
+  def test_parse_response_returns_correct_resource_index(self, index, expected):
+    spec = query_editor.QuerySpecification(
+      text=f'SELECT resource~{index} AS column FROM test'
+    ).generate()
+    test_parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'resource': 'resource/1/test/0~TEXT~54321'},
+        {'resource': 'resource/1/test/1~IMAGE~12345'},
+      ]
+    )
+    parsed_row = test_parser.parse_response(test_response)
+    assert parsed_row == expected
+
+  def test_parse_response_raises_customizer_error_on_invalid_position(self):
+    spec = query_editor.QuerySpecification(
+      text='SELECT resource~4 AS column FROM test'
+    ).generate()
+    test_parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'resource': 'resource/1/test/0~TEXT~54321'},
+      ]
+    )
+    with pytest.raises(
+      query_parser.GarfCustomizerError, match='Not a valid position in resource'
+    ):
+      test_parser.parse_response(test_response)
+
+  def test_parse_response_raises_customizer_error_on_invalid_resource(self):
+    spec = query_editor.QuerySpecification(
+      text='SELECT resource~0 AS column FROM test'
+    ).generate()
+    test_parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'resource': 'resource'},
+      ]
+    )
+    with pytest.raises(
+      query_parser.GarfCustomizerError, match='Not a valid resource'
+    ):
+      test_parser.parse_response(test_response)
+
+  def test_parse_response_returns_correct_nested_attribute(self):
+    spec = query_editor.QuerySpecification(
+      text='SELECT resource:nested_element AS column FROM test'
+    ).generate()
+    test_parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'resource': NestedResource(nested_element=1)},
+        {'resource': NestedResource(nested_element=2)},
+      ]
+    )
+    parsed_row = test_parser.parse_response(test_response)
+    assert parsed_row == [[1], [2]]
+
+  def test_parse_response_raises_customizer_error_on_missing_nested_attribute(
+    self,
+  ):
+    spec = query_editor.QuerySpecification(
+      text='SELECT resource:missing_element AS column FROM test'
+    ).generate()
+    test_parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[
+        {'resource': NestedResource(nested_element=1)},
+      ]
+    )
+    with pytest.raises(
+      query_parser.GarfCustomizerError,
+      match='nested field missing_element is missing in row',
+    ):
+      test_parser.parse_response(test_response)
 
   def test_parse_response_skips_omitted_columns(self):
     test_specification = query_editor.QuerySpecification(

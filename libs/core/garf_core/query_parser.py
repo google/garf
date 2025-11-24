@@ -58,7 +58,7 @@ class Customizer(pydantic.BaseModel):
 
   def __bool__(self) -> bool:
     """Evaluates whether all fields are not empty."""
-    return bool(self.type and self.value)
+    return bool(self.type and self.value is not None)
 
 
 class SliceField(pydantic.BaseModel):
