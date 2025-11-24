@@ -44,10 +44,11 @@ class BaseParser(abc.ABC):
   """An interface for all parsers to implement."""
 
   def __init__(
-    self, query_specification: query_editor.BaseQueryElements
+    self, query_specification: query_editor.BaseQueryElements, **kwargs: str
   ) -> None:
     """Initializes BaseParser."""
     self.query_spec = query_specification
+    self.kwargs = kwargs
 
   def parse_response(
     self,

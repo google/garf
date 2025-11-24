@@ -39,7 +39,7 @@ ApiResponseRow: TypeAlias = dict[str, ApiRowElement]
 class GarfApiResponse(pydantic.BaseModel):
   """Base class for specifying response."""
 
-  results: list[ApiResponseRow]
+  results: list[ApiResponseRow | Any]
 
   def __bool__(self) -> bool:
     return bool(self.results)
