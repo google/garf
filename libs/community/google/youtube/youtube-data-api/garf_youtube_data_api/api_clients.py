@@ -13,10 +13,15 @@
 # limitations under the License.
 """Creates API client for YouTube Data API."""
 
+import datetime
+import functools
 import logging
+import operator
 import os
 import warnings
 
+import dateutil
+import pydantic
 from garf_core import api_clients, query_editor
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -92,6 +97,39 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       if data := result.get('items'):
         results.extend(data)
 
+    if filters := request.filters:
+      span.set_attribute('youtube_data_api.filters', filters)
+      filtered_results = []
+      comparators = []
+      for filter in filters:
+        field, op, value = filter.split(' ')
+        comparators.append(Comparator(field=field, operator=op, value=value))
+      with telemetry.tracer.start_as_current_span(
+        'youtube_data_api.apply_filters'
+      ):
+        for row in results:
+          include_row = True
+          for comparator in comparators:
+            key = comparator.field.split('.')
+            res = functools.reduce(operator.getitem, key, row)
+            if isinstance(comparator.value, datetime.date):
+              expr = f'res {comparator.operator} comp'
+              include_row = eval(
+                expr,
+                {
+                  'res': dateutil.parser.parse(res).date(),
+                  'comp': comparator.value,
+                },
+              )
+            else:
+              include_row = eval(
+                f'{res} {comparator.operator} {comparator.value}', globals()
+              )
+            if not include_row:
+              break
+          if include_row:
+            filtered_results.append(row)
+      return api_clients.GarfApiResponse(results=filtered_results)
     return api_clients.GarfApiResponse(results=results)
 
   def _list(
@@ -105,3 +143,15 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       return service.list(part=part, **kwargs).execute()
     except HttpError:
       return {'items': None}
+
+
+class Comparator(pydantic.BaseModel):
+  field: str
+  operator: str
+  value: str | datetime.date
+
+  def model_post_init(self, __context) -> None:
+    if self.operator == '=':
+      self.operator = '=='
+    if self.field in ('snippet.publishedAt'):
+      self.value = dateutil.parser.parse(self.value).date()
