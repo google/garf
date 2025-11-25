@@ -13,8 +13,10 @@
 # limitations under the License.
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf_executors',
 )
+
+meter = metrics.get_meter('garf')

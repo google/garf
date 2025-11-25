@@ -20,16 +20,21 @@ GarfReport and saving it to local/remote storage.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from garf_core import report_fetcher
 from opentelemetry import trace
 
 from garf_executors import exceptions, execution_context, executor, fetchers
-from garf_executors.telemetry import tracer
+from garf_executors.telemetry import meter, tracer
 
 logger = logging.getLogger(__name__)
+
+counter = meter.create_counter(
+  name='executions_total',
+  description='Total number of query executions',
+  unit='1',
+)
 
 
 class ApiExecutionContext(execution_context.ExecutionContext):
@@ -107,6 +112,7 @@ class ApiQueryExecutor(executor.Executor):
         type(writer_client),
       )
       logger.info('%s executed successfully', title)
+      counter.add(1)
       return result
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
