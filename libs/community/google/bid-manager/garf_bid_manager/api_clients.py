@@ -207,7 +207,7 @@ def _process_api_response(
 
 
 @tenacity.retry(
-  stop=tenacity.stop_after_attempt(100), wait=tenacity.wait_exponential()
+  stop=tenacity.stop_after_attempt(100), wait=tenacity.wait_exponential(max=120)
 )
 def _check_if_report_is_done(get_request) -> bool:
   status = get_request.execute()
