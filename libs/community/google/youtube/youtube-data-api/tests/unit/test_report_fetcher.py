@@ -22,7 +22,7 @@ class TestYouTubeDataApiReportFetcher:
   def fetcher(self):
     return YouTubeDataApiReportFetcher()
 
-  def test_fetch(self, mocker, fetcher):
+  def test_fetch_returns_filtered_data(self, mocker, fetcher):
     query = """
       SELECT
         id,
@@ -57,6 +57,46 @@ class TestYouTubeDataApiReportFetcher:
     result = fetcher.fetch(query, id=['1', '2'])
     expected_report = garf_core.GarfReport(
       results=[[2, 11, 2, '2025-07-10T22:15:44Z']],
+      column_names=['id', 'views', 'likes', 'published_at'],
+    )
+
+    assert result == expected_report
+
+  def test_fetch_returns_sorted_data(self, mocker, fetcher):
+    query = """
+      SELECT
+        id,
+        statistics.viewCount AS views,
+        statistics.likeCount AS likes,
+        snippet.publishedAt AS published_at,
+      FROM videos
+      ORDER BY likes DESC
+    """
+
+    mocker.patch(
+      'garf_youtube_data_api.api_clients.YouTubeDataApiClient._list',
+      return_value={
+        'items': [
+          {
+            'id': 1,
+            'statistics': {'viewCount': 10, 'likeCount': 1},
+            'snippet': {'publishedAt': '2024-07-10T22:15:44Z'},
+          },
+          {
+            'id': 2,
+            'statistics': {'viewCount': 11, 'likeCount': 2},
+            'snippet': {'publishedAt': '2025-07-10T22:15:44Z'},
+          },
+        ],
+      },
+    )
+
+    result = fetcher.fetch(query, id=['1', '2'])
+    expected_report = garf_core.GarfReport(
+      results=[
+        [2, 11, 2, '2025-07-10T22:15:44Z'],
+        [1, 10, 1, '2024-07-10T22:15:44Z'],
+      ],
       column_names=['id', 'views', 'likes', 'published_at'],
     )
 
