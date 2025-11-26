@@ -117,14 +117,17 @@ def main():
       enable_cache=args.enable_cache,
       cache_ttl_seconds=args.cache_ttl_seconds,
     )
-    if args.parallel_queries:
+    if args.parallel_queries and len(args.query) > 1:
       logger.info('Running queries in parallel')
       batch = {query: reader_client.read(query) for query in args.query}
       query_executor.execute_batch(batch, context, args.parallel_threshold)
     else:
-      logger.info('Running queries sequentially')
+      if len(args.query) > 1:
+        logger.info('Running queries sequentially')
       for query in args.query:
-        query_executor.execute(reader_client.read(query), query, context)
+        query_executor.execute(
+          query=reader_client.read(query), title=query, context=context
+        )
   logging.shutdown()
 
 
