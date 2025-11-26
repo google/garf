@@ -25,6 +25,7 @@ except ImportError as e:
 
 import logging
 import re
+import uuid
 
 import pandas as pd
 from garf_core import query_editor, report
@@ -95,7 +96,7 @@ class SqlAlchemyQueryExecutor(
         conn.connection.executescript(query_text)
         results = report.GarfReport()
       else:
-        temp_table_name = f'temp_{title}'.replace('.', '_')
+        temp_table_name = f'temp_{uuid.uuid4().hex}'
         query_text = f'CREATE TABLE {temp_table_name} AS {query_text}'
         conn.connection.executescript(query_text)
         try:
