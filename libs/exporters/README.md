@@ -53,4 +53,4 @@ Once `garf-exporter` is running you can see exposed metrics at `localhost:8000/m
 
 Explore full documentation on using `garf-exporter`
 
-* [Documentation](https://google.github.io/garf/usage/exporters.md)
+* [Documentation](https://google.github.io/garf/usage/exporters/)
