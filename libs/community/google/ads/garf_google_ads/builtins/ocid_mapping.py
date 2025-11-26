@@ -18,7 +18,7 @@ import garf_core
 
 def get_ocid_mapping(
   report_fetcher: 'garf_google_ads.GoogleAdsApiReportFetcher',
-  accounts: list[str],
+  account: str | list[str],
   **kwargs: str,
 ):
   """Returns mapping between external customer_id and OCID parameter.
@@ -37,16 +37,18 @@ def get_ocid_mapping(
     'metrics.optimization_score_url  AS url FROM customer'
   )
   mapping = []
-  for account in accounts:
-    if report := report_fetcher.fetch(query, account):
+  if isinstance(account, str):
+    account = account.split(',')
+  for acc in account:
+    if report := report_fetcher.fetch(query_specification=query, account=acc):
       for row in report:
         if ocid := re.findall(r'ocid=(\w+)', row.url):
           mapping.append([row.account_id, ocid[0]])
           break
       if not ocid:
-        mapping.append([int(account), '0'])
+        mapping.append([int(acc), '0'])
     else:
-      mapping.append([int(account), '0'])
+      mapping.append([int(acc), '0'])
   return garf_core.GarfReport(
     results=mapping,
     column_names=[
