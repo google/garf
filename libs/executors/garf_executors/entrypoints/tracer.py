@@ -39,4 +39,18 @@ def initialize_tracer():
       OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
     )
     tracer_provider.add_span_processor(otlp_processor)
+    tracer_provider.add_span_processor(otlp_processor)
+    if gcp_project_id := os.getenv('OTEL_EXPORTER_GCP_TRACE_PROJECT_ID'):
+      try:
+        from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+      except ImportError as e:
+        raise ImportError(
+          'Please install garf_executors with GCP support '
+          '- `pip install garf_executors[gcp]`'
+        ) from e
+
+      cloud_span_processor = BatchSpanProcessor(
+        CloudTraceSpanExporter(project_id=gcp_project_id)
+      )
+      tracer_provider.add_span_processor(cloud_span_processor)
   trace.set_tracer_provider(tracer_provider)
