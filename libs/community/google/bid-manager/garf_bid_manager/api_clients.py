@@ -15,6 +15,7 @@
 
 import csv
 import io
+import json
 import logging
 import os
 import pathlib
@@ -34,6 +35,8 @@ _API_URL = 'https://doubleclickbidmanager.googleapis.com/'
 _DEFAULT_API_SCOPES = ['https://www.googleapis.com/auth/doubleclickbidmanager']
 
 _SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home() / 'dbm.json')
+_QUERY_CACHE_ENV = 'GARF_BID_MANAGER_QUERY_CACHE_DIR'
+_DEFAULT_QUERY_CACHE_DIR = pathlib.Path.home() / '.garf/bid_manager'
 
 
 class BidManagerApiClientError(exceptions.BidManagerApiError):
@@ -50,6 +53,7 @@ class BidManagerApiClient(api_clients.BaseClient):
       'GARF_BID_MANAGER_CREDENTIALS_FILE', _SERVICE_ACCOUNT_CREDENTIALS_FILE
     ),
     auth_mode: Literal['oauth', 'service_account'] = 'oauth',
+    query_cache_dir: str | pathlib.Path | None = None,
     **kwargs: str,
   ) -> None:
     """Initializes BidManagerApiClient."""
@@ -59,6 +63,10 @@ class BidManagerApiClient(api_clients.BaseClient):
     self.kwargs = kwargs
     self._client = None
     self._credentials = None
+    cache_dir = query_cache_dir or os.getenv(_QUERY_CACHE_ENV)
+    self.query_cache_dir = (
+      pathlib.Path(cache_dir) if cache_dir else _DEFAULT_QUERY_CACHE_DIR
+    )
 
   @property
   def credentials(self):
@@ -87,36 +95,36 @@ class BidManagerApiClient(api_clients.BaseClient):
   def get_response(
     self, request: query_editor.BidManagerApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
-    query = _build_request(request)
-    query_response = self.client.queries().create(body=query).execute()
-    report_response = (
-      self.client.queries()
-      .run(queryId=query_response['queryId'], synchronous=False)
-      .execute()
-    )
-    query_id = report_response['key']['queryId']
-    report_id = report_response['key']['reportId']
-    logging.info(
-      'Query %s is running, report %s has been created and is '
-      'currently being generated.',
-      query_id,
-      report_id,
-    )
+    query_hash = request.hash
+    query_id = None
+    report_id = None
+    status = None
 
-    get_request = (
-      self.client.queries()
-      .reports()
-      .get(
-        queryId=report_response['key']['queryId'],
-        reportId=report_response['key']['reportId'],
+    if cached_ids := self._load_cached_query_reference(query_hash):
+      cached_query_id, cached_report_id = cached_ids
+      logging.info(
+        'Attempting to reuse DV360 report %s for query hash %s.',
+        cached_report_id,
+        query_hash,
       )
-    )
+      try:
+        status = self._get_report_status(cached_query_id, cached_report_id)
+        query_id, report_id = cached_query_id, cached_report_id
+      except Exception as exc:  # pylint: disable=broad-except
+        logging.warning(
+          'Unable to reuse DV360 report %s (hash %s), regenerating. Reason: %s',
+          cached_report_id,
+          query_hash,
+          exc,
+        )
+        status = None
 
-    status = _check_if_report_is_done(get_request)
+    if status is None:
+      query_id, report_id = self._run_query(request)
+      self._save_cached_query_reference(query_hash, query_id, report_id)
+      status = self._get_report_status(query_id, report_id)
 
-    logging.info(
-      'Report %s generated successfully. Now downloading.', report_id
-    )
+    logging.info('Report %s generated successfully. Now downloading.', report_id)
     with smart_open.open(
       status['metadata']['googleCloudStoragePath'], 'r', encoding='utf-8'
     ) as f:
@@ -142,6 +150,64 @@ class BidManagerApiClient(api_clients.BaseClient):
     raise BidManagerApiClientError(
       f'Credentials file could not be found at {self.credentials_file}.'
     )
+
+
+  def _run_query(
+    self, request: query_editor.BidManagerApiQuery
+  ) -> tuple[str, str]:
+    query = _build_request(request)
+    query_response = self.client.queries().create(body=query).execute()
+    report_response = (
+      self.client.queries()
+      .run(queryId=query_response['queryId'], synchronous=False)
+      .execute()
+    )
+    query_id = report_response['key']['queryId']
+    report_id = report_response['key']['reportId']
+    logging.info(
+      'Query %s is running, report %s has been created and is currently '
+      'being generated.',
+      query_id,
+      report_id,
+    )
+    return query_id, report_id
+
+  def _get_report_status(self, query_id: str, report_id: str):
+    get_request = (
+      self.client.queries()
+      .reports()
+      .get(
+        queryId=query_id,
+        reportId=report_id,
+      )
+    )
+    return _check_if_report_is_done(get_request)
+
+  def _load_cached_query_reference(
+    self, query_hash: str
+  ) -> tuple[str, str] | None:
+    cache_path = self.query_cache_dir / f'{query_hash}.txt'
+    if not cache_path.is_file():
+      return None
+    try:
+      with open(cache_path, 'r', encoding='utf-8') as cache_file:
+        data = json.load(cache_file)
+      return data['query_id'], data['report_id']
+    except (OSError, ValueError, KeyError) as exc:
+      logging.warning(
+        'Failed to load DV360 cache file %s, ignoring. Reason: %s',
+        cache_path,
+        exc,
+      )
+      return None
+
+  def _save_cached_query_reference(
+    self, query_hash: str, query_id: str, report_id: str
+  ) -> None:
+    self.query_cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = self.query_cache_dir / f'{query_hash}.txt'
+    with open(cache_path, 'w', encoding='utf-8') as cache_file:
+      json.dump({'query_id': query_id, 'report_id': report_id}, cache_file)
 
 
 def _build_request(request: query_editor.BidManagerApiQuery):

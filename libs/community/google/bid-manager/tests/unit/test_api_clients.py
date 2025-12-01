@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
+import io
+import json
+from unittest import mock
+
 import pytest
 from garf_bid_manager import api_clients, query_editor
 
@@ -85,3 +90,110 @@ def test_process_api_response():
   ]
 
   assert result == expected_result
+
+
+def _build_query_spec():
+  query = """
+    SELECT
+      advertiser AS advertiser,
+      metric_impressions AS impressions
+    FROM standard
+    WHERE advertiser = 1
+    """
+  return query_editor.BidManagerApiQuery(text=query, title='test').generate()
+
+
+def _mock_report_status():
+  return {
+    'key': {'queryId': '123', 'reportId': '456'},
+    'metadata': {
+      'status': {'state': 'DONE'},
+      'googleCloudStoragePath': 'gs://bucket/report.csv',
+    },
+  }
+
+
+def _patch_open(monkeypatch, data: str):
+  @contextlib.contextmanager
+  def fake_open(*_, **__):
+    yield io.StringIO(data)
+
+  monkeypatch.setattr(api_clients.smart_open, 'open', fake_open)
+
+
+def test_get_response_reuses_cached_report(tmp_path, monkeypatch):
+  spec = _build_query_spec()
+  cache_file = tmp_path / f'{spec.hash}.txt'
+  cache_file.write_text(
+    json.dumps({'query_id': '123', 'report_id': '456'}),
+    encoding='utf-8',
+  )
+
+  client = api_clients.BidManagerApiClient(query_cache_dir=tmp_path)
+
+  mock_client = mock.Mock()
+  mock_queries = mock.Mock()
+  mock_reports = mock.Mock()
+  mock_get_request = mock.Mock()
+  mock_get_request.execute.return_value = _mock_report_status()
+  mock_reports.get.return_value = mock_get_request
+  mock_queries.reports.return_value = mock_reports
+  mock_client.queries.return_value = mock_queries
+  client._client = mock_client
+
+  _patch_open(monkeypatch, 'col1,col2\nvalue1,value2\n')
+
+  response = client.get_response(spec)
+
+  assert response.results == [
+    {'FILTER_ADVERTISER': 'value1', 'METRIC_IMPRESSIONS': 'value2'}
+  ]
+  mock_queries.create.assert_not_called()
+  mock_queries.run.assert_not_called()
+
+
+def test_get_response_creates_and_caches_report(tmp_path, monkeypatch):
+  spec = _build_query_spec()
+  client = api_clients.BidManagerApiClient(query_cache_dir=tmp_path)
+
+  mock_client = mock.Mock()
+  mock_queries = mock.Mock()
+  mock_reports = mock.Mock()
+
+  mock_create = mock.Mock()
+  mock_create.execute.return_value = {'queryId': '999'}
+  mock_run = mock.Mock()
+  mock_run.execute.return_value = {
+    'key': {'queryId': '999', 'reportId': '555'}
+  }
+  mock_get_request = mock.Mock()
+  mock_get_request.execute.return_value = {
+    'key': {'queryId': '999', 'reportId': '555'},
+    'metadata': {
+      'status': {'state': 'DONE'},
+      'googleCloudStoragePath': 'gs://bucket/report.csv',
+    },
+  }
+
+  mock_reports.get.return_value = mock_get_request
+  mock_queries.create.return_value = mock_create
+  mock_queries.run.return_value = mock_run
+  mock_queries.reports.return_value = mock_reports
+  mock_client.queries.return_value = mock_queries
+  client._client = mock_client
+
+  _patch_open(monkeypatch, 'col1,col2\nvalue1,value2\n')
+
+  response = client.get_response(spec)
+
+  assert response.results == [
+    {'FILTER_ADVERTISER': 'value1', 'METRIC_IMPRESSIONS': 'value2'}
+  ]
+  mock_queries.create.assert_called_once()
+  mock_queries.run.assert_called_once()
+  cache_file = tmp_path / f'{spec.hash}.txt'
+  assert cache_file.is_file()
+  assert json.loads(cache_file.read_text(encoding='utf-8')) == {
+    'query_id': '999',
+    'report_id': '555',
+  }
