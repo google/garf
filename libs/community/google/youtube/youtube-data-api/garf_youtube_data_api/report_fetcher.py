@@ -20,6 +20,7 @@ import operator
 from collections.abc import Iterable, MutableSequence
 from typing import Any, Final
 
+import pandas as pd
 from garf_core import parsers, report, report_fetcher
 from typing_extensions import override
 
@@ -96,4 +97,16 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
           query_specification, args, **{name: element}, **kwargs
         )
         results.append(res)
-    return functools.reduce(operator.add, results)
+    res = functools.reduce(operator.add, results)
+    if sorts := (
+      query_editor.YouTubeDataApiQuery(text=query_specification)
+      .generate()
+      .sorts
+    ):
+      sorts = sorts[0]
+      key, *desc = sorts.split(' ')
+      asc_order = not desc or 'ASC' in desc[0]
+      return report.GarfReport.from_pandas(
+        res.to_pandas().sort_values(by=key, ascending=asc_order)
+      )
+    return res

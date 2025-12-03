@@ -5,11 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-youtube-data-api"
 dependencies = [
-  "garf-core",
+  "garf-core[pandas]",
   "garf-io",
   "google-api-python-client",
 ]
 authors = [
+  {name = "Andrei Markin", email = "amarkin@google.com"},
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
 license = {text = "Apache 2.0"}
