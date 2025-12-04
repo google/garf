@@ -34,14 +34,32 @@ def get_youtube_channel_videos(
     """
   videos = report_fetcher.fetch(
     channel_videos_query,
-    playlistId=videos_playlist.to_list(flatten=True, distinct=True),
+    playlistId=videos_playlist.to_list(row_type='scalar', distinct=True),
     maxResults=50,
-  ).to_list(flatten=True, distinct=True)
+  ).to_list(row_type='scalar', distinct=True)
 
   video_performance_query = """
     SELECT
       snippet.channelId AS channel_id,
       id AS video_id,
+      snippet.title AS title,
+      snippet.description AS description,
+      snippet.publishedAt AS published_at,
+      snippet.categoryId AS category_id,
+      snippet.defaultLanguage AS default_language,
+      contentDetails.duration AS duration,
+      contentDetails.definition AS definition,
+      contentDetails.dimension AS dimension,
+      contentDetails.caption AS caption,
+      statistics.viewCount AS view_count,
+      statistics.likeCount AS like_count,
+      statistics.commentCount AS comment_count,
+      statistics.favoriteCount AS favorite_count,
+      status.uploadStatus AS upload_status,
+      status.privacyStatus AS privacy_status,
+      status.license AS license,
+      status.embeddable AS embeddable,
+      status.publicStatsViewable AS public_stats_viewable
     FROM videos
     """
   return report_fetcher.fetch(video_performance_query, id=videos)
