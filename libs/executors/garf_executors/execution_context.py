@@ -35,8 +35,10 @@ class ExecutionContext(pydantic.BaseModel):
   Attributes:
     query_parameters: Parameters to dynamically change query text.
     fetcher_parameters: Parameters to specify fetching setup.
-    writer: Type of writer to use.
-    writer_parameters: Optional parameters to setup writer.
+    writer: Type of writer to use (deprecated, use writers instead).
+    writer_parameters: Optional parameters to setup writer (deprecated, use writers_parameters instead).
+    writers: List of writer types to use. If specified, multiple writers will be used.
+    writers_parameters: List of parameter dicts for each writer. Must match length of writers.
   """
 
   query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
@@ -49,6 +51,8 @@ class ExecutionContext(pydantic.BaseModel):
   writer_parameters: dict[str, str] | None = pydantic.Field(
     default_factory=dict
   )
+  writers: list[str] | None = None
+  writers_parameters: list[dict[str, str]] | None = None
 
   def model_post_init(self, __context__) -> None:
     if self.fetcher_parameters is None:
@@ -57,6 +61,23 @@ class ExecutionContext(pydantic.BaseModel):
       self.writer_parameters = {}
     if not self.query_parameters:
       self.query_parameters = query_editor.GarfQueryParameters()
+    # Backward compatibility: if writer is set but writers is not, convert to writers list
+    if self.writer and not self.writers:
+      self.writers = [self.writer]
+      if self.writer_parameters:
+        self.writers_parameters = [self.writer_parameters]
+      else:
+        self.writers_parameters = [{}]
+    # Validate writers_parameters length matches writers length
+    if self.writers and self.writers_parameters:
+      if len(self.writers) != len(self.writers_parameters):
+        raise ValueError(
+          f'writers_parameters length ({len(self.writers_parameters)}) '
+          f'must match writers length ({len(self.writers)})'
+        )
+    elif self.writers and not self.writers_parameters:
+      # If writers is set but writers_parameters is not, create empty dicts
+      self.writers_parameters = [{}] * len(self.writers)
 
   @classmethod
   def from_file(
@@ -75,9 +96,50 @@ class ExecutionContext(pydantic.BaseModel):
 
   @property
   def writer_client(self) -> abs_writer.AbsWriter:
-    writer_client = writer.create_writer(self.writer, **self.writer_parameters)
-    if self.writer == 'bq':
+    """Returns single writer client (for backward compatibility)."""
+    if self.writers and len(self.writers) > 0:
+      # Use first writer for backward compatibility
+      writer_type = self.writers[0]
+      writer_params = (
+        self.writers_parameters[0] if self.writers_parameters else {}
+      )
+    else:
+      writer_type = self.writer
+      writer_params = self.writer_parameters or {}
+    
+    if not writer_type:
+      raise ValueError('No writer specified')
+    
+    writer_client = writer.create_writer(writer_type, **writer_params)
+    if writer_type == 'bq':
       _ = writer_client.create_or_get_dataset()
-    if self.writer == 'sheet':
+    if writer_type == 'sheet':
       writer_client.init_client()
     return writer_client
+
+  @property
+  def writer_clients(self) -> list[abs_writer.AbsWriter]:
+    """Returns list of writer clients for multiple writers."""
+    # Handle backward compatibility: if only writer is set, convert to writers list
+    writers_to_use = self.writers
+    writers_params_to_use = self.writers_parameters
+    
+    if not writers_to_use and self.writer:
+      writers_to_use = [self.writer]
+      writers_params_to_use = [self.writer_parameters] if self.writer_parameters else [{}]
+    
+    if not writers_to_use:
+      return []
+    
+    clients = []
+    for i, writer_type in enumerate(writers_to_use):
+      writer_params = (
+        writers_params_to_use[i] if writers_params_to_use else {}
+      )
+      writer_client = writer.create_writer(writer_type, **writer_params)
+      if writer_type == 'bq':
+        _ = writer_client.create_or_get_dataset()
+      if writer_type == 'sheet':
+        writer_client.init_client()
+      clients.append(writer_client)
+    return clients

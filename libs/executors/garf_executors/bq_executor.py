@@ -102,21 +102,28 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
         results = report.GarfReport.from_pandas(result.to_dataframe())
       else:
         results = report.GarfReport()
-      if context.writer and results:
-        writer_client = context.writer_client
-        logger.debug(
-          'Start writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        writing_result = writer_client.write(results, title)
-        logger.debug(
-          'Finish writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        logger.info('%s executed successfully', title)
-        return writing_result
+      if (context.writer or context.writers) and results:
+        writer_clients = context.writer_clients
+        if not writer_clients:
+          logger.warning('No writers configured, skipping write operation')
+        else:
+          writing_results = []
+          for writer_client in writer_clients:
+            logger.debug(
+              'Start writing data for query %s via %s writer',
+              title,
+              type(writer_client),
+            )
+            writing_result = writer_client.write(results, title)
+            logger.debug(
+              'Finish writing data for query %s via %s writer',
+              title,
+              type(writer_client),
+            )
+            writing_results.append(writing_result)
+          logger.info('%s executed successfully', title)
+          # Return the last writer's result for backward compatibility
+          return writing_results[-1] if writing_results else None
       return results
     except google_cloud_exceptions.GoogleCloudError as e:
       raise BigQueryExecutorError(e) from e
