@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 
 try:
@@ -139,8 +140,9 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
         except google_cloud_exceptions.NotFound:
           bq_dataset = bigquery.Dataset(dataset_id)
           bq_dataset.location = self.location
-          self.client.create_dataset(bq_dataset, timeout=30)
-          logger.info('Created new dataset %s', dataset_id)
+          with contextlib.suppress(google_cloud_exceptions.Conflict):
+            self.client.create_dataset(bq_dataset, timeout=30)
+            logger.info('Created new dataset %s', dataset_id)
 
 
 def extract_datasets(macros: dict | None) -> list[str]:
