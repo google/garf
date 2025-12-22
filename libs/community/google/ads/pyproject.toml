@@ -8,6 +8,7 @@ dependencies = [
   "garf-core",
   "garf-io",
   "google-ads",
+  "tenacity",
 ]
 authors = [
   {name = "Andrei Markin", email = "amarkin@google.com"},
@@ -36,3 +37,7 @@ test =  [
   "pytest-cov",
   "python-dotenv",
 ]
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true

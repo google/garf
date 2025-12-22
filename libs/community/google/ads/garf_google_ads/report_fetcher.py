@@ -52,6 +52,18 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
     customer_ids_query: str | None = None,
     **kwargs: str,
   ) -> garf_core.GarfReport:
+    """Fetches data from Google Ads API.
+
+    Args:
+      query_specifiction: Query to execute.
+      args: Optional parameters to fine-tune the query.
+      account: Account(s) to get data from.
+      expand_mcc: Whether to perform account expansion (MCC to Account).
+      custom_ids_query: Query to reduce number of accounts based a condition.
+
+    Returns:
+      Fetched report for provided accounts.
+    """
     if isinstance(account, str):
       account = account.split(',')
     if not args:
@@ -102,14 +114,11 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
     """Performs Manager account(s) expansion to child accounts.
 
     Args:
-      customer_ids:
-          Manager account(s) to be expanded.
-      customer_ids_query:
-          Garf query to limit the expansion only to accounts
-          satisfying the condition.
+      customer_ids: Manager account(s) to be expanded.
+      customer_ids_query: GAQL query used to reduce the number of customer_ids.
 
     Returns:
-        All child accounts under provided customer_ids.
+      All child accounts under provided customer_ids.
     """
     return self._get_customer_ids(
       seed_customer_ids=customer_ids, customer_ids_query=customer_ids_query
@@ -127,7 +136,7 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
       customer_ids_query: GAQL query used to reduce the number of customer_ids.
 
     Returns:
-        All customer_ids from MCC satisfying the condition.
+      All customer_ids from MCC satisfying the condition.
     """
     query = """
         SELECT customer_client.id FROM customer_client
