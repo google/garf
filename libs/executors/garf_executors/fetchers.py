@@ -13,13 +13,15 @@
 # limitations under the License.
 
 import inspect
+import logging
 import sys
 from importlib.metadata import entry_points
 
 from garf_core import report_fetcher
-from opentelemetry import trace
 
 from garf_executors.telemetry import tracer
+
+logger = logging.getLogger(name='garf_executors.fetchers')
 
 
 @tracer.start_as_current_span('find_fetchers')
@@ -57,8 +59,10 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
             obj, report_fetcher.ApiReportFetcher
           ):
             return getattr(fetcher_module, name)
-      except ModuleNotFoundError:
-        continue
+      except ModuleNotFoundError as e:
+        raise report_fetcher.ApiReportFetcherError(
+          f'Failed to load fetcher for source {source}, reason: {e}'
+        )
   raise report_fetcher.ApiReportFetcherError(
     f'No fetcher available for the source "{source}"'
   )
