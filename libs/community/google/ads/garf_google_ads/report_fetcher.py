@@ -20,7 +20,17 @@ import operator
 
 import garf_core
 
-from garf_google_ads import GoogleAdsApiClient, builtins, parsers, query_editor
+from garf_google_ads import (
+  GoogleAdsApiClient,
+  builtins,
+  exceptions,
+  parsers,
+  query_editor,
+)
+
+
+class GoogleAdsApiReportFetcherError(exceptions.GoogleAdsApiError):
+  """Report fetcher specific error."""
 
 
 class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
@@ -55,15 +65,22 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
     """Fetches data from Google Ads API.
 
     Args:
-      query_specifiction: Query to execute.
+      query_specification: Query to execute.
       args: Optional parameters to fine-tune the query.
       account: Account(s) to get data from.
       expand_mcc: Whether to perform account expansion (MCC to Account).
-      custom_ids_query: Query to reduce number of accounts based a condition.
+      customer_ids_query: Query to reduce number of accounts based a condition.
 
     Returns:
       Fetched report for provided accounts.
+
+    Raises:
+      GoogleAdsApiReportFetcherError: If not account provided or found.
     """
+    if not account:
+      raise GoogleAdsApiReportFetcherError(
+        'Provide an account to get data from.'
+      )
     if isinstance(account, str):
       account = account.split(',')
     if not args:
@@ -72,6 +89,10 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
       account = self.expand_mcc(
         customer_ids=account, customer_ids_query=customer_ids_query
       )
+      if not account:
+        raise GoogleAdsApiReportFetcherError(
+          'No account found satisfying the condition {customer_ids_query}.'
+        )
     if len(account) == 1:
       return super().fetch(
         query_specification=query_specification,
