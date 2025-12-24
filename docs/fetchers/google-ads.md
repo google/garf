@@ -1,22 +1,49 @@
-# `garf` for Google Ads API
+## garf for Google Ads API
 
 [![PyPI](https://img.shields.io/pypi/v/garf-google-ads?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-google-ads)
 [![Downloads PyPI](https://img.shields.io/pypi/dw/garf-google-ads?logo=pypi)](https://pypi.org/project/garf-google-ads/)
 
-`garf-google-ads` simplifies fetching data from Google Ads API using SQL-like queries.
+Interacts with [Google Ads API](https://developers.google.com/google-ads-api).
 
-## Prerequisites
+## Install
 
-* [Google Ads API](https://console.cloud.google.com/apis/library/googleads.googleapis.com) enabled.
+Install `garf-google-ads` library
 
-## Installation
+/// tab | pip
+```
+pip install garf-executors garf-google-ads
+```
+///
 
-`pip install garf-google-ads`
+/// tab | uv
+```
+uv pip install garf-executors garf-google-ads
+```
+///
 
 ## Usage
 
-### Run as a library
+### Prerequisites
+
+* [Google Ads API](https://console.cloud.google.com/apis/library/googleads.googleapis.com) enabled.
+
+/// tab | cli
+```bash
+echo """
+SELECT
+  campaign.id,
+  metrics.clicks AS clicks
+FROM campaign
+WHERE segments.date DURING LAST_7_DAYS
+  " > query.sql
+garf query.sql --source google-ads \
+  --output console
 ```
+///
+
+/// tab | python
+
+```python
 import os
 
 from garf_io import writer
@@ -40,23 +67,7 @@ fetched_report = (
 console_writer = writer.create_writer('console')
 console_writer.write(fetched_report, 'query')
 ```
-
-### Run via CLI
-
-> Install `garf-executors` package to run queries via CLI (`pip install garf-executors`).
-
-```
-garf <PATH_TO_QUERIES> --source google-ads \
-  --output <OUTPUT_TYPE> \
-  --source.account=GOOGLE_ADS_ACCOUNT \
-  --source.path-to-config=./google-ads.yaml
-```
-
-where:
-
-* `<PATH_TO_QUERIES>` - local or remove files containing queries
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
-* `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
+///
 
 ###  Available source parameters
 
