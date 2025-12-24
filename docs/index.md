@@ -23,6 +23,7 @@ and writes it virtually anywhere.
 * [YouTube Reporting API](fetchers/youtube-reporting-api.md)
 * [Google Analytics](fetchers/google-analytics-api.md)
 * [Google Merchant Center](fetchers/merchant-center-api.md)
+* [Google Ads](fetchers/google-ads.md)
 
 ## Installation
 

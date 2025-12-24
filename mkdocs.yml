@@ -81,3 +81,4 @@ nav:
     - Merchant Center: fetchers/merchant-center-api.md
     - Google Analytics: fetchers/google-analytics-api.md
     - Bid Manager: fetchers/bid-manager.md
+    - Google Ads: fetchers/google-ads.md
