@@ -35,10 +35,8 @@ class ExecutionContext(pydantic.BaseModel):
   Attributes:
     query_parameters: Parameters to dynamically change query text.
     fetcher_parameters: Parameters to specify fetching setup.
-    writer: Type of writer to use (deprecated, use writers instead).
-    writer_parameters: Optional parameters to setup writer (deprecated, use writers_parameters instead).
-    writers: List of writer types to use. If specified, multiple writers will be used.
-    writers_parameters: List of parameter dicts for each writer. Must match length of writers.
+    writer: Type of writer to use. Can be a single writer string or list of writers.
+    writer_parameters: Optional parameters to setup writer.
   """
 
   query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
@@ -47,12 +45,10 @@ class ExecutionContext(pydantic.BaseModel):
   fetcher_parameters: dict[str, str | bool | int | list[str | int]] | None = (
     pydantic.Field(default_factory=dict)
   )
-  writer: str | None = None
+  writer: str | list[str] | None = None
   writer_parameters: dict[str, str] | None = pydantic.Field(
     default_factory=dict
   )
-  writers: list[str] | None = None
-  writers_parameters: list[dict[str, str]] | None = None
 
   def model_post_init(self, __context__) -> None:
     if self.fetcher_parameters is None:
@@ -61,23 +57,6 @@ class ExecutionContext(pydantic.BaseModel):
       self.writer_parameters = {}
     if not self.query_parameters:
       self.query_parameters = query_editor.GarfQueryParameters()
-    # Backward compatibility: if writer is set but writers is not, convert to writers list
-    if self.writer and not self.writers:
-      self.writers = [self.writer]
-      if self.writer_parameters:
-        self.writers_parameters = [self.writer_parameters]
-      else:
-        self.writers_parameters = [{}]
-    # Validate writers_parameters length matches writers length
-    if self.writers and self.writers_parameters:
-      if len(self.writers) != len(self.writers_parameters):
-        raise ValueError(
-          f'writers_parameters length ({len(self.writers_parameters)}) '
-          f'must match writers length ({len(self.writers)})'
-        )
-    elif self.writers and not self.writers_parameters:
-      # If writers is set but writers_parameters is not, create empty dicts
-      self.writers_parameters = [{}] * len(self.writers)
 
   @classmethod
   def from_file(
@@ -96,16 +75,13 @@ class ExecutionContext(pydantic.BaseModel):
 
   @property
   def writer_client(self) -> abs_writer.AbsWriter:
-    """Returns single writer client (for backward compatibility)."""
-    if self.writers and len(self.writers) > 0:
-      # Use first writer for backward compatibility
-      writer_type = self.writers[0]
-      writer_params = (
-        self.writers_parameters[0] if self.writers_parameters else {}
-      )
+    """Returns single writer client."""
+    if isinstance(self.writer, list) and len(self.writer) > 0:
+      writer_type = self.writer[0]
     else:
       writer_type = self.writer
-      writer_params = self.writer_parameters or {}
+    
+    writer_params = self.writer_parameters or {}
     
     if not writer_type:
       raise ValueError('No writer specified')
@@ -119,23 +95,16 @@ class ExecutionContext(pydantic.BaseModel):
 
   @property
   def writer_clients(self) -> list[abs_writer.AbsWriter]:
-    """Returns list of writer clients for multiple writers."""
-    # Handle backward compatibility: if only writer is set, convert to writers list
-    writers_to_use = self.writers
-    writers_params_to_use = self.writers_parameters
-    
-    if not writers_to_use and self.writer:
-      writers_to_use = [self.writer]
-      writers_params_to_use = [self.writer_parameters] if self.writer_parameters else [{}]
-    
-    if not writers_to_use:
+    """Returns list of writer clients."""
+    if not self.writer:
       return []
     
+    # Convert single writer to list for uniform processing
+    writers_to_use = self.writer if isinstance(self.writer, list) else [self.writer]
+    writer_params = self.writer_parameters or {}
+    
     clients = []
-    for i, writer_type in enumerate(writers_to_use):
-      writer_params = (
-        writers_params_to_use[i] if writers_params_to_use else {}
-      )
+    for writer_type in writers_to_use:
       writer_client = writer.create_writer(writer_type, **writer_params)
       if writer_type == 'bq':
         _ = writer_client.create_or_get_dataset()

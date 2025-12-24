@@ -89,11 +89,8 @@ class TestApiQueryExecutor:
   def test_execute_with_multiple_writers_saves_to_both(self, executor, tmp_path, capsys):
     """Test that multiple writers (console and json) both execute."""
     context = api_executor.ApiExecutionContext(
-      writers=['console', 'json'],
-      writers_parameters=[
-        {'page_size': '10'},
-        {'destination_folder': str(tmp_path)},
-      ],
+      writer=['console', 'json'],
+      writer_parameters={'destination_folder': str(tmp_path)},
     )
     executor.execute(
       query=_TEST_QUERY,

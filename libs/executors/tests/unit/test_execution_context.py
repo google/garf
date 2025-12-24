@@ -81,20 +81,14 @@ class TestExecutionContext:
     context.save(tmp_config)
     with open(tmp_config, 'r', encoding='utf-8') as f:
       config_data = yaml.safe_load(f)
-    # Due to backward compatibility conversion, writers and writers_parameters
-    # will be added automatically, so we check that original fields are preserved
+    # Check that the data is saved correctly without extra fields
     assert config_data['writer'] == data['writer']
     assert config_data['writer_parameters'] == data['writer_parameters']
-    assert config_data['writers'] == [data['writer']]
-    assert config_data['writers_parameters'] == [data['writer_parameters']]
 
   def test_multiple_writers_creates_multiple_clients(self, tmp_path):
     context = ExecutionContext(
-      writers=['console', 'json'],
-      writers_parameters=[
-        {'page_size': '10'},
-        {'destination_folder': str(tmp_path)},
-      ],
+      writer=['console', 'json'],
+      writer_parameters={'destination_folder': str(tmp_path)},
     )
     writer_clients = context.writer_clients
     assert len(writer_clients) == 2
@@ -103,7 +97,7 @@ class TestExecutionContext:
 
   def test_multiple_writers_without_parameters_creates_empty_dicts(self):
     context = ExecutionContext(
-      writers=['console', 'json'],
+      writer=['console', 'json'],
     )
     writer_clients = context.writer_clients
     assert len(writer_clients) == 2
@@ -121,24 +115,17 @@ class TestExecutionContext:
     assert len(writer_clients) == 1
     assert writer_clients[0].__class__.__name__ == 'JsonWriter'
 
-  def test_writers_parameters_length_mismatch_raises_error(self):
-    with pytest.raises(ValueError, match='writers_parameters length'):
-      ExecutionContext(
-        writers=['console', 'json'],
-        writers_parameters=[{'page_size': '10'}],  # Only one param dict for two writers
-      )
 
   def test_from_file_with_multiple_writers(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
     data = {
-      'writers': ['console', 'json'],
-      'writers_parameters': [
-        {'page_size': '10'},
-        {'destination_folder': '/tmp'},
-      ],
+      'writer': ['console', 'json'],
+      'writer_parameters': {
+        'destination_folder': '/tmp',
+      },
     }
     with open(tmp_config, 'w', encoding='utf-8') as f:
       yaml.dump(data, f, encoding='utf-8')
     context = ExecutionContext.from_file(tmp_config)
-    assert context.writers == ['console', 'json']
+    assert context.writer == ['console', 'json']
     assert len(context.writer_clients) == 2

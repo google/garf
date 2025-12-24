@@ -102,7 +102,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
         results = report.GarfReport.from_pandas(result.to_dataframe())
       else:
         results = report.GarfReport()
-      if (context.writer or context.writers) and results:
+      if context.writer and results:
         writer_clients = context.writer_clients
         if not writer_clients:
           logger.warning('No writers configured, skipping write operation')

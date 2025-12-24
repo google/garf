@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class ApiExecutionContext(execution_context.ExecutionContext):
   """Common context for executing one or more queries."""
 
-  writer: str = 'console'
+  writer: str | list[str] = 'console'
 
 
 class ApiQueryExecutor(executor.Executor):
