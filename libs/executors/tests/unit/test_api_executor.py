@@ -85,3 +85,25 @@ class TestApiQueryExecutor:
       },
     )
     assert isinstance(executor.fetcher, fake_fetcher.FakeApiReportFetcher)
+
+  def test_execute_with_multiple_writers_saves_to_both(self, executor, tmp_path, capsys):
+    """Test that multiple writers (console and json) both execute."""
+    context = api_executor.ApiExecutionContext(
+      writer=['console', 'json'],
+      writer_parameters={'destination_folder': str(tmp_path)},
+    )
+    executor.execute(
+      query=_TEST_QUERY,
+      title='test',
+      context=context,
+    )
+    # Verify JSON file was created
+    json_file = pathlib.Path(context.writer_clients[1].destination_folder) / 'test.json'
+    assert json_file.exists()
+    with pathlib.Path.open(json_file, 'r', encoding='utf-8') as f:
+      result = json.load(f)
+    assert result == _TEST_DATA
+    
+    # Verify console output was generated
+    output = capsys.readouterr().out
+    assert 'showing results' in output and 'test' in output
