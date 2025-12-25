@@ -20,7 +20,6 @@ GarfReport and saving it to local/remote storage.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from garf_core import report_fetcher

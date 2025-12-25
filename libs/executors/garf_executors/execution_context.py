@@ -80,12 +80,12 @@ class ExecutionContext(pydantic.BaseModel):
       writer_type = self.writer[0]
     else:
       writer_type = self.writer
-    
+
     writer_params = self.writer_parameters or {}
-    
+
     if not writer_type:
       raise ValueError('No writer specified')
-    
+
     writer_client = writer.create_writer(writer_type, **writer_params)
     if writer_type == 'bq':
       _ = writer_client.create_or_get_dataset()
@@ -98,11 +98,13 @@ class ExecutionContext(pydantic.BaseModel):
     """Returns list of writer clients."""
     if not self.writer:
       return []
-    
+
     # Convert single writer to list for uniform processing
-    writers_to_use = self.writer if isinstance(self.writer, list) else [self.writer]
+    writers_to_use = (
+      self.writer if isinstance(self.writer, list) else [self.writer]
+    )
     writer_params = self.writer_parameters or {}
-    
+
     clients = []
     for writer_type in writers_to_use:
       writer_client = writer.create_writer(writer_type, **writer_params)

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
 import pytest
+import yaml
 from garf_core import query_editor
 from garf_executors.execution_context import ExecutionContext
 
@@ -114,7 +114,6 @@ class TestExecutionContext:
     writer_clients = context.writer_clients
     assert len(writer_clients) == 1
     assert writer_clients[0].__class__.__name__ == 'JsonWriter'
-
 
   def test_from_file_with_multiple_writers(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'

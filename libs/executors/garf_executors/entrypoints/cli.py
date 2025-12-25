@@ -97,18 +97,23 @@ def main():
     batch = {query: reader_client.read(query) for query in args.query}
     query_executor.execute_batch(batch, context, args.parallel_threshold)
   else:
-    extra_parameters = utils.ParamsParser(
-      ['source', args.output, 'macro', 'template']
-    ).parse(kwargs)
+    param_types = ['source', 'macro', 'template']
+    outputs = args.output.split(',')
+    extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse(
+      kwargs
+    )
     source_parameters = extra_parameters.get('source', {})
+    writer_parameters = {}
+    for output in outputs:
+      writer_parameters.update(extra_parameters.get(output))
 
     context = garf_executors.api_executor.ApiExecutionContext(
       query_parameters={
         'macro': extra_parameters.get('macro'),
         'template': extra_parameters.get('template'),
       },
-      writer=args.output,
-      writer_parameters=extra_parameters.get(args.output),
+      writer=outputs,
+      writer_parameters=writer_parameters,
       fetcher_parameters=source_parameters,
     )
     query_executor = garf_executors.setup_executor(
