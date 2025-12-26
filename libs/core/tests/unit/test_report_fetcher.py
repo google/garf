@@ -52,6 +52,17 @@ class TestApiReportFetcher:
 
     assert test_report == expected_report
 
+  def test_fetch_skips_omitted_column(self, test_dict_report_fetcher):
+    query = 'SELECT column.name AS _, other_column FROM test'
+    test_report = test_dict_report_fetcher.fetch(query)
+
+    expected_report = report.GarfReport(
+      results=[[2], [2], [2]],
+      column_names=['other_column'],
+    )
+
+    assert test_report == expected_report
+
   def test_fetch_returns_saves_and_loads_cached_version(self, caplog, tmp_path):
     test_api_client = api_clients.FakeApiClient(
       results=[
