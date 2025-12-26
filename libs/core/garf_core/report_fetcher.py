@@ -183,7 +183,7 @@ class ApiReportFetcher:
     parsed_response = self.parser(query).parse_response(response)
     fetched_report = report.GarfReport(
       results=parsed_response,
-      column_names=query.column_names,
+      column_names=[c for c in query.column_names if c != '_'],
       query_specification=query,
     )
     if self.enable_cache:
