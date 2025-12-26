@@ -227,13 +227,6 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
   def generate(self) -> BaseQueryElements:
     self.remove_comments().expand().extract_resource_name()
-    if self.query.resource_name.startswith('builtin'):
-      return BaseQueryElements(
-        title=self.query.resource_name.replace('builtin.', ''),
-        text=self.query.text,
-        resource_name=self.query.resource_name,
-        is_builtin_query=True,
-      )
     (
       self.remove_trailing_comma()
       .extract_fields()
@@ -243,6 +236,9 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       .extract_virtual_columns()
       .extract_customizers()
     )
+    if self.query.resource_name.startswith('builtin'):
+      self.query.title = self.query.resource_name.replace('builtin.', '')
+      self.query.is_builtin_query = True
     return self.query
 
   def expand(self) -> Self:
@@ -366,6 +362,8 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       r'\bSELECT\b|FROM .*', '', self.text, flags=re.IGNORECASE
     ).split(',')
     for row in selected_rows:
+      if row.strip() == '*':
+        return
       if non_empty_row := row.strip():
         yield non_empty_row
 

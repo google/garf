@@ -105,20 +105,28 @@ class TestApiReportFetcher:
 
     assert not test_report
 
+  @pytest.mark.parametrize(
+    ('select', 'expect'),
+    [
+      ('*', 'test'),
+      ('test', 'test'),
+      ('test AS new_test', 'new_test'),
+    ],
+  )
   def test_fetch_builtin_query_returns_correct_builtin_report(
-    self, test_dict_report_fetcher
+    self, test_dict_report_fetcher, select, expect
   ):
     test_report = report.GarfReport(results=[[1]], column_names=['test'])
 
-    def test_builtin_query(report_fetcher):
+    def builtin_query(report_fetcher):
       return test_report
 
-    test_dict_report_fetcher.add_builtin_queries({'test': test_builtin_query})
+    test_dict_report_fetcher.add_builtin_queries({'test': builtin_query})
 
-    query = 'SELECT test FROM builtin.test'
+    query = f'SELECT {select} FROM builtin.test'
     fetched_report = test_dict_report_fetcher.fetch(query)
-
-    assert fetched_report == test_report
+    expected_report = report.GarfReport(results=[[1]], column_names=[expect])
+    assert fetched_report == expected_report
 
   def test_fetch_parses_virtual_columns(self, test_dict_report_fetcher):
     query = """

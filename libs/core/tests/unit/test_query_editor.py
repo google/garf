@@ -128,17 +128,28 @@ class TestQuerySpecification:
     ):
       test_query_spec.generate()
 
-  def test_generate_returns_builtin_query(self):
-    query = 'SELECT test FROM builtin.test'
+  @pytest.mark.parametrize(
+    ('select', 'expect_fields', 'expect_columns'),
+    [
+      ('*', [], []),
+      ('test', ['test'], ['test']),
+      ('test AS new_test', ['test'], ['new_test']),
+    ],
+  )
+  def test_generate_returns_builtin_query(
+    self, select, expect_fields, expect_columns
+  ):
+    query = f'SELECT {select} FROM builtin.test'
     test_query_spec = query_editor.QuerySpecification(text=query, title='test')
     test_query_spec.generate()
     expected_query_elements = query_editor.BaseQueryElements(
       title='test',
       text=query,
+      fields=expect_fields,
+      column_names=expect_columns,
       resource_name='builtin.test',
       is_builtin_query=True,
     )
-
     assert test_query_spec.query == expected_query_elements
 
   def test_generate_returns_macros(self):
