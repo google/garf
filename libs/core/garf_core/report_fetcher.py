@@ -166,7 +166,10 @@ class ApiReportFetcher:
         raise query_editor.GarfBuiltInQueryError(
           f'Cannot find the built-in query "{query.title}"'
         )
-      return builtin_report(self, **kwargs)
+      rep = builtin_report(self, **kwargs)
+      if columns := query.column_names:
+        rep.column_names = columns
+      return rep
 
     if self.enable_cache:
       try:
