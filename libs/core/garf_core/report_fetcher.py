@@ -178,7 +178,7 @@ class ApiReportFetcher:
         span.set_attribute('is_cached_report', True)
         return cached_report
       except cache.GarfCacheFileNotFoundError:
-        logger.debug('Cached version not found, generating')
+        logger.info('Cached version not found, generating')
     response = self.api_client.call_api(query, **kwargs)
     if not response:
       return report.GarfReport(query_specification=query)
