@@ -96,7 +96,7 @@ class GarfCache:
       with open(cached_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
       logger.debug('Report is loaded from cache: %s', str(cached_path))
-      return report.GarfReport.from_json(data)
+      return report.GarfReport.from_json(json.dumps(data))
     raise GarfCacheFileNotFoundError
 
   def save(
@@ -123,6 +123,6 @@ class GarfCache:
     )
     hash_identifier = f'{query.hash}:{args_hash}:{kwargs_hash}'
     cached_path = self.location / f'{hash_identifier}.json'
-    logger.debug('Report is saved to cache: %s', str(cached_path))
+    logger.info('Report is saved to cache: %s', str(cached_path))
     with open(cached_path, 'w', encoding='utf-8') as f:
-      json.dump(fetched_report.to_json(), f)
+      json.dump(fetched_report.to_list(row_type='dict'), f)
