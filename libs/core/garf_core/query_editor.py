@@ -156,7 +156,9 @@ class TemplateProcessorMixin:
       else:
         query_text = self.expand_jinja(query_text, {})
       if macros := params.macro:
-        query_text = query_text.format(**macros)
+        query_text = query_text.format(
+          **macros, **CommonParametersMixin().common_params
+        )
         logger.debug('Query text after macro substitution:\n%s', query_text)
     else:
       query_text = self.expand_jinja(query_text, {})

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Union
+
 import pydantic
 import pytest
 from garf_core import api_clients, parsers, query_editor, query_parser
@@ -21,20 +23,20 @@ test_specification = query_editor.QuerySpecification(
 ).generate()
 
 
-class NestedResource(pydantic.BaseModel):
-  nested_element: int
-
-
 class ArrayElement(pydantic.BaseModel):
-  element: int
+  element: int = 1
+
+
+class NestedResource(pydantic.BaseModel):
+  nested_element: Union[int, list[ArrayElement]] = 1
 
 
 class FakeProtoMessage(pydantic.BaseModel):
-  resource: str
-  resource_id: int
-  resource_name: str
-  resource_data: NestedResource
-  array_data: list[ArrayElement]
+  resource: str = ''
+  resource_id: int = 1
+  resource_name: str = ''
+  resource_data: NestedResource = NestedResource()
+  array_data: list[ArrayElement] = pydantic.Field(default_factory=list)
 
 
 class TestDictParser:
@@ -229,7 +231,8 @@ class TestProtoParser:
         resource_id + 1 AS next_resource_id,
         resource_name,
         resource_data.nested_element,
-        array_data[0].element AS slice_element
+        array_data[0].element AS slice_element,
+        resource_id AS same_resource_id,
       FROM test
         """
     ).generate()
@@ -245,7 +248,7 @@ class TestProtoParser:
     )
 
     parsed_row = test_parser.parse_row(test_row)
-    expected_row = [1, 2, 'test', 10, [100]]
+    expected_row = [1, 2, 'test', 10, [100], 1]
 
     assert parsed_row == expected_row
 
@@ -272,3 +275,23 @@ class TestProtoParser:
       match='nested field missing_element is missing in row',
     ):
       test_parser.parse_response(test_response)
+
+  def test_parse_row_process_deeply_nested_customizer(self):
+    spec = query_editor.QuerySpecification(
+      """
+      SELECT
+        resource_id,
+        resource_data:nested_element.element AS numeric_element
+      FROM test
+        """
+    ).generate()
+    test_parser = parsers.ProtoParser(spec)
+    test_row = FakeProtoMessage(
+      resource_id=1,
+      resource_data=NestedResource(nested_element=[ArrayElement(element=100)]),
+    )
+
+    parsed_row = test_parser.parse_row(test_row)
+    expected_row = [1, [100]]
+
+    assert parsed_row == expected_row
