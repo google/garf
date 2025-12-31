@@ -150,6 +150,14 @@ class BaseParser(abc.ABC):
 
   def _process_nested_field(self, row, customizer, field):
     nested_field = self.get_row_element(row, field)
+    values_ = str(customizer.value).split('.')
+    if len(values_) > 1:
+      new_customizer = query_parser.Customizer(
+        type='nested_field', value='.'.join(values_[1:])
+      )
+      return self._process_nested_field(
+        row=nested_field, customizer=new_customizer, field=values_[0]
+      )
     if isinstance(nested_field, MutableSequence):
       return list(
         {
@@ -198,9 +206,10 @@ class BaseParser(abc.ABC):
         result = self.process_virtual_column(row, virtual_column)
       elif customizer := self.query_spec.customizers.get(column):
         result = self.process_customizer(row, customizer, fields[index])
+        index += 1
       else:
         result = self.parse_row_element(row, fields[index])
-        index = index + 1
+        index += 1
       results.append(result)
     return results
 
