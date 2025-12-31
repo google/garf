@@ -268,7 +268,7 @@ class TestProtoParser:
       ]
     )
     with pytest.raises(
-      query_parser.GarfFieldError,
-      match='field missing_element is missing in row resource_data',
+      query_parser.GarfCustomizerError,
+      match='nested field missing_element is missing in row',
     ):
       test_parser.parse_response(test_response)
