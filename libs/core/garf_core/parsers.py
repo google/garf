@@ -158,8 +158,8 @@ class BaseParser(abc.ABC):
         }
       )
     try:
-      return self.parse_row_element(field, customizer.value)
-    except AttributeError as e:
+      return self.parse_row_element(nested_field, customizer.value)
+    except (query_parser.GarfFieldError, AttributeError) as e:
       raise query_parser.GarfCustomizerError(
         f'nested field {customizer.value} is missing in row {row}'
       ) from e
