@@ -1,4 +1,6 @@
 fake:
   writer: console
+  writer_parameters:
+    format: json
   fetcher_parameters:
-    data_location: ./test.json
+    data_location: test.json

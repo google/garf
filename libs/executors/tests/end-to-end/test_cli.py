@@ -18,6 +18,8 @@ import json
 import pathlib
 import subprocess
 
+import yaml
+
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
 
@@ -77,6 +79,38 @@ class TestApiQueryExecutor:
       f'garf {str(query_path)} --source fake '
       f'--source.data_location={fake_data} '
       '--output console --console.format=json '
+      '--loglevel ERROR'
+    )
+    result = subprocess.run(
+      command,
+      shell=True,
+      check=False,
+      capture_output=True,
+      text=True,
+    )
+
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == self.expected_output
+
+  def test_fake_source_from_config(self, tmp_path):
+    query_path = tmp_path / 'query.sql'
+    with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
+      f.write(self.query)
+    test_config = _SCRIPT_PATH / 'test_config.yaml'
+    with open(test_config, 'r', encoding='utf-8') as f:
+      config_data = yaml.safe_load(f)
+      original_data_location = config_data['fake']['fetcher_parameters'][
+        'data_location'
+      ]
+      config_data['fake']['fetcher_parameters']['data_location'] = str(
+        _SCRIPT_PATH / original_data_location
+      )
+    tmp_config = tmp_path / 'config.yaml'
+    with open(tmp_config, 'w', encoding='utf-8') as f:
+      yaml.dump(config_data, f, encoding='utf-8')
+    command = (
+      f'garf {str(query_path)} --source fake '
+      f'-c {str(tmp_config)} '
       '--loglevel ERROR'
     )
     result = subprocess.run(
