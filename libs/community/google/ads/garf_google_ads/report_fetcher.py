@@ -82,7 +82,10 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
         'Provide an account to get data from.'
       )
     if isinstance(account, str):
+      account = account.replace('-', '')
       account = account.split(',')
+    else:
+      account = [a.replace('-', '') for a in account]
     if not args:
       args = {}
     if expand_mcc or customer_ids_query:
