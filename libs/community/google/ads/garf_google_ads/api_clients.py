@@ -81,7 +81,9 @@ class GoogleAdsApiClient(api_clients.BaseClient):
          When GoogleAdsClient cannot be instantiated due to missing
          credentials.
     """
-    self.api_version = version
+    self.api_version = (
+      str(version) if str(version).startswith('v') else f'v{version}'
+    )
     self.client = ads_client or self._init_client(
       path=path_to_config, config_dict=config_dict, yaml_str=yaml_str
     )
