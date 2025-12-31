@@ -88,14 +88,6 @@ def main():
       raise exceptions.GarfExecutorError(
         f'No execution context found for source {args.source} in {config_file}'
       )
-    query_executor = garf_executors.setup_executor(
-      source=args.source,
-      fetcher_parameters=context.fetcher_parameters,
-      enable_cache=args.enable_cache,
-      cache_ttl_seconds=args.cache_ttl_seconds,
-    )
-    batch = {query: reader_client.read(query) for query in args.query}
-    query_executor.execute_batch(batch, context, args.parallel_threshold)
   else:
     param_types = ['source', 'macro', 'template']
     outputs = args.output.split(',')
@@ -116,23 +108,24 @@ def main():
       writer_parameters=writer_parameters,
       fetcher_parameters=source_parameters,
     )
-    query_executor = garf_executors.setup_executor(
-      source=args.source,
-      fetcher_parameters=context.fetcher_parameters,
-      enable_cache=args.enable_cache,
-      cache_ttl_seconds=args.cache_ttl_seconds,
-    )
-    if args.parallel_queries and len(args.query) > 1:
-      logger.info('Running queries in parallel')
-      batch = {query: reader_client.read(query) for query in args.query}
-      query_executor.execute_batch(batch, context, args.parallel_threshold)
-    else:
-      if len(args.query) > 1:
-        logger.info('Running queries sequentially')
-      for query in args.query:
-        query_executor.execute(
-          query=reader_client.read(query), title=query, context=context
-        )
+  query_executor = garf_executors.setup_executor(
+    source=args.source,
+    fetcher_parameters=context.fetcher_parameters,
+    enable_cache=args.enable_cache,
+    cache_ttl_seconds=args.cache_ttl_seconds,
+  )
+  batch = {query: reader_client.read(query) for query in args.query}
+  if args.parallel_queries and len(args.query) > 1:
+    logger.info('Running queries in parallel')
+    batch = {query: reader_client.read(query) for query in args.query}
+    query_executor.execute_batch(batch, context, args.parallel_threshold)
+  else:
+    if len(args.query) > 1:
+      logger.info('Running queries sequentially')
+    for query in args.query:
+      query_executor.execute(
+        query=reader_client.read(query), title=query, context=context
+      )
   logging.shutdown()
 
 
