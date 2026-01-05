@@ -29,6 +29,9 @@ jobs:
           uv pip install pytest python-dotenv
       - name: Test ${{ matrix.library }}
         run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[test,all]
+          uv pip install -e libs/executors/.[all]
           cd libs/community/google/youtube/youtube-data-api/
           uv pip install -e .
           pytest tests/e2e

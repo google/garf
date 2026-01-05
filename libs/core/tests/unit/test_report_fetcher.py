@@ -159,3 +159,46 @@ class TestApiReportFetcher:
     )
 
     assert test_report == expected_report
+
+  def test_fetch_returns_results_placeholder_when_missing_results(self):
+    test_api_client = api_clients.FakeApiClient(
+      results=[],
+      results_placeholder=[
+        {'column': {'name': 1}, 'other_column': 2},
+      ],
+    )
+    test_fetcher = report_fetcher.ApiReportFetcher(
+      api_client=test_api_client, parser=parsers.DictParser
+    )
+
+    query = """
+      SELECT
+        column.name,
+        other_column,
+        0 AS constant_column,
+        column.name + other_column AS calculated_column,
+        'http://example.com/' + column.name AS concat_column,
+        '{current_date}' AS magic_column
+      FROM test
+    """
+    test_report = test_fetcher.fetch(query)
+
+    current_date = datetime.date.today().strftime('%Y-%m-%d')
+    expected_report = report.GarfReport(
+      results_placeholder=[
+        [1, 2, 0, 1 + 2, 'http://example.com/1', current_date],
+      ],
+      column_names=[
+        'column_name',
+        'other_column',
+        'constant_column',
+        'calculated_column',
+        'concat_column',
+        'magic_column',
+      ],
+    )
+
+    assert (test_report.results_placeholder, test_report.column_names) == (
+      expected_report.results_placeholder,
+      expected_report.column_names,
+    )

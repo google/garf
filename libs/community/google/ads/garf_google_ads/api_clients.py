@@ -18,14 +18,19 @@ from __future__ import annotations
 import importlib
 import logging
 import os
+import re
 from pathlib import Path
-from typing import Final
+from types import ModuleType
+from typing import Any, Final
 
 import google.auth
+import proto
+import pydantic
 import smart_open
 import tenacity
 import yaml
 from garf_core import api_clients
+from google import protobuf
 from google.ads.googleads import client as googleads_client
 from google.api_core import exceptions as google_exceptions
 from typing_extensions import override
@@ -37,6 +42,11 @@ google_ads_service = importlib.import_module(
   f'google.ads.googleads.{GOOGLE_ADS_API_VERSION}.'
   'services.types.google_ads_service'
 )
+
+
+class FieldPossibleValues(pydantic.BaseModel):
+  name: str
+  values: set[Any]
 
 
 class GoogleAdsApiClientError(exceptions.GoogleAdsApiError):
@@ -91,6 +101,171 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     self.ads_service = self.client.get_service('GoogleAdsService')
     self.kwargs = kwargs
 
+  @property
+  def _base_module(self) -> str:
+    """Name of Google Ads module for a given API version."""
+    return f'google.ads.googleads.{self.api_version}'
+
+  @property
+  def _common_types_module(self) -> str:
+    """Name of module containing common data types."""
+    return f'{self._base_module}.common.types'
+
+  @property
+  def _metrics(self) -> ModuleType:
+    """Module containing metrics."""
+    return importlib.import_module(f'{self._common_types_module}.metrics')
+
+  @property
+  def _segments(self) -> ModuleType:
+    """Module containing segments."""
+    return importlib.import_module(f'{self._common_types_module}.segments')
+
+  def _get_google_ads_row(self) -> google_ads_service.GoogleAdsRow:
+    """Gets GoogleAdsRow proto message for a given API version."""
+    google_ads_service = importlib.import_module(
+      f'google.ads.googleads.{self.api_version}.'
+      f'services.types.google_ads_service'
+    )
+    return google_ads_service.GoogleAdsRow()
+
+  def get_types(self, request):
+    return []
+
+  def _get_types(self, request):
+    output = []
+    for field_name in request.fields:
+      try:
+        descriptor = self._get_descriptor(field_name)
+        values = self._get_possible_values_for_resource(descriptor)
+        field = FieldPossibleValues(name=field_name, values=values)
+      except (AttributeError, ModuleNotFoundError):
+        field = FieldPossibleValues(
+          name=field_name,
+          values={
+            '',
+          },
+        )
+      output.append(field)
+    return output
+
+  def _get_descriptor(
+    self, field: str
+  ) -> protobuf.descriptor_pb2.FieldDescriptorProto:
+    """Gets descriptor for specified field.
+
+    Args:
+        field: Valid field name to be sent to Ads API.
+
+    Returns:
+        FieldDescriptorProto for specified field.
+    """
+    resource, *sub_resource, base_field = field.split('.')
+    base_field = 'type_' if base_field == 'type' else base_field
+    target_resource = self._get_target_resource(resource, sub_resource)
+    return target_resource.meta.fields.get(base_field).descriptor
+
+  def _get_target_resource(
+    self, resource: str, sub_resource: list[str] | None = None
+  ) -> proto.message.Message:
+    """Gets Proto message for specified resource and its sub-resources.
+
+    Args:
+        resource:
+            Google Ads resource (campaign, ad_group, segments, etc.).
+        sub_resource:
+            Possible sub-resources (date for segments resource).
+
+    Returns:
+        Proto describing combination of resource and sub-resource.
+    """
+    if resource == 'metrics':
+      target_resource = self._metrics.Metrics
+    elif resource == 'segments':
+      # If segment has name segments.something.something
+      if sub_resource:
+        target_resource = getattr(
+          self._segments, f'{clean_resource(sub_resource[-1])}'
+        )
+      else:
+        target_resource = getattr(self._segments, f'{clean_resource(resource)}')
+    else:
+      resource_module = importlib.import_module(
+        f'{self._base_module}.resources.types.{resource}'
+      )
+
+      target_resource = getattr(resource_module, f'{clean_resource(resource)}')
+      try:
+        # If resource has name resource.something.something
+        if sub_resource:
+          target_resource = getattr(
+            target_resource, f'{clean_resource(sub_resource[-1])}'
+          )
+      except AttributeError:
+        try:
+          resource_module = importlib.import_module(
+            f'{self._base_module}.resources.types.{sub_resource[0]}'
+          )
+        except ModuleNotFoundError:
+          resource_module = importlib.import_module(
+            f'{self._common_types_module}.{sub_resource[0]}'
+          )
+        if len(sub_resource) > 1:
+          if hasattr(resource_module, f'{clean_resource(sub_resource[1])}'):
+            target_resource = getattr(
+              resource_module, f'{clean_resource(sub_resource[-1])}'
+            )
+          else:
+            resource_module = importlib.import_module(
+              f'{self._common_types_module}.ad_type_infos'
+            )
+
+            target_resource = getattr(
+              resource_module, f'{clean_resource(sub_resource[1])}Info'
+            )
+        else:
+          target_resource = getattr(
+            resource_module, f'{clean_resource(sub_resource[-1])}'
+          )
+    return target_resource
+
+  def _get_possible_values_for_resource(
+    self, descriptor: protobuf.descriptor_pb2.FieldDescriptorProto
+  ) -> set:
+    """Identifies possible values for a given descriptor or field_type.
+
+    If descriptor's type is ENUM function gets all possible values for
+    this Enum, otherwise the default value for descriptor type is taken
+    (0 for int, '' for str, False for bool).
+
+    Args:
+        descriptor: FieldDescriptorProto for specified field.
+
+    Returns:
+        Possible values for a given descriptor.
+    """
+    mapping = {
+      'INT64': int,
+      'FLOAT': float,
+      'DOUBLE': float,
+      'BOOL': bool,
+    }
+    if descriptor.type == 14:  # 14 stands for ENUM
+      enum_class, enum = descriptor.type_name.split('.')[-2:]
+      file_name = re.sub(r'(?<!^)(?=[A-Z])', '_', enum).lower()
+      enum_resource = importlib.import_module(
+        f'{self._base_module}.enums.types.{file_name}'
+      )
+      return {p.name for p in getattr(getattr(enum_resource, enum_class), enum)}
+
+    field_type = mapping.get(
+      proto.primitives.ProtoType(descriptor.type).name, str
+    )
+    default_value = field_type()
+    return {
+      default_value,
+    }
+
   @override
   @tenacity.retry(
     stop=tenacity.stop_after_attempt(3),
@@ -103,24 +278,14 @@ class GoogleAdsApiClient(api_clients.BaseClient):
   def get_response(
     self, request: query_editor.GoogleAdsApiQuery, account: int, **kwargs: str
   ) -> api_clients.GarfApiResponse:
-    """Executes query for a given entity_id (customer_id).
-
-    Args:
-        account: Google Ads customer_id.
-        query_text: GAQL query text.
-
-    Returns:
-        SearchGoogleAdsStreamResponse for a given API version.
-
-    Raises:
-        google_exceptions.InternalServerError:
-            When data cannot be fetched from Ads API.
-    """
+    """Executes a single API request for a given customer_id and GAQL query."""
     response = self.ads_service.search_stream(
       customer_id=account, query=request.text
     )
     results = [result for batch in response for result in batch.results]
-    return api_clients.GarfApiResponse(results=results)
+    return api_clients.GarfApiResponse(
+      results=results, results_placeholder=[self._get_google_ads_row()]
+    )
 
   def _init_client(
     self,
@@ -204,3 +369,8 @@ class GoogleAdsApiClient(api_clients.BaseClient):
       version=ads_client.version,
       use_proto_plus=use_proto_plus,
     )
+
+
+def clean_resource(resource: str) -> str:
+  """Converts nested resource to a TitleCase format."""
+  return resource.title().replace('_', '')

@@ -190,7 +190,14 @@ class ApiReportFetcher:
         logger.info('Cached version not found, generating')
     response = self.api_client.call_api(query, **kwargs)
     if not response:
-      return report.GarfReport(query_specification=query)
+      placeholder_parsed_response = self.parser(query).parse_response(
+        api_clients.GarfApiResponse(results=response.results_placeholder)
+      )
+      return report.GarfReport(
+        query_specification=query,
+        results_placeholder=placeholder_parsed_response,
+        column_names=[c for c in query.column_names if c != '_'],
+      )
 
     parsed_response = self.parser(query).parse_response(response)
     fetched_report = report.GarfReport(

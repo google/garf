@@ -101,3 +101,32 @@ class TestYouTubeDataApiReportFetcher:
     )
 
     assert result == expected_report
+
+  def test_fetch_returns_placeholder_data(self, mocker, fetcher):
+    query = """
+      SELECT
+        id,
+        statistics.viewCount AS views,
+        statistics.likeCount AS likes,
+        snippet.publishedAt AS published_at,
+      FROM videos
+      ORDER BY likes DESC
+    """
+
+    mocker.patch(
+      'garf_youtube_data_api.api_clients.YouTubeDataApiClient._list',
+      return_value={'items': []},
+    )
+
+    result = fetcher.fetch(query, id=['1'])
+    expected_report = garf_core.GarfReport(
+      results_placeholder=[
+        ['', 1, 1, '1970-01-01'],
+      ],
+      column_names=['id', 'views', 'likes', 'published_at'],
+    )
+
+    assert (result.results_placeholder, result.column_names) == (
+      expected_report.results_placeholder,
+      expected_report.column_names,
+    )

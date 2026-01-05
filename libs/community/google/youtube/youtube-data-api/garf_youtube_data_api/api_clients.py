@@ -19,6 +19,7 @@ import logging
 import operator
 import os
 import warnings
+from typing import Any
 
 import dateutil
 import pydantic
@@ -72,6 +73,50 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       return self._service
     return build('youtube', self.api_version, developerKey=self.api_key)
 
+  def get_types(self, request):
+    fields = {field.split('.')[0] for field in request.fields}
+    return self.infer_types('Video', fields)
+
+  def infer_types(self, name, fields):
+    results = {}
+    ress = self.service._schema.schemas.get(name)
+    props = ress.get('properties')
+    for field in fields:
+      if prop := props.get(field):
+        if ref := prop.get('$ref'):
+          results[field] = self.infer_types(ref, [field])
+        else:
+          results[field] = prop.get('type') or prop.get('type')
+      else:
+        results.update(
+          {k: v.get('format') or v.get('type') for k, v in props.items()}
+        )
+    return results
+
+  def _generate_random_values(
+    self,
+    response_types: dict[str, Any],
+  ) -> dict[str, Any]:
+    results = {}
+    type_mapping = {
+      'string': '',
+      'int64': 1,
+      'int32': 1,
+      'uint64': 1,
+      'uint32': 1,
+      'double': 1.0,
+      'boolean': True,
+      'date-time': '1970-01-01',
+      'google-datetime': '1970-01-01T00:00:00Z',
+      'google-duration': '2H',
+    }
+    for key, value in response_types.items():
+      if isinstance(value, dict):
+        results[key] = self._generate_random_values(value)
+      else:
+        results[key] = type_mapping.get(value)
+    return results
+
   @override
   @telemetry.tracer.start_as_current_span('youtube_data_api.get_response')
   def get_response(
@@ -80,9 +125,10 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     span = trace.get_current_span()
     for k, v in kwargs.items():
       span.set_attribute(f'youtube_data_api.kwargs.{k}', v)
-    fields = [field.split('.')[0] for field in request.fields]
+    fields = {field.split('.')[0] for field in request.fields}
     sub_service = getattr(self.service, request.resource_name)()
     part_str = ','.join(fields)
+
     result = self._list(sub_service, part=part_str, **kwargs)
     results = []
     if data := result.get('items'):
@@ -97,6 +143,11 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       if data := result.get('items'):
         results.extend(data)
 
+    if not results:
+      types = self.get_types(request)
+      results_placeholder = [self._generate_random_values(types)]
+    else:
+      results_placeholder = None
     if filters := request.filters:
       span.set_attribute('youtube_data_api.filters', filters)
       filtered_results = []
@@ -129,8 +180,12 @@ class YouTubeDataApiClient(api_clients.BaseClient):
               break
           if include_row:
             filtered_results.append(row)
-      return api_clients.GarfApiResponse(results=filtered_results)
-    return api_clients.GarfApiResponse(results=results)
+      return api_clients.GarfApiResponse(
+        results=filtered_results, results_placeholder=results_placeholder
+      )
+    return api_clients.GarfApiResponse(
+      results=results, results_placeholder=results_placeholder
+    )
 
   def _list(
     self, service, part: str, next_page_token: str | None = None, **kwargs
