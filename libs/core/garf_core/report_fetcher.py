@@ -24,9 +24,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import pathlib
-from typing import Callable
+from typing import Any, Callable
 
 from opentelemetry import trace
+from typing_extensions import TypeAlias
 
 from garf_core import (
   api_clients,
@@ -39,6 +40,8 @@ from garf_core import (
 from garf_core.telemetry import tracer
 
 logger = logging.getLogger(__name__)
+
+Processor: TypeAlias = Callable[..., Any]
 
 
 class ApiReportFetcherError(exceptions.GarfError):
@@ -81,6 +84,8 @@ class ApiReportFetcher:
     enable_cache: bool = False,
     cache_path: str | pathlib.Path | None = None,
     cache_ttl_seconds: int = 3600,
+    preprocessors: dict[str, Processor] | None = None,
+    postprocessors: dict[str, Processor] | None = None,
     **kwargs: str,
   ) -> None:
     """Instantiates ApiReportFetcher based on provided api client.
@@ -94,6 +99,8 @@ class ApiReportFetcher:
       enable_cache: Whether to load / save report from / to cache.
       cache_path: Optional path to cache folder.
       cache_ttl_seconds: Maximum lifespan of cached reports.
+      preprocessors: Functions to execute before fetching the query.
+      postprocessors: Functions to execute after fetching the query.
     """
     self.api_client = api_client
     self.parser = parser
@@ -102,6 +109,8 @@ class ApiReportFetcher:
     self.enable_cache = enable_cache
     self.cache = cache.GarfCache(cache_path, cache_ttl_seconds)
     self.builtin_queries = builtin_queries or {}
+    self.preprocessors = preprocessors or {}
+    self.postprocessors = postprocessors or {}
 
   def add_builtin_queries(
     self,

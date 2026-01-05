@@ -17,6 +17,7 @@
 import asyncio
 import functools
 import operator
+import warnings
 
 import garf_core
 
@@ -51,7 +52,14 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
     if not api_client:
       api_client = GoogleAdsApiClient(**kwargs)
     self.parallel_threshold = parallel_threshold
-    super().__init__(api_client, parser, query_spec, builtin_queries, **kwargs)
+    super().__init__(
+      api_client=api_client,
+      parser=parser,
+      query_specification_builder=query_spec,
+      builtin_queries=builtin_queries,
+      preprocessors={'account': self.expand_mcc},
+      **kwargs,
+    )
 
   def fetch(
     self,
@@ -90,7 +98,7 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
       args = {}
     if expand_mcc or customer_ids_query:
       account = self.expand_mcc(
-        customer_ids=account, customer_ids_query=customer_ids_query
+        account=account, customer_ids_query=customer_ids_query
       )
       if not account:
         raise GoogleAdsApiReportFetcherError(
@@ -132,20 +140,29 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
 
   def expand_mcc(
     self,
-    customer_ids: str | list[str],
+    account: str | list[str],
     customer_ids_query: str | None = None,
+    customer_ids: str | list | None = None,
   ) -> list[str]:
     """Performs Manager account(s) expansion to child accounts.
 
     Args:
-      customer_ids: Manager account(s) to be expanded.
+      account: Manager account(s) to be expanded.
       customer_ids_query: GAQL query used to reduce the number of customer_ids.
+      customer_ids: Manager account(s) to be expanded.
 
     Returns:
       All child accounts under provided customer_ids.
     """
+    if customer_ids and not account:
+      warnings.warn(
+        '`customer_ids` is deprecated, used `account` instead',
+        category=DeprecationWarning,
+        stacklevel=2,
+      )
+      account = customer_ids
     return self._get_customer_ids(
-      seed_customer_ids=customer_ids, customer_ids_query=customer_ids_query
+      seed_customer_ids=account, customer_ids_query=customer_ids_query
     )
 
   def _get_customer_ids(

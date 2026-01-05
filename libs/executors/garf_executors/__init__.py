@@ -43,7 +43,7 @@ def setup_executor(
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     query_executor = ApiQueryExecutor(
-      concrete_api_fetcher(
+      fetcher=concrete_api_fetcher(
         **fetcher_parameters,
         enable_cache=enable_cache,
         cache_ttl_seconds=cache_ttl_seconds,
@@ -57,4 +57,4 @@ __all__ = [
   'ApiExecutionContext',
 ]
 
-__version__ = '0.1.7'
+__version__ = '0.2.0'

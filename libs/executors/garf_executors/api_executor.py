@@ -51,6 +51,10 @@ class ApiQueryExecutor(executor.Executor):
         fetcher: Instantiated report fetcher.
     """
     self.fetcher = fetcher
+    super().__init__(
+      preprocessors=self.fetcher.preprocessors,
+      postprocessors=self.fetcher.postprocessors,
+    )
 
   @classmethod
   def from_fetcher_alias(
@@ -59,7 +63,7 @@ class ApiQueryExecutor(executor.Executor):
     if not fetcher_parameters:
       fetcher_parameters = {}
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
-    return ApiQueryExecutor(concrete_api_fetcher(**fetcher_parameters))
+    return ApiQueryExecutor(fetcher=concrete_api_fetcher(**fetcher_parameters))
 
   @tracer.start_as_current_span('api.execute')
   def execute(

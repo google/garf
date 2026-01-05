@@ -15,7 +15,10 @@
 """Defines common functionality between executors."""
 
 import asyncio
+import inspect
+from typing import Optional
 
+from garf_core import report_fetcher
 from opentelemetry import trace
 
 from garf_executors import execution_context
@@ -25,6 +28,14 @@ from garf_executors.telemetry import tracer
 class Executor:
   """Defines common functionality between executors."""
 
+  def __init__(
+    self,
+    preprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
+    postprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
+  ) -> None:
+    self.preprocessors = preprocessors or {}
+    self.postprocessors = postprocessors or {}
+
   @tracer.start_as_current_span('api.execute_batch')
   def execute_batch(
     self,
@@ -33,6 +44,9 @@ class Executor:
     parallel_threshold: int = 10,
   ) -> list[str]:
     """Executes batch of queries for a common context.
+
+    If an executor has any pre/post processors, executes them first while
+    modifying the context.
 
     Args:
       batch: Mapping between query_title and its text.
@@ -44,11 +58,19 @@ class Executor:
     """
     span = trace.get_current_span()
     span.set_attribute('api.parallel_threshold', parallel_threshold)
-    return asyncio.run(
+    _handle_processors(processors=self.preprocessors, context=context)
+    results = asyncio.run(
       self._run(
         batch=batch, context=context, parallel_threshold=parallel_threshold
       )
     )
+    _handle_processors(processors=self.postprocessors, context=context)
+    return results
+
+  def add_preprocessor(
+    self, preprocessors: dict[str, report_fetcher.Processor]
+  ) -> None:
+    self.preprocessors.update(preprocessors)
 
   async def aexecute(
     self,
@@ -85,3 +107,18 @@ class Executor:
       for title, query in batch.items()
     ]
     return await asyncio.gather(*(run_with_semaphore(task) for task in tasks))
+
+
+def _handle_processors(
+  processors: dict[str, report_fetcher.Processor],
+  context: execution_context.ExecutionContext,
+) -> None:
+  for k, processor in processors.items():
+    processor_signature = list(inspect.signature(processor).parameters.keys())
+    if k in context.fetcher_parameters:
+      processor_parameters = {
+        k: v
+        for k, v in context.fetcher_parameters.items()
+        if k in processor_signature
+      }
+      context.fetcher_parameters[k] = processor(**processor_parameters)
