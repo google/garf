@@ -106,7 +106,9 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
       sorts = sorts[0]
       key, *desc = sorts.split(' ')
       asc_order = not desc or 'ASC' in desc[0]
-      return report.GarfReport.from_pandas(
+      sorted_report = report.GarfReport.from_pandas(
         res.to_pandas().sort_values(by=key, ascending=asc_order)
       )
+      sorted_report.results_placeholder = res.results_placeholder
+      return sorted_report
     return res

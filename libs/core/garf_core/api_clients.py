@@ -40,6 +40,13 @@ class GarfApiResponse(pydantic.BaseModel):
   """Base class for specifying response."""
 
   results: list[ApiResponseRow | Any]
+  results_placeholder: list[ApiResponseRow | Any] | None = pydantic.Field(
+    default_factory=list
+  )
+
+  def model_post_init(self, __context__) -> None:
+    if self.results_placeholder is None:
+      self.results_placeholder = []
 
   def __bool__(self) -> bool:
     return bool(self.results)
@@ -67,6 +74,12 @@ class BaseClient(abc.ABC):
     self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> GarfApiResponse:
     """Method for getting response."""
+
+  def get_types(
+    self, request: query_editor.BaseQueryElements | None = None, **kwargs: str
+  ) -> dict[str, Any]:
+    """Method for getting response."""
+    raise NotImplementedError
 
 
 class RestApiClient(BaseClient):
@@ -100,9 +113,17 @@ class RestApiClient(BaseClient):
 class FakeApiClient(BaseClient):
   """Fake class for specifying API client."""
 
-  def __init__(self, results: Sequence[dict[str, Any]], **kwargs: str) -> None:
+  def __init__(
+    self,
+    results: Sequence[dict[str, Any]],
+    results_placeholder: Sequence[dict[str, Any]] | None = None,
+    **kwargs: str,
+  ) -> None:
     """Initializes FakeApiClient."""
     self.results = list(results)
+    self.results_placeholder = (
+      self.results if not results_placeholder else list(results_placeholder)
+    )
     self.kwargs = kwargs
 
   @override
@@ -110,7 +131,19 @@ class FakeApiClient(BaseClient):
     self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> GarfApiResponse:
     del request
-    return GarfApiResponse(results=self.results)
+    return GarfApiResponse(
+      results=self.results, results_placeholder=self.results_placeholder
+    )
+
+  @override
+  def get_types(self, request=None, nested=None):
+    results = {}
+    for key, value in (nested or self.results[0]).items():
+      if isinstance(value, dict):
+        results[key] = self.get_types(nested=value)
+      else:
+        results[key] = type(value)
+    return results
 
   @classmethod
   def from_file(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
