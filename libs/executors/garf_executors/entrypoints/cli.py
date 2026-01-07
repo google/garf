@@ -24,9 +24,10 @@ import logging
 import sys
 
 from garf_io import reader
+from opentelemetry import trace
 
 import garf_executors
-from garf_executors import config, exceptions
+from garf_executors import config, exceptions, workflow
 from garf_executors.entrypoints import utils
 from garf_executors.entrypoints.tracer import initialize_tracer
 from garf_executors.telemetry import tracer
@@ -39,6 +40,7 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('query', nargs='*')
   parser.add_argument('-c', '--config', dest='config', default=None)
+  parser.add_argument('-w', '--workflow', dest='workflow', default=None)
   parser.add_argument('--source', dest='source', default=None)
   parser.add_argument('--output', dest='output', default='console')
   parser.add_argument('--input', dest='input', default='file')
@@ -70,18 +72,47 @@ def main():
   parser.set_defaults(dry_run=False)
   args, kwargs = parser.parse_known_args()
 
+  span = trace.get_current_span()
+  command_args = ' '.join(sys.argv[1:])
+  span.set_attribute('cli.command', f'garf {command_args}')
   if args.version:
     print(garf_executors.__version__)
     sys.exit()
   logger = utils.init_logging(
     loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
   )
+  reader_client = reader.create_reader(args.input)
+  if workflow_file := args.workflow:
+    execution_workflow = workflow.Workflow.from_file(workflow_file)
+    for i, step in enumerate(execution_workflow.steps, 1):
+      with tracer.start_as_current_span(f'{i}-{step.fetcher}'):
+        query_executor = garf_executors.setup_executor(
+          source=step.fetcher,
+          fetcher_parameters=step.fetcher_parameters,
+          enable_cache=args.enable_cache,
+          cache_ttl_seconds=args.cache_ttl_seconds,
+        )
+        batch = {}
+        if not (queries := step.queries):
+          logger.error('Please provide one or more queries to run')
+          raise exceptions.GarfExecutorError(
+            'Please provide one or more queries to run'
+          )
+        for query in queries:
+          if isinstance(query, garf_executors.workflow.QueryPath):
+            batch[query.path] = reader_client.read(query.path)
+          else:
+            batch[query.query.title] = query.query.text
+        query_executor.execute_batch(
+          batch, step.context, args.parallel_threshold
+        )
+    sys.exit()
+
   if not args.query:
     logger.error('Please provide one or more queries to run')
     raise exceptions.GarfExecutorError(
       'Please provide one or more queries to run'
     )
-  reader_client = reader.create_reader(args.input)
   if config_file := args.config:
     execution_config = config.Config.from_file(config_file)
     if not (context := execution_config.sources.get(args.source)):

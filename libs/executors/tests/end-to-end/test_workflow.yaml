@@ -1,0 +1,17 @@
+steps:
+  - alias: test
+    fetcher: fake
+    queries:
+      - query:
+          title: test_query
+          text:  |
+            SELECT
+              resource,
+              dimensions.name AS name,
+              metrics.clicks AS clicks
+            FROM resource
+    writer: console
+    writer_parameters:
+      format: json
+    fetcher_parameters:
+      data_location: test.json

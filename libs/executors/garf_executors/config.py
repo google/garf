@@ -47,5 +47,7 @@ class Config(pydantic.BaseModel):
   def save(self, path: str | pathlib.Path | os.PathLike[str]) -> str:
     """Saves config to local or remote yaml file."""
     with smart_open.open(path, 'w', encoding='utf-8') as f:
-      yaml.dump(self.model_dump().get('sources'), f, encoding='utf-8')
+      yaml.dump(
+        self.model_dump(exclude_none=True).get('sources'), f, encoding='utf-8'
+      )
     return f'Config is saved to {str(path)}'
