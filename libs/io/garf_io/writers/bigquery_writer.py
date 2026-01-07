@@ -27,6 +27,7 @@ except ImportError as e:
     'Please install garf-io with BigQuery support - `pip install garf-io[bq]`'
   ) from e
 
+import contextlib
 import logging
 
 import numpy as np
@@ -117,9 +118,12 @@ class BigQueryWriter(abs_writer.AbsWriter):
     try:
       bq_dataset = self.client.get_dataset(self.dataset_id)
     except google_cloud_exceptions.NotFound:
-      bq_dataset = bigquery.Dataset(self.dataset_id)
+      dataset_id = f'{self.project}.{self.dataset_id}'
+      bq_dataset = bigquery.Dataset(dataset_id)
       bq_dataset.location = self.location
-      bq_dataset = self.client.create_dataset(bq_dataset, timeout=30)
+      with contextlib.suppress(google_cloud_exceptions.Conflict):
+        bq_dataset = self.client.create_dataset(bq_dataset, timeout=30)
+        logger.info('Created new dataset %s', dataset_id)
     return bq_dataset
 
   @tracer.start_as_current_span('bq.write')
