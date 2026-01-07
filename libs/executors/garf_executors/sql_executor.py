@@ -57,6 +57,7 @@ class SqlAlchemyQueryExecutor(
         engine: Initialized Engine object to operated on a given database.
     """
     self.engine = engine
+    super().__init__()
 
   @classmethod
   def from_connection_string(
@@ -89,12 +90,17 @@ class SqlAlchemyQueryExecutor(
       Report with data if query returns some data otherwise empty Report.
     """
     span = trace.get_current_span()
-    logging.info('Executing script: %s', title)
+    logger.info('Executing script: %s', title)
     query_text = self.replace_params_template(query, context.query_parameters)
     with self.engine.begin() as conn:
       if re.findall(r'(create|update) ', query_text.lower()):
-        conn.connection.executescript(query_text)
-        results = report.GarfReport()
+        try:
+          conn.connection.executescript(query_text)
+          results = report.GarfReport()
+        except Exception as e:
+          raise SqlAlchemyQueryExecutorError(
+            f'Failed to execute query {title}: Reason: {e}'
+          ) from e
       else:
         temp_table_name = f'temp_{uuid.uuid4().hex}'
         query_text = f'CREATE TABLE {temp_table_name} AS {query_text}'
@@ -103,6 +109,10 @@ class SqlAlchemyQueryExecutor(
           results = report.GarfReport.from_pandas(
             pd.read_sql(f'SELECT * FROM {temp_table_name}', conn)
           )
+        except Exception as e:
+          raise SqlAlchemyQueryExecutorError(
+            f'Failed to execute query {title}: Reason: {e}'
+          ) from e
         finally:
           conn.connection.execute(f'DROP TABLE {temp_table_name}')
       if context.writer and results:

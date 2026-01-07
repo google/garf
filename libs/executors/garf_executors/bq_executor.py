@@ -30,6 +30,7 @@ import logging
 
 from garf_core import query_editor, report
 from google.cloud import exceptions as google_cloud_exceptions
+from opentelemetry import trace
 
 from garf_executors import exceptions, execution_context, executor
 from garf_executors.telemetry import tracer
@@ -68,6 +69,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
       )
     self.project_id = project_id
     self.location = location
+    super().__init__()
 
   @property
   def client(self) -> bigquery.Client:
@@ -93,41 +95,47 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
+    span = trace.get_current_span()
+    logger.info('Executing script: %s', title)
     query_text = self.replace_params_template(query, context.query_parameters)
     self.create_datasets(context.query_parameters.macro)
     job = self.client.query(query_text)
     try:
       result = job.result()
-      logger.debug('%s launched successfully', title)
-      if result.total_rows:
-        results = report.GarfReport.from_pandas(result.to_dataframe())
-      else:
-        results = report.GarfReport()
-      if context.writer and results:
-        writer_clients = context.writer_clients
-        if not writer_clients:
-          logger.warning('No writers configured, skipping write operation')
-        else:
-          writing_results = []
-          for writer_client in writer_clients:
-            logger.debug(
-              'Start writing data for query %s via %s writer',
-              title,
-              type(writer_client),
-            )
-            writing_result = writer_client.write(results, title)
-            logger.debug(
-              'Finish writing data for query %s via %s writer',
-              title,
-              type(writer_client),
-            )
-            writing_results.append(writing_result)
-          logger.info('%s executed successfully', title)
-          # Return the last writer's result for backward compatibility
-          return writing_results[-1] if writing_results else None
-      return results
     except google_cloud_exceptions.GoogleCloudError as e:
-      raise BigQueryExecutorError(e) from e
+      raise BigQueryExecutorError(
+        f'Failed to execute query {title}: Reason: {e}'
+      ) from e
+      logger.debug('%s launched successfully', title)
+    if result.total_rows:
+      results = report.GarfReport.from_pandas(result.to_dataframe())
+    else:
+      results = report.GarfReport()
+    if context.writer and results:
+      writer_clients = context.writer_clients
+      if not writer_clients:
+        logger.warning('No writers configured, skipping write operation')
+      else:
+        writing_results = []
+        for writer_client in writer_clients:
+          logger.debug(
+            'Start writing data for query %s via %s writer',
+            title,
+            type(writer_client),
+          )
+          writing_result = writer_client.write(results, title)
+          logger.debug(
+            'Finish writing data for query %s via %s writer',
+            title,
+            type(writer_client),
+          )
+          writing_results.append(writing_result)
+        # Return the last writer's result for backward compatibility
+        logger.info('%s executed successfully', title)
+        return writing_results[-1] if writing_results else None
+    logger.info('%s executed successfully', title)
+    span.set_attribute('execute.num_results', len(results))
+    return results
 
   @tracer.start_as_current_span('bq.create_datasets')
   def create_datasets(self, macros: dict | None) -> None:
