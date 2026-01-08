@@ -46,13 +46,10 @@ where
 ///
 /// tab | Python
 ```python
-from garf_executors import api_executor
+from garf_executors import setup_executor
 
 
-
-query_executor = api_executor.ApiQueryExecutor.from_fetcher_alias(
-  'youtube-data-api'
-)
+query_executor = setup_executor(source='youtube-data-api')
 context = api_executor.ApiExecutionContext(writer='csv')
 
 query_text = """
@@ -70,3 +67,49 @@ query_executor.execute(
 )
 ```
 ///
+
+### Caching
+
+When running queries you can get data from cache rather that fetching them from API.
+
+
+Cache has `cache_ttl_seconds` parameter (default is 3600 seconds or 1 hour).
+
+
+/// tab | bash
+
+```
+garf query.sql --source youtube_data_api \
+  --output console \
+  --source.ids=VIDEO_ID \
+  --enable-cache \
+  --cache-ttl-seconds 300
+```
+///
+
+/// tab | Python
+```python
+from garf_executors import setup_executor
+
+
+query_executor = setup_executor(
+  source='youtube-data-api',
+  enable_cache=True,
+  cache_ttl_seconds=300
+)
+context = api_executor.ApiExecutionContext(writer='csv')
+
+query_text = """
+SELECT
+  id,
+  snippet.publishedAt AS published_at,
+  snippet.title AS title
+FROM videos
+"""
+
+query_executor.execute(
+  query=query_text,
+  title="query",
+  context=context
+)
+```

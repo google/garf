@@ -121,6 +121,30 @@ report = report_fetcher.fetch(query, args=query_parameters)
     report = report_fetcher.fetch(query, args=query_parameters)
     ```
 
+### Caching
+
+You can store and retrieve reports from cache rather that getting them from API.
+
+
+Cache has two default parameters which can be overwritten:
+
+* `cache_path` (default is `$HOME/.garf/cache`)
+* `cache_ttl_seconds` (default is 3600 seconds or 1 hour).
+
+```python
+from garf_core import ApiReportFetcher
+
+report_fetcher = ApiReportFetcher(
+  api_client,
+  enable_cache=True,
+  cache_path='~/.cache',
+  cache_ttl_seconds=4*60*60
+)
+
+query = 'SELECT metric FROM resource'
+
+report = report_fetcher.fetch(query)
+```
 
 ## Built-in report fetchers
 
