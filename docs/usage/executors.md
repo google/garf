@@ -74,6 +74,7 @@ query_executor.execute(
   context=context
 )
 ```
+
 !!!note
     You can use `aexecute` method to run execute the query asynchronously
     ```python
@@ -91,7 +92,7 @@ query_executor.execute(
 !!!note
     Ensure that API endpoint for `garf` is running.
     ```bash
-    python garf_executors.entrypoints.server
+    python -m garf_executors.entrypoints.server
     ```
 
 ```bash
@@ -108,7 +109,6 @@ curl -X 'POST' \
   }
 }'
 ```
-
 ///
 
 ## Customization
