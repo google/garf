@@ -18,9 +18,11 @@ from typing import Optional, Union
 
 import fastapi
 import pydantic
+import typer
 import uvicorn
 from garf_io import reader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from typing_extensions import Annotated
 
 import garf_executors
 from garf_executors import exceptions
@@ -29,6 +31,7 @@ from garf_executors.entrypoints.tracer import initialize_tracer
 initialize_tracer()
 app = fastapi.FastAPI()
 FastAPIInstrumentor.instrument_app(app)
+typer_app = typer.Typer()
 
 
 class ApiExecutorRequest(pydantic.BaseModel):
@@ -104,5 +107,12 @@ def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
   return ApiExecutorResponse(results=results)
 
 
+@typer_app.command()
+def main(
+  port: Annotated[int, typer.Option(help='Port to start the server')] = 8000,
+):
+  uvicorn.run(app, port=port)
+
+
 if __name__ == '__main__':
-  uvicorn.run(app)
+  typer_app()
