@@ -37,7 +37,7 @@ classifiers = [
 dynamic = ["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_executors.__version__"}
+version = {attr = "garf.executors.__version__"}
 
 [project.optional-dependencies]
 bq=[
@@ -62,4 +62,8 @@ all = [
   "garf-executors[bq,sql,server,gcp]"
 ]
 [project.scripts]
-garf="garf_executors.entrypoints.cli:main"
+garf="garf.executors.entrypoints.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_executors*", "garf.*"]

@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=C0330, g-bad-import-order, g-multiple-import
-from opentelemetry import trace
+import warnings
 
-tracer = trace.get_tracer(
-  instrumenting_module_name='garf_core',
+from garf.core.telemetry import *
+
+warnings.warn(
+  "The 'garf_core' namespace is deprecated. Please use 'garf.core' instead.",
+  DeprecationWarning,
+  stacklevel=2,
 )

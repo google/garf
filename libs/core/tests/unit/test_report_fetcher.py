@@ -17,7 +17,7 @@ import datetime
 import logging
 
 import pytest
-from garf_core import (
+from garf.core import (
   api_clients,
   parsers,
   report,

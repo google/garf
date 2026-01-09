@@ -12,46 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-  OTLPSpanExporter,
+import warnings
+
+from garf.executors.entrypoints.tracer import *
+
+warnings.warn(
+  "The 'garf_executors.entrypoints' namespace is deprecated. "
+  "Please use 'garf.executors.entrypoints' instead.",
+  DeprecationWarning,
+  stacklevel=2,
 )
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-  BatchSpanProcessor,
-)
-
-DEFAULT_SERVICE_NAME = 'garf'
-
-
-def initialize_tracer():
-  resource = Resource.create(
-    {'service.name': os.getenv('OTLP_SERVICE_NAME', DEFAULT_SERVICE_NAME)}
-  )
-
-  tracer_provider = TracerProvider(resource=resource)
-
-  if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
-    if gcp_project_id := os.getenv('OTEL_EXPORTER_GCP_PROJECT_ID'):
-      try:
-        from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-      except ImportError as e:
-        raise ImportError(
-          'Please install garf_executors with GCP support '
-          '- `pip install garf_executors[gcp]`'
-        ) from e
-
-      cloud_span_processor = BatchSpanProcessor(
-        CloudTraceSpanExporter(project_id=gcp_project_id)
-      )
-      tracer_provider.add_span_processor(cloud_span_processor)
-    else:
-      otlp_processor = BatchSpanProcessor(
-        OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
-      )
-      tracer_provider.add_span_processor(otlp_processor)
-
-  trace.set_tracer_provider(tracer_provider)

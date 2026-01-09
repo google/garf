@@ -16,8 +16,8 @@ import csv
 import json
 import pathlib
 
-from garf_core import report
-from garf_core.fetchers import FakeApiReportFetcher
+from garf.core import report
+from garf.core.fetchers import FakeApiReportFetcher
 
 
 class TestFakeApiReportFetcher:

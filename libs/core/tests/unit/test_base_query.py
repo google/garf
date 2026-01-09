@@ -16,7 +16,7 @@ import dataclasses
 from typing import ClassVar
 
 import pydantic
-from garf_core import base_query
+from garf.core import base_query
 
 
 class TestBaseQuery:

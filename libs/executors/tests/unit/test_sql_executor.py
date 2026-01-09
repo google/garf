@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import pytest
 import sqlalchemy
-from garf_core import report
-from garf_executors import sql_executor
+from garf.core import report
+from garf.executors import sql_executor
 
 
 class TestSqlAlchemyQueryExecutor:

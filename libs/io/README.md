@@ -31,11 +31,12 @@ To install specific writers use:
 * `pip install garf-io[bq]` for BigQuery support
 * `pip install garf-io[sheets]` for Google spreadsheets support
 * `pip install garf-io[sqlalchemy]` for SqlAlchemy support
+
 ## Usage
 
 ```
-import garf_core import report
-from garf_io import writer
+import garf.core import report
+from garf.io import writer
 
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])

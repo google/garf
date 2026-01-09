@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import pytest
-from garf_io import writer
+from garf.io import writer
 
 
 @pytest.mark.parametrize(

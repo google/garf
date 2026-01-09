@@ -18,21 +18,20 @@ import argparse
 import logging
 from concurrent import futures
 
+import garf.executors
 import grpc
+from garf.executors import garf_pb2, garf_pb2_grpc
+from garf.executors.entrypoints.tracer import initialize_tracer
 from google.protobuf.json_format import MessageToDict
 from grpc_reflection.v1alpha import reflection
-
-import garf_executors
-from garf_executors import garf_pb2, garf_pb2_grpc
-from garf_executors.entrypoints.tracer import initialize_tracer
 
 
 class GarfService(garf_pb2_grpc.GarfService):
   def Execute(self, request, context):
-    query_executor = garf_executors.setup_executor(
+    query_executor = garf.executors.setup_executor(
       request.source, request.context.fetcher_parameters
     )
-    execution_context = garf_executors.execution_context.ExecutionContext(
+    execution_context = garf.executors.execution_context.ExecutionContext(
       **MessageToDict(request.context, preserving_proto_field_name=True)
     )
     result = query_executor.execute(

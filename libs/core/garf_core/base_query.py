@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,29 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for defining base class for Garf query classes.
 
-Garf query classes can inherit from BaseQuery and have a simple way of
-being fetched from API.
-"""
+import warnings
 
-from __future__ import annotations
+from garf.core.base_query import *
 
-
-class BaseQuery:
-  """Base class to inherit all Garf queries from.
-
-  Attributes:
-    query_text: Contains query text or template.
-  """
-
-  query_text = ''
-
-  @property
-  def query(self) -> str:
-    """Returns expanded query with parameters takes from initialization."""
-    return self.query_text.format(**self.__dict__)
-
-  def __str__(self) -> str:
-    """Formatted query string representation."""
-    return self.query.strip()
+warnings.warn(
+  "The 'garf_core' namespace is deprecated. Please use 'garf.core' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

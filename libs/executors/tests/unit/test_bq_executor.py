@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from garf_executors import bq_executor
+from garf.executors import bq_executor
 
 
 def test_extract_datasets():

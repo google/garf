@@ -13,8 +13,8 @@
 # limitations under the License.
 import grpc
 import pytest
-from garf_executors import garf_pb2 as pb
-from garf_executors import garf_pb2_grpc
+from garf.executors import garf_pb2 as pb
+from garf.executors import garf_pb2_grpc
 
 
 @pytest.mark.skip

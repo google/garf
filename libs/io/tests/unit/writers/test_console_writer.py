@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from garf_io.writers import console_writer
+from garf.io.writers import console_writer
 
 _TMP_NAME = 'test'
 
