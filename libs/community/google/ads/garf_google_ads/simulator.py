@@ -12,42 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Simulates response from Google Ads API based on a query."""
+import warnings
 
-from __future__ import annotations
+from garf.community.google.ads.simulator import *
 
-import logging
-from typing import Any
-
-import garf_core
-from garf_core import simulator
-
-from garf_google_ads import parsers, query_editor
-from garf_google_ads.api_clients import GoogleAdsApiClient
-
-logger = logging.getLogger(__name__)
-
-
-class GoogleAdsApiSimulatorSpecification(simulator.SimulatorSpecification):
-  """Google Ads API specific simulator specification."""
-
-
-class GoogleAdsApiReportSimulator(simulator.ApiReportSimulator):
-  def __init__(
-    self,
-    api_client: GoogleAdsApiClient | None = None,
-    parser: garf_core.parsers.ProtoParser = parsers.GoogleAdsRowParser,
-    query_spec: query_editor.GoogleAdsApiQuery = (
-      query_editor.GoogleAdsApiQuery
-    ),
-    **kwargs: str,
-  ) -> None:
-    if not api_client:
-      api_client = GoogleAdsApiClient(**kwargs)
-    super().__init__(api_client, parser, query_spec)
-
-  def _generate_random_values(
-    self,
-    response_types: dict[str, Any],
-  ) -> dict[str, Any]:
-    return self.api_client._get_google_ads_row()
+warnings.warn(
+  "The 'garf_google_ads' namespace is deprecated. "
+  "Please use 'garf.community.google.ads' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

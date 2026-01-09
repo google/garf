@@ -1,4 +1,4 @@
-# Copyright 2026 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
+from garf.core import exceptions
 
-from garf.community.google.ads.builtins.ocid_mapping import *
 
-warnings.warn(
-  "The 'garf_google_ads.builtins' namespace is deprecated. "
-  "Please use 'garf.community.google.ads.builtins' instead.",
-  DeprecationWarning,
-  stacklevel=2,
-)
+class GoogleAdsApiError(exceptions.GarfError):
+  """Base class for all library exceptions."""

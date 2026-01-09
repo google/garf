@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from garf_google_ads.query_editor import GoogleAdsApiQuery
+from garf.community.google.ads.query_editor import GoogleAdsApiQuery
 
 
 class TestGoogleAdsApiQuery:
@@ -33,10 +33,7 @@ class TestGoogleAdsApiQuery:
       'ad_group_ad.policy_summary.policy_topic_entries',
       'ad_group_ad_asset_view.policy_summary',
     ]
-    assert (
-      spec.customizers.get('policy_topic_type').value
-      == 'type_'
-    )
+    assert spec.customizers.get('policy_topic_type').value == 'type_'
     assert (
       spec.customizers.get('asset_policy_type').value
       == 'policy_topic_entries.type_'

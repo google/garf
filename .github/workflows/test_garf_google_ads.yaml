@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'libs/community/google/ads/garf_google_ads/**'
+      - 'libs/community/google/ads/garf/**'
 
 env:
   UV_SYSTEM_PYTHON: 1
