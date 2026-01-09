@@ -14,15 +14,15 @@
 from __future__ import annotations
 
 import pytest
-from garf_core import GarfReport
-from garf_core.query_editor import QuerySpecification
-from garf_exporter.exporter import GarfExporter
+from garf.core import GarfReport
+from garf.core.query_editor import QuerySpecification
+from garf.exporter.exporter import GarfExporter
 from prometheus_client import samples
 
 
-class TestGaaarfExporter:
+class TestGarfExporter:
   @pytest.fixture
-  def garf_exporter(self):
+  def test_exporter(self):
     return GarfExporter(namespace='test')
 
   @pytest.fixture
@@ -57,41 +57,41 @@ class TestGaaarfExporter:
       query_specification=query_specification,
     )
 
-  def test_garf_exporter_has_default_values(self, garf_exporter):
-    assert garf_exporter.namespace
-    assert garf_exporter.job_name
-    assert not garf_exporter.registry.get_target_info()
+  def test_test_exporter_has_default_values(self, test_exporter):
+    assert test_exporter.namespace
+    assert test_exporter.job_name
+    assert not test_exporter.registry.get_target_info()
 
-  def test_export_returns_correct_metric_name(self, garf_exporter, report):
-    garf_exporter.export(report)
-    metrics = list(garf_exporter.registry.collect())
+  def test_export_returns_correct_metric_name(self, test_exporter, report):
+    test_exporter.export(report)
+    metrics = list(test_exporter.registry.collect())
     assert 'test_clicks' in [metric.name for metric in metrics]
 
   def test_export_returns_correct_metric_name_with_suffix(
-    self, garf_exporter, report
+    self, test_exporter, report
   ):
     suffix = 'performance'
-    garf_exporter.export(report=report, suffix=suffix)
-    metrics = list(garf_exporter.registry.collect())
+    test_exporter.export(report=report, suffix=suffix)
+    metrics = list(test_exporter.registry.collect())
     assert f'test_{suffix}_clicks' in [metric.name for metric in metrics]
 
   def test_export_returns_correct_virtual_metric_name(
-    self, garf_exporter, report_with_virtual_column
+    self, test_exporter, report_with_virtual_column
   ):
-    garf_exporter.export(report=report_with_virtual_column)
-    metrics = list(garf_exporter.registry.collect())
+    test_exporter.export(report=report_with_virtual_column)
+    metrics = list(test_exporter.registry.collect())
     assert 'test_info' in [metric.name for metric in metrics]
 
   def test_export_returns_correct_metric_documentation(
-    self, garf_exporter, report
+    self, test_exporter, report
   ):
-    garf_exporter.export(report)
-    metrics = list(garf_exporter.registry.collect())
+    test_exporter.export(report)
+    metrics = list(test_exporter.registry.collect())
     assert 'clicks' in [metric.documentation for metric in metrics]
 
-  def test_export_returns_correct_metric_samples(self, garf_exporter, report):
-    garf_exporter.export(report)
-    metrics = list(garf_exporter.registry.collect())
+  def test_export_returns_correct_metric_samples(self, test_exporter, report):
+    test_exporter.export(report)
+    metrics = list(test_exporter.registry.collect())
     for metric in metrics:
       if metric.name == 'test_clicks':
         assert len(metric.samples) == len(report.results)
@@ -110,10 +110,10 @@ class TestGaaarfExporter:
     ],
   )
   def test_export_returns_correct_metric_samples_values(
-    self, garf_exporter, report, expected_samples
+    self, test_exporter, report, expected_samples
   ):
-    garf_exporter.export(report)
-    metrics = list(garf_exporter.registry.collect())
+    test_exporter.export(report)
+    metrics = list(test_exporter.registry.collect())
     for metric in metrics:
       if metric.name == 'test_clicks':
         assert metric.samples == expected_samples

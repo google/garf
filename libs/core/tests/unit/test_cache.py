@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import pytest
-from garf_core import cache, query_editor, report
+from garf.core import cache, query_editor, report
 
 
 class TestGarfCache:

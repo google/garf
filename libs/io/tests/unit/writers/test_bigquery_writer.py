@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import os
 
-import garf_core
+import garf.core
 import pytest
-from garf_io.writers import bigquery_writer
+from garf.io.writers import bigquery_writer
 from google.cloud import bigquery
 
 
@@ -28,7 +28,7 @@ class TestBigQueryWriter:
   )
   def test_write(self):
     writer = bigquery_writer.BigQueryWriter(array_handling='arrays')
-    report = garf_core.GarfReport(
+    report = garf.core.GarfReport(
       results=[
         [{'key': ['one', 'two']}, 'three'],
       ],

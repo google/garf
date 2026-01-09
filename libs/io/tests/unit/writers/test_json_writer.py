@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from garf_io.writers import json_writer
+from garf.io.writers import json_writer
 
 _TMP_FILENAME = 'test.json'
 

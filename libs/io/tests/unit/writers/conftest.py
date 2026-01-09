@@ -17,7 +17,7 @@ from __future__ import annotations
 import datetime
 
 import pytest
-from garf_core import report
+from garf.core import report
 
 
 @pytest.fixture

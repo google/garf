@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Library for getting reports from Google Ads API."""
+import warnings
 
-from garf_google_ads.api_clients import GoogleAdsApiClient
-from garf_google_ads.report_fetcher import GoogleAdsApiReportFetcher
+from garf.community.google.ads import *
 
-__all__ = [
-  'GoogleAdsApiClient',
-  'GoogleAdsApiReportFetcher',
-]
-
-__version__ = '0.0.5'
+warnings.warn(
+  "The 'garf_google_ads' namespace is deprecated. "
+  "Please use 'garf.community.google.ads' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

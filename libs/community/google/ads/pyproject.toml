@@ -26,10 +26,10 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_google_ads.__version__"}
+version = {attr = "garf.community.google.ads.__version__"}
 
 [project.entry-points.garf]
-google-ads = "garf_google_ads.report_fetcher"
+google-ads = "garf.community.google.ads.report_fetcher"
 
 [options.extras_require]
 test =  [
@@ -38,6 +38,6 @@ test =  [
   "python-dotenv",
 ]
 
-[[tool.uv.index]]
-url = "https://pypi.org/simple"
-default = true
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_google_ads", "garf"]

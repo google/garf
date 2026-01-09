@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import pytest
-from garf_core.query_parser import (
+from garf.core.query_parser import (
   Customizer,
   ExtractedLineElements,
   GarfVirtualColumnError,

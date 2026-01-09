@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-from garf_core import api_clients, simulator
+from garf.core import api_clients, simulator
 
 
 class TestSimulator:
