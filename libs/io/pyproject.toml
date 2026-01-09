@@ -35,7 +35,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_io.__version__"}
+version = {attr = "garf.io.__version__"}
 
 [project.optional-dependencies]
 test =  [
@@ -61,11 +61,15 @@ all = [
   "garf-io[bq,sheets,sqlalchemy]"
 ]
 [project.entry-points.garf_writer]
-bq = "garf_io.writers.bigquery_writer"
-bigquery = "garf_io.writers.bigquery_writer"
-console = "garf_io.writers.console_writer"
-csv = "garf_io.writers.csv_writer"
-json = "garf_io.writers.json_writer"
-sheet = "garf_io.writers.sheets_writer"
-sheets = "garf_io.writers.sheets_writer"
-sqldb = "garf_io.writers.sqldb_writer"
+bq = "garf.io.writers.bigquery_writer"
+bigquery = "garf.io.writers.bigquery_writer"
+console = "garf.io.writers.console_writer"
+csv = "garf.io.writers.csv_writer"
+json = "garf.io.writers.json_writer"
+sheet = "garf.io.writers.sheets_writer"
+sheets = "garf.io.writers.sheets_writer"
+sqldb = "garf.io.writers.sqldb_writer"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_io*", "garf.*"]

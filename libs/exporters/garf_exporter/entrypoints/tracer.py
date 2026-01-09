@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,32 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 
-import os
+from garf.exporter.entrypoints.tracer import *
 
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-  OTLPSpanExporter,
+warnings.warn(
+  "The 'garf_exporter.entrypoints' namespace is deprecated. "
+  "Please use 'garf.exporter.entrypoints' instead.",
+  DeprecationWarning,
+  stacklevel=2,
 )
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-  BatchSpanProcessor,
-)
-
-DEFAULT_SERVICE_NAME = 'garf-exporter'
-
-
-def initialize_tracer():
-  resource = Resource.create(
-    {'service.name': os.getenv('OTLP_SERVICE_NAME', DEFAULT_SERVICE_NAME)}
-  )
-
-  tracer_provider = TracerProvider(resource=resource)
-
-  if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
-    otlp_processor = BatchSpanProcessor(
-      OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
-    )
-    tracer_provider.add_span_processor(otlp_processor)
-  trace.set_tracer_provider(tracer_provider)

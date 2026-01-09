@@ -16,7 +16,7 @@ from typing import Union
 
 import pydantic
 import pytest
-from garf_core import api_clients, parsers, query_editor, query_parser
+from garf.core import api_clients, parsers, query_editor, query_parser
 
 test_specification = query_editor.QuerySpecification(
   'SELECT test_column_1 FROM test'

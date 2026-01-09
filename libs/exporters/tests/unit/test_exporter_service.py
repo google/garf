@@ -18,7 +18,7 @@ import logging
 import pathlib
 
 import pytest
-from garf_exporter import collector, exporter, exporter_service
+from garf.exporter import collector, exporter, exporter_service
 
 _SCRIPT_DIR = pathlib.Path(__file__).parent
 

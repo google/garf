@@ -14,8 +14,8 @@
 
 import pytest
 import yaml
-from garf_core import query_editor
-from garf_executors.execution_context import ExecutionContext
+from garf.core import query_editor
+from garf.executors.execution_context import ExecutionContext
 
 
 class TestExecutionContext:

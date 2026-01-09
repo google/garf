@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import pytest
-from garf_executors.entrypoints import utils
+from garf.executors.entrypoints import utils
 
 
 class TestParamsParser:

@@ -18,8 +18,8 @@ import datetime
 
 import pytest
 from dateutil.relativedelta import relativedelta
-from garf_core import query_editor, query_parser
-from garf_core.query_parser import Customizer, SliceField
+from garf.core import query_editor, query_parser
+from garf.core.query_parser import Customizer, SliceField
 
 
 @pytest.fixture

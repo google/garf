@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,107 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""FastAPI endpoint for executing queries."""
 
-from typing import Optional, Union
+import warnings
 
-import fastapi
-import pydantic
-import typer
-import uvicorn
-from garf_io import reader
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from typing_extensions import Annotated
+from garf.executors.entrypoints.server import *
 
-import garf_executors
-from garf_executors import exceptions
-from garf_executors.entrypoints.tracer import initialize_tracer
-
-initialize_tracer()
-app = fastapi.FastAPI()
-FastAPIInstrumentor.instrument_app(app)
-typer_app = typer.Typer()
-
-
-class ApiExecutorRequest(pydantic.BaseModel):
-  """Request for executing a query.
-
-  Attributes:
-    source: Type of API to interact with.
-    title: Name of the query used as an output for writing.
-    query: Query to execute.
-    query_path: Local or remote path to query.
-    context: Execution context.
-  """
-
-  source: str
-  title: Optional[str] = None
-  query: Optional[str] = None
-  query_path: Optional[Union[str, list[str]]] = None
-  context: garf_executors.api_executor.ApiExecutionContext
-
-  @pydantic.model_validator(mode='after')
-  def check_query_specified(self):
-    if not self.query_path and not self.query:
-      raise exceptions.GarfExecutorError(
-        'Missing one of required parameters: query, query_path'
-      )
-    return self
-
-  def model_post_init(self, __context__) -> None:
-    if self.query_path and isinstance(self.query_path, str):
-      self.query = reader.FileReader().read(self.query_path)
-    if not self.title:
-      self.title = str(self.query_path)
-
-
-class ApiExecutorResponse(pydantic.BaseModel):
-  """Response after executing a query.
-
-  Attributes:
-    results: Results of query execution.
-  """
-
-  results: list[str]
-
-
-@app.get('/api/version')
-async def version() -> str:
-  return garf_executors.__version__
-
-
-@app.get('/api/fetchers')
-async def get_fetchers() -> list[str]:
-  """Shows all available API sources."""
-  return list(garf_executors.fetchers.find_fetchers())
-
-
-@app.post('/api/execute')
-async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
-  query_executor = garf_executors.setup_executor(
-    request.source, request.context.fetcher_parameters
-  )
-  result = query_executor.execute(request.query, request.title, request.context)
-  return ApiExecutorResponse(results=[result])
-
-
-@app.post('/api/execute:batch')
-def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
-  query_executor = garf_executors.setup_executor(
-    request.source, request.context.fetcher_parameters
-  )
-  reader_client = reader.FileReader()
-  batch = {query: reader_client.read(query) for query in request.query_path}
-  results = query_executor.execute_batch(batch, request.context)
-  return ApiExecutorResponse(results=results)
-
-
-@typer_app.command()
-def main(
-  port: Annotated[int, typer.Option(help='Port to start the server')] = 8000,
-):
-  uvicorn.run(app, port=port)
-
-
-if __name__ == '__main__':
-  typer_app()
+warnings.warn(
+  "The 'garf_executors.entrypoints' namespace is deprecated. "
+  "Please use 'garf.executors.entrypoints' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

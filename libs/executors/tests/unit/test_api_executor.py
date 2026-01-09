@@ -17,10 +17,10 @@ import json
 import pathlib
 
 import pytest
-from garf_core import api_clients, parsers, report_fetcher
-from garf_core.fetchers import fake as fake_fetcher
-from garf_executors import api_executor
-from garf_io.writers import json_writer
+from garf.core import api_clients, parsers, report_fetcher
+from garf.core.fetchers import fake as fake_fetcher
+from garf.executors import api_executor
+from garf.io.writers import json_writer
 
 _TEST_DATA = [
   {'customer_id': 1},

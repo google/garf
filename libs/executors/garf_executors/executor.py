@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,113 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines common functionality between executors."""
 
-import asyncio
-import inspect
-from typing import Optional
+import warnings
 
-from garf_core import report_fetcher
-from opentelemetry import trace
+from garf.executors.executor import *
 
-from garf_executors import execution_context
-from garf_executors.telemetry import tracer
-
-
-class Executor:
-  """Defines common functionality between executors."""
-
-  def __init__(
-    self,
-    preprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
-    postprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
-  ) -> None:
-    self.preprocessors = preprocessors or {}
-    self.postprocessors = postprocessors or {}
-
-  @tracer.start_as_current_span('api.execute_batch')
-  def execute_batch(
-    self,
-    batch: dict[str, str],
-    context: execution_context.ExecutionContext,
-    parallel_threshold: int = 10,
-  ) -> list[str]:
-    """Executes batch of queries for a common context.
-
-    If an executor has any pre/post processors, executes them first while
-    modifying the context.
-
-    Args:
-      batch: Mapping between query_title and its text.
-      context: Execution context.
-      parallel_threshold: Number of queries to execute in parallel.
-
-    Returns:
-      Results of execution.
-    """
-    span = trace.get_current_span()
-    span.set_attribute('api.parallel_threshold', parallel_threshold)
-    _handle_processors(processors=self.preprocessors, context=context)
-    results = asyncio.run(
-      self._run(
-        batch=batch, context=context, parallel_threshold=parallel_threshold
-      )
-    )
-    _handle_processors(processors=self.postprocessors, context=context)
-    return results
-
-  def add_preprocessor(
-    self, preprocessors: dict[str, report_fetcher.Processor]
-  ) -> None:
-    self.preprocessors.update(preprocessors)
-
-  async def aexecute(
-    self,
-    query: str,
-    title: str,
-    context: execution_context.ExecutionContext,
-  ) -> str:
-    """Performs query execution asynchronously.
-
-    Args:
-      query: Location of the query.
-      title: Name of the query.
-      context: Query execution context.
-
-    Returns:
-      Result of writing the report.
-    """
-    return await asyncio.to_thread(self.execute, query, title, context)
-
-  async def _run(
-    self,
-    batch: dict[str, str],
-    context: execution_context.ExecutionContext,
-    parallel_threshold: int,
-  ):
-    semaphore = asyncio.Semaphore(value=parallel_threshold)
-
-    async def run_with_semaphore(fn):
-      async with semaphore:
-        return await fn
-
-    tasks = [
-      self.aexecute(query=query, title=title, context=context)
-      for title, query in batch.items()
-    ]
-    return await asyncio.gather(*(run_with_semaphore(task) for task in tasks))
-
-
-def _handle_processors(
-  processors: dict[str, report_fetcher.Processor],
-  context: execution_context.ExecutionContext,
-) -> None:
-  for k, processor in processors.items():
-    processor_signature = list(inspect.signature(processor).parameters.keys())
-    if k in context.fetcher_parameters:
-      processor_parameters = {
-        k: v
-        for k, v in context.fetcher_parameters.items()
-        if k in processor_signature
-      }
-      context.fetcher_parameters[k] = processor(**processor_parameters)
+warnings.warn(
+  "The 'garf_executors' namespace is deprecated. "
+  "Please use 'garf.executors' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)
