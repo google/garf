@@ -19,8 +19,8 @@
 ```
 import os
 
-from garf_io import writer
-from garf_google_ads import GoogleAdsApiReportFetcher
+from garf.io import writer
+from garf.community.google.ads import GoogleAdsApiReportFetcher
 
 query = """
 SELECT
@@ -54,9 +54,9 @@ garf <PATH_TO_QUERIES> --source google-ads \
 
 where:
 
-* `<PATH_TO_QUERIES>` - local or remove files containing queries
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
-* `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
+* `PATH_TO_QUERIES` - local or remove files containing queries
+* `output` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
+* `SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
 
 ###  Available source parameters
 

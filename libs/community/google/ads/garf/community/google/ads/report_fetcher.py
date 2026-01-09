@@ -19,9 +19,8 @@ import functools
 import operator
 import warnings
 
-import garf_core
-
-from garf_google_ads import (
+import garf.core
+from garf.community.google.ads import (
   GoogleAdsApiClient,
   builtins,
   exceptions,
@@ -34,13 +33,13 @@ class GoogleAdsApiReportFetcherError(exceptions.GoogleAdsApiError):
   """Report fetcher specific error."""
 
 
-class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
+class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
   """Defines report fetcher."""
 
   def __init__(
     self,
     api_client: GoogleAdsApiClient | None = None,
-    parser: garf_core.parsers.ProtoParser = parsers.GoogleAdsRowParser,
+    parser: garf.core.parsers.ProtoParser = parsers.GoogleAdsRowParser,
     query_spec: query_editor.GoogleAdsApiQuery = (
       query_editor.GoogleAdsApiQuery
     ),
@@ -64,12 +63,12 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
   def fetch(
     self,
     query_specification: str | query_editor.GoogleAdsApiQuery,
-    args: garf_core.query_editor.GarfQueryParameters | None = None,
+    args: garf.core.query_editor.GarfQueryParameters | None = None,
     account: str | list[str] | None = None,
     expand_mcc: bool = False,
     customer_ids_query: str | None = None,
     **kwargs: str,
-  ) -> garf_core.GarfReport:
+  ) -> garf.core.GarfReport:
     """Fetches data from Google Ads API.
 
     Args:
@@ -196,7 +195,7 @@ class GoogleAdsApiReportFetcher(garf_core.ApiReportFetcher):
         account=[str(a) for a in child_customer_ids],
       )
       child_customer_ids = [
-        row[0] if isinstance(row, garf_core.report.GarfRow) else row
+        row[0] if isinstance(row, garf.core.report.GarfRow) else row
         for row in child_customer_ids
       ]
 

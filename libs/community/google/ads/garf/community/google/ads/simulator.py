@@ -19,11 +19,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import garf_core
-from garf_core import simulator
-
-from garf_google_ads import parsers, query_editor
-from garf_google_ads.api_clients import GoogleAdsApiClient
+import garf.core
+from garf.community.google.ads import parsers, query_editor
+from garf.community.google.ads.api_clients import GoogleAdsApiClient
+from garf.core import simulator
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class GoogleAdsApiReportSimulator(simulator.ApiReportSimulator):
   def __init__(
     self,
     api_client: GoogleAdsApiClient | None = None,
-    parser: garf_core.parsers.ProtoParser = parsers.GoogleAdsRowParser,
+    parser: garf.core.parsers.ProtoParser = parsers.GoogleAdsRowParser,
     query_spec: query_editor.GoogleAdsApiQuery = (
       query_editor.GoogleAdsApiQuery
     ),

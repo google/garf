@@ -14,7 +14,7 @@
 import os
 
 import pytest
-from garf_google_ads import simulator
+from garf.community.google.ads import simulator
 
 
 @pytest.mark.skipif(

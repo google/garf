@@ -15,7 +15,7 @@
 
 import re
 
-from garf_core import query_editor
+from garf.core import query_editor
 
 
 class GoogleAdsApiQuery(query_editor.QuerySpecification):

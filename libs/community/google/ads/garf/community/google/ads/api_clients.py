@@ -29,13 +29,12 @@ import pydantic
 import smart_open
 import tenacity
 import yaml
-from garf_core import api_clients
+from garf.community.google.ads import exceptions, query_editor
+from garf.core import api_clients
 from google import protobuf
 from google.ads.googleads import client as googleads_client
 from google.api_core import exceptions as google_exceptions
 from typing_extensions import override
-
-from garf_google_ads import exceptions, query_editor
 
 GOOGLE_ADS_API_VERSION: Final = googleads_client._DEFAULT_VERSION
 google_ads_service = importlib.import_module(

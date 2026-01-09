@@ -23,12 +23,11 @@ from collections import abc
 from typing import Union, get_args
 
 import proto  # type: ignore
-from garf_core import parsers
+from garf.community.google.ads import api_clients, query_editor
+from garf.core import parsers
 from google import protobuf
 from proto.marshal.collections import repeated
 from typing_extensions import Self, TypeAlias
-
-from garf_google_ads import api_clients, query_editor
 
 google_ads_service = importlib.import_module(
   f'google.ads.googleads.{api_clients.GOOGLE_ADS_API_VERSION}.'
