@@ -58,12 +58,22 @@ class ApiQueryExecutor(executor.Executor):
 
   @classmethod
   def from_fetcher_alias(
-    cls, source: str, fetcher_parameters: dict[str, str] | None = None
+    cls,
+    source: str,
+    fetcher_parameters: dict[str, str] | None = None,
+    enable_cache: bool = False,
+    cache_ttl_seconds: int = 3600,
   ) -> ApiQueryExecutor:
     if not fetcher_parameters:
       fetcher_parameters = {}
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
-    return ApiQueryExecutor(fetcher=concrete_api_fetcher(**fetcher_parameters))
+    return ApiQueryExecutor(
+      fetcher=concrete_api_fetcher(
+        **fetcher_parameters,
+        enable_cache=enable_cache,
+        cache_ttl_seconds=cache_ttl_seconds,
+      )
+    )
 
   @tracer.start_as_current_span('api.execute')
   def execute(
@@ -86,11 +96,13 @@ class ApiQueryExecutor(executor.Executor):
       GarfExecutorError: When failed to execute query.
     """
     span = trace.get_current_span()
-    span.set_attribute('fetcher', self.fetcher.__class__.__name__)
-    span.set_attribute('api_client', self.fetcher.api_client.__class__.__name__)
+    span.set_attribute('fetcher.class', self.fetcher.__class__.__name__)
+    span.set_attribute(
+      'api.client.class', self.fetcher.api_client.__class__.__name__
+    )
     try:
-      span.set_attribute('query_title', title)
-      span.set_attribute('query_text', query)
+      span.set_attribute('query.title', title)
+      span.set_attribute('query.text', query)
       logger.debug('starting query %s', query)
       results = self.fetcher.fetch(
         query_specification=query,
