@@ -1,4 +1,4 @@
-# Copyright 2026 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from garf.community.google.ads.builtins import ocid_mapping
 
-import warnings
-
-from garf.community.google.ads.builtins.ocid_mapping import *
-
-warnings.warn(
-  "The 'garf_google_ads.builtins' namespace is deprecated. "
-  "Please use 'garf.community.google.ads.builtins' instead.",
-  DeprecationWarning,
-  stacklevel=2,
-)
+BUILTIN_QUERIES = {
+  'ocid_mapping': ocid_mapping.get_ocid_mapping,
+}
