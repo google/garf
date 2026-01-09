@@ -160,6 +160,28 @@ query_executor.execute(
 ```
 ///
 
+/// tab | server
+
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "API_SOURCE",
+  "title": "query",
+  "query": "YOUR_QUERY_HERE",
+  "context": {
+    "writer": "OUTPUT_TYPE",
+    "fetcher_parameters": {
+      "param1": "VALUE"
+    }
+  }
+}'
+```
+///
+
+
 ### Macro
 
 If your query contains [macros](https://google.github.io/garf/usage/queries/#macros) you can provide values for them.
@@ -205,6 +227,27 @@ query_executor.execute(
 ```
 ///
 
+/// tab | server
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "API_SOURCE",
+  "title": "query",
+  "query": "YOUR_QUERY_HERE",
+  "context": {
+    "writer": "OUTPUT_TYPE",
+    "query_parameters": {
+      "macro":  {
+        "key": "VALUE"
+      }
+    }
+  }
+}'
+```
+///
 
 
 ### Template
@@ -268,6 +311,29 @@ query_executor.execute(
 ```
 ///
 
+/// tab | server
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "API_SOURCE",
+  "title": "query",
+  "query": "SELECT {% if key == '0' %} column_1 {% else %} column_2 {% endif %} FROM resource",
+  "context": {
+    "writer": "OUTPUT_TYPE",
+    "query_parameters": {
+      "template":  {
+        "key": "VALUE"
+      }
+    }
+  }
+}'
+```
+///
+
+
 ## Batch execution
 
 You can to execute multiple queries in parallel.
@@ -306,5 +372,24 @@ query_executor.execute_batch(
   context=context,
   parallel_threshold=10,
 )
+```
+///
+
+/// tab | server
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute:batch' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "API_SOURCE",
+  "query_path": [
+    "path/to/query1.sql",
+    "path/to/query2.sql"
+  ],
+  "context": {
+    "writer": "OUTPUT_TYPE"
+  }
+}'
 ```
 ///
