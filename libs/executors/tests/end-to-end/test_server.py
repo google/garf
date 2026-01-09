@@ -18,7 +18,7 @@ import pathlib
 
 import fastapi
 from fastapi import testclient
-from garf_executors.entrypoints.server import app
+from garf.executors.entrypoints.server import app
 
 client = testclient.TestClient(app)
 

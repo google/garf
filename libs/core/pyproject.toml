@@ -38,11 +38,11 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_core.__version__"}
+version = {attr = "garf.core.__version__"}
 
 [project.entry-points.garf]
-rest = "garf_core.fetchers.rest"
-fake = "garf_core.fetchers.fake"
+rest = "garf.core.fetchers.rest"
+fake = "garf.core.fetchers.fake"
 
 [project.optional-dependencies]
 pandas=[
@@ -54,3 +54,7 @@ polars=[
 all = [
   "garf-core[pandas,polars]"
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_core", "garf"]

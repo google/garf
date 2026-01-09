@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,19 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""`garf-core` contains the base abstractions for garf framework.
 
-These abstractions are used by an implementation for a concrete reporting API.
-"""
+import warnings
 
-from garf_core.base_query import BaseQuery
-from garf_core.report import GarfReport
-from garf_core.report_fetcher import ApiReportFetcher
+from garf.core import *
 
-__all__ = [
-  'BaseQuery',
-  'GarfReport',
-  'ApiReportFetcher',
-]
-
-__version__ = '0.8.0'
+warnings.warn(
+  "The 'garf_core' namespace is deprecated. Please use 'garf.core' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

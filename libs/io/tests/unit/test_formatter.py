@@ -15,8 +15,8 @@
 from __future__ import annotations
 
 import pytest
-from garf_core import report as garf_report
-from garf_io import formatter
+from garf.core import report as garf_report
+from garf.io import formatter
 
 
 class TestFormatterWithoutPlaceholders:

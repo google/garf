@@ -17,7 +17,7 @@ import json
 import pathlib
 
 import pytest
-from garf_core import api_clients
+from garf.core import api_clients
 
 
 class TestFakeApiClient:

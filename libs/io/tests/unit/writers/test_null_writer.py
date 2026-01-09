@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import pytest
-from garf_io.writers import null_writer
+from garf.io.writers import null_writer
 
 
 class TestNullWriter:

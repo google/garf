@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import yaml
-from garf_executors.config import Config
+from garf.executors.config import Config
 
 
 class TestConfig:

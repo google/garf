@@ -15,7 +15,7 @@
 import os
 
 import pytest
-from garf_io.writers import sheets_writer
+from garf.io.writers import sheets_writer
 
 
 class TestSheetWriter:

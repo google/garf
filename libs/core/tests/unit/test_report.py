@@ -19,7 +19,7 @@ from collections import abc
 import pandas as pd
 import polars as pl
 import pytest
-from garf_core import report
+from garf.core import report
 
 
 @pytest.fixture
