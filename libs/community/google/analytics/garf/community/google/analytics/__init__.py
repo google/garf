@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
-
-from garf.community.google.analytics.api_clients import *
-
-warnings.warn(
-  "The 'garf_google_analytics' namespace is deprecated. "
-  "Please use 'garf.community.google.analytics' instead.",
-  DeprecationWarning,
-  stacklevel=2,
+from garf.community.google.analytics.api_clients import GoogleAnalyticsApiClient
+from garf.community.google.analytics.report_fetcher import (
+  GoogleAnalyticsApiReportFetcher,
 )
+
+__all__ = [
+  'GoogleAnalyticsApiClient',
+  'GoogleAnalyticsApiReportFetcher',
+]
+
+__version__ = '0.0.1'

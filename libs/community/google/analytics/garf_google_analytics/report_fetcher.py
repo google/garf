@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,24 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines report fetcher for Google Analytics API."""
+import warnings
 
-from garf_core import parsers, report_fetcher
+from garf.community.google.analytics.report_fetcher import *
 
-from garf_google_analytics import GoogleAnalyticsApiClient, query_editor
-
-
-class GoogleAnalyticsApiReportFetcher(report_fetcher.ApiReportFetcher):
-  """Defines report fetcher."""
-
-  def __init__(
-    self,
-    api_client: GoogleAnalyticsApiClient = GoogleAnalyticsApiClient(),
-    parser: parsers.DictParser = parsers.NumericConverterDictParser,
-    query_spec: query_editor.GoogleAnalyticsApiQuery = (
-      query_editor.GoogleAnalyticsApiQuery
-    ),
-    **kwargs: str,
-  ) -> None:
-    """Initializes GoogleAnalyticsApiReportFetcher."""
-    super().__init__(api_client, parser, query_spec, **kwargs)
+warnings.warn(
+  "The 'garf_google_analytics' namespace is deprecated. "
+  "Please use 'garf.community.google.analytics' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

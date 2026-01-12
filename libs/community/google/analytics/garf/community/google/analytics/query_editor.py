@@ -1,4 +1,4 @@
-# Copyright 2026 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Defines Google Analytics API specific query parser."""
 
-import warnings
+from garf_core import query_editor
 
-from garf.community.google.analytics.api_clients import *
 
-warnings.warn(
-  "The 'garf_google_analytics' namespace is deprecated. "
-  "Please use 'garf.community.google.analytics' instead.",
-  DeprecationWarning,
-  stacklevel=2,
-)
+class GoogleAnalyticsApiQuery(query_editor.QuerySpecification):
+  """Query to Google Analytics API."""
