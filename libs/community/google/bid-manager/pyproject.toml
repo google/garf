@@ -27,10 +27,10 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_bid_manager.__version__"}
+version = {attr = "garf.community.google.bid_manager.__version__"}
 
 [project.entry-points.garf]
-bid-manager = "garf_bid_manager.report_fetcher"
+bid-manager = "garf.community.google.bid_manager.report_fetcher"
 
 [options.extras_require]
 test =  [
@@ -38,3 +38,7 @@ test =  [
   "pytest-cov",
   "python-dotenv",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_bid_manager*", "garf.*"]

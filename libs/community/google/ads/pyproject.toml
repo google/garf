@@ -40,4 +40,4 @@ test =  [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include=["garf_google_ads", "garf"]
+include=["garf_google_ads*", "garf.*"]

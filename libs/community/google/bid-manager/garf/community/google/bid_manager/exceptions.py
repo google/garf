@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
+from garf.core import exceptions
 
-from garf.community.google.bid_manager.api_clients import *
 
-warnings.warn(
-  "The 'garf_bid_manager' namespace is deprecated. "
-  "Please use 'garf.community.google.bid_manager' instead.",
-  DeprecationWarning,
-  stacklevel=2,
-)
+class BidManagerApiError(exceptions.GarfError):
+  """Base class for all library exceptions."""

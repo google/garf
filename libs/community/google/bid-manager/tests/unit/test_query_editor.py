@@ -15,8 +15,8 @@
 import datetime
 
 import pytest
-from garf_bid_manager.query_editor import BidManagerApiQuery
-from garf_core import query_parser
+from garf.community.google.bid_manager.query_editor import BidManagerApiQuery
+from garf.core import query_parser
 
 
 class TestBidManagerApiQuery:
