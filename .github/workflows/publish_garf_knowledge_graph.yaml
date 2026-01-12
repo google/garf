@@ -26,8 +26,8 @@ jobs:
       - name: Get versions and check for change
         id: version_check
         run: |
-          PREV_VERSION=$(git show HEAD~1:libs/community/google/knowledge-graph/garf_knowledge_graph_api/__init__.py | grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          CURRENT_VERSION=$(grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" libs/community/google/knowledge-graph/garf_knowledge_graph_api/__init__.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          PREV_VERSION=$(git show HEAD~1:libs/community/google/knowledge-graph/garf/community/google/knowledge_graph/__init__.py | grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          CURRENT_VERSION=$(grep -oE "__version__ = '([0-9]+\.[0-9]+\.[0-9]+)'" libs/community/google/knowledge-graph/garf/community/google/knowledge_graph/__init__.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 
           if [[ "$CURRENT_VERSION" != "$PREV_VERSION" ]]; then
             echo "Version change detected: $PREV_VERSION -> $CURRENT_VERSION"
