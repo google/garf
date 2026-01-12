@@ -17,12 +17,12 @@
 
 ### Run as a library
 ```
-import garf_google_analytics
-from garf_io import writer
+from garf.community.google.analytics import GoogleAnalyticsApiReportFetcher
+from garf.io import writer
 
 # Fetch report
 fetched_report = (
-  garf_google_analytics.GoogleAnalyticsApiReportFetcher()
+  GoogleAnalyticsApiReportFetcher()
   .fetch(query, query="<YOUR_QUERY_HERE">, property_id=PROPERTY_ID)
 )
 

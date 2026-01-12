@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from garf_google_analytics.api_clients import GoogleAnalyticsApiClient
-from garf_google_analytics.report_fetcher import GoogleAnalyticsApiReportFetcher
+import warnings
 
-__all__ = [
-  'GoogleAnalyticsApiClient',
-  'GoogleAnalyticsApiReportFetcher',
-]
+from garf.community.google.analytics import *
 
-__version__ = '0.0.1'
+warnings.warn(
+  "The 'garf_google_analytics' namespace is deprecated. "
+  "Please use 'garf.community.google.analytics' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)
