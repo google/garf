@@ -24,10 +24,10 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_knowledge_graph_api.__version__"}
+version = {attr = "garf.community.google.knowledge_graph.__version__"}
 
 [project.entry-points.garf]
-knowledge-graph-api = "garf_knowledge_graph_api.report_fetcher"
+knowledge-graph-api = "garf.community.google.knowledge_graph.report_fetcher"
 
 [options.extras_require]
 test =  [
@@ -36,4 +36,6 @@ test =  [
   "python-dotenv",
 ]
 
-[project.scripts]
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_knowledge_graph_api*", "garf.*"]

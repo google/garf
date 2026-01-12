@@ -19,8 +19,8 @@
 
 ### Run as a library
 ```
-from garf_knowledge_graph_api import report_fetcher
-from garf_io import writer
+from garf.community.google.knowledge_graph import report_fetcher
+from garf.io import writer
 
 
 # Specify query

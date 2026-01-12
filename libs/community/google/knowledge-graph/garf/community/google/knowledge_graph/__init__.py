@@ -12,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
+"""Defines simplified imports."""
 
-from garf.community.google.knowledge_graph import *
+from __future__ import annotations
 
-warnings.warn(
-  "The 'garf_knowledge_graph_api' namespace is deprecated. "
-  "Please use 'garf.community.google.knowledge_graph' instead.",
-  DeprecationWarning,
-  stacklevel=2,
+from garf.community.google.knowledge_graph.api_clients import (
+  KnowledgeGraphApiClient,
 )
+from garf.community.google.knowledge_graph.report_fetcher import (
+  KnowledgeGraphApiReportFetcher,
+)
+
+__all__ = [
+  'KnowledgeGraphApiClient',
+  'KnowledgeGraphApiReportFetcher',
+]
+
+__version__ = '0.0.1'
