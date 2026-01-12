@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
+from garf.core import exceptions
 
-from garf.community.google.merchant import *
 
-warnings.warn(
-  "The 'garf_merchant_api' namespace is deprecated. "
-  "Please use 'garf.community.google.merchant' instead.",
-  DeprecationWarning,
-  stacklevel=2,
-)
+class GarfMerchantApiError(exceptions.GarfError):
+  """Base class for all library exceptions."""

@@ -24,10 +24,10 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf_merchant_api.__version__"}
+version = {attr = "garf.community.google.merchant.__version__"}
 
 [project.entry-points.garf]
-merchant-api = "garf_merchant_api.report_fetcher"
+merchant-api = "garf.community.google.merchant.report_fetcher"
 
 [options.extras_require]
 test =  [
@@ -36,4 +36,6 @@ test =  [
   "python-dotenv",
 ]
 
-[project.scripts]
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_google_ads*", "garf.*"]
