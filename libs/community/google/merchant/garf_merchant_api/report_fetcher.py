@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines report fetcher."""
+import warnings
 
-from garf_core import parsers, report_fetcher
+from garf.community.google.merchant.report_fetcher import *
 
-from garf_merchant_api import MerchantApiClient, query_editor
-
-
-class MerchantApiReportFetcher(report_fetcher.ApiReportFetcher):
-  """Defines report fetcher."""
-
-  def __init__(
-    self,
-    api_client: MerchantApiClient = MerchantApiClient(),
-    parser: parsers.BaseParser = parsers.NumericConverterDictParser,
-    query_spec: query_editor.MerchantApiQuery = query_editor.MerchantApiQuery,
-    **kwargs: str,
-  ) -> None:
-    """Initializes MerchantApiReportFetcher."""
-    super().__init__(api_client, parser, query_spec, **kwargs)
+warnings.warn(
+  "The 'garf_merchant_api' namespace is deprecated. "
+  "Please use 'garf.community.google.merchant' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

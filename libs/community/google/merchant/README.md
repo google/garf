@@ -17,8 +17,8 @@
 
 ### Run as a library
 ```
-from garf_merchant_api import report_fetcher
-from garf_io import writer
+from garf.community.google.merchant import report_fetcher
+from garf.io import writer
 
 
 # Specify query

@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
+"""Library for fetching reports from Google Merchant API."""
 
-from garf.community.google.merchant import *
+from __future__ import annotations
 
-warnings.warn(
-  "The 'garf_merchant_api' namespace is deprecated. "
-  "Please use 'garf.community.google.merchant' instead.",
-  DeprecationWarning,
-  stacklevel=2,
+from garf.community.google.merchant.api_clients import MerchantApiClient
+from garf.community.google.merchant.report_fetcher import (
+  MerchantApiReportFetcher,
 )
+
+__all__ = [
+  'MerchantApiClient',
+  'MerchantApiReportFetcher',
+]
+
+__version__ = '0.0.1'

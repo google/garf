@@ -1,0 +1,56 @@
+{
+  "results": [
+    {
+      "productView": {
+        "id": "online~en~US~id0"
+        "offerId": "id0",
+        "feedLabel": "US",
+        "aggregatedReportingContextStatus": "NOT_ELIGIBLE_OR_DISAPPROVED",
+        "itemIssues": [
+          {
+            "type": {
+              "code": "invalid_string_value",
+              "canonicalAttribute": "n:product_code"
+            },
+            "severity": {
+              "severityPerReportingContext": [
+                {
+                  "reportingContext": "SHOPPING_ADS",
+                  "disapprovedCountries": [
+                    "US"
+                  ]
+                },
+                {
+                  "reportingContext": "FREE_LISTINGS",
+                  "disapprovedCountries": [
+                    "US"
+                  ]
+                }
+              ],
+              "aggregatedSeverity": "DISAPPROVED"
+            },
+            "resolution": "MERCHANT_ACTION"
+          },
+          {
+            "type": {
+              "code": "apparel_missing_brand",
+              "canonicalAttribute": "n:brand"
+            },
+            "severity": {
+              "severityPerReportingContext": [
+                {
+                  "reportingContext": "SHOPPING_ADS",
+                  "disapprovedCountries": [
+                    "US"
+                  ]
+                }
+              ],
+              "aggregatedSeverity": "DEMOTED"
+            },
+            "resolution": "MERCHANT_ACTION"
+          }
+        ]
+      }
+    }
+  ]
+}
