@@ -11,14 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 
-import warnings
-
-from garf.community.google.bid_manager.api_clients import *
-
-warnings.warn(
-  "The 'garf_bid_manager' namespace is deprecated. "
-  "Please use 'garf.community.google.bid_manager' instead.",
-  DeprecationWarning,
-  stacklevel=2,
+from garf.community.google.bid_manager.api_clients import BidManagerApiClient
+from garf.community.google.bid_manager.report_fetcher import (
+  BidManagerApiReportFetcher,
 )
+
+__all__ = [
+  'BidManagerApiClient',
+  'BidManagerApiReportFetcher',
+]
+
+__version__ = '0.0.7'
+
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+logging.getLogger('google_auth_oauthlib.flow').setLevel(logging.ERROR)

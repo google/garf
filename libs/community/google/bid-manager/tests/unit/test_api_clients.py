@@ -18,7 +18,7 @@ import json
 from unittest import mock
 
 import pytest
-from garf_bid_manager import api_clients, query_editor
+from garf.community.google.bid_manager import api_clients, query_editor
 
 
 @pytest.mark.parametrize(
@@ -163,9 +163,7 @@ def test_get_response_creates_and_caches_report(tmp_path, monkeypatch):
   mock_create = mock.Mock()
   mock_create.execute.return_value = {'queryId': '999'}
   mock_run = mock.Mock()
-  mock_run.execute.return_value = {
-    'key': {'queryId': '999', 'reportId': '555'}
-  }
+  mock_run.execute.return_value = {'key': {'queryId': '999', 'reportId': '555'}}
   mock_get_request = mock.Mock()
   mock_get_request.execute.return_value = {
     'key': {'queryId': '999', 'reportId': '555'},

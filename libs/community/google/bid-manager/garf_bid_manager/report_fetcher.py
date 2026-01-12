@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines report fetcher for Bid Manager API."""
+import warnings
 
-from garf_core import parsers, report_fetcher
+from garf.community.google.bid_manager.report_fetcher import *
 
-from garf_bid_manager import BidManagerApiClient, query_editor
-
-
-class BidManagerApiReportFetcher(report_fetcher.ApiReportFetcher):
-  """Defines report fetcher."""
-
-  def __init__(
-    self,
-    api_client: BidManagerApiClient | None = None,
-    parser: parsers.DictParser = parsers.NumericConverterDictParser,
-    query_spec: query_editor.BidManagerApiQuery = (
-      query_editor.BidManagerApiQuery
-    ),
-    **kwargs: str,
-  ) -> None:
-    """Initializes BidManagerApiReportFetcher."""
-    if not api_client:
-      api_client = BidManagerApiClient(**kwargs)
-    super().__init__(api_client, parser, query_spec, **kwargs)
+warnings.warn(
+  "The 'garf_bid_manager' namespace is deprecated. "
+  "Please use 'garf.community.google.bid_manager' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)

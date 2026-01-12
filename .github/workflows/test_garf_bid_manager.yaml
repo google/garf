@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'libs/community/google/bid-manager/garf_bid_manager/**'
+      - 'libs/community/google/bid-manager/garf/**'
 
 env:
   UV_SYSTEM_PYTHON: 1
@@ -29,6 +29,9 @@ jobs:
           uv pip install pytest
       - name: Test ${{ matrix.library }}
         run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[test,all]
+          uv pip install -e libs/executors/.[all]
           cd libs/community/google/bid-manager/
           uv pip install -e .
           pytest tests/unit

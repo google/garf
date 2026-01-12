@@ -18,8 +18,8 @@
 
 ### Run as a library
 ```
-import garf_bid_manager
-from garf_io import writer
+from garf.community.google.bid_manager import BidManagerApiReportFetcher
+from garf.io import writer
 
 # Fetch report
 query = """
@@ -30,10 +30,7 @@ query = """
   WHERE advertiser = 1
     AND dataRange IN (2025-01-01, 2025-12-31)
 """
-fetched_report = (
-  garf_bid_manager.BidManagerApiReportFetcher()
-  .fetch(query, query=query)
-)
+fetched_report = BidManagerApiReportFetcher() .fetch(query, query=query)
 
 # Write report to console
 console_writer = writer.create_writer('console')

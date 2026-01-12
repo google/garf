@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,17 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 
-from garf_bid_manager.api_clients import BidManagerApiClient
-from garf_bid_manager.report_fetcher import BidManagerApiReportFetcher
+import warnings
 
-__all__ = [
-  'BidManagerApiClient',
-  'BidManagerApiReportFetcher',
-]
+from garf.community.google.bid_manager import *
 
-__version__ = '0.0.7'
-
-logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
-logging.getLogger('google_auth_oauthlib.flow').setLevel(logging.ERROR)
+warnings.warn(
+  "The 'garf_bid_manager' namespace is deprecated. "
+  "Please use 'garf.community.google.bid_manager' instead.",
+  DeprecationWarning,
+  stacklevel=2,
+)
