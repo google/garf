@@ -19,7 +19,12 @@ import pathlib
 import pydantic
 import smart_open
 import yaml
+from garf.executors import exceptions
 from garf.executors.execution_context import ExecutionContext
+
+
+class GarfWorkflowError(exceptions.GarfExecutorError):
+  """Workflow specific exception."""
 
 
 class QueryPath(pydantic.BaseModel):
@@ -57,7 +62,7 @@ class ExecutionStep(ExecutionContext):
   """
 
   fetcher: str | None = None
-  alias: str | None = None
+  alias: str | None = pydantic.Field(default=None, pattern=r'^[a-zA-Z0-9_]+$')
   queries: list[QueryPath | QueryDefinition] | None = None
 
   @property
@@ -84,7 +89,10 @@ class Workflow(pydantic.BaseModel):
     """Builds workflow from local or remote yaml file."""
     with smart_open.open(path, 'r', encoding='utf-8') as f:
       data = yaml.safe_load(f)
-    return Workflow(steps=data.get('steps'))
+    try:
+      return Workflow(**data)
+    except pydantic.ValidationError as e:
+      raise GarfWorkflowError(f'Incorrect workflow:\n {e}') from e
 
   def save(self, path: str | pathlib.Path | os.PathLike[str]) -> str:
     """Saves workflow to local or remote yaml file."""
