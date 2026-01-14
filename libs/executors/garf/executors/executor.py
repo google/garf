@@ -19,7 +19,7 @@ import inspect
 from typing import Optional
 
 from garf.core import report_fetcher
-from garf.executors import execution_context
+from garf.executors import execution_context, query_processor
 from garf.executors.telemetry import tracer
 from opentelemetry import trace
 
@@ -112,6 +112,7 @@ def _handle_processors(
   processors: dict[str, report_fetcher.Processor],
   context: execution_context.ExecutionContext,
 ) -> None:
+  context = query_processor.process_gquery(context)
   for k, processor in processors.items():
     processor_signature = list(inspect.signature(processor).parameters.keys())
     if k in context.fetcher_parameters:

@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import pytest
 from garf.community.google.ads.query_editor import GoogleAdsApiQuery
+from garf.core import query_editor
 
 
 class TestGoogleAdsApiQuery:
@@ -38,3 +39,11 @@ class TestGoogleAdsApiQuery:
       spec.customizers.get('asset_policy_type').value
       == 'policy_topic_entries.type_'
     )
+
+  def test_generate_raises_error_on_missing_resource(self):
+    query = 'SELECT campaign.type'
+    with pytest.raises(
+      query_editor.GarfResourceError,
+      match='No resource found in query: SELECT campaign.type',
+    ):
+      GoogleAdsApiQuery(text=query).generate()

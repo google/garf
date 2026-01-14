@@ -49,24 +49,26 @@ class SqlAlchemyQueryExecutor(
       engine: Initialized Engine object to operated on a given database.
   """
 
-  def __init__(self, engine: sqlalchemy.engine.base.Engine) -> None:
+  def __init__(
+    self, engine: sqlalchemy.engine.base.Engine | None = None, **kwargs: str
+  ) -> None:
     """Initializes executor with a given engine.
 
     Args:
         engine: Initialized Engine object to operated on a given database.
     """
-    self.engine = engine
+    self.engine = engine or sqlalchemy.create_engine('sqlite://')
     super().__init__()
 
   @classmethod
   def from_connection_string(
-    cls, connection_string: str
+    cls, connection_string: str | None
   ) -> SqlAlchemyQueryExecutor:
     """Creates executor from SqlAlchemy connection string.
 
     https://docs.sqlalchemy.org/en/20/core/engines.html
     """
-    engine = sqlalchemy.create_engine(connection_string)
+    engine = sqlalchemy.create_engine(connection_string or 'sqlite://')
     return cls(engine)
 
   @tracer.start_as_current_span('sql.execute')

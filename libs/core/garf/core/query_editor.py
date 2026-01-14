@@ -155,9 +155,9 @@ class TemplateProcessorMixin:
       else:
         query_text = self.expand_jinja(query_text, {})
       if macros := params.macro:
-        query_text = query_text.format(
-          **macros, **CommonParametersMixin().common_params
-        )
+        joined_macros = CommonParametersMixin().common_params
+        joined_macros.update(macros)
+        query_text = query_text.format(**joined_macros)
         logger.debug('Query text after macro substitution:\n%s', query_text)
     else:
       query_text = self.expand_jinja(query_text, {})
@@ -237,7 +237,9 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       .extract_virtual_columns()
       .extract_customizers()
     )
-    if self.query.resource_name.startswith('builtin'):
+    if self.query.resource_name and self.query.resource_name.startswith(
+      'builtin'
+    ):
       self.query.title = self.query.resource_name.replace('builtin.', '')
       self.query.is_builtin_query = True
     return self.query
@@ -283,16 +285,14 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
     Returns:
       Found resource.
-
-    Raises:
-      GarfResourceException: If resource_name isn't found.
     """
     if resource_name := re.findall(
       r'FROM\s+([\w.]+)', self.query.text, flags=re.IGNORECASE
     ):
       self.query.resource_name = str(resource_name[0]).strip()
-      return self
-    raise GarfResourceError(f'No resource found in query: {self.query.text}')
+    else:
+      self.query.resource_name = None
+    return self
 
   def extract_fields(self) -> Self:
     for line in self._extract_query_lines():
@@ -379,7 +379,7 @@ def convert_date(date_string: str) -> str:
     GarfMacroError:
      If dynamic lookback value (:YYYYMMDD-N) is incorrect.
   """
-  if isinstance(date_string, list) or date_string.find(':Y') == -1:
+  if isinstance(date_string, list) or str(date_string).find(':Y') == -1:
     return date_string
   current_date = datetime.date.today()
   base_date, *date_customizer = re.split('\\+|-', date_string)
