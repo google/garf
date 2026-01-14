@@ -23,6 +23,10 @@ class GoogleAdsApiQuery(query_editor.QuerySpecification):
 
   def generate(self):
     base_query = super().generate()
+    if not base_query.resource_name:
+      raise query_editor.GarfResourceError(
+        f'No resource found in query: {base_query.text}'
+      )
     for field in base_query.fields:
       field = _format_type_field_name(field)
     for customizer in base_query.customizers.values():

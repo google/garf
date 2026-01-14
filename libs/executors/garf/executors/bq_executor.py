@@ -54,6 +54,7 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
     self,
     project_id: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
     location: str | None = None,
+    **kwargs: str,
   ) -> None:
     """Initializes BigQueryExecutor.
 
