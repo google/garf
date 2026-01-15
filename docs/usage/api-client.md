@@ -11,7 +11,7 @@ ApiClient is responsible for sending request to an API based on the query.
 It allows you to specify sample response from an API as JSON or a dictionary.
 
 ```python
-from garf_core.api_clients import FakeApiClient
+from garf.core.api_clients import FakeApiClient
 
 fake_data = [
   {'field1': {'subfield': 1}, 'field2': 2},
@@ -23,7 +23,7 @@ api_client = FakeApiClient(results=fake_data)
 Instead of providing data as a variable you can read them from JSON or CSV.
 
 ```python
-from garf_core.api_clients import FakeApiClient
+from garf.core.api_clients import FakeApiClient
 
 api_client = FakeApiClient.from_json('path/to/json')
 api_client = FakeApiClient.from_csv('path/to/csv')
@@ -38,7 +38,7 @@ REST API client is useful when you have a REST API available. Provide endpoint
 to get data from.
 
 ```python
-from garf_core.api_clients import RestApiClient
+from garf.core.api_clients import RestApiClient
 
 endpoint= 'https://api.restful-api.dev'
 api_client = RestApiClient(endpoint=endpoint)

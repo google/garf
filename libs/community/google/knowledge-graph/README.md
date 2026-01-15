@@ -59,7 +59,7 @@ garf <PATH_TO_QUERIES> --source knowledge-graph-api \
 where:
 
 * `<PATH_TO_QUERIES>` - local or remove files containing queries
-* `<OUTPUT_TYPE>` - output supported by [`garf-io` library](../garf_io/README.md).
+* `output` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
 * `<SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
 
 ## Available source parameters

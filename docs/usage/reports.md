@@ -118,7 +118,7 @@ report = GarfReport.from_polars(df)
 `GarfReport` can be easily saved to local or remote storage:
 
 ```python
-from garf_io import writer
+from garf.io import writer
 
 # initialize CSV writer
 csv_writer = writer.create_writer('csv', destination_folder="/tmp")

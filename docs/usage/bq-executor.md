@@ -31,7 +31,7 @@ where
 /// tab | Python
 
 ```python
-from garf_executors.bq_executor import BigQueryExecutor
+from garf.executors.bq_executor import BigQueryExecutor
 
 
 query_executor = BigQueryExecutor(project_id=MY_PROJECT)

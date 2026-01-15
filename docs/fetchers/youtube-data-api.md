@@ -43,7 +43,7 @@ garf query.sql --source youtube-data-api \
 ```python
 import os
 
-from garf_io import writer
+from garf.io import writer
 from garf_youtube_data_api import YouTubeDataApiReportFetcher
 
 query = 'SELECT id, snippet.title AS channel_name FROM channels'
@@ -109,7 +109,7 @@ garf video_info.sql --source youtube-data-api \
 ```python
 import os
 
-from garf_io import writer
+from garf.io import writer
 from garf_youtube_data_api import YouTubeDataApiReportFetcher
 
 query = """
@@ -167,7 +167,7 @@ garf video_orientation.sql --source youtube-data-api \
 ```python hl_lines="19"
 import os
 
-from garf_io import writer
+from garf.io import writer
 from garf_youtube_data_api import YouTubeDataApiReportFetcher
 
 query = """
@@ -225,7 +225,7 @@ garf channel_info.sql --source youtube-data-api \
 ```python
 import os
 
-from garf_io import writer
+from garf.io import writer
 from garf_youtube_data_api import YouTubeDataApiReportFetcher
 
 query = """
@@ -277,7 +277,7 @@ garf channel_videos.sql --source youtube-data-api \
 ```python
 import os
 
-from garf_io import writer
+from garf.io import writer
 from garf_youtube_data_api import YouTubeDataApiReportFetcher
 
 query = """
@@ -322,7 +322,7 @@ garf video_commentaries.sql --source youtube-data-api \
 ```python
 import os
 
-from garf_io import writer
+from garf.io import writer
 from garf_youtube_data_api import YouTubeDataApiReportFetcher
 
 

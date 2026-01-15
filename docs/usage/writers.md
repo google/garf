@@ -59,8 +59,8 @@ garf query.sql --source API_SOURCE \
 
 /// tab | python
 ```python
-from garf_core import report
-from garf_io import writer
+from garf.core import report
+from garf.io import writer
 
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])

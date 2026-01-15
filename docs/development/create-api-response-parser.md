@@ -1,5 +1,5 @@
 If your API client returns lists of structures that are not similar to dictionaries,
-you might need to implement a custom parser based on `garf_core.parsers.BaseParser`.
+you might need to implement a custom parser based on `garf.core.parsers.BaseParser`.
 
 
 ## Define Parser class
@@ -7,7 +7,7 @@ you might need to implement a custom parser based on `garf_core.parsers.BasePars
 The only method you need to implement is `parse_row`.
 
 ```python
-from garf_core.parsers import BaseParser
+from garf.core.parsers import BaseParser
 
 class MyParser(BaseParser):
 
@@ -20,7 +20,7 @@ class MyParser(BaseParser):
 Once your Parser class is defined, you can use with built-in `ApiReportFetcher`.
 
 ```python
-from garf_core import ApiReportFetcher
+from garf.core import ApiReportFetcher
 
 report_fetcher = ApiReportFetcher(api_client, parser=MyParser)
 ```

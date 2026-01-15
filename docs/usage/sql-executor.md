@@ -29,7 +29,7 @@ where
 /// tab | Python
 
 ```python
-from garf_executors.sql_executor import SqlAlchemyQueryExecutor
+from garf.executors.sql_executor import SqlAlchemyQueryExecutor
 
 
 query_executor = (
