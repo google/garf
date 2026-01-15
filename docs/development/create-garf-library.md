@@ -55,7 +55,7 @@ It's up to you how to implement a request to an API given fields, dimensions, re
 * Create `<YOUR_LIBRARY>ApiClient` class:
 
 ```python
-from garf_core import api_clients, query_editor
+from garf.core import api_clients, query_editor
 
 
 class MyLibraryApiClient(api_clients.BaseClient):
@@ -76,7 +76,7 @@ and API response parsers as well as built-in queries associated with a concrete 
 * Create `<YOUR_LIBRARY>ReportFetcher` class:
 
 ```python
-from garf_core import report_fetcher
+from garf.core import report_fetcher
 
 
 class MyLibraryApiReportFetcher(report_fetcher.ApiReportFetcher):

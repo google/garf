@@ -48,8 +48,8 @@ garf query.sql --source google-analytics \
 /// tab | python
 
 ```python
-from garf_io import writer
-from garf_google_analytics import GoogleAnalyticsApiReportFetcher
+from garf.io import writer
+from garf.community.google.analytics import GoogleAnalyticsApiReportFetcher
 
 query = """
 SELECT

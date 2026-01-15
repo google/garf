@@ -247,7 +247,7 @@ query_string = "SELECT campaign.id FROM campaign"
 
 #### Local
 ```python
-from garf_io import reader
+from garf.io import reader
 
 query_path = "path/to/query.sql"
 
@@ -258,7 +258,7 @@ query = reader_client.read(query_path)
 ```
 #### Remote
 ```python
-from garf_io import reader
+from garf.io import reader
 
 query_path = "gs://PROJECT_ID/path/to/query.sql"
 
@@ -272,7 +272,7 @@ query = reader_client.read(query_path)
 ```python
 from dataclasses import dataclass
 
-from garf_core.base_query import BaseQuery
+from garf.core.base_query import BaseQuery
 
 @dataclass
 class Campaigns(BaseQuery):
@@ -294,7 +294,7 @@ query = Campaigns(status='DISABLED')
 from typing import ClassVar
 from pydantic import BaseModel
 
-from garf_core.base_query import BaseQuery
+from garf.core.base_query import BaseQuery
 
 class Campaigns(BaseModel, BaseQuery):
   query_text: ClassVar[str]  = """
@@ -311,7 +311,7 @@ query = Campaigns(status='DISABLED')
 ### As plain python classes
 
 ```python
-from garf_core.base_query import BaseQuery
+from garf.core.base_query import BaseQuery
 
 class Campaigns(BaseQuery):
   query_text  = """

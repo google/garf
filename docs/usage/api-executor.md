@@ -46,7 +46,7 @@ where
 ///
 /// tab | Python
 ```python
-from garf_executors import setup_executor
+from garf.executors import setup_executor
 
 
 query_executor = setup_executor(source='youtube-data-api')
@@ -114,7 +114,7 @@ garf query.sql --source youtube_data_api \
 
 /// tab | Python
 ```python
-from garf_executors import setup_executor
+from garf.executors import setup_executor
 
 
 query_executor = setup_executor(

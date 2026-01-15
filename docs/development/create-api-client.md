@@ -9,7 +9,7 @@ Creating an API client is the easiest way of developing with `garf`.
 
 `garf-core` library has a `BaseClient` which one mandatory method you need to implement `get_response`.
 
-Your implementation should take an instance of `garf_core.query_editor.BaseQueryElements` class and return `garf_core.api_clients.GarfApiResponse`.
+Your implementation should take an instance of `garf.core.query_editor.BaseQueryElements` class and return `garf.core.api_clients.GarfApiResponse`.
 
 * `BaseQueryElements` contains various elements parsed from the query such as fields, sorts, filters, and resource to get data from.
 * `GarfApiReponse` contains `results` property that should be a list of dictionary-like objects.
@@ -18,7 +18,7 @@ Your implementation should take an instance of `garf_core.query_editor.BaseQuery
 Let see and example implementation of `MyApiClient`.
 
 ```python
-from garf_core import api_clients, query_editor
+from garf.core import api_clients, query_editor
 
 class MyApiClient(api_clients.BaseClient):
 
@@ -35,7 +35,7 @@ class MyApiClient(api_clients.BaseClient):
 Once your ApiClient class is defined, you can use with built-in `ApiReportFetcher`.
 
 ```python
-from garf_core import ApiReportFetcher
+from garf.core import ApiReportFetcher
 
 api_client = MyClient()
 report_fetcher = ApiReportFetcher(api_client=api_client)

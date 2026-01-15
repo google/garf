@@ -19,3 +19,9 @@ These abstractions are designed to be as modular and simple as possible:
 ## Installation
 
 `pip install garf-core`
+
+## Documentation
+
+Explore full documentation on working with  `garf-core`
+
+* [Documentation](https://google.github.io/garf/usage/core/)

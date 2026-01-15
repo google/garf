@@ -46,8 +46,8 @@ garf query.sql --source google-ads \
 ```python
 import os
 
-from garf_io import writer
-from garf_google_ads import GoogleAdsApiReportFetcher
+from garf.io import writer
+from garf.community.google.ads import GoogleAdsApiReportFetcher
 
 query = """
 SELECT

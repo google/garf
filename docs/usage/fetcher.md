@@ -9,7 +9,7 @@ To initialize `ApiReportFetcher` you need an instance of an API client to
 interact with an API. You can choose from [built-in](api-client.md) API clients
 or [create](../development/create-api-client.md) your own.
 ```python
-from garf_core import ApiReportFetcher
+from garf.core import ApiReportFetcher
 
 report_fetcher = ApiReportFetcher(api_client)
 ```
@@ -28,8 +28,8 @@ strings to int/float whenever possible.
 
 
 ```python
-from garf_core import ApiReportFetcher
-from garf_core.parsers import NumericConverterDictParser
+from garf.core import ApiReportFetcher
+from garf.core.parsers import NumericConverterDictParser
 
 report_fetcher = ApiReportFetcher(
   api_client=api_client,
@@ -47,9 +47,9 @@ You can specified them in `builtin_queries` parameters during `ApiReportFetcher`
 initialization.
 
 ```python
-from garf_core import ApiReportFetcher
-from garf_core.report import GarfReport
-from garf_core.parsers import NumericConverterDictParser
+from garf.core import ApiReportFetcher
+from garf.core.report import GarfReport
+from garf.core.parsers import NumericConverterDictParser
 
 def builtin_query(fetcher: ApiReportFetcher) -> GarfReport:
   return fetcher.fetch('SELECT field FROM resource')
@@ -68,7 +68,7 @@ report_fetcher = ApiReportFetcher(
 To fetch data from an API use `fetch` method.
 
 ```python
-from garf_core import ApiReportFetcher
+from garf.core import ApiReportFetcher
 
 report_fetcher = ApiReportFetcher(api_client)
 query = 'SELECT metric FROM resource'
@@ -89,8 +89,8 @@ or [written](writers.md) to local / remote storage.
 If your query contains [macros](queries.md/#macros)  or [templates](queries.md#templates), you need to pass values for them via `args` parameters.
 
 ```python
-from garf_core import ApiReportFetcher
-from garf_core.query_editor import GarfQueryParameters
+from garf.core import ApiReportFetcher
+from garf.core.query_editor import GarfQueryParameters
 
 report_fetcher = ApiReportFetcher(api_client)
 
@@ -132,7 +132,7 @@ Cache has two default parameters which can be overwritten:
 * `cache_ttl_seconds` (default is 3600 seconds or 1 hour).
 
 ```python
-from garf_core import ApiReportFetcher
+from garf.core import ApiReportFetcher
 
 report_fetcher = ApiReportFetcher(
   api_client,
@@ -160,7 +160,7 @@ To simplify testing and working with REST APIs `garf` has two built-in report fe
 It's ideal for prototyping and testing APIs without interacting with them directly.
 
 ```python
-from garf_core.fetchers import FakeApiReportFetcher
+from garf.core.fetchers import FakeApiReportFetcher
 
 fake_data = [
   {'field1': {'subfield': 1}, 'field2': 2},
@@ -194,7 +194,7 @@ When writing queries specify relative address of the resource you want to fetch 
 (i.e. `customers/1/orders`).
 
 ```python
-from garf_core.fetchers import RestApiReportFetcher
+from garf.core.fetchers import RestApiReportFetcher
 
 endpoint= 'https://api.restful-api.dev'
 report_fetcher = RestApiReportFetcher.from_endpoint(endpoint)

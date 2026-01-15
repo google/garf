@@ -57,7 +57,7 @@ where
 
 /// tab | Python
 ```python
-from garf_executors import api_executor
+from garf.executors import api_executor
 
 
 query_executor = (
@@ -92,7 +92,7 @@ query_executor.execute(
 !!!note
     Ensure that API endpoint for `garf` is running.
     ```bash
-    python -m garf_executors.entrypoints.server
+    python -m garf.executors.entrypoints.server
     ```
 
 ```bash
@@ -136,7 +136,7 @@ where
 
 /// tab | Python
 ```python
-from garf_executors import api_executor
+from garf.executors import api_executor
 
 
 query_executor = (
@@ -199,7 +199,7 @@ garf query.sql --source <API_SOURCE> \
 
 /// tab | Python
 ```python
-from garf_executors import api_executor
+from garf.executors import api_executor
 
 
 query_executor = (
@@ -275,7 +275,7 @@ garf query.sql --source <API_SOURCE> \
 
 /// tab | Python
 ```python
-from garf_executors import api_executor
+from garf.executors import api_executor
 
 
 query_executor = (
@@ -349,7 +349,7 @@ garf *.sql --source <API_SOURCE> \
 
 /// tab | Python
 ```python
-from garf_executors import api_executor
+from garf.executors import api_executor
 
 
 query_executor = (

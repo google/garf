@@ -9,8 +9,8 @@ garf query.sql --source API_SOURCE \
 
 /// tab | python
 ```python
-from garf_core import report
-from garf_io.writers import json_writer
+from garf.core import report
+from garf.io.writers import json_writer
 
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
@@ -39,8 +39,8 @@ garf query.sql --source API_SOURCE \
 
 /// tab | python
 ```python
-from garf_core import report
-from garf_io.writers import json_writer
+from garf.core import report
+from garf.io.writers import json_writer
 
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
@@ -67,8 +67,8 @@ garf query.sql --source API_SOURCE \
 
 /// tab | python
 ```python hl_lines="7"
-from garf_core import report
-from garf_io.writers import json_writer
+from garf.core import report
+from garf.io.writers import json_writer
 
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])

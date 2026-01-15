@@ -48,8 +48,8 @@ garf query.sql --source bid-manager \
 ```python
 import os
 
-from garf_io import writer
-from garf_bid_manager import BidManagerApiReportFetcher
+from garf.io import writer
+from garf.community.google.bid_manager import BidManagerApiReportFetcher
 
 query = """
 SELECT
