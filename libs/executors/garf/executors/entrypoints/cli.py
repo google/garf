@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import pathlib
 import sys
 
 import garf.executors
@@ -82,6 +83,7 @@ def main():
   )
   reader_client = reader.create_reader(args.input)
   if workflow_file := args.workflow:
+    wf_parent = pathlib.Path.cwd() / pathlib.Path(workflow_file).parent
     execution_workflow = workflow.Workflow.from_file(workflow_file)
     for i, step in enumerate(execution_workflow.steps, 1):
       with tracer.start_as_current_span(f'{i}-{step.fetcher}'):
@@ -99,7 +101,8 @@ def main():
           )
         for query in queries:
           if isinstance(query, garf.executors.workflow.QueryPath):
-            batch[query.path] = reader_client.read(query.path)
+            query_path = wf_parent / pathlib.Path(query.path)
+            batch[query.path] = reader_client.read(query_path)
           else:
             batch[query.query.title] = query.query.text
         query_executor.execute_batch(
