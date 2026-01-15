@@ -1,5 +1,5 @@
 SELECT
   resource,
-  dimension.name AS name,
-  metric.clicks AS clics
+  dimensions.name AS name,
+  metrics.clicks AS clicks
 FROM resource

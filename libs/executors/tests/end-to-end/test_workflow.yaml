@@ -2,6 +2,7 @@ steps:
   - alias: test
     fetcher: fake
     queries:
+      - path: query.sql
       - query:
           title: test_query
           text:  |
@@ -14,4 +15,32 @@ steps:
     writer_parameters:
       format: json
     fetcher_parameters:
-      data_location: test.json
+      data:
+        - resource: Campaign A
+          dimensions:
+            name: Ad Group 1
+            id: 101
+          metrics:
+            clicks: 1500
+            cost: 250.75
+        - resource: Campaign B
+          dimensions:
+            name: Ad Group 2
+            id: 102
+          metrics:
+            clicks: 2300
+            cost: 410.20
+        - resource: Campaign C
+          dimensions:
+            name: Ad Group 3
+            id: 103
+          metrics:
+            clicks: 800
+            cost: 120.50
+        - resource: Campaign A
+          dimensions:
+            name: Ad Group 4
+            id: 104
+          metrics:
+            clicks: 3200
+            cost: 600.00

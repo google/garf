@@ -43,19 +43,21 @@ class FakeApiReportFetcher(report_fetcher.ApiReportFetcher):
     query_specification_builder: query_editor.QuerySpecification = (
       query_editor.QuerySpecification
     ),
+    data: Sequence[dict[str, Any]] | None = None,
     data_location: str | os.PathLike[str] | None = None,
     csv_location: str | os.PathLike[str] | None = None,
     json_location: str | os.PathLike[str] | None = None,
     **kwargs: str,
   ) -> None:
-    if not api_client and not (
-      data_location := json_location or csv_location or data_location
-    ):
-      raise report_fetcher.ApiReportFetcherError(
-        'Missing fake data for the fetcher.'
-      )
     if not api_client:
-      api_client = api_clients.FakeApiClient.from_file(data_location)
+      if data:
+        api_client = api_clients.FakeApiClient(results=list(data))
+      elif data_location := json_location or csv_location or data_location:
+        api_client = api_clients.FakeApiClient.from_file(data_location)
+      else:
+        raise report_fetcher.ApiReportFetcherError(
+          'Missing fake data for the fetcher.'
+        )
     super().__init__(api_client, parser, query_specification_builder, **kwargs)
 
   @classmethod

@@ -124,20 +124,9 @@ class TestApiQueryExecutor:
     assert result.returncode == 0
     assert json.loads(result.stdout) == self.expected_output
 
-  def test_fake_source_from_workflow(self, tmp_path):
+  def test_fake_source_from_workflow(self):
     workflow_path = _SCRIPT_PATH / 'test_workflow.yaml'
-    with open(workflow_path, 'r', encoding='utf-8') as f:
-      workflow_data = yaml.safe_load(f)
-      original_data_location = workflow_data['steps'][0]['fetcher_parameters'][
-        'data_location'
-      ]
-      workflow_data['steps'][0]['fetcher_parameters']['data_location'] = str(
-        _SCRIPT_PATH / original_data_location
-      )
-    tmp_workflow = tmp_path / 'workflow.yaml'
-    with open(tmp_workflow, 'w', encoding='utf-8') as f:
-      yaml.dump(workflow_data, f, encoding='utf-8')
-    command = f'garf -w {str(tmp_workflow)} --loglevel ERROR'
+    command = f'garf -w {str(workflow_path)} --loglevel ERROR'
     result = subprocess.run(
       command,
       shell=True,
@@ -147,4 +136,6 @@ class TestApiQueryExecutor:
     )
 
     assert result.returncode == 0
-    assert json.loads(result.stdout) == self.expected_output
+    for output in result.stdout.split('\n'):
+      if output:
+        assert json.loads(output) == self.expected_output

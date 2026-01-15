@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+from typing import Any
 
 import pydantic
 import smart_open
@@ -42,8 +43,8 @@ class ExecutionContext(pydantic.BaseModel):
   query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
     default_factory=dict
   )
-  fetcher_parameters: dict[str, str | bool | int | list[str | int]] | None = (
-    pydantic.Field(default_factory=dict)
+  fetcher_parameters: dict[str, Any] | None = pydantic.Field(
+    default_factory=dict
   )
   writer: str | list[str] | None = None
   writer_parameters: dict[str, str] | None = pydantic.Field(
