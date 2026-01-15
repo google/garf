@@ -57,7 +57,10 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
           if inspect.isclass(obj) and issubclass(
             obj, report_fetcher.ApiReportFetcher
           ):
-            return getattr(fetcher_module, name)
+            if not hasattr(obj, 'alias'):
+              return getattr(fetcher_module, name)
+            if obj.alias == fetcher.name:
+              return getattr(fetcher_module, name)
       except ModuleNotFoundError as e:
         raise report_fetcher.ApiReportFetcherError(
           f'Failed to load fetcher for source {source}, reason: {e}'
