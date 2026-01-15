@@ -1,0 +1,50 @@
+name: Run tests for garf-youtube
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'libs/community/google/youtube/**'
+
+env:
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.4"
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+      - name: Run unit tests
+        run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[test,all]
+          uv pip install -e libs/executors/.[all]
+          cd libs/community/google/youtube/
+          uv pip install -e .[test]
+          pytest tests/unit
+        env:
+          GARF_YOUTUBE_DATA_API_KEY: ${{ secrets.GARF_YOUTUBE_DATA_API_KEY }}
+          YOUTUBE_ID: ${{ secrets.YOUTUBE_ID }}
+      - name: Run end-to-end tests
+        run: |
+          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/io/.[test,all]
+          uv pip install -e libs/executors/.[all]
+          cd libs/community/google/youtube/
+          uv pip install -e .[test]
+          pytest tests/e2e
+        env:
+          GARF_YOUTUBE_DATA_API_KEY: ${{ secrets.GARF_YOUTUBE_DATA_API_KEY }}
+          YOUTUBE_ID: ${{ secrets.YOUTUBE_ID }}

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-youtube"
+dependencies = [
+  "garf-core[pandas]>=1.0.0",
+  "garf-io>=1.0.0",
+  "google-api-python-client",
+]
+authors = [
+  {name = "Andrei Markin", email = "amarkin@google.com"},
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+license = {text = "Apache 2.0"}
+requires-python = ">=3.9"
+description = "Garf connector to YouTube APIs"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+dynamic=["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf.community.google.youtube.__version__"}
+
+[project.entry-points.garf]
+youtube-data-api = "garf.community.google.youtube.report_fetcher"
+youtube-analytics = "garf.community.google.youtube.report_fetcher"
+
+[project.optional-dependencies]
+test =  [
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+  "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf_youtube_data*", "garf_youtube_reporting_api*", "garf.*"]
