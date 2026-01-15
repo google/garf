@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-exporter"
 dependencies = [
-  "garf-executors",
+  "garf-executors>=1.0.0",
   "pyyaml",
   "prometheus-client",
   "pydantic",
