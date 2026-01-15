@@ -22,6 +22,7 @@ class TestWorkflow:
       {
         'fetcher': 'api',
         'queries': [
+          {'folder': 'queries'},
           {'path': 'example.sql'},
           {'query': {'text': 'SELECT 1', 'title': 'example2'}},
         ],

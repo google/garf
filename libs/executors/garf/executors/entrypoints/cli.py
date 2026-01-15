@@ -102,7 +102,18 @@ def main():
         for query in queries:
           if isinstance(query, garf.executors.workflow.QueryPath):
             query_path = wf_parent / pathlib.Path(query.path)
+            if not query_path.exists():
+              raise workflow.GarfWorkflowError(f'Query: {query_path} not found')
             batch[query.path] = reader_client.read(query_path)
+          elif isinstance(query, garf.executors.workflow.QueryFolder):
+            query_path = wf_parent / pathlib.Path(query.folder)
+            if not query_path.exists():
+              raise workflow.GarfWorkflowError(
+                f'Folder: {query_path} not found'
+              )
+            for p in query_path.rglob('*'):
+              if p.suffix == '.sql':
+                batch[p.stem] = reader_client.read(p)
           else:
             batch[query.query.title] = query.query.text
         query_executor.execute_batch(

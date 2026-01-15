@@ -27,6 +27,12 @@ class GarfWorkflowError(exceptions.GarfExecutorError):
   """Workflow specific exception."""
 
 
+class QueryFolder(pydantic.BaseModel):
+  """Path to folder with queries."""
+
+  folder: str
+
+
 class QueryPath(pydantic.BaseModel):
   """Path file with query."""
 
@@ -63,7 +69,7 @@ class ExecutionStep(ExecutionContext):
 
   fetcher: str | None = None
   alias: str | None = pydantic.Field(default=None, pattern=r'^[a-zA-Z0-9_]+$')
-  queries: list[QueryPath | QueryDefinition] | None = None
+  queries: list[QueryPath | QueryDefinition | QueryFolder] | None = None
 
   @property
   def context(self) -> ExecutionContext:
