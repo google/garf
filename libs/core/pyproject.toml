@@ -57,4 +57,4 @@ all = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include=["garf_core", "garf"]
+include=["garf_core*", "garf.*"]

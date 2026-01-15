@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-executors"
 dependencies = [
-  "garf-core",
-  "garf-io",
+  "garf-core>=1.0.0",
+  "garf-io>=1.0.0",
   "pyyaml",
   "pydantic",
   "opentelemetry-api",
