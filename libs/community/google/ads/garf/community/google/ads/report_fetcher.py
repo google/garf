@@ -92,7 +92,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
       account = account.replace('-', '')
       account = account.split(',')
     else:
-      account = [a.replace('-', '') for a in account]
+      account = [str(a).replace('-', '') for a in account]
     if not args:
       args = {}
     if expand_mcc or customer_ids_query:
