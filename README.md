@@ -26,6 +26,7 @@ and writes it virtually anywhere.
 * [Google Analytics](https://google.github.io/garf/fetchers/google-analytics-api/)
 * [Google Merchant Center](https://google.github.io/garf/fetchers/merchant-center-api/)
 * [Bid Manager](https://google.github.io/garf/fetchers/bid-manager/)
+* [Google Ads](https://google.github.io/garf/fetchers/google-ads/)
 
 
 ## Installation
@@ -46,9 +47,9 @@ garf  query.sql --source rest --source.endpoint=https://api.restful-api.dev
 ### Get data from API to use in your code
 
 ```python
-from garf_core.report_fetcher import ApiReportFetcher
-from garf_core.api_clients import RestApiClient
-from garf_io import writer
+from garf.core.report_fetcher import ApiReportFetcher
+from garf.core.api_clients import RestApiClient
+from garf.io import writer
 
 api_client = RestApiClient(endpoint='https://api.restful-api.dev')
 fetcher = ApiReportFetcher(api_client)
