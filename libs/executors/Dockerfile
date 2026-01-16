@@ -9,4 +9,4 @@ RUN if [ -n "$EXTRA_LIBS" ]; then \
   uv pip install --no-cache-dir $EXTRA_LIBS; \
 fi
 
-ENTRYPOINT ["uvicorn", "garf.executors.entrypoints.server:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "garf.executors.entrypoints.server:app", "--host", "0.0.0.0"]
