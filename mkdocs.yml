@@ -82,6 +82,7 @@ nav:
     - Create a library: development/create-garf-library.md
   - Fetchers:
     - fetchers/overview.md
+    - REST: fetchers/rest.md
     - YouTube: fetchers/youtube.md
     - Merchant Center: fetchers/merchant-center-api.md
     - Google Analytics: fetchers/google-analytics-api.md

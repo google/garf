@@ -440,8 +440,10 @@ fetched_report = (
   .fetch(
     query,
     args={
-      'start_date': '2025-01-01',
-      'end_date': '2025-12-31',
+      'macro': {
+        'start_date': '2025-01-01',
+        'end_date': '2025-12-31',
+      }
     }
   )
 )
@@ -504,9 +506,11 @@ fetched_report = (
   .fetch(
     query,
     args={
-      'video_id': YOUTUBE_VIDEO_ID,
-      'start_date': '2025-01-01',
-      'end_date': '2025-12-31',
+      'macro': {
+        'video_id': YOUTUBE_VIDEO_ID,
+        'start_date': '2025-01-01',
+        'end_date': '2025-12-31',
+      }
     }
   )
 )
