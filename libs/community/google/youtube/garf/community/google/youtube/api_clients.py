@@ -211,15 +211,15 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
   def __init__(self, api_version: str = 'v2') -> None:
     """Initializes YouTubeAnalyticsApiClient."""
     if (
-      not os.getenv('GARF_YOUTUBE_REPORTING_API_REFRESH_TOKEN')
-      or not os.getenv('GARF_YOUTUBE_REPORTING_API_CLIENT_ID')
-      or not os.getenv('GARF_YOUTUBE_REPORTING_API_CLIENT_SECRET')
+      not os.getenv('GARF_YOUTUBE_ANALYTICS_API_REFRESH_TOKEN')
+      or not os.getenv('GARF_YOUTUBE_ANALYTICS_API_CLIENT_ID')
+      or not os.getenv('GARF_YOUTUBE_ANALYTICS_API_CLIENT_SECRET')
     ):
       raise YouTubeAnalyticsApiClientError(
         'YouTubeAnalyticsApiClient requests all ENV variables to be set up: '
-        'GARF_YOUTUBE_REPORTING_API_REFRESH_TOKEN, '
-        'GARF_YOUTUBE_REPORTING_API_CLIENT_ID, '
-        'GARF_YOUTUBE_REPORTING_API_CLIENT_SECRET'
+        'GARF_YOUTUBE_ANALYTICS_API_REFRESH_TOKEN, '
+        'GARF_YOUTUBE_ANALYTICS_API_CLIENT_ID, '
+        'GARF_YOUTUBE_ANALYTICS_API_CLIENT_SECRET'
       )
     self.api_version = api_version
     self._credentials = None
@@ -232,10 +232,10 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
       return self._credentials
     return Credentials(
       None,
-      refresh_token=os.getenv('GARF_YOUTUBE_REPORTING_API_REFRESH_TOKEN'),
+      refresh_token=os.getenv('GARF_YOUTUBE_ANALYTICS_API_REFRESH_TOKEN'),
       token_uri='https://oauth2.googleapis.com/token',
-      client_id=os.getenv('GARF_YOUTUBE_REPORTING_API_CLIENT_ID'),
-      client_secret=os.getenv('GARF_YOUTUBE_REPORTING_API_CLIENT_SECRET'),
+      client_id=os.getenv('GARF_YOUTUBE_ANALYTICS_API_CLIENT_ID'),
+      client_secret=os.getenv('GARF_YOUTUBE_ANALYTICS_API_CLIENT_SECRET'),
     )
 
   @property
