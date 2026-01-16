@@ -1,0 +1,40 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker build \
+          --build-arg="_EXTRA_LIBS=${_EXTRA_LIBS}" \
+          -t "gcr.io/$PROJECT_ID/${_IMAGE}:latest" \
+          -f - . <<EOF
+        FROM ${_BASE_IMAGE}
+        ARG _EXTRA_LIBS=""
+        RUN if [ -n "$_EXTRA_LIBS" ]; then \
+          uv pip install --no-cache-dir $_EXTRA_LIBS; \
+        fi
+        EOF
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/${_IMAGE}:latest']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy', '${_SERVICE_NAME}',
+      '--image', 'gcr.io/$PROJECT_ID/${_IMAGE}:latest',
+      '--region', '${_REGION}',
+      '--platform', 'managed', '--port', '8000',
+      '--set-env-vars',
+      'OTEL_EXPORTER_OTLP_ENDPOINT=telemetry.googleapis.com,OTEL_SERVICE_NAME=garf',
+    ]
+
+substitutions:
+  _EXTRA_LIBS: "garf-executors"
+  _BASE_IMAGE: "ghcr.io/google/garf:latest"
+  _IMAGE: "garf"
+  _SERVICE_NAME: "garf"
+  _REGION: "us-central1"
+
+images:
+  - 'gcr.io/$PROJECT_ID/${_IMAGE}:latest'

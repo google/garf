@@ -88,6 +88,10 @@ nav:
     - Create API client: development/create-api-client.md
     - Create API response parser: development/create-api-response-parser.md
     - Create a library: development/create-garf-library.md
+  - Deployment:
+    - Docker: deployment/docker.md
+    - Kubernetes: deployment/kubernetes.md
+    - Google Cloud: deployment/google-cloud.md
   - Fetchers:
     - fetchers/overview.md
     - REST: fetchers/rest.md
