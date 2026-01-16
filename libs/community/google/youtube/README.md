@@ -1,9 +1,9 @@
-# `garf` for YouTube Data API
+# `garf` for YouTube APIs
 
-[![PyPI](https://img.shields.io/pypi/v/garf-youtube-data-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube-data-api)
-[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube-data-api?logo=pypi)](https://pypi.org/project/garf-youtube-data-api/)
+[![PyPI](https://img.shields.io/pypi/v/garf-youtube?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube?logo=pypi)](https://pypi.org/project/garf-youtube/)
 
-`garf-youtube-data-api` simplifies fetching data from YouTube Data API using SQL-like queries.
+`garf-youtube` simplifies fetching data from YouTube APIs using SQL-like queries.
 
 ## Prerequisites
 
@@ -13,8 +13,9 @@
 * [API key](https://support.google.com/googleapi/answer/6158862?hl=en) to access to access YouTube Data API.
     > Once generated expose API key as `export GARF_YOUTUBE_DATA_API_KEY=<YOUR_API_KEY>`
 
-### YouTube Reporting API
-* [YouTube Reporting API](https://console.cloud.google.com/apis/library/youtubereporting.googleapis.com) enabled.
+### YouTube Analytics API
+
+* [YouTube Analytics API](https://console.cloud.google.com/apis/library/youtubeanalytics.googleapis.com) enabled.
 * [Client ID, client secret](https://support.google.com/cloud/answer/6158849?hl=en) and refresh token generated. \
     > Please note you'll need to use another OAuth2 credentials type - *Web application*, and set "https://developers.google.com/oauthplayground" as redirect url in it.
 * Refresh token. You can use [OAuth Playground](https://developers.google.com/oauthplayground/) to generate refresh token.
@@ -25,9 +26,9 @@
 * Expose client id,  client secret and refresh token as environmental variables:
 
 ```
-export GARF_YOUTUBE_REPORTING_API_CLIENT_ID=
-export GARF_YOUTUBE_REPORTING_API_CLIENT_SECRET=
-export GARF_YOUTUBE_REPORTING_API_REFRESH_TOKEN=
+export GARF_YOUTUBE_ANALYICS_API_CLIENT_ID=
+export GARF_YOUTUBE_ANALYICS_API_CLIENT_SECRET=
+export GARF_YOUTUBE_ANALYICS_API_REFRESH_TOKEN=
 ```
 
 ## Installation
