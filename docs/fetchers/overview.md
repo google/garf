@@ -1,7 +1,9 @@
 # Supported APIs
 
-* [YouTube Data API](youtube-data-api.md)
-* [YouTube Reporting API](youtube-reporting-api.md)
+* [REST APIs](rest.md)
+* [YouTube Data API](youtube.md#youtube-data-api)
+* [YouTube Analytics API](youtube.md#youtube-analytics-api)
 * [Google Analytics](google-analytics-api.md)
 * [Google Merchant Center](merchant-center-api.md)
 * [Bid Manager](bid-manager.md)
+* [Google Ads](google-ads.md)

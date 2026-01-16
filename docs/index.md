@@ -5,8 +5,8 @@
 `garf` is a Python library for building various connectors to reporting API that provides
 users with a SQL-like interface to specify what needs to be extracted from the API.
 
-Write a query and  `garf` will do the rest- build the correct request to an API, parse response
-and writes it virtually anywhere.
+Write a query and  `garf` will do the rest - build the correct request to an API, parse response
+and write it virtually anywhere.
 
 ## Key features
 
@@ -19,11 +19,13 @@ and writes it virtually anywhere.
 
 ## Supported APIs
 
-* [YouTube Data API](fetchers/youtube-data-api.md)
-* [YouTube Reporting API](fetchers/youtube-reporting-api.md)
+* [YouTube Data API](fetchers/youtube.md#youtube-data-api)
+* [YouTube Analytics API](fetchers/yotube.md#youtube-analytics-api)
 * [Google Analytics](fetchers/google-analytics-api.md)
 * [Google Merchant Center](fetchers/merchant-center-api.md)
+* [Google Merchant Center](fetchers/bid-manager.md)
 * [Google Ads](fetchers/google-ads.md)
+* [REST](fetchers/rest.md)
 
 ## Installation
 
@@ -52,12 +54,10 @@ garf  query.sql --source rest --source.endpoint=https://api.restful-api.dev
 ### Python library
 
 ```python
-from garf_core.report_fetcher import ApiReportFetcher
-from garf_core.api_clients import RestApiClient
-from garf_io import writer
+from garf.core.fetchers import RestApiReportFetcher
+from garf.io import writer
 
-api_client = RestApiClient(endpoint='https://api.restful-api.dev')
-fetcher = ApiReportFetcher(api_client)
+fetcher = RestApiReportFetcher(endpoint='https://api.restful-api.dev')
 query = 'SELECT id, name AS model, data.color AS color FROM objects'
 report = fetcher.fetch(query)
 
@@ -65,5 +65,5 @@ report = fetcher.fetch(query)
 report.to_pandas()
 
 # Write to CSV
-writer.create_writer('console').write(report, 'api_data')
+writer.create_writer('csv').write(report, 'api_data')
 ```
