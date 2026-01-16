@@ -1,33 +1,32 @@
-# garf for YouTube Data API
+The `garf-youtube` library provides a unified way to interact with various YouTube APIs, streamlining data fetching and reporting within the `garf` framework. It acts as an umbrella library, allowing you to access both the YouTube Data API and the YouTube Analytics API through consistent `garf` queries.
 
-[![PyPI](https://img.shields.io/pypi/v/garf-youtube-data-api?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube-data-api)
-[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube-data-api?logo=pypi)](https://pypi.org/project/garf-youtube-data-api/)
+## Overview
 
-Interacts with [YouTube Data API](https://developers.google.com/youtube/v3/docs).
+`garf-youtube` simplifies fetching data from YouTube by abstracting away the underlying API complexities. You can write SQL-like queries to specify the data you need, and `garf` handles the interaction with the appropriate YouTube API endpoint.
 
-## Install
+## Installation
 
-Install `garf-youtube-data-api` library
+To use `garf-youtube`, you typically install it along with `garf-executors`:
 
 /// tab | pip
-```
-pip install garf-executors garf-youtube-data-api
+```bash
+pip install garf-executors garf-youtube
 ```
 ///
 
 /// tab | uv
-```
-uv pip install garf-executors garf-youtube-data-api
+```bash
+uv pip install garf-executors garf-youtube
 ```
 ///
 
-## Usage
+`garf-youtube` acts as a facade for the YouTube Data API and YouTube Analytics API. Depending on your query, `garf` will automatically route the request to the correct underlying fetcher.
 
+## YouTube Data API
 ### Prerequisites
 
 * [YouTube Data API](https://console.cloud.google.com/apis/library/youtube.googleapis.com) enabled.
 * [API key](https://support.google.com/googleapi/answer/6158862?hl=en) to access to access YouTube Data API exposed as `export GARF_YOUTUBE_DATA_API_KEY=<YOUR_API_KEY>`
-
 
 /// tab | cli
 ```bash
@@ -41,15 +40,13 @@ garf query.sql --source youtube-data-api \
 /// tab | python
 
 ```python
-import os
-
 from garf.io import writer
-from garf_youtube_data_api import YouTubeDataApiReportFetcher
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
 
 query = 'SELECT id, snippet.title AS channel_name FROM channels'
 
 fetched_report = (
-  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  YouTubeDataApiReportFetcher()
   .fetch(query, id=[YOUTUBE_CHANNEL_ID])
 )
 
@@ -69,9 +66,9 @@ csv_writer.write(fetched_report, 'query')
 | `chart` | `mostPopular` | Gets most popular in `regionCode`, can be narrowed down with `videoCategoriId` |
 | `videoId` | id(s) of YouTube Video to get comments from | Multiple ids are supported, should be comma-separated |
 
-## Examples
+### Examples
 
-### Videos
+#### Videos
 
 **Gets meta information and statistics for YouTube videos.**
 
@@ -107,10 +104,8 @@ garf video_info.sql --source youtube-data-api \
 /// tab | python
 
 ```python
-import os
-
 from garf.io import writer
-from garf_youtube_data_api import YouTubeDataApiReportFetcher
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
 
 query = """
 SELECT
@@ -134,7 +129,7 @@ FROM videos
 """
 
 fetched_report = (
-  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  YouTubeDataApiReportFetcher()
   .fetch(query, id=[YOUTUBE_VIDEO_ID_1, YOUTUBE_VIDEO_ID_2])
 )
 
@@ -165,10 +160,8 @@ garf video_orientation.sql --source youtube-data-api \
 /// tab | python
 
 ```python hl_lines="19"
-import os
-
 from garf.io import writer
-from garf_youtube_data_api import YouTubeDataApiReportFetcher
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
 
 query = """
 SELECT
@@ -179,7 +172,7 @@ FROM videos
 """
 
 fetched_report = (
-  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  YouTubeDataApiReportFetcher()
   .fetch(
     query,
     id=[YOUTUBE_VIDEO_ID_1, YOUTUBE_VIDEO_ID_2],
@@ -192,7 +185,7 @@ csv_writer.write(fetched_report, 'video_orientation')
 ```
 ///
 
-### Channels
+#### Channels
 
 **Gets meta information and statistics for YouTube channel(s).**
 
@@ -223,10 +216,8 @@ garf channel_info.sql --source youtube-data-api \
 /// tab | python
 
 ```python
-import os
-
 from garf.io import writer
-from garf_youtube_data_api import YouTubeDataApiReportFetcher
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
 
 query = """
 SELECT
@@ -245,7 +236,7 @@ FROM channels
 """
 
 fetched_report = (
-  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  YouTubeDataApiReportFetcher()
   .fetch(query, id=[YOUTUBE_CHANNEL_ID])
 )
 
@@ -275,10 +266,8 @@ garf channel_videos.sql --source youtube-data-api \
 /// tab | python
 
 ```python
-import os
-
 from garf.io import writer
-from garf_youtube_data_api import YouTubeDataApiReportFetcher
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
 
 query = """
 SELECT
@@ -288,7 +277,7 @@ FROM builtin.channelVideos
 """
 
 fetched_report = (
-  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  YouTubeDataApiReportFetcher()
   .fetch(query, id=[YOUTUBE_CHANNEL_ID])
 )
 
@@ -297,7 +286,7 @@ csv_writer.write(fetched_report, 'channel_videos')
 ```
 ///
 
-### Commentaries
+#### Commentaries
 
 **Gets tops level commentaries for YouTube video(s).**
 
@@ -320,10 +309,8 @@ garf video_commentaries.sql --source youtube-data-api \
 /// tab | python
 
 ```python
-import os
-
 from garf.io import writer
-from garf_youtube_data_api import YouTubeDataApiReportFetcher
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
 
 
 query = """
@@ -335,11 +322,196 @@ FROM commentThreads
 """
 
 fetched_report = (
-  YouTubeDataApiReportFetcher(api_key=os.getenv('GARF_YOUTUBE_DATA_API_KEY'))
+  YouTubeDataApiReportFetcher()
   .fetch(query, id=[YOUTUBE_VIDEO_ID_1, YOUTUBE_VIDEO_ID_2])
 )
 
 csv_writer = writer.create_writer('csv')
 csv_writer.write(fetched_report, 'video_commentaries')
+```
+///
+
+## YouTube Analytics API
+
+### Prerequisites
+
+* [YouTube Reporting API](https://console.cloud.google.com/apis/library/youtubereporting.googleapis.com) enabled.
+* [Client ID, client secret](https://support.google.com/cloud/answer/6158849?hl=en) and refresh token generated.
+!!!important
+    Please note you'll need to use *Web application* OAuth2 credentials type and set "https://developers.google.com/oauthplayground" as redirect url in it.
+
+* Refresh token. You can use [OAuth Playground](https://developers.google.com/oauthplayground/) to generate refresh token.
+    * Select `https://www.googleapis.com/auth/yt-analytics.readonly` scope
+    * Enter OAuth Client ID and OAuth Client secret under *Use your own OAuth credentials*;
+    * Click on *Authorize APIs*
+
+* Expose client id,  client secret and refresh token as environmental variables:
+
+/// tab | cli
+```bash
+echo """
+SELECT
+  dimensions.day AS date,
+  metrics.views AS views
+FROM channel
+WHERE
+  channel==MINE
+  AND startDate = 2025-01-01
+  AND endDate = 2025-12-31
+" > query.sql
+
+garf query.sql --source youtube-analytics \
+  --output csv
+```
+///
+
+/// tab | Python
+
+```python
+from garf.io import writer
+from garf.community.google.youtube import YouTubeAnalyticsApiReportFetcher
+
+query = """
+SELECT
+  dimensions.day AS date,
+  metrics.views AS views
+FROM channel
+WHERE
+  channel==MINE
+  AND startDate = 2025-01-01
+  AND endDate = 2025-12-31
+"""
+
+fetched_report = (
+  YouTubeAnalyticsApiReportFetcher()
+  .fetch(query)
+)
+
+csv_writer = writer.create_writer('csv')
+csv_writer.write(fetched_report, 'report_data')
+```
+///
+
+### Examples
+
+#### Channel views
+
+**Gets daily number of views for a channel.**
+
+/// tab | cli
+```bash
+echo "
+SELECT
+  dimensions.day AS date,
+  metrics.views AS views
+FROM channel
+WHERE
+  channel==MINE
+  AND startDate = {start_date}
+  AND endDate = {end_date}
+" > channel_daily_views.sql
+
+garf channel_daily_views.sql --source youtube-analytics \
+  --output csv \
+  --macro.start_date=2025-01-01 \
+  --macro.end_date=2025-12-31
+```
+///
+
+/// tab | python
+
+```python
+from garf.io import writer
+from garf.community.google.youtube import YouTubeAnalyticsApiReportFetcher
+
+query = """
+SELECT
+  dimensions.day AS date,
+  metrics.views AS views
+FROM channel
+WHERE
+  channel==MINE
+  AND startDate = {start_date}
+  AND endDate = {end_date}
+"""
+
+fetched_report = (
+  YouTubeAnalyticsApiReportFetcher()
+  .fetch(
+    query,
+    args={
+      'start_date': '2025-01-01',
+      'end_date': '2025-12-31',
+    }
+  )
+)
+
+csv_writer = writer.create_writer('csv')
+csv_writer.write(fetched_report, 'channel_daily_views')
+```
+///
+
+#### Video retention
+
+**Gets retention information for a given video.**
+
+/// tab | cli
+```bash
+echo "
+SELECT
+  dimensions.elapsedVideoTimeRatio AS time_ratio,
+  metrics.audienceWatchRatio AS watch_ratio,
+  metrics.relativeRetentionPerformance AS retention
+FROM channel
+WHERE
+  channel==MINE
+  AND audienceType==ORGANIC
+  AND video=={video_id}
+  AND startDate = {start_date}
+  AND endDate = {end_date}
+" > video_retention.sql
+
+garf video_retention.sql --source youtube-analytics \
+  --output csv \
+  --macro.video_id=YOUTUBE_VIDEO_ID \
+  --macro.start_date=2025-01-01 \
+  --macro.end_date=2025-12-31
+```
+///
+
+/// tab | python
+
+```python
+from garf.io import writer
+from garf.community.google.youtube import YouTubeAnalyticsApiReportFetcher
+
+query = """
+SELECT
+  dimensions.elapsedVideoTimeRatio AS time_ratio,
+  metrics.audienceWatchRatio AS watch_ratio,
+  metrics.relativeRetentionPerformance AS retention
+FROM channel
+WHERE
+  channel==MINE
+  AND audienceType==ORGANIC
+  AND video=={video_id}
+  AND startDate = {start_date}
+  AND endDate = {end_date}
+"""
+
+fetched_report = (
+  YouTubeAnalyticsApiReportFetcher()
+  .fetch(
+    query,
+    args={
+      'video_id': YOUTUBE_VIDEO_ID,
+      'start_date': '2025-01-01',
+      'end_date': '2025-12-31',
+    }
+  )
+)
+
+csv_writer = writer.create_writer('csv')
+csv_writer.write(fetched_report, 'video_retention')
 ```
 ///

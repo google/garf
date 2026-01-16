@@ -82,9 +82,7 @@ nav:
     - Create a library: development/create-garf-library.md
   - Fetchers:
     - fetchers/overview.md
-    - YouTube:
-      - Data API: fetchers/youtube-data-api.md
-      - Reporting API: fetchers/youtube-reporting-api.md
+    - YouTube: fetchers/youtube.md
     - Merchant Center: fetchers/merchant-center-api.md
     - Google Analytics: fetchers/google-analytics-api.md
     - Bid Manager: fetchers/bid-manager.md
