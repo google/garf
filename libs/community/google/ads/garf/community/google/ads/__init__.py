@@ -12,14 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Library for getting reports from Google Ads API."""
+"""Library for getting reports from Google Ads & Search Ads 360 API."""
 
-from garf.community.google.ads.api_clients import GoogleAdsApiClient
-from garf.community.google.ads.report_fetcher import GoogleAdsApiReportFetcher
+from garf.community.google.ads.api_clients import (
+  GoogleAdsApiClient,
+  SearchAds360ApiClient,
+)
+from garf.community.google.ads.report_fetcher import (
+  GoogleAdsApiReportFetcher,
+  SearchAds360ApiReportFetcher,
+)
 
 __all__ = [
   'GoogleAdsApiClient',
   'GoogleAdsApiReportFetcher',
+  'SearchAds360ApiClient',
+  'SearchAds360ApiReportFetcher',
 ]
 
-__version__ = '1.0.2'
+__version__ = '1.1.0'

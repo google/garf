@@ -11,13 +11,12 @@ pip install garf-executors
 ```
 ## Run
 
-Let's take an example of working with [YouTube Data API fetcher](../fetchers/youtube-data-api.md) to get some stats on YouTube video.
-
+Let's take an example of working with [YouTube Data API fetcher](../fetchers/youtube.md#youtube-data-api) to get some stats on YouTube video.
 !!! important
     Make sure that corresponding library for interacting with YouTube Data API is installed
 
     ```bash
-    pip install garf_youtube_data_api
+    pip install garf-youtube
     ```
 
 /// tab | bash
@@ -104,7 +103,7 @@ Cache has `cache_ttl_seconds` parameter (default is 3600 seconds or 1 hour).
 /// tab | bash
 
 ```
-garf query.sql --source youtube_data_api \
+garf query.sql --source youtube-data-api \
   --output console \
   --source.id=VIDEO_ID \
   --enable-cache \

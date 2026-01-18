@@ -21,7 +21,7 @@ import warnings
 
 import garf.core
 from garf.community.google.ads import (
-  GoogleAdsApiClient,
+  api_clients,
   builtins,
   exceptions,
   parsers,
@@ -34,11 +34,13 @@ class GoogleAdsApiReportFetcherError(exceptions.GoogleAdsApiError):
 
 
 class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
-  """Defines report fetcher."""
+  """Defines report fetcher for Google Ads API."""
+
+  alias = 'google-ads'
 
   def __init__(
     self,
-    api_client: GoogleAdsApiClient | None = None,
+    api_client: api_clients.GoogleAdsApiClient | None = None,
     parser: garf.core.parsers.ProtoParser = parsers.GoogleAdsRowParser,
     query_spec: query_editor.GoogleAdsApiQuery = (
       query_editor.GoogleAdsApiQuery
@@ -49,7 +51,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
   ) -> None:
     """Initializes GoogleAdsApiReportFetcher."""
     if not api_client:
-      api_client = GoogleAdsApiClient(**kwargs)
+      api_client = api_clients.GoogleAdsApiClient(**kwargs)
     self.parallel_threshold = parallel_threshold
     super().__init__(
       api_client=api_client,
@@ -205,4 +207,23 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         for customer_id in child_customer_ids
         if customer_id != 0
       }
+    )
+
+
+class SearchAds360ApiReportFetcher(GoogleAdsApiReportFetcher):
+  """Defines report fetcher for Search Ads 360 API."""
+
+  alias = 'search-ads-360'
+
+  def __init__(
+    self,
+    api_client: api_clients.SearchAds360ApiClient | None = None,
+    **kwargs: str,
+  ) -> None:
+    """Initializes SearchAds360ApiReportFetcher."""
+    if not api_client:
+      api_client = api_clients.SearchAds360ApiClient(**kwargs)
+    super().__init__(
+      api_client=api_client,
+      **kwargs,
     )
