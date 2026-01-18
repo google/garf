@@ -27,6 +27,7 @@ and writes it virtually anywhere.
 * [Google Merchant Center](https://google.github.io/garf/fetchers/merchant-center-api/)
 * [Bid Manager](https://google.github.io/garf/fetchers/bid-manager/)
 * [Google Ads](https://google.github.io/garf/fetchers/google-ads/)
+* [Search Ads 360](https://google.github.io/garf/fetchers/google-ads/#search-ads-360)
 * [REST](fetchers/rest.md)
 
 

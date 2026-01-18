@@ -30,12 +30,16 @@ version = {attr = "garf.community.google.ads.__version__"}
 
 [project.entry-points.garf]
 google-ads = "garf.community.google.ads.report_fetcher"
+search-ads-360 = "garf.community.google.ads.report_fetcher"
 
-[options.extras_require]
+[project.optional-dependencies]
 test =  [
   "pytest",
   "pytest-cov",
   "python-dotenv",
+]
+search-ads-360 = [
+  "google-api-python-client",
 ]
 
 [tool.setuptools.packages.find]

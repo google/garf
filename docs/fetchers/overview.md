@@ -7,3 +7,4 @@
 * [Google Merchant Center](merchant-center-api.md)
 * [Bid Manager](bid-manager.md)
 * [Google Ads](google-ads.md)
+* [Search Ads 360](google-ads.md#search-ads-360)

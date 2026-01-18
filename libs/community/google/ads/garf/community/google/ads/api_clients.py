@@ -52,6 +52,53 @@ class GoogleAdsApiClientError(exceptions.GoogleAdsApiError):
   """Google Ads API client specific error."""
 
 
+class SearchAds360ApiClient(api_clients.BaseClient):
+  """Client to interact Search Ads 360 API.
+
+  Attributes:
+    default_config: Default location for search-ads-360.yaml file.
+    client: GoogleAdsClient to perform stream and mutate operations.
+    search_ads_360_service: Service to perform stream operations.
+  """
+
+  default_config = str(Path.home() / 'search-ads-360.yaml')
+
+  def __init__(
+    self,
+    path_to_config: str | os.PathLike[str] = os.getenv(
+      'SEARCH_ADS_360_CONFIGURATION_FILE_PATH', default_config
+    ),
+    **kwargs: str,
+  ) -> None:
+    """Initializes SearchAds360ApiClient based on a config file.
+
+    Args:
+      path_to_config: Path to search-ads-360.yaml file.
+    """
+    from garf.community.google.ads import search_ads_360_client
+
+    self.client = search_ads_360_client.SearchAds360Client.load_from_file(
+      path_to_config
+    )
+    self.search_ads_360_service = self.client.get_service()
+    self.kwargs = kwargs
+
+  def get_response(
+    self, request, account: int, **kwargs: str
+  ) -> api_clients.GarfApiResponse:
+    from garf.community.google.ads import search_ads_360_client
+
+    request = search_ads_360_client.SearchSearchAds360StreamRequest(
+      query=request.text, customer_id=account
+    )
+    response = self.search_ads_360_service.search_stream(request)
+    results = [result for batch in response for result in batch.results]
+    return api_clients.GarfApiResponse(
+      results=results,
+      results_placeholder=[search_ads_360_client.SearchAds360Row()],
+    )
+
+
 class GoogleAdsApiClient(api_clients.BaseClient):
   """Client to interact with Google Ads API.
 

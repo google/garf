@@ -1,17 +1,21 @@
-# `garf` for Google Ads API
+# `garf` for Google Ads  & Search Ads 360 API
 
 [![PyPI](https://img.shields.io/pypi/v/garf-google-ads?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-google-ads)
 [![Downloads PyPI](https://img.shields.io/pypi/dw/garf-google-ads?logo=pypi)](https://pypi.org/project/garf-google-ads/)
 
-`garf-google-ads` simplifies fetching data from Google Ads API using SQL-like queries.
+`garf-google-ads` simplifies fetching data from Google Ads & Search Ads 360 API using SQL-like queries.
 
 ## Prerequisites
 
 * [Google Ads API](https://console.cloud.google.com/apis/library/googleads.googleapis.com) enabled.
+* (Optional) [Search Ads 360 API](https://console.cloud.google.com/apis/library/doubleclicksearch.googleapis.com) enabled if you want to interact with Search Ads 360 API.
+
 
 ## Installation
 
 `pip install garf-google-ads`
+
+> To work with Search Ads 360 API install run `pip install garf-google-ads[search-ads-360]`
 
 ## Usage
 
@@ -67,3 +71,7 @@ where:
 | `expand-mcc`   | Whether to force account expansion if MCC is provided | `False` by default |
 | `customer-ids-query`   | Optional query to find account satisfying specific condition | |
 | `version`   | Version of Google Ads API |  |
+
+## Documentation
+
+You can find a documentation on `garf-google-ads` [here](https://google.github.io/garf/fetchers/google-ads/).

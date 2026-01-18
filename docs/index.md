@@ -20,11 +20,12 @@ and write it virtually anywhere.
 ## Supported APIs
 
 * [YouTube Data API](fetchers/youtube.md#youtube-data-api)
-* [YouTube Analytics API](fetchers/yotube.md#youtube-analytics-api)
+* [YouTube Analytics API](fetchers/youtube.md#youtube-analytics-api)
 * [Google Analytics](fetchers/google-analytics-api.md)
 * [Google Merchant Center](fetchers/merchant-center-api.md)
-* [Google Merchant Center](fetchers/bid-manager.md)
+* [Bid Manager](fetchers/bid-manager.md)
 * [Google Ads](fetchers/google-ads.md)
+* [Search Ads 360](fetchers/google-ads.md#search-ads-360)
 * [REST](fetchers/rest.md)
 
 ## Installation
@@ -37,7 +38,7 @@ pip install garf-executors
 
 /// tab | uv
 ```bash
-uv add garf-executors
+uv pip install garf-executors
 ```
 ///
 
