@@ -122,6 +122,7 @@ class ApiReportFetcher:
     self,
     query_specification: str | query_editor.QuerySpecification,
     args: query_editor.GarfQueryParameters | None = None,
+    title: str | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
     """Asynchronously fetches data from API based on query_specification.
@@ -130,12 +131,13 @@ class ApiReportFetcher:
       query_specification: Query text that will be passed to API
         alongside column_names, customizers and virtual columns.
       args: Arguments that need to be passed to the query.
+      title: Optional title of the query.
 
     Returns:
       GarfReport with results of query execution.
     """
     return await asyncio.to_thread(
-      self.fetch, query_specification, args, **kwargs
+      self.fetch, query_specification, args, title, **kwargs
     )
 
   @tracer.start_as_current_span('fetch')
@@ -143,6 +145,7 @@ class ApiReportFetcher:
     self,
     query_specification: str | query_editor.QuerySpecification,
     args: query_editor.GarfQueryParameters | None = None,
+    title: str | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
     """Fetches data from API based on query_specification.
@@ -151,6 +154,7 @@ class ApiReportFetcher:
       query_specification: Query text that will be passed to API
         alongside column_names, customizers and virtual columns.
       args: Arguments that need to be passed to the query.
+      title: Optional title of the query.
 
     Returns:
       GarfReport with results of query execution.
@@ -168,6 +172,8 @@ class ApiReportFetcher:
         args=args,
       )
     query = query_specification.generate()
+    if not query.title:
+      query.title = title
     if query.is_builtin_query:
       span.set_attribute('is_builtin_query', True)
       if not (builtin_report := self.builtin_queries.get(query.title)):
