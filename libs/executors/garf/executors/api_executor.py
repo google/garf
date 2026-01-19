@@ -21,6 +21,7 @@ GarfReport and saving it to local/remote storage.
 from __future__ import annotations
 
 import logging
+import pathlib
 
 from garf.core import report_fetcher
 from garf.executors import (
@@ -110,9 +111,11 @@ class ApiQueryExecutor(executor.Executor):
       span.set_attribute('query.title', title)
       span.set_attribute('query.text', query)
       logger.debug('starting query %s', query)
+      title = pathlib.Path(title).name.split('.')[0]
       results = self.fetcher.fetch(
         query_specification=query,
         args=context.query_parameters,
+        title=title,
         **context.fetcher_parameters,
       )
       writer_clients = context.writer_clients
