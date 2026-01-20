@@ -137,7 +137,11 @@ class ApiReportFetcher:
       GarfReport with results of query execution.
     """
     return await asyncio.to_thread(
-      self.fetch, query_specification, args, title, **kwargs
+      self.fetch,
+      query_specification=query_specification,
+      args=args,
+      title=title,
+      **kwargs,
     )
 
   @tracer.start_as_current_span('fetch')
