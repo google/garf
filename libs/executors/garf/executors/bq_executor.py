@@ -96,6 +96,8 @@ class BigQueryExecutor(executor.Executor, query_editor.TemplateProcessorMixin):
       Report with data if query returns some data otherwise empty Report.
     """
     span = trace.get_current_span()
+    span.set_attribute('query.title', title)
+    span.set_attribute('query.text', query)
     logger.info('Executing script: %s', title)
     query_text = self.replace_params_template(query, context.query_parameters)
     self.create_datasets(context.query_parameters.macro)
