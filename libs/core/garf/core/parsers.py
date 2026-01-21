@@ -251,6 +251,8 @@ class NumericConverterDictParser(DictParser):
     """Extract nested field with int/float conversion."""
 
     def convert_field(value):
+      if value is None:
+        return value
       for type_ in (int, float):
         with contextlib.suppress(ValueError):
           return type_(value)
