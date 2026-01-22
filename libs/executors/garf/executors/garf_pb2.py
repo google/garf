@@ -25,21 +25,27 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ngarf.proto\x12\x04garf\x1a\x1cgoogle/protobuf/struct.proto\"g\n\x0e\x45xecuteRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12\'\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x16.garf.ExecutionContext\"\xbc\x01\n\x10\x45xecutionContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x0e\n\x06writer\x18\x03 \x01(\t\x12\x32\n\x11writer_parameters\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"d\n\x0fQueryParameters\x12&\n\x05macro\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12)\n\x08template\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"\"\n\x0f\x45xecuteResponse\x12\x0f\n\x07results\x18\x01 \x03(\t2G\n\x0bGarfService\x12\x38\n\x07\x45xecute\x12\x14.garf.ExecuteRequest\x1a\x15.garf.ExecuteResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ngarf.proto\x12\x04garf\x1a\x1cgoogle/protobuf/struct.proto\"a\n\x0c\x46\x65tchRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12#\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x12.garf.FetchContext\"G\n\rFetchResponse\x12\x0f\n\x07\x63olumns\x18\x01 \x03(\t\x12%\n\x04rows\x18\x02 \x03(\x0b\x32\x17.google.protobuf.Struct\"t\n\x0c\x46\x65tchContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"g\n\x0e\x45xecuteRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12\'\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x16.garf.ExecutionContext\"\xbc\x01\n\x10\x45xecutionContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x0e\n\x06writer\x18\x03 \x01(\t\x12\x32\n\x11writer_parameters\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"d\n\x0fQueryParameters\x12&\n\x05macro\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12)\n\x08template\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"\"\n\x0f\x45xecuteResponse\x12\x0f\n\x07results\x18\x01 \x03(\t2{\n\x0bGarfService\x12\x38\n\x07\x45xecute\x12\x14.garf.ExecuteRequest\x1a\x15.garf.ExecuteResponse\"\x00\x12\x32\n\x05\x46\x65tch\x12\x12.garf.FetchRequest\x1a\x13.garf.FetchResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'garf_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_EXECUTEREQUEST']._serialized_start=50
-  _globals['_EXECUTEREQUEST']._serialized_end=153
-  _globals['_EXECUTIONCONTEXT']._serialized_start=156
-  _globals['_EXECUTIONCONTEXT']._serialized_end=344
-  _globals['_QUERYPARAMETERS']._serialized_start=346
-  _globals['_QUERYPARAMETERS']._serialized_end=446
-  _globals['_EXECUTERESPONSE']._serialized_start=448
-  _globals['_EXECUTERESPONSE']._serialized_end=482
-  _globals['_GARFSERVICE']._serialized_start=484
-  _globals['_GARFSERVICE']._serialized_end=555
+  _globals['_FETCHREQUEST']._serialized_start=50
+  _globals['_FETCHREQUEST']._serialized_end=147
+  _globals['_FETCHRESPONSE']._serialized_start=149
+  _globals['_FETCHRESPONSE']._serialized_end=220
+  _globals['_FETCHCONTEXT']._serialized_start=222
+  _globals['_FETCHCONTEXT']._serialized_end=338
+  _globals['_EXECUTEREQUEST']._serialized_start=340
+  _globals['_EXECUTEREQUEST']._serialized_end=443
+  _globals['_EXECUTIONCONTEXT']._serialized_start=446
+  _globals['_EXECUTIONCONTEXT']._serialized_end=634
+  _globals['_QUERYPARAMETERS']._serialized_start=636
+  _globals['_QUERYPARAMETERS']._serialized_end=736
+  _globals['_EXECUTERESPONSE']._serialized_start=738
+  _globals['_EXECUTERESPONSE']._serialized_end=772
+  _globals['_GARFSERVICE']._serialized_start=774
+  _globals['_GARFSERVICE']._serialized_end=897
 # @@protoc_insertion_point(module_scope)

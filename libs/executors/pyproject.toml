@@ -57,6 +57,13 @@ server=[
   "fastapi[standard]",
   "opentelemetry-instrumentation-fastapi",
   "typer",
+  "grpcio-reflection",
+]
+tests = [
+  "pytest",
+  "pytest-mock",
+  "pytest-xdist",
+  "pytest-grpc",
 ]
 all = [
   "garf-executors[bq,sql,server,gcp]"
