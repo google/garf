@@ -87,7 +87,7 @@ async def get_fetchers() -> list[str]:
 
 
 @app.post('/api/execute')
-async def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
+def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
   query_executor = garf.executors.setup_executor(
     request.source, request.context.fetcher_parameters
   )
