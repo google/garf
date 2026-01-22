@@ -5,7 +5,7 @@ import warnings
 
 from . import garf_pb2 as garf__pb2
 
-GRPC_GENERATED_VERSION = '1.75.0'
+GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in garf_pb2_grpc.py depends on'
+        + ' but the generated code in garf_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -39,12 +39,23 @@ class GarfServiceStub(object):
                 request_serializer=garf__pb2.ExecuteRequest.SerializeToString,
                 response_deserializer=garf__pb2.ExecuteResponse.FromString,
                 _registered_method=True)
+        self.Fetch = channel.unary_unary(
+                '/garf.GarfService/Fetch',
+                request_serializer=garf__pb2.FetchRequest.SerializeToString,
+                response_deserializer=garf__pb2.FetchResponse.FromString,
+                _registered_method=True)
 
 
 class GarfServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Execute(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Fetch(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -57,6 +68,11 @@ def add_GarfServiceServicer_to_server(servicer, server):
                     servicer.Execute,
                     request_deserializer=garf__pb2.ExecuteRequest.FromString,
                     response_serializer=garf__pb2.ExecuteResponse.SerializeToString,
+            ),
+            'Fetch': grpc.unary_unary_rpc_method_handler(
+                    servicer.Fetch,
+                    request_deserializer=garf__pb2.FetchRequest.FromString,
+                    response_serializer=garf__pb2.FetchResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -86,6 +102,33 @@ class GarfService(object):
             '/garf.GarfService/Execute',
             garf__pb2.ExecuteRequest.SerializeToString,
             garf__pb2.ExecuteResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Fetch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/Fetch',
+            garf__pb2.FetchRequest.SerializeToString,
+            garf__pb2.FetchResponse.FromString,
             options,
             channel_credentials,
             insecure,

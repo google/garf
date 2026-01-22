@@ -5,6 +5,25 @@ import "google/protobuf/struct.proto";
 
 service GarfService {
   rpc Execute(ExecuteRequest) returns (ExecuteResponse) {}
+  rpc Fetch(FetchRequest) returns (FetchResponse) {}
+
+}
+
+message FetchRequest {
+  string source = 1;
+  string title = 2;
+  string query = 3;
+  FetchContext context = 4;
+}
+
+message FetchResponse {
+  repeated string columns = 1;
+  repeated google.protobuf.Struct rows = 2;
+}
+
+message FetchContext {
+  QueryParameters query_parameters = 1;
+  google.protobuf.Struct fetcher_parameters = 2;
 }
 
 message ExecuteRequest {

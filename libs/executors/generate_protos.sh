@@ -1,3 +1,3 @@
 python -m grpc_tools.protoc -I=../../protos/ \
-	--python_out=./garf_executors --grpc_python_out=./garf_executors \
+	--python_out=./garf/executors --grpc_python_out=./garf/executors \
 	../../protos/garf.proto
