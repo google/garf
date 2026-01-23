@@ -28,17 +28,24 @@ def test_process_gquery_returns_unchanged_context():
   ('gquery', 'error_message'),
   [
     (
-      'gquery:SELECT 1',
-      'Incorrect gquery format, should be gquery:alias:query, '
-      'got gquery:SELECT 1',
+      'gquery',
+      'Incorrect gquery format, should be gquery:alias:query, got gquery',
+    ),
+    (
+      'gquery::SELECT 1',
+      'Missing alias in gquery: gquery::SELECT 1',
+    ),
+    (
+      'gquery:sqldb',
+      'Missing query text in gquery: gquery:sqldb',
     ),
     (
       'gquery:unknown_alias:SELECT 1',
-      'Unsupported alias for gquery: unknown_alias',
+      'Unsupported alias unknown_alias for gquery: gquery:unknown_alias:SELECT 1',
     ),
     (
       'gquery:sqldb:SELECT 1 AS id, 2 AS second_id',
-      "Multiple columns in gquery: ['id', 'second_id']",
+      "Multiple columns in gquery definition: ['id', 'second_id']",
     ),
   ],
 )
@@ -47,7 +54,7 @@ def test_process_gquery_raises_error(gquery, error_message):
     fetcher_parameters={'id': gquery}
   )
   with pytest.raises(
-    exceptions.GarfExecutorError,
+    query_processor.GqueryError,
     match=re.escape(error_message),
   ):
     query_processor.process_gquery(context)
