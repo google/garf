@@ -22,15 +22,47 @@ import pydantic
 import typer
 import uvicorn
 from garf.executors import exceptions
+from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import initialize_tracer
 from garf.io import reader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
 initialize_tracer()
 app = fastapi.FastAPI()
 FastAPIInstrumentor.instrument_app(app)
 typer_app = typer.Typer()
+
+
+class GarfSettings(BaseSettings):
+  """Specifies environmental variables for garf.
+
+  Ensure that mandatory variables are exposed via
+  export ENV_VARIABLE_NAME=VALUE.
+
+  Attributes:
+    loglevel: Level of logging.
+    log_name: Name of log.
+    logger_type: Type of logger.
+  """
+
+  model_config = SettingsConfigDict(env_prefix='garf_')
+
+  loglevel: str = 'INFO'
+  log_name: str = 'garf'
+  logger_type: str = 'local'
+
+
+class GarfDependencies:
+  def __init__(self) -> None:
+    """Initializes GarfDependencies."""
+    settings = GarfSettings()
+    self.logger = utils.init_logging(
+      loglevel=settings.loglevel,
+      logger_type=settings.logger_type,
+      name=settings.log_name,
+    )
 
 
 class ApiExecutorRequest(pydantic.BaseModel):
@@ -81,13 +113,18 @@ async def version() -> str:
 
 
 @app.get('/api/fetchers')
-async def get_fetchers() -> list[str]:
+async def get_fetchers(
+  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
+) -> list[str]:
   """Shows all available API sources."""
   return list(garf.executors.fetchers.find_fetchers())
 
 
 @app.post('/api/execute')
-def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
+def execute(
+  request: ApiExecutorRequest,
+  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
+) -> ApiExecutorResponse:
   query_executor = garf.executors.setup_executor(
     request.source, request.context.fetcher_parameters
   )
@@ -96,7 +133,10 @@ def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
 
 
 @app.post('/api/execute:batch')
-def execute_batch(request: ApiExecutorRequest) -> ApiExecutorResponse:
+def execute_batch(
+  request: ApiExecutorRequest,
+  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
+) -> ApiExecutorResponse:
   query_executor = garf.executors.setup_executor(
     request.source, request.context.fetcher_parameters
   )
