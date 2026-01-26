@@ -105,12 +105,14 @@ def main():
           )
         for query in queries:
           if isinstance(query, garf.executors.workflow.QueryPath):
+            query_path = query.full_path
             if re.match(
-              '^(http|gs|s3|aruze|hdfs|webhdfs|ssh|scp|sftp)', query.path
+              '^(http|gs|s3|aruze|hdfs|webhdfs|ssh|scp|sftp)', query_path
             ):
-              batch[query.path] = reader_client.read(query.path)
+              batch[query.path] = reader_client.read(query_path)
             else:
-              query_path = wf_parent / pathlib.Path(query.path)
+              if not query.prefix:
+                query_path = wf_parent / pathlib.Path(query.path)
               if not query_path.exists():
                 raise workflow.GarfWorkflowError(
                   f'Query: {query_path} not found'
