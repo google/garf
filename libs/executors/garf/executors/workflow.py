@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import re
 
 import pydantic
 import smart_open
@@ -37,6 +38,13 @@ class QueryPath(pydantic.BaseModel):
   """Path file with query."""
 
   path: str
+  prefix: str | None = None
+
+  @property
+  def full_path(self) -> str:
+    if self.prefix:
+      return re.sub('/$', '', self.prefix) + '/' + self.path
+    return self.path
 
 
 class QueryDefinition(pydantic.BaseModel):
