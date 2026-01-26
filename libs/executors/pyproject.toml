@@ -55,6 +55,7 @@ gcp= [
 ]
 server=[
   "fastapi[standard]",
+  "pydantic-settings",
   "opentelemetry-instrumentation-fastapi",
   "typer",
   "grpcio-reflection",
