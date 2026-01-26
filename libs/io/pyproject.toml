@@ -46,6 +46,7 @@ test =  [
 ]
 bq=[
   "google-cloud-bigquery",
+  "google-cloud-bigquery-storage",
   "pandas",
   "smart_open[gcs]",
   "pandas-gbq",
