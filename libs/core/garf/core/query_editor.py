@@ -212,7 +212,12 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       args: Optional parameters to be dynamically injected into query text.
       api_version: Version of Google Ads API.
     """
-    self.args = args or GarfQueryParameters()
+    if not args:
+      self.args = GarfQueryParameters()
+    elif isinstance(args, GarfQueryParameters):
+      self.args = args
+    else:
+      self.args = GarfQueryParameters(**args)
     self.query = BaseQueryElements(title=title, text=text)
 
   @property
