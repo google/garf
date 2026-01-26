@@ -13,7 +13,6 @@
 # limitations under the License.
 import pathlib
 
-import grpc
 import pytest
 from garf.executors import garf_pb2 as pb
 from garf.executors import garf_pb2_grpc

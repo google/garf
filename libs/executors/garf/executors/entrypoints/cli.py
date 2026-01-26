@@ -22,11 +22,10 @@ from __future__ import annotations
 import argparse
 import logging
 import pathlib
-import re
 import sys
 
 import garf.executors
-from garf.executors import config, exceptions, workflow
+from garf.executors import config, exceptions, setup, workflow, workflow_runner
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import initialize_tracer
 from garf.executors.telemetry import tracer
@@ -86,52 +85,11 @@ def main():
   if workflow_file := args.workflow:
     wf_parent = pathlib.Path.cwd() / pathlib.Path(workflow_file).parent
     execution_workflow = workflow.Workflow.from_file(workflow_file)
-    for i, step in enumerate(execution_workflow.steps, 1):
-      step_span_name = f'{i}-{step.fetcher}'
-      if step.alias:
-        step_span_name = f'{step_span_name}-{step.alias}'
-      with tracer.start_as_current_span(step_span_name):
-        query_executor = garf.executors.setup_executor(
-          source=step.fetcher,
-          fetcher_parameters=step.fetcher_parameters,
-          enable_cache=args.enable_cache,
-          cache_ttl_seconds=args.cache_ttl_seconds,
-        )
-        batch = {}
-        if not (queries := step.queries):
-          logger.error('Please provide one or more queries to run')
-          raise exceptions.GarfExecutorError(
-            'Please provide one or more queries to run'
-          )
-        for query in queries:
-          if isinstance(query, garf.executors.workflow.QueryPath):
-            query_path = query.full_path
-            if re.match(
-              '^(http|gs|s3|aruze|hdfs|webhdfs|ssh|scp|sftp)', query_path
-            ):
-              batch[query.path] = reader_client.read(query_path)
-            else:
-              if not query.prefix:
-                query_path = wf_parent / pathlib.Path(query.path)
-              if not query_path.exists():
-                raise workflow.GarfWorkflowError(
-                  f'Query: {query_path} not found'
-                )
-              batch[query.path] = reader_client.read(query_path)
-          elif isinstance(query, garf.executors.workflow.QueryFolder):
-            query_path = wf_parent / pathlib.Path(query.folder)
-            if not query_path.exists():
-              raise workflow.GarfWorkflowError(
-                f'Folder: {query_path} not found'
-              )
-            for p in query_path.rglob('*'):
-              if p.suffix == '.sql':
-                batch[p.stem] = reader_client.read(p)
-          else:
-            batch[query.query.title] = query.query.text
-        query_executor.execute_batch(
-          batch, step.context, args.parallel_threshold
-        )
+    workflow_runner.WorkflowRunner(
+      execution_workflow=execution_workflow, wf_parent=wf_parent
+    ).run(
+      enable_cache=args.enable_cache, cache_ttl_seconds=args.cache_ttl_seconds
+    )
     sys.exit()
 
   if not args.query:
@@ -165,7 +123,7 @@ def main():
       writer_parameters=writer_parameters,
       fetcher_parameters=source_parameters,
     )
-  query_executor = garf.executors.setup_executor(
+  query_executor = setup.setup_executor(
     source=args.source,
     fetcher_parameters=context.fetcher_parameters,
     enable_cache=args.enable_cache,

@@ -21,7 +21,7 @@ import garf.executors
 import pydantic
 import typer
 import uvicorn
-from garf.executors import exceptions
+from garf.executors import exceptions, setup, workflow_runner
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import initialize_tracer
 from garf.io import reader
@@ -125,7 +125,7 @@ def execute(
   request: ApiExecutorRequest,
   dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
 ) -> ApiExecutorResponse:
-  query_executor = garf.executors.setup_executor(
+  query_executor = setup.setup_executor(
     request.source, request.context.fetcher_parameters
   )
   result = query_executor.execute(request.query, request.title, request.context)
@@ -137,13 +137,25 @@ def execute_batch(
   request: ApiExecutorRequest,
   dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
 ) -> ApiExecutorResponse:
-  query_executor = garf.executors.setup_executor(
+  query_executor = setup.setup_executor(
     request.source, request.context.fetcher_parameters
   )
   reader_client = reader.FileReader()
   batch = {query: reader_client.read(query) for query in request.query_path}
   results = query_executor.execute_batch(batch, request.context)
   return ApiExecutorResponse(results=results)
+
+
+@app.post('/api/execute:workflow')
+def execute_workflow(
+  workflow_file: str,
+  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
+  enable_cache: bool = False,
+  cache_ttl_seconds: int = 3600,
+) -> list[str]:
+  return workflow_runner.WorkflowRunner.from_file(workflow_file).run(
+    enable_cache=enable_cache, cache_ttl_seconds=cache_ttl_seconds
+  )
 
 
 @typer_app.command()
