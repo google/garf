@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Executors to fetch data from various APIs."""
+import pathlib
 
-from __future__ import annotations
+from garf.executors import workflow_runner
 
-from garf.executors.api_executor import ApiExecutionContext, ApiQueryExecutor
+_SCRIPT_PATH = pathlib.Path(__file__).parent
 
-__all__ = [
-  'ApiQueryExecutor',
-  'ApiExecutionContext',
-]
 
-__version__ = '1.0.7'
+class TestWorkflowRunner:
+  def test_run_returns_executed_step_names(self):
+    runner = workflow_runner.WorkflowRunner.from_file(
+      _SCRIPT_PATH / '../end-to-end/test_workflow.yaml'
+    )
+    results = runner.run()
+    assert results == ['1-fake-test']

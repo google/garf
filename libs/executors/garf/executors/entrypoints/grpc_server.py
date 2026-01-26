@@ -18,9 +18,8 @@ import argparse
 import logging
 from concurrent import futures
 
-import garf.executors
 import grpc
-from garf.executors import garf_pb2, garf_pb2_grpc
+from garf.executors import execution_context, garf_pb2, garf_pb2_grpc, setup
 from garf.executors.entrypoints.tracer import initialize_tracer
 from google.protobuf.json_format import MessageToDict
 from grpc_reflection.v1alpha import reflection
@@ -28,30 +27,29 @@ from grpc_reflection.v1alpha import reflection
 
 class GarfService(garf_pb2_grpc.GarfService):
   def Execute(self, request, context):
-    query_executor = garf.executors.setup_executor(
+    query_executor = setup.setup_executor(
       request.source, request.context.fetcher_parameters
-    )
-    execution_context = garf.executors.execution_context.ExecutionContext(
-      **MessageToDict(request.context, preserving_proto_field_name=True)
     )
     result = query_executor.execute(
       query=request.query,
       title=request.title,
-      context=execution_context,
+      context=execution_context.ExecutionContext(
+        **MessageToDict(request.context, preserving_proto_field_name=True)
+      ),
     )
     return garf_pb2.ExecuteResponse(results=[result])
 
   def Fetch(self, request, context):
-    query_executor = garf.executors.setup_executor(
+    query_executor = setup.setup_executor(
       request.source, request.context.fetcher_parameters
     )
-    execution_context = garf.executors.execution_context.ExecutionContext(
+    query_args = execution_context.ExecutionContext(
       **MessageToDict(request.context, preserving_proto_field_name=True)
-    )
+    ).query_parameters
     result = query_executor.fetcher.fetch(
       query_specification=request.query,
       title=request.title,
-      args=execution_context.query_parameters,
+      args=query_args,
     )
     return garf_pb2.FetchResponse(
       columns=result.column_names, rows=result.to_list(row_type='dict')
