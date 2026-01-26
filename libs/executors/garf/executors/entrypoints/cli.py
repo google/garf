@@ -86,7 +86,10 @@ def main():
     wf_parent = pathlib.Path.cwd() / pathlib.Path(workflow_file).parent
     execution_workflow = workflow.Workflow.from_file(workflow_file)
     for i, step in enumerate(execution_workflow.steps, 1):
-      with tracer.start_as_current_span(f'{i}-{step.fetcher}'):
+      step_span_name = f'{i}-{step.fetcher}'
+      if step.alias:
+        step_span_name = f'{step_span_name}-{step.alias}'
+      with tracer.start_as_current_span(step_span_name):
         query_executor = garf.executors.setup_executor(
           source=step.fetcher,
           fetcher_parameters=step.fetcher_parameters,
