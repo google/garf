@@ -13,15 +13,27 @@
 # limitations under the License.
 import pathlib
 
-from garf.executors import workflow_runner
+from garf.executors.workflows import workflow_runner
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
+
+_TEST_WORKFLOW_PATH = _SCRIPT_PATH / 'test_workflow.yaml'
 
 
 class TestWorkflowRunner:
   def test_run_returns_executed_step_names(self):
-    runner = workflow_runner.WorkflowRunner.from_file(
-      _SCRIPT_PATH / '../end-to-end/test_workflow.yaml'
-    )
+    runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
     results = runner.run()
     assert results == ['1-fake-test']
+
+  def test_compile_saves_file(self, tmp_path):
+    tmp_workflow_path = tmp_path / 'workflow.yaml'
+    runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
+    result = runner.compile(tmp_workflow_path)
+    assert result == f'Workflow is saved to {tmp_workflow_path}'
+
+  def test_deploy_saves_file(self, tmp_path):
+    tmp_workflow_path = tmp_path / 'workflow.yaml'
+    runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
+    result = runner.deploy(tmp_workflow_path)
+    assert result == f'Workflow is saved to {tmp_workflow_path}'
