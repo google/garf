@@ -21,9 +21,10 @@ import garf.executors
 import pydantic
 import typer
 import uvicorn
-from garf.executors import exceptions, setup, workflow_runner
+from garf.executors import exceptions, setup
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import initialize_tracer
+from garf.executors.workflows import workflow_runner
 from garf.io import reader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from pydantic_settings import BaseSettings, SettingsConfigDict

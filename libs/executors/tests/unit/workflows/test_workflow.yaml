@@ -12,7 +12,6 @@ steps:
   - alias: test
     fetcher: fake
     queries:
-      - path: query.sql
       - query:
           title: test_query
           text:  |

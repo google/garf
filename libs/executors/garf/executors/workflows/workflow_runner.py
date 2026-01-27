@@ -20,8 +20,10 @@ import pathlib
 import re
 from typing import Final
 
-from garf.executors import exceptions, setup, workflow
+import yaml
+from garf.executors import exceptions, setup
 from garf.executors.telemetry import tracer
+from garf.executors.workflows import workflow
 from garf.io import reader
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,7 @@ logger = logging.getLogger(__name__)
 _REMOTE_FILES_PATTERN: Final[str] = (
   '^(http|gs|s3|aruze|hdfs|webhdfs|ssh|scp|sftp)'
 )
+_SCRIPT_PATH = pathlib.Path(__file__).parent
 
 
 class WorkflowRunner:
@@ -112,3 +115,27 @@ class WorkflowRunner:
         )
         execution_results.append(step_name)
     return execution_results
+
+  def compile(self, path: str | pathlib.Path) -> str:
+    """Saves workflow with expanded anchors."""
+    return self.workflow.save(path)
+
+  def deploy(self, path: str | pathlib.Path) -> str:
+    """Prepares workflow for deployment to Google Cloud Workflows."""
+    wf = self.workflow.model_dump(exclude_none=True).get('steps')
+    with open(_SCRIPT_PATH / 'gcp_workflow.yaml', 'r', encoding='utf-8') as f:
+      cloud_workflow_run_template = yaml.safe_load(f)
+    init = {
+      'init': {
+        'assign': [{'pairs': wf}],
+      },
+    }
+    cloud_workflow = {
+      'main': {
+        'params': [],
+        'steps': [init, cloud_workflow_run_template],
+      },
+    }
+    with open(path, 'w', encoding='utf-8') as f:
+      yaml.dump(cloud_workflow, f, sort_keys=False)
+    return f'Workflow is saved to {path}'

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import yaml
-from garf.executors.workflow import Workflow
+from garf.executors.workflows.workflow import Workflow
 
 
 class TestWorkflow:

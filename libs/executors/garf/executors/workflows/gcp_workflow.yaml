@@ -1,0 +1,49 @@
+run:
+  for:
+    value: pair
+    in: ${pairs}
+    steps:
+      - log_source:
+          call: sys.log
+          args:
+            data: ${pair.alias}
+      - execute_queries:
+          parallel:
+            for:
+              value: query
+              in: ${pair.queries}
+              steps:
+                - log_query:
+                    call: sys.log
+                    args:
+                      data: ${pair}
+                - execute_single_query:
+                    try:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("GARF_ENDPOINT") + "/api/execute"}
+                        auth:
+                          type: OIDC
+                        body:
+                          source: ${pair.fetcher}
+                          # query_path: ${query.path}
+                          title: ${query.query.title}
+                          query: ${query.query.text}
+                          context:
+                            fetcher_parameters: ${pair.fetcher_parameters}
+                            writer: ${pair.writer}
+                            writer_parameters: ${pair.writer_parameters}
+                            query_parameters:
+                              macro: ${pair.query_parameters.macro}
+                              template: ${pair.query_parameters.template}
+                      result: task_resp
+                    except:
+                      as: e
+                      assign:
+                        - task_resp:
+                            status: "failed"
+                            error: ${e.message}
+                - log_result:
+                    call: sys.log
+                    args:
+                      data: ${task_resp}

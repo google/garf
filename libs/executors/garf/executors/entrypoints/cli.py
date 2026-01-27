@@ -25,10 +25,11 @@ import pathlib
 import sys
 
 import garf.executors
-from garf.executors import config, exceptions, setup, workflow, workflow_runner
+from garf.executors import config, exceptions, setup
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import initialize_tracer
 from garf.executors.telemetry import tracer
+from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
 from opentelemetry import trace
 
