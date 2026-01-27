@@ -69,11 +69,15 @@ class WorkflowRunner:
   ) -> list[str]:
     reader_client = reader.create_reader('file')
     execution_results = []
+    logger.info('Starting Garf Workflow...')
     for i, step in enumerate(self.workflow.steps, 1):
       step_name = f'{i}-{step.fetcher}'
       if step.alias:
         step_name = f'{step_name}-{step.alias}'
       with tracer.start_as_current_span(step_name):
+        logger.info(
+          'Running step %d, fetcher: %s, alias: %s', i, step.fetcher, step.alias
+        )
         query_executor = setup.setup_executor(
           source=step.fetcher,
           fetcher_parameters=step.fetcher_parameters,
