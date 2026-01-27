@@ -55,7 +55,10 @@ class WorkflowRunner:
     self.parallel_threshold = parallel_threshold
 
   @classmethod
-  def from_file(cls, workflow_file: str | pathlib.Path) -> WorkflowRunner:
+  def from_file(
+    cls,
+    workflow_file: str | pathlib.Path,
+  ) -> WorkflowRunner:
     """Initialized Workflow runner from a local or remote file."""
     if isinstance(workflow_file, str):
       workflow_file = pathlib.Path(workflow_file)
@@ -65,8 +68,14 @@ class WorkflowRunner:
     )
 
   def run(
-    self, enable_cache: bool = False, cache_ttl_seconds: int = 3600
+    self,
+    enable_cache: bool = False,
+    cache_ttl_seconds: int = 3600,
+    selected_aliases: list[str] | None = None,
+    skipped_aliases: list[str] | None = None,
   ) -> list[str]:
+    skipped_aliases = skipped_aliases or []
+    selected_aliases = selected_aliases or []
     reader_client = reader.create_reader('file')
     execution_results = []
     logger.info('Starting Garf Workflow...')
@@ -74,6 +83,22 @@ class WorkflowRunner:
       step_name = f'{i}-{step.fetcher}'
       if step.alias:
         step_name = f'{step_name}-{step.alias}'
+      if step.alias in skipped_aliases:
+        logger.warning(
+          'Skipping step %d, fetcher: %s, alias: %s',
+          i,
+          step.fetcher,
+          step.alias,
+        )
+        continue
+      if selected_aliases and step.alias not in selected_aliases:
+        logger.warning(
+          'Skipping step %d, fetcher: %s, alias: %s',
+          i,
+          step.fetcher,
+          step.alias,
+        )
+        continue
       with tracer.start_as_current_span(step_name):
         logger.info(
           'Running step %d, fetcher: %s, alias: %s', i, step.fetcher, step.alias

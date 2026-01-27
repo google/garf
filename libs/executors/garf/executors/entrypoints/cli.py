@@ -68,6 +68,10 @@ def main():
     default=3600,
     type=int,
   )
+  parser.add_argument('--workflow-skip', dest='workflow_skip', default=None)
+  parser.add_argument(
+    '--workflow-include', dest='workflow_include', default=None
+  )
   parser.set_defaults(parallel_queries=True)
   parser.set_defaults(enable_cache=False)
   parser.set_defaults(dry_run=False)
@@ -86,10 +90,15 @@ def main():
   if workflow_file := args.workflow:
     wf_parent = pathlib.Path.cwd() / pathlib.Path(workflow_file).parent
     execution_workflow = workflow.Workflow.from_file(workflow_file)
+    workflow_skip = args.workflow_skip if args.workflow_skip else None
+    workflow_include = args.workflow_include if args.workflow_include else None
     workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow, wf_parent=wf_parent
     ).run(
-      enable_cache=args.enable_cache, cache_ttl_seconds=args.cache_ttl_seconds
+      enable_cache=args.enable_cache,
+      cache_ttl_seconds=args.cache_ttl_seconds,
+      selected_aliases=workflow_include,
+      skipped_aliases=workflow_skip,
     )
     sys.exit()
 
