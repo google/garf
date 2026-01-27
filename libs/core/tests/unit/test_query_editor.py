@@ -165,6 +165,25 @@ class TestQuerySpecification:
       'start_date'
     ) == datetime.date.today().strftime('%Y-%m-%d')
 
+  def test_generate_process_where_statements(self):
+    query = """
+      SELECT
+        test
+      FROM resource
+      WHERE
+        start_date = TODAY
+        AND name IN ('one', AND, "three")
+    """
+    test_query_elements = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+    ).generate()
+
+    assert test_query_elements.filters == [
+      'start_date = TODAY',
+      'name IN (\'one\', AND, "three")',
+    ]
+
   @pytest.mark.parametrize(
     ('slice', 'literal'),
     [

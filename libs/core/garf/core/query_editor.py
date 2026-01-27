@@ -312,11 +312,31 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       self.query.text,
       flags=re.IGNORECASE,
     ):
-      filters = [
-        filter.strip()
-        for filter in re.split(' AND ', filters[0][0], flags=re.IGNORECASE)
+      in_pattern = r'\((.*?)\)'
+
+      def create_replacer():
+        count = 0
+
+        def replacer(match):
+          nonlocal count
+          count += 1
+          return f'({{group_{count}}})'
+
+        return replacer
+
+      joined_filters = ' '.join(filters[0])
+      in_groups = re.findall(in_pattern, joined_filters)
+      group_replacements = {
+        f'group_{i}': group for i, group in enumerate(in_groups, 1)
+      }
+
+      final_filters = re.sub(in_pattern, create_replacer(), joined_filters)
+      found_filters = [
+        f.strip().format(**group_replacements)
+        for f in re.split(' AND ', final_filters, flags=re.IGNORECASE)
       ]
-      self.query.filters = filters
+
+      self.query.filters = found_filters
     return self
 
   def extract_sorts(self) -> Self:
