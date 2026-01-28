@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import pathlib
 
-from garf.core import report_fetcher
+from garf.core import report_fetcher, simulator
 from garf.executors import (
   exceptions,
   execution_context,
@@ -50,13 +50,19 @@ class ApiQueryExecutor(executor.Executor):
       api_client: a client used for connecting to API.
   """
 
-  def __init__(self, fetcher: report_fetcher.ApiReportFetcher) -> None:
+  def __init__(
+    self,
+    fetcher: report_fetcher.ApiReportFetcher,
+    report_simulator: simulator.ApiReportSimulator | None = None,
+  ) -> None:
     """Initializes ApiQueryExecutor.
 
     Args:
-        fetcher: Instantiated report fetcher.
+      fetcher: Instantiated report fetcher.
+      report_simulator: Instantiated simulator.
     """
     self.fetcher = fetcher
+    self.simulator = report_simulator
     super().__init__(
       preprocessors=self.fetcher.preprocessors,
       postprocessors=self.fetcher.postprocessors,
@@ -101,6 +107,8 @@ class ApiQueryExecutor(executor.Executor):
     Raises:
       GarfExecutorError: When failed to execute query.
     """
+    if self.simulator:
+      return self.simulate(query=query, title=title, context=context)
     context = query_processor.process_gquery(context)
     span = trace.get_current_span()
     span.set_attribute('fetcher.class', self.fetcher.__class__.__name__)
@@ -115,6 +123,69 @@ class ApiQueryExecutor(executor.Executor):
       results = self.fetcher.fetch(
         query_specification=query,
         args=context.query_parameters,
+        title=title,
+        **context.fetcher_parameters,
+      )
+      writer_clients = context.writer_clients
+      if not writer_clients:
+        logger.warning('No writers configured, skipping write operation')
+        return None
+      writing_results = []
+      for writer_client in writer_clients:
+        logger.debug(
+          'Start writing data for query %s via %s writer',
+          title,
+          type(writer_client),
+        )
+        result = writer_client.write(results, title)
+        logger.debug(
+          'Finish writing data for query %s via %s writer',
+          title,
+          type(writer_client),
+        )
+        writing_results.append(result)
+      logger.info('%s executed successfully', title)
+      # Return the last writer's result for backward compatibility
+      return writing_results[-1] if writing_results else None
+    except Exception as e:
+      logger.error('%s generated an exception: %s', title, str(e))
+      raise exceptions.GarfExecutorError(
+        '%s generated an exception: %s', title, str(e)
+      ) from e
+
+  @tracer.start_as_current_span('api.simulate')
+  def simulate(
+    self,
+    query: str,
+    title: str,
+    context: ApiExecutionContext,
+  ) -> str:
+    """Reads query, simulates results and stores them in a specified location.
+
+    Args:
+      query: Location of the query.
+      title: Name of the query.
+      context: Query execution context.
+
+    Returns:
+      Result of writing the report.
+
+    Raises:
+      GarfExecutorError: When failed to execute query.
+    """
+    context = query_processor.process_gquery(context)
+    span = trace.get_current_span()
+    span.set_attribute('fetcher.class', self.fetcher.__class__.__name__)
+    span.set_attribute(
+      'api.client.class', self.fetcher.api_client.__class__.__name__
+    )
+    try:
+      span.set_attribute('query.title', title)
+      span.set_attribute('query.text', query)
+      logger.debug('starting query %s', query)
+      title = pathlib.Path(title).name.split('.')[0]
+      results = self.simulator.simulate(
+        query_specification=query,
         title=title,
         **context.fetcher_parameters,
       )

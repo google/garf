@@ -28,6 +28,7 @@ def setup_executor(
   fetcher_parameters: dict[str, str | int | bool],
   enable_cache: bool = False,
   cache_ttl_seconds: int = 3600,
+  simulate: bool = False,
 ) -> type[executor.Executor]:
   """Initializes executors based on a source and parameters."""
   if source == 'bq':
@@ -42,11 +43,16 @@ def setup_executor(
     )
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
+    if simulate:
+      concrete_simulator = fetchers.get_report_simulator(source)()
+    else:
+      concrete_simulator = None
     query_executor = ApiQueryExecutor(
       fetcher=concrete_api_fetcher(
         **fetcher_parameters,
         enable_cache=enable_cache,
         cache_ttl_seconds=cache_ttl_seconds,
-      )
+      ),
+      report_simulator=concrete_simulator,
     )
   return query_executor
