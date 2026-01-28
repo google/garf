@@ -31,6 +31,9 @@ version = {attr = "garf.community.google.youtube.__version__"}
 youtube-data-api = "garf.community.google.youtube.report_fetcher"
 youtube-analytics = "garf.community.google.youtube.report_fetcher"
 
+[project.entry-points.garf_simulator]
+youtube-data-api = "garf.community.google.youtube.simulator"
+
 [project.optional-dependencies]
 test =  [
   "pytest",
