@@ -41,8 +41,10 @@ def _handle_sub_context(context, sub_context):
       if alias == 'sqldb':
         from garf.executors import sql_executor
 
-        gquery_executor = sql_executor.SqlAlchemyQueryExecutor(
-          **context.fetcher_parameters
+        gquery_executor = (
+          sql_executor.SqlAlchemyQueryExecutor.from_connection_string(
+            context.fetcher_parameters.get('connection_string')
+          )
         )
       elif alias == 'bq':
         from garf.executors import bq_executor
