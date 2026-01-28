@@ -80,6 +80,8 @@ nav:
     - Create API client: development/create-api-client.md
     - Create API response parser: development/create-api-response-parser.md
     - Create a library: development/create-garf-library.md
+  - Deployment:
+    - Google Cloud: deployment/google-cloud.md
   - Fetchers:
     - fetchers/overview.md
     - REST: fetchers/rest.md
