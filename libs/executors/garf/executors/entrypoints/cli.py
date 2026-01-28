@@ -54,6 +54,7 @@ def main():
   parser.add_argument(
     '--no-parallel-queries', dest='parallel_queries', action='store_false'
   )
+  parser.add_argument('--simulate', dest='simulate', action='store_true')
   parser.add_argument('--dry-run', dest='dry_run', action='store_true')
   parser.add_argument('-v', '--version', dest='version', action='store_true')
   parser.add_argument(
@@ -73,6 +74,7 @@ def main():
     '--workflow-include', dest='workflow_include', default=None
   )
   parser.set_defaults(parallel_queries=True)
+  parser.set_defaults(simulate=False)
   parser.set_defaults(enable_cache=False)
   parser.set_defaults(dry_run=False)
   args, kwargs = parser.parse_known_args()
@@ -138,6 +140,7 @@ def main():
     fetcher_parameters=context.fetcher_parameters,
     enable_cache=args.enable_cache,
     cache_ttl_seconds=args.cache_ttl_seconds,
+    simulate=args.simulate,
   )
   batch = {query: reader_client.read(query) for query in args.query}
   if args.parallel_queries and len(args.query) > 1:

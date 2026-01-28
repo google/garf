@@ -17,7 +17,7 @@ import logging
 import sys
 from importlib.metadata import entry_points
 
-from garf.core import report_fetcher
+from garf.core import report_fetcher, simulator
 from garf.executors.telemetry import tracer
 
 logger = logging.getLogger(name='garf.executors.fetchers')
@@ -28,6 +28,14 @@ def find_fetchers() -> set[str]:
   """Identifiers all available report fetchers."""
   if entrypoints := _get_entrypoints('garf'):
     return {fetcher.name for fetcher in entrypoints}
+  return set()
+
+
+@tracer.start_as_current_span('find_simulators')
+def find_simulators() -> set[str]:
+  """Identifiers all available report simulators."""
+  if entrypoints := _get_entrypoints('garf_simulator'):
+    return {simulator.name for simulator in entrypoints}
   return set()
 
 
@@ -67,6 +75,45 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
         )
   raise report_fetcher.ApiReportFetcherError(
     f'No fetcher available for the source "{source}"'
+  )
+
+
+@tracer.start_as_current_span('get_report_simulator')
+def get_report_simulator(source: str) -> type[simulator.ApiReportSimulator]:
+  """Loads report simulator for a given source.
+
+  Args:
+    source: Alias for a source associated with a simulator.
+
+  Returns:
+    Class for a found report simulator.
+
+  Raises:
+    GarfApiReportSimulatorError: When simulator cannot be loaded.
+    MissingApiReportSimulatorError: When simulator not found.
+  """
+  if source not in find_simulators():
+    raise simulator.MissingApiReportSimulatorError(source)
+  for sim in _get_entrypoints('garf_simulator'):
+    if sim.name == source:
+      try:
+        with tracer.start_as_current_span('load_simulator_module') as span:
+          simulator_module = sim.load()
+          span.set_attribute('loaded_module', simulator_module.__name__)
+        for name, obj in inspect.getmembers(simulator_module):
+          if inspect.isclass(obj) and issubclass(
+            obj, simulator.ApiReportSimulator
+          ):
+            if not hasattr(obj, 'alias'):
+              return getattr(simulator_module, name)
+            if obj.alias == sim.name:
+              return getattr(simulator_module, name)
+      except ModuleNotFoundError as e:
+        raise simulator.GarfApiReportSimulatorError(
+          f'Failed to load simulator for source {source}, reason: {e}'
+        )
+  raise simulator.GarfApiReportSimulatorError(
+    f'No simulator available for the source "{source}"'
   )
 
 

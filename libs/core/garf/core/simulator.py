@@ -29,6 +29,17 @@ class GarfApiReportSimulatorError(exceptions.GarfError):
   """Simulator specific exception."""
 
 
+class MissingApiReportSimulatorError(GarfApiReportSimulatorError):
+  """Exception for not found report simulator."""
+
+  def __init__(self, source: str) -> None:
+    """Initializes MissingApiReportSimulatorError."""
+    self.source = source
+
+  def __str__(self) -> str:
+    return f'No simulator available for the source "{self.source}"'
+
+
 class SimulatorSpecification(pydantic.BaseModel):
   model_config = pydantic.ConfigDict(extra='allow')
 
