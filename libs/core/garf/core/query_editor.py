@@ -137,57 +137,37 @@ class CommonParametersMixin:
     return {key: value() for key, value in self._common_params.items()}
 
 
-class TemplateProcessorMixin:
-  def replace_params_template(
-    self, query_text: str, params: GarfQueryParameters | None = None
-  ) -> str:
-    logger.debug('Original query text:\n%s', query_text)
-    if params:
-      if templates := params.template:
-        query_templates = {
-          name: value for name, value in templates.items() if name in query_text
-        }
-        if query_templates:
-          query_text = self.expand_jinja(query_text, query_templates)
-          logger.debug('Query text after jinja expansion:\n%s', query_text)
-        else:
-          query_text = self.expand_jinja(query_text, {})
+class SafeDict(dict):
+  def __missing__(self, key: str):
+    logger.warning('Not processed macro found: %s', key)
+    return '{' + key + '}'
+
+
+def expand_jinja(
+  query_text: str, template_params: QueryParameters | None = None
+) -> str:
+  file_inclusions = ('% include', '% import', '% extend')
+  if any(file_inclusion in query_text for file_inclusion in file_inclusions):
+    template = jinja2.Environment(loader=jinja2.FileSystemLoader('.'))
+    query = template.from_string(query_text)
+  else:
+    query = jinja2.Template(query_text)
+  if not template_params:
+    return query.render()
+  for key, value in template_params.items():
+    if value:
+      if isinstance(value, list):
+        template_params[key] = value
+      elif len(splitted_param := value.split(',')) > 1:
+        template_params[key] = splitted_param
       else:
-        query_text = self.expand_jinja(query_text, {})
-      if macros := params.macro:
-        joined_macros = CommonParametersMixin().common_params
-        joined_macros.update(macros)
-        query_text = query_text.format(**joined_macros)
-        logger.debug('Query text after macro substitution:\n%s', query_text)
+        template_params[key] = value
     else:
-      query_text = self.expand_jinja(query_text, {})
-    return query_text
-
-  def expand_jinja(
-    self, query_text: str, template_params: QueryParameters | None = None
-  ) -> str:
-    file_inclusions = ('% include', '% import', '% extend')
-    if any(file_inclusion in query_text for file_inclusion in file_inclusions):
-      template = jinja2.Environment(loader=jinja2.FileSystemLoader('.'))
-      query = template.from_string(query_text)
-    else:
-      query = jinja2.Template(query_text)
-    if not template_params:
-      return query.render()
-    for key, value in template_params.items():
-      if value:
-        if isinstance(value, list):
-          template_params[key] = value
-        elif len(splitted_param := value.split(',')) > 1:
-          template_params[key] = splitted_param
-        else:
-          template_params[key] = value
-      else:
-        template_params = ''
-    return query.render(template_params)
+      template_params = ''
+  return query.render(template_params)
 
 
-class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
+class QuerySpecification(CommonParametersMixin):
   """Simplifies fetching data from API and its further parsing.
 
   Attributes:
@@ -197,11 +177,14 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     api_version: Version of Google Ads API.
   """
 
+  allowed_tags: tuple[str, ...] = ('unsafe_macro',)
+
   def __init__(
     self,
     text: str,
     title: str | None = None,
     args: GarfQueryParameters | None = None,
+    unsafe_macro: bool = False,
     **kwargs: str,
   ) -> None:
     """Instantiates QuerySpecification based on text, title and optional args.
@@ -219,6 +202,7 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
     else:
       self.args = GarfQueryParameters(**args)
     self.query = BaseQueryElements(title=title, text=text)
+    self.unsafe_macro = unsafe_macro
 
   @property
   def macros(self) -> QueryParameters:
@@ -251,9 +235,12 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
 
   def expand(self) -> Self:
     """Applies necessary transformations to query."""
-    query_text = self.expand_jinja(self.query.text, self.args.template)
+    query_text = expand_jinja(self.query.text, self.args.template)
     try:
-      self.query.text = query_text.format(**self.macros).strip()
+      if self.unsafe_macro:
+        self.query.text = query_text.format_map(SafeDict(**self.macros)).strip()
+      else:
+        self.query.text = query_text.format(**self.macros).strip()
     except KeyError as e:
       raise GarfMacroError(f'No value provided for macro {str(e)}.') from e
     return self
@@ -269,6 +256,17 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
         continue
       if re.match('/\\*', line) or multiline_comment:
         multiline_comment = True
+        continue
+      if re.match('^(#|--|//)garf:', line):
+        _, tag = line.split(':', maxsplit=1)
+        tag = tag.replace('-', '_')
+        action, tag_name = tag.split('_', maxsplit=1)
+        if tag_name in self.allowed_tags:
+          if action == 'allow':
+            setattr(self, tag_name, True)
+          elif action == 'disable':
+            setattr(self, tag_name, False)
+
         continue
       if re.match('^(#|--|//) ', line) or line in ('--', '#', '//'):
         continue
@@ -331,11 +329,16 @@ class QuerySpecification(CommonParametersMixin, TemplateProcessorMixin):
       }
 
       final_filters = re.sub(in_pattern, create_replacer(), joined_filters)
-      found_filters = [
-        f.strip().format(**group_replacements)
-        for f in re.split(' AND ', final_filters, flags=re.IGNORECASE)
-      ]
-
+      if self.unsafe_macro:
+        found_filters = [
+          f.strip().format_map(SafeDict(**group_replacements))
+          for f in re.split(' AND ', final_filters, flags=re.IGNORECASE)
+        ]
+      else:
+        found_filters = [
+          f.strip().format(**group_replacements)
+          for f in re.split(' AND ', final_filters, flags=re.IGNORECASE)
+        ]
       self.query.filters = found_filters
     return self
 

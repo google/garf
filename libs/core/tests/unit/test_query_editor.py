@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 
 import pytest
 from dateutil.relativedelta import relativedelta
@@ -165,24 +166,131 @@ class TestQuerySpecification:
       'start_date'
     ) == datetime.date.today().strftime('%Y-%m-%d')
 
-  def test_generate_process_where_statements(self):
-    query = """
+  @pytest.mark.parametrize(
+    ('where', 'filters'),
+    [
+      (
+        'start_date = TODAY AND name IN (\'one\', AND, "three")',
+        [
+          'start_date = TODAY',
+          'name IN (\'one\', AND, "three")',
+        ],
+      ),
+    ],
+  )
+  def test_generate_process_where_statements(self, where, filters):
+    query = f"""
       SELECT
         test
       FROM resource
-      WHERE
-        start_date = TODAY
-        AND name IN ('one', AND, "three")
+      WHERE {where}
     """
     test_query_elements = query_editor.QuerySpecification(
       text=query,
       title='test',
     ).generate()
 
+    assert test_query_elements.filters == filters
+
+  def test_generate_process_nested_where_statements(self):
+    where = 'name IN (\'one\', ( AND ), "three")'
+    query = f"""
+      SELECT
+        test
+      FROM resource
+      WHERE {where}
+    """
+    test_query_elements = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+    ).generate()
+
+    assert test_query_elements.filters == [where]
+
+  def test_generate_raises_macro_error_in_non_strict_mode(self):
+    query = """
+      SELECT
+        test
+      FROM resource
+      WHERE
+        metric = {metric}
+        AND dimension = {dimension}
+    """
+    with pytest.raises(query_editor.GarfMacroError):
+      query_editor.QuerySpecification(
+        text=query,
+        title='test',
+        args=query_editor.GarfQueryParameters(macro={'metric': 'metric'}),
+      ).generate()
+
+  def test_generate_raises_macro_error_with_disable_unsafe_macro_tag(self):
+    query = """
+      --garf:disable-unsafe-macro
+      SELECT
+        test
+      FROM resource
+      WHERE
+        metric = {metric}
+        AND dimension = {dimension}
+    """
+    with pytest.raises(
+      query_editor.GarfMacroError,
+      match="No value provided for macro 'dimension'",
+    ):
+      query_editor.QuerySpecification(
+        text=query,
+        title='test',
+        args=query_editor.GarfQueryParameters(macro={'metric': 'metric'}),
+      ).generate()
+
+  def test_generate_handles_non_provided_macros_in_with_inline_tag(
+    self, caplog
+  ):
+    caplog.set_level(logging.INFO)
+    query = """
+      --garf:allow-unsafe-macro
+      SELECT
+        test
+      FROM resource
+      WHERE
+        metric = {metric}
+        AND dimension = {dimension}
+    """
+    test_query_elements = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+      args=query_editor.GarfQueryParameters(macro={'metric': 'metric'}),
+    ).generate()
     assert test_query_elements.filters == [
-      'start_date = TODAY',
-      'name IN (\'one\', AND, "three")',
+      'metric = metric',
+      'dimension = {dimension}',
     ]
+    assert 'Not processed macro found: dimension' in caplog.text
+
+  def test_generate_handles_non_provided_macros_in_non_strict_mode(
+    self, caplog
+  ):
+    caplog.set_level(logging.INFO)
+    query = """
+      SELECT
+        test
+      FROM resource
+      WHERE
+        metric = {metric}
+        AND dimension = {dimension}
+    """
+    test_query_elements = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+      args=query_editor.GarfQueryParameters(macro={'metric': 'metric'}),
+      unsafe_macro=True,
+    ).generate()
+
+    assert test_query_elements.filters == [
+      'metric = metric',
+      'dimension = {dimension}',
+    ]
+    assert 'Not processed macro found: dimension' in caplog.text
 
   @pytest.mark.parametrize(
     ('slice', 'literal'),

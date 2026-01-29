@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import pytest
 import sqlalchemy
-from garf.core import report
-from garf.executors import sql_executor
+from garf.core import query_editor, report
+from garf.executors import execution_context, sql_executor
 
 
 class TestSqlAlchemyQueryExecutor:
@@ -43,3 +43,67 @@ class TestSqlAlchemyQueryExecutor:
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
     result = executor.execute(title='test', query=query)
     assert result == expected_result
+
+  @pytest.mark.parametrize(
+    ('selective', 'expected'), [(None, 2), ('true', 1), ('false', 2)]
+  )
+  def test_execute_handles_templates(self, executor, selective, expected):
+    query = """
+    SELECT
+      {% if selective == "true" %}
+        1 AS field
+      {% else %}
+        2 AS field
+      {% endif %}
+    ;
+    """
+    expected_result = report.GarfReport(
+      results=[[expected]], column_names=['field']
+    )
+    if selective is None:
+      context = execution_context.ExecutionContext()
+    else:
+      context = execution_context.ExecutionContext(
+        query_parameters={'template': {'selective': selective}}
+      )
+    result = executor.execute(title='test', query=query, context=context)
+    assert result == expected_result
+
+  def test_execute_allow_unsafe_macro(self, executor, engine):
+    query = """
+    --garf:allow-unsafe-macro
+    CREATE TABLE test AS SELECT '{value}' AS one;
+    """
+    executor.execute(title='test', query=query)
+
+    with engine.connect() as connection:
+      result = connection.execute(sqlalchemy.text('select one from test'))
+      for row in result:
+        assert row.one == '{value}'
+
+  def test_execute_disable_unsafe_macro(self, executor):
+    query = """
+    --garf:disable-unsafe-macro
+    CREATE TABLE test AS SELECT '{value}' AS one;
+    """
+    with pytest.raises(
+      query_editor.GarfMacroError, match="No value provided for macro 'value'"
+    ):
+      executor.execute(title='test', query=query)
+
+  def test_execute_replaces_macro(self, executor, engine):
+    query = """
+    CREATE TABLE test AS SELECT '{value}' AS one;
+    """
+    executor.execute(
+      title='test',
+      query=query,
+      context=execution_context.ExecutionContext(
+        query_parameters={'macro': {'value': '1'}}
+      ),
+    )
+
+    with engine.connect() as connection:
+      result = connection.execute(sqlalchemy.text('select one from test'))
+      for row in result:
+        assert row.one == '1'

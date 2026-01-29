@@ -40,9 +40,7 @@ class SqlAlchemyQueryExecutorError(exceptions.GarfExecutorError):
   """Error when SqlAlchemyQueryExecutor fails to run query."""
 
 
-class SqlAlchemyQueryExecutor(
-  executor.Executor, query_editor.TemplateProcessorMixin
-):
+class SqlAlchemyQueryExecutor(executor.Executor):
   """Handles query execution via SqlAlchemy.
 
   Attributes:
@@ -91,10 +89,18 @@ class SqlAlchemyQueryExecutor(
       Report with data if query returns some data otherwise empty Report.
     """
     span = trace.get_current_span()
+    query_spec = (
+      query_editor.QuerySpecification(
+        text=query, title=title, args=context.query_parameters
+      )
+      .remove_comments()
+      .expand()
+    )
+    query_text = query_spec.query.text
+    title = query_spec.query.title
     span.set_attribute('query.title', title)
-    span.set_attribute('query.text', query)
+    span.set_attribute('query.text', query_text)
     logger.info('Executing script: %s', title)
-    query_text = self.replace_params_template(query, context.query_parameters)
     with self.engine.begin() as conn:
       if re.findall(r'(create|update) ', query_text.lower()):
         try:
