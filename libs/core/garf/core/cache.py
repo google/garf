@@ -126,3 +126,13 @@ class GarfCache:
     logger.info('Report is saved to cache: %s', str(cached_path))
     with open(cached_path, 'w', encoding='utf-8') as f:
       json.dump(fetched_report.to_list(row_type='dict'), f)
+
+  @property
+  def size(self) -> int:
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(self.location):
+      for f in filenames:
+        file_path = os.path.join(dirpath, f)
+        if not os.path.islink(file_path):
+          total_size += os.path.getsize(file_path)
+    return total_size

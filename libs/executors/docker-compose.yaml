@@ -28,3 +28,17 @@ services:
       - "4318:4318"
     volumes:
       - "${OTEL_COLLECTOR_CONFIG}:/etc/otel-collector-config.yml"
+  prometheus:
+    image: prom/prometheus:main
+    user: 0:0
+    ports:
+      - 9090:9090
+    volumes:
+      - "${PROMETHEUS_CONFIG}:/etc/prometheus/prometheus.yml"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped

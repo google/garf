@@ -28,11 +28,19 @@ import requests
 import smart_open
 from garf.core import exceptions, query_editor
 from garf.core.telemetry import tracer
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from typing_extensions import TypeAlias, override
 
 ApiRowElement: TypeAlias = Union[int, float, str, bool, list, dict, None]
 ApiResponseRow: TypeAlias = dict[str, ApiRowElement]
+
+meter = metrics.get_meter('garf.core')
+
+api_counter = meter.create_counter(
+  'garf_api_call_total',
+  unit='1',
+  description='Counts number of requests to API',
+)
 
 
 class GarfApiResponse(pydantic.BaseModel):
@@ -66,6 +74,7 @@ class BaseClient(abc.ABC):
     span = trace.get_current_span()
     response = self.get_response(request, **kwargs)
     span.set_attribute('num_rows_api_response', len(response.results))
+    api_counter.add(1, {'api.client.class': self.__class__.__name__})
     return response
 
   @abc.abstractmethod

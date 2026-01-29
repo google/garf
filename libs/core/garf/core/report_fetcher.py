@@ -35,12 +35,17 @@ from garf.core import (
   report,
 )
 from garf.core.telemetry import tracer
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from typing_extensions import TypeAlias
 
-logger = logging.getLogger(__name__)
-
 Processor: TypeAlias = Callable[..., Any]
+
+logger = logging.getLogger(__name__)
+meter = metrics.get_meter('garf.core')
+
+cache_size_meter = meter.create_gauge(
+  'garf_cache_size_bytes', unit='By', description='Size of garf cache in bytes'
+)
 
 
 class ApiReportFetcherError(exceptions.GarfError):
@@ -197,6 +202,11 @@ class ApiReportFetcher:
         return cached_report
       except cache.GarfCacheFileNotFoundError:
         logger.info('Cached version not found, generating')
+
+      cache_size_meter.set(
+        self.cache.size, {'cache.location': str(self.cache.location)}
+      )
+
     response = self.api_client.call_api(query, **kwargs)
     if not response:
       placeholder_parsed_response = self.parser(query).parse_response(
