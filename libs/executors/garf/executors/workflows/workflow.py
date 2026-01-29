@@ -11,11 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Workflow specifies steps of end-to-end fetching and processing."""
+
 from __future__ import annotations
 
+import copy
 import os
 import pathlib
 import re
+from collections import defaultdict
+from typing import Any
 
 import pydantic
 import smart_open
@@ -96,17 +101,41 @@ class Workflow(pydantic.BaseModel):
 
   Attributes:
     steps: Contains one or several fetcher executions.
+    context: Query and fetcher parameters to overwrite in steps.
   """
 
   steps: list[ExecutionStep]
+  context: ExecutionContext | None = None
+
+  def model_post_init(self, __context__) -> None:
+    if context := self.context:
+      custom_parameters = defaultdict(dict)
+      if custom_macros := context.query_parameters.macro:
+        custom_parameters['query_parameters']['macro'] = custom_macros
+      if custom_templates := context.query_parameters.template:
+        custom_parameters['query_parameters']['template'] = custom_templates
+      if custom_fetcher_parameters := context.fetcher_parameters:
+        custom_parameters['fetcher_parameters'] = custom_fetcher_parameters
+
+      if custom_parameters:
+        steps = self.steps
+        for i, step in enumerate(steps):
+          res = _merge_dicts(
+            step.model_dump(exclude_none=True), dict(custom_parameters)
+          )
+          steps[i] = ExecutionStep(**res)
 
   @classmethod
-  def from_file(cls, path: str | pathlib.Path | os.PathLike[str]) -> Workflow:
+  def from_file(
+    cls,
+    path: str | pathlib.Path | os.PathLike[str],
+    context: ExecutionContext | None = None,
+  ) -> Workflow:
     """Builds workflow from local or remote yaml file."""
     with smart_open.open(path, 'r', encoding='utf-8') as f:
       data = yaml.safe_load(f)
     try:
-      return Workflow(**data)
+      return Workflow(steps=data.get('steps'), context=context)
     except pydantic.ValidationError as e:
       raise GarfWorkflowError(f'Incorrect workflow:\n {e}') from e
 
@@ -117,3 +146,19 @@ class Workflow(pydantic.BaseModel):
         self.model_dump(exclude_none=True).get('steps'), f, encoding='utf-8'
       )
     return f'Workflow is saved to {str(path)}'
+
+
+def _merge_dicts(
+  dict1: dict[str, Any], dict2: dict[str, Any]
+) -> dict[str, Any]:
+  result = copy.deepcopy(dict1)
+  for key, value in dict2.items():
+    if (
+      key in result
+      and isinstance(result[key], dict)
+      and isinstance(value, dict)
+    ):
+      result[key] = _merge_dicts(result[key], value)
+    else:
+      result[key] = value
+  return result
