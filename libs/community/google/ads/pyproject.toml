@@ -32,6 +32,9 @@ version = {attr = "garf.community.google.ads.__version__"}
 google-ads = "garf.community.google.ads.report_fetcher"
 search-ads-360 = "garf.community.google.ads.report_fetcher"
 
+[project.entry-points.garf_simulator]
+google-ads = "garf.community.google.ads.simulator"
+
 [project.optional-dependencies]
 test =  [
   "pytest",

@@ -62,6 +62,18 @@ repos:
     entry: pytest -n auto libs/exporters/tests/unit/
     language: system
     pass_filenames: false
+  - id: pytest-check-youtube
+    name: pytest-check-youtube
+    entry: pytest -n auto libs/community/google/youtube/tests/unit/
+    files: ^libs/community/google/youtube/
+    language: system
+    pass_filenames: false
+  - id: pytest-check-google-ads
+    name: pytest-check-ads
+    entry: pytest -n auto libs/community/google/ads/tests/unit/
+    files: ^libs/community/google/ads/
+    language: system
+    pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e

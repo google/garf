@@ -175,7 +175,7 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     )
     return google_ads_service.GoogleAdsRow()
 
-  def get_types(self, request):
+  def get_types(self, request, **kwargs):
     return []
 
   def _get_types(self, request):
@@ -325,8 +325,9 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     self, request: query_editor.GoogleAdsApiQuery, account: int, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     """Executes a single API request for a given customer_id and GAQL query."""
+    gaql_query = _create_gaql_query(request)
     response = self.ads_service.search_stream(
-      customer_id=account, query=request.text
+      customer_id=account, query=gaql_query
     )
     results = [result for batch in response for result in batch.results]
     return api_clients.GarfApiResponse(
@@ -415,6 +416,48 @@ class GoogleAdsApiClient(api_clients.BaseClient):
       version=ads_client.version,
       use_proto_plus=use_proto_plus,
     )
+
+
+def _create_gaql_query(query: query_editor.GoogleAdsApiQuery) -> str:
+  """Generate valid GAQL query.
+
+  Based on original query text, a set of field and virtual columns
+  constructs new GAQL query to be sent to Ads API.
+
+  Returns:
+    Valid GAQL query.
+  """
+  virtual_fields = [
+    field
+    for name, column in query.virtual_columns.items()
+    if column.type == 'expression'
+    for field in column.fields
+  ]
+  fields = query.fields
+  if virtual_fields:
+    fields = query.fields + virtual_fields
+  joined_fields = ', '.join(fields)
+  if filters := query.filters:
+    filter_conditions = ' AND '.join(filters)
+    filters = f'WHERE {filter_conditions}'
+  else:
+    filters = ''
+  if sorts := query.sorts:
+    sort_conditions = ' AND '.join(sorts)
+    sorts = f'ORDER BY {sort_conditions}'
+  else:
+    sorts = ''
+  query_text = (
+    f'SELECT {joined_fields} FROM {query.resource_name} {filters} {sorts}'
+  )
+  query_text = _unformat_type_field_name(query_text)
+  return re.sub(r'\s+', ' ', query_text).strip()
+
+
+def _unformat_type_field_name(query: str) -> str:
+  if query == 'type_':
+    return 'type'
+  return re.sub(r'\.type_', '.type', query)
 
 
 def clean_resource(resource: str) -> str:
