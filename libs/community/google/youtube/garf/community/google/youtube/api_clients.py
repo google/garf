@@ -74,7 +74,7 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       return self._service
     return build('youtube', self.api_version, developerKey=self.api_key)
 
-  def get_types(self, request):
+  def get_types(self, request, **kwargs: str):
     fields = {field.split('.')[0] for field in request.fields}
     return self.infer_types('Video', fields)
 
