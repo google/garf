@@ -73,11 +73,13 @@ class ExecutionStep(ExecutionContext):
     alias: Optional alias to identify execution step.
     queries: Queries to run for a particular fetcher.
     context: Execution context for queries and fetcher.
+    parallel_threshold: Max allowed parallelism for the queries in the step.
   """
 
   fetcher: str | None = None
   alias: str | None = pydantic.Field(default=None, pattern=r'^[a-zA-Z0-9_]+$')
   queries: list[QueryPath | QueryDefinition | QueryFolder] | None = None
+  parallel_threshold: int | None = None
 
   @property
   def context(self) -> ExecutionContext:

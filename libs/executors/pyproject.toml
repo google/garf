@@ -69,6 +69,10 @@ tests = [
 all = [
   "garf-executors[bq,sql,server,gcp]"
 ]
+
+[tool.setuptools.package-data]
+"*"= ["gcp_workflow.yaml"]
+
 [project.scripts]
 garf="garf.executors.entrypoints.cli:main"
 
