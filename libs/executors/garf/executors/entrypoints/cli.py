@@ -93,9 +93,26 @@ def main():
     loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
   )
   reader_client = reader.create_reader(args.input)
+  param_types = ['source', 'macro', 'template']
+  outputs = args.output.split(',')
+  extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse(kwargs)
+  source_parameters = extra_parameters.get('source', {})
+  writer_parameters = {}
+  for output in outputs:
+    writer_parameters.update(extra_parameters.get(output))
+
+  context = garf.executors.api_executor.ApiExecutionContext(
+    query_parameters={
+      'macro': extra_parameters.get('macro'),
+      'template': extra_parameters.get('template'),
+    },
+    writer=outputs,
+    writer_parameters=writer_parameters,
+    fetcher_parameters=source_parameters,
+  )
   if workflow_file := args.workflow:
     wf_parent = pathlib.Path.cwd() / pathlib.Path(workflow_file).parent
-    execution_workflow = workflow.Workflow.from_file(workflow_file)
+    execution_workflow = workflow.Workflow.from_file(workflow_file, context)
     workflow_skip = args.workflow_skip if args.workflow_skip else None
     workflow_include = args.workflow_include if args.workflow_include else None
     workflow_runner.WorkflowRunner(
@@ -120,26 +137,6 @@ def main():
       raise exceptions.GarfExecutorError(
         f'No execution context found for source {args.source} in {config_file}'
       )
-  else:
-    param_types = ['source', 'macro', 'template']
-    outputs = args.output.split(',')
-    extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse(
-      kwargs
-    )
-    source_parameters = extra_parameters.get('source', {})
-    writer_parameters = {}
-    for output in outputs:
-      writer_parameters.update(extra_parameters.get(output))
-
-    context = garf.executors.api_executor.ApiExecutionContext(
-      query_parameters={
-        'macro': extra_parameters.get('macro'),
-        'template': extra_parameters.get('template'),
-      },
-      writer=outputs,
-      writer_parameters=writer_parameters,
-      fetcher_parameters=source_parameters,
-    )
   query_executor = setup.setup_executor(
     source=args.source,
     fetcher_parameters=context.fetcher_parameters,
