@@ -116,6 +116,8 @@ class Workflow(pydantic.BaseModel):
         custom_parameters['query_parameters']['template'] = custom_templates
       if custom_fetcher_parameters := context.fetcher_parameters:
         custom_parameters['fetcher_parameters'] = custom_fetcher_parameters
+      if custom_writer_parameters := context.writer_parameters:
+        custom_parameters['writer_parameters'] = custom_writer_parameters
 
       if custom_parameters:
         steps = self.steps
@@ -143,7 +145,7 @@ class Workflow(pydantic.BaseModel):
     """Saves workflow to local or remote yaml file."""
     with smart_open.open(path, 'w', encoding='utf-8') as f:
       yaml.dump(
-        self.model_dump(exclude_none=True).get('steps'), f, encoding='utf-8'
+        self.model_dump(exclude_none=True), f, encoding='utf-8', sort_keys=False
       )
     return f'Workflow is saved to {str(path)}'
 
