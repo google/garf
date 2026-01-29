@@ -140,7 +140,9 @@ class WorkflowRunner:
           else:
             batch[query.query.title] = query.query.text
         query_executor.execute_batch(
-          batch, step.context, self.parallel_threshold
+          batch,
+          step.context,
+          step.parallel_threshold or self.parallel_threshold,
         )
         execution_results.append(step_name)
     return execution_results
