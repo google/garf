@@ -196,6 +196,7 @@ class ApiQueryExecutor(executor.Executor):
       title = pathlib.Path(title).name.split('.')[0]
       results = self.simulator.simulate(
         query_specification=query,
+        args=context.query_parameters,
         title=title,
         **context.fetcher_parameters,
       )

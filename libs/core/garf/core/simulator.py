@@ -67,11 +67,16 @@ class ApiReportSimulator:
     self,
     query_specification: str | query_editor.QuerySpecification,
     simulator_specification: SimulatorSpecification | None = None,
+    args: query_editor.GarfQueryParameters | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
+    if args is None:
+      args = query_editor.GarfQueryParameters()
     if not isinstance(query_specification, query_editor.QuerySpecification):
       query_specification = self.query_specification_builder(
         text=str(query_specification),
+        args=args,
+        **kwargs,
       )
     query = query_specification.generate()
     try:
