@@ -13,7 +13,7 @@
 # limitations under the License.
 import re
 
-import garf_core
+from garf.core.report import GarfReport
 
 
 def get_ocid_mapping(
@@ -49,7 +49,7 @@ def get_ocid_mapping(
         mapping.append([int(acc), '0'])
     else:
       mapping.append([int(acc), '0'])
-  return garf_core.GarfReport(
+  return GarfReport(
     results=mapping,
     column_names=[
       'account_id',

@@ -32,53 +32,7 @@ class GoogleAdsApiQuery(query_editor.QuerySpecification):
     for customizer in base_query.customizers.values():
       if customizer.type == 'nested_field':
         customizer.value = _format_type_field_name(customizer.value)
-    base_query.text = self._create_gaql_query()
     return base_query
-
-  def _create_gaql_query(
-    self,
-  ) -> str:
-    """Generate valid GAQL query.
-
-    Based on original query text, a set of field and virtual columns
-    constructs new GAQL query to be sent to Ads API.
-
-    Returns:
-      Valid GAQL query.
-    """
-    virtual_fields = [
-      field
-      for name, column in self.query.virtual_columns.items()
-      if column.type == 'expression'
-      for field in column.fields
-    ]
-    fields = self.query.fields
-    if virtual_fields:
-      fields = self.query.fields + virtual_fields
-    joined_fields = ', '.join(fields)
-    if filters := self.query.filters:
-      filter_conditions = ' AND '.join(filters)
-      filters = f'WHERE {filter_conditions}'
-    else:
-      filters = ''
-    if sorts := self.query.sorts:
-      sort_conditions = ' AND '.join(sorts)
-      sorts = f'ORDER BY {sort_conditions}'
-    else:
-      sorts = ''
-    query_text = (
-      f'SELECT {joined_fields} '
-      f'FROM {self.query.resource_name} '
-      f'{filters} {sorts}'
-    )
-    query_text = _unformat_type_field_name(query_text)
-    return re.sub(r'\s+', ' ', query_text).strip()
-
-
-def _unformat_type_field_name(query: str) -> str:
-  if query == 'type_':
-    return 'type'
-  return re.sub(r'\.type_', '.type', query)
 
 
 def _format_type_field_name(query: str) -> str:
