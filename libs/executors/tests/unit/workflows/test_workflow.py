@@ -60,12 +60,13 @@ class TestWorkflow:
     workflow.save(tmp_workflow)
     with open(tmp_workflow, 'r', encoding='utf-8') as f:
       workflow_data = yaml.safe_load(f)
-    assert workflow_data == self.data.get('steps')
+    assert workflow_data == self.data
 
   def test_init_with_context(self):
     new_start_date = '2026-01-01'
     new_cohort = '2'
     new_ids = [4, 5, 6]
+    new_folder = '/app'
     workflow = Workflow(
       steps=self.data.get('steps'),
       context={
@@ -76,6 +77,9 @@ class TestWorkflow:
         'fetcher_parameters': {
           'id': new_ids,
         },
+        'writer_parameters': {
+          'destination_folder': new_folder,
+        },
       },
     )
 
@@ -84,3 +88,4 @@ class TestWorkflow:
     assert step.query_parameters.macro.get('end_date') == '2025-12-31'
     assert step.query_parameters.template.get('cohorts') == new_cohort
     assert step.fetcher_parameters.get('id') == new_ids
+    assert step.writer_parameters.get('destination_folder') == new_folder
