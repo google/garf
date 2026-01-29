@@ -23,7 +23,10 @@ import typer
 import uvicorn
 from garf.executors import exceptions, setup
 from garf.executors.entrypoints import utils
-from garf.executors.entrypoints.tracer import initialize_tracer
+from garf.executors.entrypoints.tracer import (
+  initialize_meter,
+  initialize_tracer,
+)
 from garf.executors.workflows import workflow_runner
 from garf.io import reader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -31,6 +34,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
 initialize_tracer()
+initialize_meter()
 app = fastapi.FastAPI()
 FastAPIInstrumentor.instrument_app(app)
 typer_app = typer.Typer()

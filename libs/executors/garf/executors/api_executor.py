@@ -32,9 +32,16 @@ from garf.executors import (
   query_processor,
 )
 from garf.executors.telemetry import tracer
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 
 logger = logging.getLogger(__name__)
+meter = metrics.get_meter('garf.executors')
+
+api_counter = meter.create_counter(
+  'garf_api_execute_total',
+  unit='1',
+  description='Counts number of API executions',
+)
 
 
 class ApiExecutionContext(execution_context.ExecutionContext):
@@ -120,6 +127,9 @@ class ApiQueryExecutor(executor.Executor):
       span.set_attribute('query.text', query)
       logger.debug('starting query %s', query)
       title = pathlib.Path(title).name.split('.')[0]
+      api_counter.add(
+        1, {'api.client.class': self.fetcher.api_client.__class__.__name__}
+      )
       results = self.fetcher.fetch(
         query_specification=query,
         args=context.query_parameters,

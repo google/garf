@@ -27,13 +27,17 @@ import sys
 import garf.executors
 from garf.executors import config, exceptions, setup
 from garf.executors.entrypoints import utils
-from garf.executors.entrypoints.tracer import initialize_tracer
+from garf.executors.entrypoints.tracer import (
+  initialize_meter,
+  initialize_tracer,
+)
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
 from opentelemetry import trace
 
 initialize_tracer()
+meter_provider = initialize_meter()
 
 
 @tracer.start_as_current_span('garf.entrypoints.cli')
@@ -102,6 +106,7 @@ def main():
       selected_aliases=workflow_include,
       skipped_aliases=workflow_skip,
     )
+    meter_provider.shutdown()
     sys.exit()
 
   if not args.query:
@@ -155,6 +160,7 @@ def main():
         query=reader_client.read(query), title=query, context=context
       )
   logging.shutdown()
+  meter_provider.shutdown()
 
 
 if __name__ == '__main__':
