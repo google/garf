@@ -183,8 +183,11 @@ class ApiReportFetcher:
     query = query_specification.generate()
     if not query.title:
       query.title = title
+    if query.title:
+      span.set_attribute('query.title', query.title)
+      span.set_attribute('query.text', query.text)
     if query.is_builtin_query:
-      span.set_attribute('is_builtin_query', True)
+      span.set_attribute('query.is_builtin', True)
       if not (builtin_report := self.builtin_queries.get(query.title)):
         raise query_editor.GarfBuiltInQueryError(
           f'Cannot find the built-in query "{query.title}"'
