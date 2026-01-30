@@ -123,8 +123,6 @@ class ApiQueryExecutor(executor.Executor):
       'api.client.class', self.fetcher.api_client.__class__.__name__
     )
     try:
-      span.set_attribute('query.title', title)
-      span.set_attribute('query.text', query)
       logger.debug('starting query %s', query)
       title = pathlib.Path(title).name.split('.')[0]
       api_counter.add(
