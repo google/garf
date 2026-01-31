@@ -38,6 +38,7 @@ from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
 
 logger = logging.getLogger(__name__)
+logging.getLogger('pandas_gbq').setLevel(logging.WARNING)
 
 _WRITE_DISPOSITION_MAPPING = {
   'WRITE_TRUNCATE': 'replace',
@@ -102,6 +103,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       raise BigQueryWriterError(
         'Unsupported writer disposition, choose one of: replace, append, fail'
       )
+    self._client = None
 
   def __str__(self) -> str:
     return f'[BigQuery] - {self.dataset_id} at {self.location} location.'
@@ -109,7 +111,10 @@ class BigQueryWriter(abs_writer.AbsWriter):
   @property
   def client(self) -> bigquery.Client:
     """Instantiated BigQuery client."""
-    return bigquery.Client(self.project)
+    if not self._client:
+      with tracer.start_as_current_span('bq.create_client'):
+        self._client = bigquery.Client(self.project)
+    return self._client
 
   @tracer.start_as_current_span('bq.create_or_get_dataset')
   def create_or_get_dataset(self) -> bigquery.Dataset:
@@ -137,7 +142,6 @@ class BigQueryWriter(abs_writer.AbsWriter):
     """
     report = self.format_for_write(report)
     destination = formatter.format_extension(destination)
-    _ = self.create_or_get_dataset()
     table = f'{self.dataset_id}.{destination}'
     if not report:
       df = pd.DataFrame(
@@ -148,7 +152,10 @@ class BigQueryWriter(abs_writer.AbsWriter):
     df = df.replace({np.nan: None})
     logger.debug('Writing %d rows of data to %s', len(df), destination)
     pandas_gbq.to_gbq(
-      dataframe=df, destination_table=table, if_exists=self.write_disposition
+      dataframe=df,
+      destination_table=table,
+      if_exists=self.write_disposition,
+      progress_bar=False,
     )
     logger.debug('Writing to %s is completed', destination)
     return f'[BigQuery] - at {self.dataset_id}.{destination}'
