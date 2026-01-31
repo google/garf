@@ -21,6 +21,8 @@ from typing import Any
 
 import pydantic
 from garf.core import api_clients, exceptions, parsers, query_editor, report
+from garf.core.telemetry import tracer
+from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
@@ -63,11 +65,13 @@ class ApiReportSimulator:
     self.query_specification_builder = query_specification_builder
     self.simulator_specification_builder = simulator_specification_builder
 
+  @tracer.start_as_current_span('simulate')
   def simulate(
     self,
     query_specification: str | query_editor.QuerySpecification,
     simulator_specification: SimulatorSpecification | None = None,
     args: query_editor.GarfQueryParameters | None = None,
+    title: str | None = None,
     **kwargs: str,
   ) -> report.GarfReport:
     if args is None:
@@ -78,7 +82,13 @@ class ApiReportSimulator:
         args=args,
         **kwargs,
       )
+    span = trace.get_current_span()
     query = query_specification.generate()
+    if not query.title:
+      query.title = title
+    if query.title:
+      span.set_attribute('query.title', query.title)
+      span.set_attribute('query.text', query.text)
     try:
       response_types = self.api_client.get_types(query, **kwargs)
     except NotImplementedError as e:
