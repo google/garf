@@ -122,6 +122,7 @@ def main():
       cache_ttl_seconds=args.cache_ttl_seconds,
       selected_aliases=workflow_include,
       skipped_aliases=workflow_skip,
+      simulate=args.simulate,
     )
     meter_provider.shutdown()
     sys.exit()
@@ -143,6 +144,8 @@ def main():
     enable_cache=args.enable_cache,
     cache_ttl_seconds=args.cache_ttl_seconds,
     simulate=args.simulate,
+    writers=context.writer,
+    writer_parameters=context.writer_parameters,
   )
   batch = {query: reader_client.read(query) for query in args.query}
   if args.parallel_queries and len(args.query) > 1:

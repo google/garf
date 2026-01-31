@@ -16,10 +16,15 @@
 from __future__ import annotations
 
 import importlib
+import logging
+from typing import Any
 
 from garf.executors import executor, fetchers
 from garf.executors.api_executor import ApiQueryExecutor
 from garf.executors.telemetry import tracer
+from garf.io import writer
+
+logger = logging.getLogger('garf.executors.setup')
 
 
 @tracer.start_as_current_span('setup_executor')
@@ -29,11 +34,22 @@ def setup_executor(
   enable_cache: bool = False,
   cache_ttl_seconds: int = 3600,
   simulate: bool = False,
+  writers: str | list[str] | None = None,
+  writer_parameters: dict[str, Any] | None = None,
 ) -> type[executor.Executor]:
   """Initializes executors based on a source and parameters."""
+  if simulate and enable_cache:
+    logger.warning('Simulating API responses. Disabling cache.')
+    enable_cache = False
+  if writers:
+    writer_clients = writer.setup_writers(writers, writer_parameters)
+  else:
+    writer_clients = None
   if source == 'bq':
     bq_executor = importlib.import_module('garf.executors.bq_executor')
-    query_executor = bq_executor.BigQueryExecutor(**fetcher_parameters)
+    query_executor = bq_executor.BigQueryExecutor(
+      **fetcher_parameters, writers=writer_clients
+    )
   elif source == 'sqldb':
     sql_executor = importlib.import_module('garf.executors.sql_executor')
     query_executor = (
@@ -54,5 +70,6 @@ def setup_executor(
         cache_ttl_seconds=cache_ttl_seconds,
       ),
       report_simulator=concrete_simulator,
+      writers=writer_clients,
     )
   return query_executor

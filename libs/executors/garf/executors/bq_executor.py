@@ -31,6 +31,7 @@ import logging
 from garf.core import query_editor, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
+from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
 from opentelemetry import trace
 
@@ -54,13 +55,15 @@ class BigQueryExecutor(executor.Executor):
     self,
     project_id: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
     location: str | None = None,
+    writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
   ) -> None:
     """Initializes BigQueryExecutor.
 
     Args:
-        project_id: Google Cloud project id.
-        location: BigQuery dataset location.
+      project_id: Google Cloud project id.
+      location: BigQuery dataset location.
+      writers: Instantiated writers.
     """
     if not project_id:
       raise BigQueryExecutorError(
@@ -69,6 +72,7 @@ class BigQueryExecutor(executor.Executor):
       )
     self.project_id = project_id
     self.location = location
+    self.writers = writers
     super().__init__()
 
   @property
@@ -108,6 +112,7 @@ class BigQueryExecutor(executor.Executor):
     span.set_attribute('query.title', title)
     span.set_attribute('query.text', query)
     logger.info('Executing script: %s', title)
+    # TODO: move to initialization
     self.create_datasets(context.query_parameters.macro)
     job = self.client.query(query_text)
     try:
@@ -122,7 +127,7 @@ class BigQueryExecutor(executor.Executor):
     else:
       results = report.GarfReport()
     if context.writer and results:
-      writer_clients = context.writer_clients
+      writer_clients = self.writers or context.writer_clients
       if not writer_clients:
         logger.warning('No writers configured, skipping write operation')
       else:
