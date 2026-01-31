@@ -73,6 +73,7 @@ class WorkflowRunner:
     cache_ttl_seconds: int = 3600,
     selected_aliases: list[str] | None = None,
     skipped_aliases: list[str] | None = None,
+    simulate: bool = False,
   ) -> list[str]:
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
@@ -108,6 +109,9 @@ class WorkflowRunner:
           fetcher_parameters=step.fetcher_parameters,
           enable_cache=enable_cache,
           cache_ttl_seconds=cache_ttl_seconds,
+          simulate=simulate,
+          writers=step.writer,
+          writer_parameters=step.writer_parameters,
         )
         batch = {}
         if not (queries := step.queries):

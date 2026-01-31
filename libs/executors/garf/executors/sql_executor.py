@@ -31,6 +31,7 @@ import pandas as pd
 from garf.core import query_editor, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
+from garf.io.writers import abs_writer
 from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,10 @@ class SqlAlchemyQueryExecutor(executor.Executor):
   """
 
   def __init__(
-    self, engine: sqlalchemy.engine.base.Engine | None = None, **kwargs: str
+    self,
+    engine: sqlalchemy.engine.base.Engine | None = None,
+    writers: list[abs_writer.AbsWriter] | None = None,
+    **kwargs: str,
   ) -> None:
     """Initializes executor with a given engine.
 
@@ -56,6 +60,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
         engine: Initialized Engine object to operated on a given database.
     """
     self.engine = engine or sqlalchemy.create_engine('sqlite://')
+    self.writers = writers
     super().__init__()
 
   @classmethod
@@ -125,7 +130,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
         finally:
           conn.connection.execute(f'DROP TABLE {temp_table_name}')
       if context.writer and results:
-        writer_clients = context.writer_clients
+        writer_clients = self.writers or context.writer_clients
         if not writer_clients:
           logger.warning('No writers configured, skipping write operation')
         else:

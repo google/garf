@@ -32,6 +32,7 @@ from garf.executors import (
   query_processor,
 )
 from garf.executors.telemetry import tracer
+from garf.io.writers import abs_writer
 from opentelemetry import metrics, trace
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class ApiQueryExecutor(executor.Executor):
     self,
     fetcher: report_fetcher.ApiReportFetcher,
     report_simulator: simulator.ApiReportSimulator | None = None,
+    writers: list[abs_writer.AbsWriter] | None = None,
   ) -> None:
     """Initializes ApiQueryExecutor.
 
@@ -70,6 +72,7 @@ class ApiQueryExecutor(executor.Executor):
     """
     self.fetcher = fetcher
     self.simulator = report_simulator
+    self.writers = writers
     super().__init__(
       preprocessors=self.fetcher.preprocessors,
       postprocessors=self.fetcher.postprocessors,
@@ -134,7 +137,7 @@ class ApiQueryExecutor(executor.Executor):
         title=title,
         **context.fetcher_parameters,
       )
-      writer_clients = context.writer_clients
+      writer_clients = self.writers or context.writer_clients
       if not writer_clients:
         logger.warning('No writers configured, skipping write operation')
         return None
@@ -183,13 +186,11 @@ class ApiQueryExecutor(executor.Executor):
     """
     context = query_processor.process_gquery(context)
     span = trace.get_current_span()
-    span.set_attribute('fetcher.class', self.fetcher.__class__.__name__)
+    span.set_attribute('simulator.class', self.simulator.__class__.__name__)
     span.set_attribute(
-      'api.client.class', self.fetcher.api_client.__class__.__name__
+      'api.client.class', self.simulator.api_client.__class__.__name__
     )
     try:
-      span.set_attribute('query.title', title)
-      span.set_attribute('query.text', query)
       logger.debug('starting query %s', query)
       title = pathlib.Path(title).name.split('.')[0]
       results = self.simulator.simulate(
@@ -198,7 +199,7 @@ class ApiQueryExecutor(executor.Executor):
         title=title,
         **context.fetcher_parameters,
       )
-      writer_clients = context.writer_clients
+      writer_clients = self.writers or context.writer_clients
       if not writer_clients:
         logger.warning('No writers configured, skipping write operation')
         return None

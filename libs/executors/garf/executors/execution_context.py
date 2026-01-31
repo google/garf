@@ -36,8 +36,8 @@ class ExecutionContext(pydantic.BaseModel):
   Attributes:
     query_parameters: Parameters to dynamically change query text.
     fetcher_parameters: Parameters to specify fetching setup.
-    writer: Type of writer to use. Can be a single writer string or list of writers.
-    writer_parameters: Optional parameters to setup writer.
+    writer: Type of writer(s) to use.
+    writer_parameters: Optional parameters to setup writer(s).
   """
 
   query_parameters: query_editor.GarfQueryParameters | None = pydantic.Field(
@@ -77,41 +77,25 @@ class ExecutionContext(pydantic.BaseModel):
   @property
   def writer_client(self) -> abs_writer.AbsWriter:
     """Returns single writer client."""
+    if not self.writer:
+      raise writer.GarfIoWriterError('No available writer')
     if isinstance(self.writer, list) and len(self.writer) > 0:
       writer_type = self.writer[0]
     else:
       writer_type = self.writer
-
-    writer_params = self.writer_parameters or {}
-
-    if not writer_type:
-      raise ValueError('No writer specified')
-
-    writer_client = writer.create_writer(writer_type, **writer_params)
-    if writer_type == 'bq':
-      _ = writer_client.create_or_get_dataset()
-    if writer_type == 'sheet':
-      writer_client.init_client()
-    return writer_client
+    writer_clients = writer.setup_writers(
+      writers=[writer_type], writer_parameters=self.writer_parameters
+    )
+    return writer_clients[0]
 
   @property
   def writer_clients(self) -> list[abs_writer.AbsWriter]:
     """Returns list of writer clients."""
     if not self.writer:
-      return []
-
-    # Convert single writer to list for uniform processing
+      raise writer.GarfIoWriterError('No available writer')
     writers_to_use = (
       self.writer if isinstance(self.writer, list) else [self.writer]
     )
-    writer_params = self.writer_parameters or {}
-
-    clients = []
-    for writer_type in writers_to_use:
-      writer_client = writer.create_writer(writer_type, **writer_params)
-      if writer_type == 'bq':
-        _ = writer_client.create_or_get_dataset()
-      if writer_type == 'sheet':
-        writer_client.init_client()
-      clients.append(writer_client)
-    return clients
+    return writer.setup_writers(
+      writers=writers_to_use, writer_parameters=self.writer_parameters
+    )
