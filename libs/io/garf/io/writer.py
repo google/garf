@@ -19,6 +19,7 @@ import enum
 import inspect
 import sys
 from importlib.metadata import entry_points
+from typing import Any
 
 from garf.io import exceptions
 from garf.io.telemetry import tracer
@@ -101,3 +102,23 @@ def create_writer(
       span.set_attribute(f'{writer_option}.{k}', v)
     return concrete_writer(**kwargs)
   raise GarfIoWriterError(f'Failed to load {writer_option}!')
+
+
+def setup_writers(
+  writers: list[str], writer_parameters: dict[str, Any] | None = None
+) -> list[abs_writer.AbsWriter]:
+  """Returns list of writer clients."""
+  if isinstance(writers, str):
+    writers = [writers]
+  if writer_parameters is None:
+    writer_parameters = {}
+
+  clients = []
+  for writer_type in writers:
+    writer_client = create_writer(writer_type, **writer_parameters)
+    if writer_type in ('bq', 'bigquery'):
+      _ = writer_client.create_or_get_dataset()
+    if writer_type in ('sheet', 'sheets'):
+      writer_client.create_or_get_spreadsheet()
+    clients.append(writer_client)
+  return clients

@@ -133,12 +133,13 @@ class SheetWriter(AbsWriter):
 
   @property
   def spreadsheet(self) -> gspread.spreadsheet.Spreadsheet:
-    if self._spreadsheet:
-      return self._spreadsheet
+    if not self._spreadsheet:
+      self._spreadsheet = self.create_or_get_spreadsheet()
+    return self._spreadsheet
+
+  def create_or_get_spreadsheet(self) -> gspread.spreadsheet.Spreadsheet:
     if not self.spreadsheet_url:
-      spreadsheet = self.client.create(title=f'Garf CSV {uuid.uuid4().hex}')
-      self.spreadsheet_url = spreadsheet.url
-      return spreadsheet
+      return self.client.create(title=f'Garf {uuid.uuid4().hex}')
     return self.client.open_by_url(self.spreadsheet_url)
 
   def _add_rows_if_needed(
