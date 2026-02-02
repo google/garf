@@ -91,6 +91,15 @@ class BigQueryExecutor(executor.Executor):
         self._client = bigquery.Client(self.project)
     return self._client
 
+  @property
+  def project_id(self) -> str:
+    warnings.warn(
+      "'project_id' property is deprecated. Please use 'project' instead.",
+      DeprecationWarning,
+      stacklevel=2,
+    )
+    return self.project
+
   @tracer.start_as_current_span('bq.execute')
   def execute(
     self,
