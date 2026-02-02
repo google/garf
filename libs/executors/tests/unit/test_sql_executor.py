@@ -14,10 +14,13 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 import sqlalchemy
 from garf.core import query_editor, report
 from garf.executors import execution_context, sql_executor
+from garf.io import writer
 
 
 class TestSqlAlchemyQueryExecutor:
@@ -43,6 +46,40 @@ class TestSqlAlchemyQueryExecutor:
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
     result = executor.execute(title='test', query=query)
     assert result == expected_result
+
+  def test_execute_writers_data_via_executor_writer(self, engine, tmp_path):
+    writers = writer.setup_writers(
+      writers=['json'], writer_parameters={'destination_folder': tmp_path}
+    )
+    executor = sql_executor.SqlAlchemyQueryExecutor(
+      engine=engine, writers=writers
+    )
+    query = 'SELECT 1 AS one;'
+    result = executor.execute(
+      title='test',
+      query=query,
+    )
+    output_path = str(tmp_path / 'test.json')
+    assert result == f'[JSON] - at {output_path}'
+    with open(output_path, 'r', encoding='utf-8') as f:
+      data = json.load(f)
+    assert data == [{'one': 1}]
+
+  def test_execute_writers_data_via_context_writer(self, engine, tmp_path):
+    executor = sql_executor.SqlAlchemyQueryExecutor(engine=engine)
+    query = 'SELECT 1 AS one;'
+    result = executor.execute(
+      title='test',
+      query=query,
+      context=execution_context.ExecutionContext(
+        writer='json', writer_parameters={'destination_folder': str(tmp_path)}
+      ),
+    )
+    output_path = str(tmp_path / 'test.json')
+    assert result == f'[JSON] - at {output_path}'
+    with open(output_path, 'r', encoding='utf-8') as f:
+      data = json.load(f)
+    assert data == [{'one': 1}]
 
   @pytest.mark.parametrize(
     ('selective', 'expected'), [(None, 2), ('true', 1), ('false', 2)]
