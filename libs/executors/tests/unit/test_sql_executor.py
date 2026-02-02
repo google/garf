@@ -41,6 +41,22 @@ class TestSqlAlchemyQueryExecutor:
       for row in result:
         assert row.one == 1
 
+  def test_execute_works_with_multiple_tables(self, executor, engine):
+    query = """
+    CREATE TABLE test1 AS SELECT 1 AS one;
+    CREATE TABLE test2 AS SELECT 2 AS one;
+    """
+    executor.execute(title='test', query=query)
+
+    with engine.connect() as connection:
+      result = connection.execute(sqlalchemy.text('select one from test1'))
+      for row in result:
+        assert row.one == 1
+
+      result = connection.execute(sqlalchemy.text('select one from test2'))
+      for row in result:
+        assert row.one == 2
+
   def test_execute_returns_data_to_caller(self, executor):
     query = 'SELECT 1 AS one;'
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
