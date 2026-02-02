@@ -65,14 +65,14 @@ class SqlAlchemyQueryExecutor(executor.Executor):
 
   @classmethod
   def from_connection_string(
-    cls, connection_string: str | None
+    cls, connection_string: str | None, writers: list[str] | None = None
   ) -> SqlAlchemyQueryExecutor:
     """Creates executor from SqlAlchemy connection string.
 
     https://docs.sqlalchemy.org/en/20/core/engines.html
     """
     engine = sqlalchemy.create_engine(connection_string or 'sqlite://')
-    return cls(engine)
+    return cls(engine=engine, writers=writers)
 
   @tracer.start_as_current_span('sql.execute')
   def execute(
@@ -129,7 +129,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
           ) from e
         finally:
           conn.connection.execute(f'DROP TABLE {temp_table_name}')
-      if context.writer and results:
+      if results and (self.writers or context.writer):
         writer_clients = self.writers or context.writer_clients
         if not writer_clients:
           logger.warning('No writers configured, skipping write operation')

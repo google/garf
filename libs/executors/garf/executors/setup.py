@@ -54,7 +54,8 @@ def setup_executor(
     sql_executor = importlib.import_module('garf.executors.sql_executor')
     query_executor = (
       sql_executor.SqlAlchemyQueryExecutor.from_connection_string(
-        fetcher_parameters.get('connection_string')
+        connection_string=fetcher_parameters.get('connection_string'),
+        writers=writer_clients,
       )
     )
   else:

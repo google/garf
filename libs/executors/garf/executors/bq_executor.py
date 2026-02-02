@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import warnings
 
 try:
   from google.cloud import bigquery  # type: ignore
@@ -53,7 +54,7 @@ class BigQueryExecutor(executor.Executor):
 
   def __init__(
     self,
-    project_id: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
+    project: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
     location: str | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
@@ -65,20 +66,30 @@ class BigQueryExecutor(executor.Executor):
       location: BigQuery dataset location.
       writers: Instantiated writers.
     """
-    if not project_id:
+    if not project and 'project_id' not in kwargs:
       raise BigQueryExecutorError(
-        'project_id is required. Either provide it as project_id parameter '
+        'project is required. Either provide it as project parameter '
         'or GOOGLE_CLOUD_PROJECT env variable.'
       )
-    self.project_id = project_id
+    if project_id := kwargs.get('project_id'):
+      warnings.warn(
+        "'project_id' parameter is deprecated. Please use 'project' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+      )
+    self.project = project or project_id
     self.location = location
     self.writers = writers
+    self._client = None
     super().__init__()
 
   @property
   def client(self) -> bigquery.Client:
-    """Instantiates bigquery client."""
-    return bigquery.Client(self.project_id)
+    """Instantiated BigQuery client."""
+    if not self._client:
+      with tracer.start_as_current_span('bq.create_client'):
+        self._client = bigquery.Client(self.project)
+    return self._client
 
   @tracer.start_as_current_span('bq.execute')
   def execute(
@@ -114,19 +125,8 @@ class BigQueryExecutor(executor.Executor):
     logger.info('Executing script: %s', title)
     # TODO: move to initialization
     self.create_datasets(context.query_parameters.macro)
-    job = self.client.query(query_text)
-    try:
-      result = job.result()
-    except google_cloud_exceptions.GoogleCloudError as e:
-      raise BigQueryExecutorError(
-        f'Failed to execute query {title}: Reason: {e}'
-      ) from e
-      logger.debug('%s launched successfully', title)
-    if result.total_rows:
-      results = report.GarfReport.from_pandas(result.to_dataframe())
-    else:
-      results = report.GarfReport()
-    if context.writer and results:
+    results = self._query(query_text, title)
+    if results and (self.writers or context.writer):
       writer_clients = self.writers or context.writer_clients
       if not writer_clients:
         logger.warning('No writers configured, skipping write operation')
@@ -164,7 +164,7 @@ class BigQueryExecutor(executor.Executor):
     """
     if macros and (datasets := extract_datasets(macros)):
       for dataset in datasets:
-        dataset_id = f'{self.project_id}.{dataset}'
+        dataset_id = f'{self.project}.{dataset}'
         try:
           self.client.get_dataset(dataset_id)
         except google_cloud_exceptions.NotFound:
@@ -173,6 +173,19 @@ class BigQueryExecutor(executor.Executor):
           with contextlib.suppress(google_cloud_exceptions.Conflict):
             self.client.create_dataset(bq_dataset, timeout=30)
             logger.info('Created new dataset %s', dataset_id)
+
+  def _query(self, query_text, title) -> report.GarfReport:
+    job = self.client.query(query_text)
+    try:
+      result = job.result()
+    except google_cloud_exceptions.GoogleCloudError as e:
+      raise BigQueryExecutorError(
+        f'Failed to execute query {title}: Reason: {e}'
+      ) from e
+      logger.debug('%s launched successfully', title)
+    if result.total_rows:
+      return report.GarfReport.from_pandas(result.to_dataframe())
+    return report.GarfReport()
 
 
 def extract_datasets(macros: dict | None) -> list[str]:
