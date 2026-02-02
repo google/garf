@@ -337,19 +337,19 @@ fastar==0.8.0 \
     --hash=sha256:feb8f73ad25ad84f986dc53e7c6561b281ee2087500f6e400899c3bf1a3f6dc0 \
     --hash=sha256:ff85094f10003801339ac4fa9b20a3410c2d8f284d4cba2dc99de6e98c877812
     # via fastapi-cloud-cli
-garf-core==1.0.3 \
-    --hash=sha256:1a34f350a36339cb2126535d3fbbaa949a316cf5286cb3d0abe941ff44a90b1f \
-    --hash=sha256:c29f2b195ef763dcd8e79e4e350770fcacd24692f61708e14a0c250e65169b0b
+garf-core==1.1.0 \
+    --hash=sha256:394cd42999e4192d884c2bde0b481cc76e03046ca78d94767db6738d9cb8d621 \
+    --hash=sha256:c48e4ca10756570aeb286162ea58981598eed43a73dfaa5e0fc0769afe1607bd
     # via
     #   garf-executors
     #   garf-io
-garf-executors[server]==1.0.6 \
-    --hash=sha256:2017b32e0766faa139b07ee839102fd5b617c0490db150e7f7340e46ff6d1111 \
-    --hash=sha256:946a251cc7010ae403cf218f10f13173f0bbd094d1be4b60dd87938479ae33dd
+garf-executors[server]==1.2.0 \
+    --hash=sha256:026f3802d253a4bd10a37d8a39fe9dcb580e38d96f115db23de7c0731ea8f4cc \
+    --hash=sha256:1c19822e8d28db42982d15f5c2d1f2ddeefc800792e4895fd145556fc63c22f6
     # via -r requirements.in
-garf-io==1.0.0 \
-    --hash=sha256:3226c174add50393c9c5046cca81da5ecf9eae0a83edfdfd99233cb8a9a0c062 \
-    --hash=sha256:c228771a42da2de6734aad692460dd5250868c732f54acadea4061529f925b9b
+garf-io==1.1.0 \
+    --hash=sha256:18ba708c507ff3ebfa06919d99f770d9e37dd161db080dd084c0f3e261d540f6 \
+    --hash=sha256:da7cf87be2e4ae179fa2b8c323daecd7415a6977b0611218f76d8fae7face495
     # via garf-executors
 googleapis-common-protos==1.72.0 \
     --hash=sha256:4299c5a82d5ae1a9702ada957347726b167f9f8d1fc352477702a1e851ff4038 \
@@ -682,17 +682,17 @@ packaging==26.0 \
     --hash=sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4 \
     --hash=sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529
     # via opentelemetry-instrumentation
-protobuf==6.33.4 \
-    --hash=sha256:0f12ddbf96912690c3582f9dffb55530ef32015ad8e678cd494312bd78314c4f \
-    --hash=sha256:1fe3730068fcf2e595816a6c34fe66eeedd37d51d0400b72fabc848811fdc1bc \
-    --hash=sha256:2fe67f6c014c84f655ee06f6f66213f9254b3a8b6bda6cda0ccd4232c73c06f0 \
-    --hash=sha256:3df850c2f8db9934de4cf8f9152f8dc2558f49f298f37f90c517e8e5c84c30e9 \
-    --hash=sha256:757c978f82e74d75cba88eddec479df9b99a42b31193313b75e492c06a51764e \
-    --hash=sha256:8f11ffae31ec67fc2554c2ef891dcb561dae9a2a3ed941f9e134c2db06657dbc \
-    --hash=sha256:918966612c8232fc6c24c78e1cd89784307f5814ad7506c308ee3cf86662850d \
-    --hash=sha256:955478a89559fa4568f5a81dce77260eabc5c686f9e8366219ebd30debf06aa6 \
-    --hash=sha256:c7c64f259c618f0bef7bee042075e390debbf9682334be2b67408ec7c1c09ee6 \
-    --hash=sha256:dc2e61bca3b10470c1912d166fe0af67bfc20eb55971dcef8dfa48ce14f0ed91
+protobuf==6.33.5 \
+    --hash=sha256:3093804752167bcab3998bec9f1048baae6e29505adaf1afd14a37bddede533c \
+    --hash=sha256:69915a973dd0f60f31a08b8318b73eab2bd6a392c79184b3612226b0a3f8ec02 \
+    --hash=sha256:6ddcac2a081f8b7b9642c09406bc6a4290128fce5f471cddd165960bb9119e5c \
+    --hash=sha256:8afa18e1d6d20af15b417e728e9f60f3aa108ee76f23c3b2c07a2c3b546d3afd \
+    --hash=sha256:8f04fa32763dcdb4973d537d6b54e615cc61108c7cb38fe59310c3192d29510a \
+    --hash=sha256:9b71e0281f36f179d00cbcb119cb19dec4d14a81393e5ea220f64b286173e190 \
+    --hash=sha256:a3157e62729aafb8df6da2c03aa5c0937c7266c626ce11a278b6eb7963c4e37c \
+    --hash=sha256:a5cb85982d95d906df1e2210e58f8e4f1e3cdc088e52c921a041f9c9a0386de5 \
+    --hash=sha256:cbf16ba3350fb7b889fca858fb215967792dc125b35c7976ca4818bee3521cf0 \
+    --hash=sha256:d71b040839446bac0f4d162e758bea99c8251161dae9d0983a3b88dee345153b
     # via
     #   googleapis-common-protos
     #   grpcio-reflection
@@ -837,7 +837,9 @@ pydantic-extra-types==2.11.0 \
 pydantic-settings==2.12.0 \
     --hash=sha256:005538ef951e3c2a68e1c08b292b5f2e71490def8589d4221b95dab00dafcfd0 \
     --hash=sha256:fddb9fd99a5b18da837b29710391e945b1e30c135477f484084ee513adb93809
-    # via fastapi
+    # via
+    #   fastapi
+    #   garf-executors
 pygments==2.19.2 \
     --hash=sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887 \
     --hash=sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b
@@ -940,16 +942,16 @@ requests==2.32.5 \
     # via
     #   garf-core
     #   opentelemetry-exporter-otlp-proto-http
-rich==14.3.1 \
-    --hash=sha256:b8c5f568a3a749f9290ec6bddedf835cec33696bfc1e48bcfecb276c7386e4b8 \
-    --hash=sha256:da750b1aebbff0b372557426fb3f35ba56de8ef954b3190315eb64076d6fb54e
+rich==14.3.2 \
+    --hash=sha256:08e67c3e90884651da3239ea668222d19bea7b589149d8014a21c633420dbb69 \
+    --hash=sha256:e712f11c1a562a11843306f5ed999475f09ac31ffb64281f73ab29ffdda8b3b8
     # via
     #   garf-io
     #   rich-toolkit
     #   typer
-rich-toolkit==0.17.1 \
-    --hash=sha256:5af54df8d1dd9c8530e462e1bdcaed625c9b49f5a55b035aa0ba1c17bdb87c9a \
-    --hash=sha256:96d24bb921ecd225ffce7c526a9149e74006410c05e6d405bd74ffd54d5631ed
+rich-toolkit==0.18.1 \
+    --hash=sha256:04011a9751f4c2becdf44bd1aaff8562d4b00caf04f14e483a9873c15fbe3154 \
+    --hash=sha256:bf104f1945a7252debeda7d7138118eaf848fff5ea81d9eda556cbc5f911122c
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
@@ -1109,9 +1111,9 @@ rignore==0.7.6 \
     --hash=sha256:fe6c41175c36554a4ef0994cd1b4dbd6d73156fca779066456b781707402048e \
     --hash=sha256:ffa86694fec604c613696cb91e43892aa22e1fec5f9870e48f111c603e5ec4e9
     # via fastapi-cloud-cli
-sentry-sdk==2.50.0 \
-    --hash=sha256:0ef0ed7168657ceb5a0be081f4102d92042a125462d1d1a29277992e344e749e \
-    --hash=sha256:873437a989ee1b8b25579847bae8384515bf18cfed231b06c591b735c1781fe3
+sentry-sdk==2.51.0 \
+    --hash=sha256:b89d64577075fd8c13088bc3609a2ce77a154e5beb8cba7cc16560b0539df4f7 \
+    --hash=sha256:e21016d318a097c2b617bb980afd9fc737e1efc55f9b4f0cdc819982c9717d5f
     # via fastapi-cloud-cli
 shellingham==1.5.4 \
     --hash=sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686 \
