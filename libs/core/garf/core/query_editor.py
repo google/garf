@@ -218,7 +218,8 @@ class QuerySpecification(CommonParametersMixin):
   def generate(self) -> BaseQueryElements:
     self.remove_comments().expand().extract_resource_name()
     (
-      self.remove_trailing_comma()
+      self.remove_final_semicolon()
+      .remove_trailing_comma()
       .extract_fields()
       .extract_filters()
       .extract_sorts()
@@ -243,6 +244,10 @@ class QuerySpecification(CommonParametersMixin):
         self.query.text = query_text.format(**self.macros).strip()
     except KeyError as e:
       raise GarfMacroError(f'No value provided for macro {str(e)}.') from e
+    return self
+
+  def remove_final_semicolon(self) -> Self:
+    self.query.text = re.sub(';$', '', self.query.text)
     return self
 
   def remove_comments(self) -> Self:
@@ -270,9 +275,7 @@ class QuerySpecification(CommonParametersMixin):
         continue
       if re.match('^(#|--|//) ', line) or line in ('--', '#', '//'):
         continue
-      cleaned_query_line = re.sub(
-        ';$', '', re.sub('(--|//) .*$', '', line).strip()
-      )
+      cleaned_query_line = re.sub('(--|//) .*$', '', line).strip()
       result.append(cleaned_query_line)
     self.query.text = ' '.join(result)
     return self
