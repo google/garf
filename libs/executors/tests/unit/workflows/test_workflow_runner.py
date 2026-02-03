@@ -13,6 +13,7 @@
 # limitations under the License.
 import pathlib
 
+import pytest
 from garf.executors.workflows import workflow_runner
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
@@ -23,7 +24,13 @@ _TEST_WORKFLOW_PATH = _SCRIPT_PATH / 'test_workflow.yaml'
 class TestWorkflowRunner:
   def test_run_returns_executed_step_names(self):
     runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
-    results = runner.run()
+    results = runner.run(selected_aliases=['test'])
+    assert results == ['1-fake-test']
+
+  @pytest.skip
+  def test_run_parameterized_step(self):
+    runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
+    results = runner.run(selected_aliases=['test_parametrized'])
     assert results == ['1-fake-test']
 
   def test_compile_saves_file(self, tmp_path):

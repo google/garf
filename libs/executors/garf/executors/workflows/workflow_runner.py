@@ -21,7 +21,7 @@ import re
 from typing import Final
 
 import yaml
-from garf.executors import exceptions, setup
+from garf.executors import exceptions, query_processor, setup
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow
 from garf.io import reader
@@ -119,6 +119,8 @@ class WorkflowRunner:
           raise exceptions.GarfExecutorError(
             'Please provide one or more queries to run'
           )
+        if step.garf:
+          gquery_report = query_processor.process_gquery(step.context)
         for query in queries:
           if isinstance(query, workflow.QueryPath):
             query_path = query.full_path

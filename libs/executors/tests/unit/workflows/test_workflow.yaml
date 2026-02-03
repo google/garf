@@ -7,20 +7,7 @@ common_context: &empty_context
     query_parameters:
       macro: {}
       template: {}
-
-steps:
-  - alias: test
-    fetcher: fake
-    queries:
-      - query:
-          title: test_query
-          text:  |
-            SELECT
-              resource,
-              dimensions.name AS name,
-              metrics.clicks AS clicks
-            FROM resource
-    <<: [*empty_context, *writer_defaults]
+fetcher_section: &fetcher_defaults
     fetcher_parameters:
       data:
         - resource: Campaign A
@@ -51,3 +38,32 @@ steps:
           metrics:
             clicks: 3200
             cost: 600.00
+
+steps:
+  - alias: test
+    fetcher: fake
+    queries:
+      - query:
+          title: test_query
+          text:  |
+            SELECT
+              resource,
+              dimensions.name AS name,
+              metrics.clicks AS clicks
+            FROM resource
+    <<: [*empty_context, *writer_defaults, *fetcher_defaults]
+  - alias: test_parametrized
+    fetcher: fake
+    garf:
+      row: row
+      report: gquery:sqldb:SELECT 'name1' AS name UNION ALL SELECT 'name2' AS name;
+    queries:
+      - query:
+          title: test_query
+          text:  |
+            SELECT
+              resource,
+              dimensions.name AS  {row.name},
+              metrics.clicks AS clicks
+            FROM resource
+    <<: [*empty_context, *writer_defaults, *fetcher_defaults]

@@ -96,6 +96,17 @@ class ExecutionStep(ExecutionContext):
     )
 
 
+class ForStep(pydantic.BaseModel):
+  model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+  row: str
+  report: str
+
+
+class ParametrizedExecutionStep(ExecutionStep):
+  garf: ForStep
+
+
 class Workflow(pydantic.BaseModel):
   """Orchestrates execution of queries for multiple fetchers.
 
@@ -104,7 +115,7 @@ class Workflow(pydantic.BaseModel):
     context: Query and fetcher parameters to overwrite in steps.
   """
 
-  steps: list[ExecutionStep]
+  steps: list[ExecutionStep | ParametrizedExecutionStep]
   context: ExecutionContext | None = None
 
   def model_post_init(self, __context__) -> None:
