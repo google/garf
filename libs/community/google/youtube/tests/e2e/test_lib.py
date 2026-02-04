@@ -71,29 +71,22 @@ def test_builtin_channel_videos_with_enhanced_attributes():
     FROM builtin.channelVideos
     """
 
-  # Use a test channel ID from environment
-  test_channel_id = os.getenv('YOUTUBE_CHANNEL_ID', 'UC_x5XG1OV2P6uZZ5FSM9Ttw')
+  test_channel_id = os.getenv('YOUTUBE_CHANNEL_ID', 'UCmMowAX5A4tYd4Utq1Lymog')
 
   fetched_report = fetcher.fetch(query, id=[test_channel_id])
 
-  # Verify we got results
-  assert fetched_report, 'No videos returned from channelVideos'
-  assert len(fetched_report) > 0, 'channelVideos returned empty list'
+  assert fetched_report
+  assert fetched_report.column_names == [
+    'channel_id',
+    'video_id',
+    'title',
+    'description',
+    'published_at',
+    'view_count',
+    'like_count',
+    'comment_count',
+    'duration',
+    'privacy_status',
+  ]
 
-  # Verify the enhanced attributes are present in the first video
-  first_video = fetched_report[0]
-  assert hasattr(first_video, 'channel_id'), 'Missing channel_id attribute'
-  assert hasattr(first_video, 'video_id'), 'Missing video_id attribute'
-  assert hasattr(first_video, 'title'), 'Missing title attribute'
-  assert hasattr(first_video, 'view_count'), 'Missing view_count attribute'
-  assert hasattr(first_video, 'duration'), 'Missing duration attribute'
-
-  # Verify the values are not None/empty
-  assert first_video.video_id, 'video_id is empty'
-  assert first_video.title, 'title is empty'
-
-  print(f'✓ channelVideos test passed! Found {len(fetched_report)} videos')
-  print(f'  First video: {first_video.title}')
-  print(f'  Video ID: {first_video.video_id}')
-  if hasattr(first_video, 'view_count') and first_video.view_count:
-    print(f'  Views: {first_video.view_count}')
+  assert fetched_report[0].channel_id == test_channel_id
