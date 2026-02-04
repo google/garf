@@ -74,6 +74,12 @@ repos:
     files: ^libs/community/google/ads/
     language: system
     pass_filenames: false
+  - id: pytest-check-bid-manager
+    name: pytest-check-bid-manager
+    entry: pytest -n auto libs/community/google/bid-manager/tests/unit/
+    files: ^libs/community/google/bid-manager/
+    language: system
+    pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e

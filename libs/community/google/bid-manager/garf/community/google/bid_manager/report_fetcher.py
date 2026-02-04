@@ -33,4 +33,5 @@ class BidManagerApiReportFetcher(report_fetcher.ApiReportFetcher):
     """Initializes BidManagerApiReportFetcher."""
     if not api_client:
       api_client = BidManagerApiClient(**kwargs)
+      api_client.client
     super().__init__(api_client, parser, query_spec, **kwargs)
