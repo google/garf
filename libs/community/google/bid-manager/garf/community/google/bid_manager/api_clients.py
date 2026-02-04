@@ -13,12 +13,14 @@
 # limitations under the License.
 """Creates API client for Bid Manager API."""
 
+import contextlib
 import csv
 import io
 import json
 import logging
 import os
 import pathlib
+import socket
 from typing import Literal
 
 import smart_open
@@ -36,6 +38,9 @@ _DEFAULT_API_SCOPES = ['https://www.googleapis.com/auth/doubleclickbidmanager']
 _SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home() / 'dbm.json')
 _QUERY_CACHE_ENV = 'GARF_BID_MANAGER_QUERY_CACHE_DIR'
 _DEFAULT_QUERY_CACHE_DIR = pathlib.Path.home() / '.garf/bid_manager'
+
+
+logger = logging.getLogger(__name__)
 
 
 class BidManagerApiClientError(exceptions.BidManagerApiError):
@@ -79,16 +84,16 @@ class BidManagerApiClient(api_clients.BaseClient):
 
   @property
   def client(self):
-    if self._client:
-      return self._client
-    return build(
-      'doubleclickbidmanager',
-      self.api_version,
-      discoveryServiceUrl=(
-        f'{_API_URL}/$discovery/rest?version={self.api_version}'
-      ),
-      credentials=self.credentials,
-    )
+    if not self._client:
+      self._client = build(
+        'doubleclickbidmanager',
+        self.api_version,
+        discoveryServiceUrl=(
+          f'{_API_URL}/$discovery/rest?version={self.api_version}'
+        ),
+        credentials=self.credentials,
+      )
+    return self._client
 
   @override
   def get_response(
@@ -101,7 +106,7 @@ class BidManagerApiClient(api_clients.BaseClient):
 
     if cached_ids := self._load_cached_query_reference(query_hash):
       cached_query_id, cached_report_id = cached_ids
-      logging.info(
+      logger.info(
         'Attempting to reuse DV360 report %s for query hash %s.',
         cached_report_id,
         query_hash,
@@ -110,7 +115,7 @@ class BidManagerApiClient(api_clients.BaseClient):
         status = self._get_report_status(cached_query_id, cached_report_id)
         query_id, report_id = cached_query_id, cached_report_id
       except Exception as exc:  # pylint: disable=broad-except
-        logging.warning(
+        logger.warning(
           'Unable to reuse DV360 report %s (hash %s), regenerating. Reason: %s',
           cached_report_id,
           query_hash,
@@ -123,9 +128,7 @@ class BidManagerApiClient(api_clients.BaseClient):
       self._save_cached_query_reference(query_hash, query_id, report_id)
       status = self._get_report_status(query_id, report_id)
 
-    logging.info(
-      'Report %s generated successfully. Now downloading.', report_id
-    )
+    logger.info('Report %s generated successfully. Now downloading.', report_id)
     with smart_open.open(
       status['metadata']['googleCloudStoragePath'], 'r', encoding='utf-8'
     ) as f:
@@ -145,9 +148,15 @@ class BidManagerApiClient(api_clients.BaseClient):
 
   def _get_oauth_credentials(self):
     if pathlib.Path(self.credentials_file).is_file():
+      with contextlib.closing(
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      ) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        free_port = s.getsockname()[1]
       return InstalledAppFlow.from_client_secrets_file(
         self.credentials_file, _DEFAULT_API_SCOPES
-      ).run_local_server(port=8088)
+      ).run_local_server(port=free_port)
     raise BidManagerApiClientError(
       f'Credentials file could not be found at {self.credentials_file}.'
     )
@@ -164,7 +173,7 @@ class BidManagerApiClient(api_clients.BaseClient):
     )
     query_id = report_response['key']['queryId']
     report_id = report_response['key']['reportId']
-    logging.info(
+    logger.info(
       'Query %s is running, report %s has been created and is currently '
       'being generated.',
       query_id,
@@ -194,7 +203,7 @@ class BidManagerApiClient(api_clients.BaseClient):
         data = json.load(cache_file)
       return data['query_id'], data['report_id']
     except (OSError, ValueError, KeyError) as exc:
-      logging.warning(
+      logger.warning(
         'Failed to load DV360 cache file %s, ignoring. Reason: %s',
         cache_path,
         exc,
@@ -239,7 +248,13 @@ def _build_request(request: query_editor.BidManagerApiQuery):
         query['metadata']['dataRange'] = {'range': value[0]}
       else:
         query['metadata']['dataRange']['range'] = 'CUSTOM_DATES'
-        year, month, day = value[0].split('-')
+        try:
+          year, month, day = value[0].split('-')
+        except ValueError as e:
+          raise BidManagerApiClientError(
+            f'Incorrect dataRange format, expected YYYY-MM-DD, got {value[0]}'
+          ) from e
+
         query['metadata']['dataRange'][date_identifier[0]] = {
           'day': int(day),
           'month': int(month),
@@ -279,7 +294,7 @@ def _check_if_report_is_done(get_request) -> bool:
   status = get_request.execute()
   state = status.get('metadata').get('status').get('state')
   if state != 'DONE':
-    logging.debug(
+    logger.debug(
       'Report %s it not ready, retrying...', status['key']['reportId']
     )
     raise Exception
