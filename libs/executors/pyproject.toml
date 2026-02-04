@@ -52,6 +52,7 @@ sql=[
 ]
 gcp= [
   "opentelemetry-exporter-gcp-trace",
+  "opentelemetry-exporter-gcp-monitoring",
 ]
 server=[
   "fastapi[standard]",
