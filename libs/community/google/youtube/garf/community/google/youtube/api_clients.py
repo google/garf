@@ -20,7 +20,7 @@ import operator
 import os
 import warnings
 from collections import defaultdict
-from typing import Any
+from typing import Any, Final
 
 import dateutil
 import pydantic
@@ -33,6 +33,48 @@ from opentelemetry import trace
 from typing_extensions import override
 
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
+ALLOWED_PARAMETERS: Final[tuple[str, ...]] = (
+  'id',
+  'forHandle',
+  'forUsername',
+  'managedByName',
+  'mine',
+  'chart',
+  'myRating',
+  'maxHeight',
+  'maxWidth',
+  'onBehalfOfContentOwner',
+  'regionCode',
+  'videoCategoryId',
+  'parentId',
+  'textFormat',
+  'videoId',
+  'order',
+  'moderationStatus',
+  'searchTerms',
+  'playlistId',
+  'channelId',
+  'channelType',
+  'location',
+  'publishedAfter',
+  'publishedBefore',
+  'q',
+  'maxResults',
+  'relevanceLanguage',
+  'safeSearch',
+  'topicId',
+  'type',
+  'videoCaption',
+  'videoDuration',
+  'videoEmbeddable',
+  'videoLicence',
+  'videoPaidProductPlacement',
+  'videoSyndicated',
+  'videoType',
+  'mode',
+  'filterByMemberChannelId',
+)
 
 
 class YouTubeDataApiClientError(exceptions.GarfYouTubeDataApiError):
@@ -75,8 +117,17 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     return build('youtube', self.api_version, developerKey=self.api_key)
 
   def get_types(self, request):
+    resource_mapping = {
+      'videos': 'Video',
+      'channels': 'Channel',
+      'playlistItems': 'PlaylistItem',
+    }
+    if not (name := resource_mapping.get(request.resource_name)):
+      raise YouTubeDataApiClientError(
+        f'Unsupported resource for interring types: {request.resource_name}'
+      )
     fields = {field.split('.')[0] for field in request.fields}
-    return self.infer_types('Video', fields)
+    return self.infer_types(name, fields)
 
   def infer_types(self, name, fields):
     results = {}
@@ -124,13 +175,17 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     self, request: query_editor.BaseQueryElements, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     span = trace.get_current_span()
+    api_parameters = {}
     for k, v in kwargs.items():
-      span.set_attribute(f'youtube_data_api.kwargs.{k}', v)
+      if k in ALLOWED_PARAMETERS:
+        span.set_attribute(f'youtube_data_api.kwargs.{k}', v)
+        api_parameters[k] = v
+
     fields = {field.split('.')[0] for field in request.fields}
     sub_service = getattr(self.service, request.resource_name)()
     part_str = ','.join(fields)
 
-    result = self._list(sub_service, part=part_str, **kwargs)
+    result = self._list(sub_service, part=part_str, **api_parameters)
     results = []
     if data := result.get('items'):
       results.extend(data)
@@ -139,7 +194,7 @@ class YouTubeDataApiClient(api_clients.BaseClient):
         sub_service,
         part=part_str,
         next_page_token=result.get('nextPageToken'),
-        **kwargs,
+        **api_parameters,
       )
       if data := result.get('items'):
         results.extend(data)

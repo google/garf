@@ -15,26 +15,23 @@
 
 import functools
 import itertools
+import logging
 import operator
 from collections.abc import Iterable, MutableSequence
-from typing import Any, Final
+from typing import Final
 
-from garf.community.google.youtube import api_clients, builtins, query_editor
+import garf.core.query_editor
+from garf.community.google.youtube import (
+  api_clients,
+  builtins,
+  exceptions,
+  query_editor,
+  simulator,
+)
 from garf.core import parsers, report, report_fetcher
 from typing_extensions import override
 
-ALLOWED_FILTERS: Final[tuple[str, ...]] = (
-  'id',
-  'regionCode',
-  'videoCategoryId',
-  'chart',
-  'forHandle',
-  'forUsername',
-  'onBehalfOfContentOwner',
-  'playlistId',
-  'videoId',
-  'channelId',
-)
+logger = logging.getLogger('garf.community.google.youtube.report_fetcher')
 
 MAX_BATCH_SIZE: Final[int] = 50
 
@@ -43,6 +40,10 @@ def _batched(iterable: Iterable[str], chunk_size: int):
   iterator = iter(iterable)
   while chunk := list(itertools.islice(iterator, chunk_size)):
     yield chunk
+
+
+class YouTubeDataApiReportFetcherError(exceptions.GarfYouTubeApiError):
+  """YouTubeDataApiReportFetcher specific error."""
 
 
 class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
@@ -68,31 +69,58 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
   @override
   def fetch(
     self,
-    query_specification,
-    args: dict[str, Any] = None,
+    query_specification: str | query_editor.YouTubeDataApiQuery,
+    args: garf.core.query_editor.GarfQueryParameters | None = None,
+    title: str | None = None,
     **kwargs,
   ) -> report.GarfReport:
     results = []
     filter_identifier = list(
-      set(ALLOWED_FILTERS).intersection(set(kwargs.keys()))
+      set(api_clients.ALLOWED_PARAMETERS).intersection(set(kwargs.keys()))
     )
     if len(filter_identifier) == 1:
       name = filter_identifier[0]
       ids = kwargs.pop(name)
       if not isinstance(ids, MutableSequence):
         ids = ids.split(',')
+      if not ids:
+        logger.warning('No values provided for %s parameter', name)
+        placeholder_report = simulator.YouTubeDataApiReportSimulator(
+          api_client=self.api_client,
+          parser=self.parser,
+          query_spec=self.query_specification_builder,
+        ).simulate(
+          query_specification=query_specification, args=args, title=title
+        )
+        return report.GarfReport(
+          placeholder_results=placeholder_report.results,
+          column_names=placeholder_report.column_names,
+        )
     else:
-      return super().fetch(query_specification, args, **kwargs)
+      return super().fetch(
+        query_specification=query_specification,
+        args=args,
+        title=title,
+        **kwargs,
+      )
     if name == 'id':
       for batch in _batched(ids, MAX_BATCH_SIZE):
         res = super().fetch(
-          query_specification, args, **{name: batch}, **kwargs
+          query_specification=query_specification,
+          args=args,
+          title=title,
+          **{name: batch},
+          **kwargs,
         )
         results.append(res)
     else:
       for element in ids:
         res = super().fetch(
-          query_specification, args, **{name: element}, **kwargs
+          query_specification=query_specification,
+          args=args,
+          title=title,
+          **{name: element},
+          **kwargs,
         )
         results.append(res)
     res = functools.reduce(operator.add, results)

@@ -34,7 +34,9 @@ def get_youtube_channel_videos(
     """
   videos = report_fetcher.fetch(
     channel_videos_query,
-    playlistId=videos_playlist.to_list(row_type='scalar', distinct=True),
+    playlistId=','.join(
+      videos_playlist.to_list(row_type='scalar', distinct=True)
+    ),
     maxResults=50,
   ).to_list(row_type='scalar', distinct=True)
 
