@@ -191,11 +191,20 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     child_customer_ids = self.fetch(
       query_specification=query, account=seed_customer_ids
     ).to_list()
+    if not child_customer_ids:
+      raise GoogleAdsApiReportFetcherError(
+        'No ENABLED accounts found under provided seed accounts '
+        f'{seed_customer_ids}'
+      )
     if customer_ids_query:
       child_customer_ids = self.fetch(
         query_specification=customer_ids_query,
         account=[str(a) for a in child_customer_ids],
       )
+      if not child_customer_ids:
+        raise GoogleAdsApiReportFetcherError(
+          f'No accounts found satisfying the follow query: {customer_ids_query}'
+        )
       child_customer_ids = [
         row[0] if isinstance(row, garf.core.report.GarfRow) else row
         for row in child_customer_ids
