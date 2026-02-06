@@ -67,8 +67,12 @@ elasticsearch = [
 pubsub = [
   "google-cloud-pubsub",
 ]
+excel = [
+  "pandas",
+  "openpyxl"
+]
 all = [
-  "garf-io[bq,sheets,sqlalchemy]"
+  "garf-io[bq,sheets,sqlalchemy,excel]"
 ]
 
 [project.entry-points.garf_writer]
@@ -83,6 +87,7 @@ sqldb = "garf.io.writers.sqldb_writer"
 opensearch = "garf.io.writers.opensearch_writer"
 elasticsearch = "garf.io.writers.elasticsearch_writer"
 pubsub = "garf.io.writers.pubsub_writer"
+excel = "garf.io.writers.excel_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]
