@@ -71,6 +71,9 @@ excel = [
   "pandas",
   "openpyxl"
 ]
+kafka = [
+  "kafka-python",
+]
 all = [
   "garf-io[bq,sheets,sqlalchemy,excel]"
 ]
@@ -88,6 +91,7 @@ opensearch = "garf.io.writers.opensearch_writer"
 elasticsearch = "garf.io.writers.elasticsearch_writer"
 pubsub = "garf.io.writers.pubsub_writer"
 excel = "garf.io.writers.excel_writer"
+kafka = "garf.io.writers.kafka_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]
