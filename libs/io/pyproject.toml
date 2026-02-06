@@ -64,9 +64,13 @@ opensearch = [
 elasticsearch = [
   "elasticsearch",
 ]
+pubsub = [
+  "google-cloud-pubsub",
+]
 all = [
   "garf-io[bq,sheets,sqlalchemy]"
 ]
+
 [project.entry-points.garf_writer]
 bq = "garf.io.writers.bigquery_writer"
 bigquery = "garf.io.writers.bigquery_writer"
@@ -78,6 +82,7 @@ sheets = "garf.io.writers.sheets_writer"
 sqldb = "garf.io.writers.sqldb_writer"
 opensearch = "garf.io.writers.opensearch_writer"
 elasticsearch = "garf.io.writers.elasticsearch_writer"
+pubsub = "garf.io.writers.pubsub_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]
