@@ -58,6 +58,12 @@ sqlalchemy = [
 sheets = [
   "gspread",
 ]
+opensearch = [
+  "opensearch-py",
+]
+elasticsearch = [
+  "elasticsearch",
+]
 all = [
   "garf-io[bq,sheets,sqlalchemy]"
 ]
@@ -70,6 +76,8 @@ json = "garf.io.writers.json_writer"
 sheet = "garf.io.writers.sheets_writer"
 sheets = "garf.io.writers.sheets_writer"
 sqldb = "garf.io.writers.sqldb_writer"
+opensearch = "garf.io.writers.opensearch_writer"
+elasticsearch = "garf.io.writers.elasticsearch_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]
