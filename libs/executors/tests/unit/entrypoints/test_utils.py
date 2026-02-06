@@ -80,6 +80,25 @@ class TestParamsParser:
       'template': {},
     }
 
+  def test_parse_all(self):
+    param_parser = utils.ParamsParser()
+    parsed_params = param_parser.parse_all(
+      [
+        '--macro.start_date=2022-01-01',
+        '--macro.end_date=2022-12-31',
+        '--template.active',
+      ]
+    )
+    assert parsed_params == {
+      'macro': {
+        'start_date': '2022-01-01',
+        'end_date': '2022-12-31',
+      },
+      'template': {
+        'active': True,
+      },
+    }
+
 
 @pytest.mark.parametrize(
   'logger_type',

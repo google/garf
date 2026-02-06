@@ -25,14 +25,23 @@ from rich import logging as rich_logging
 
 
 class ParamsParser:
-  def __init__(self, identifiers: Sequence[str]) -> None:
-    self.identifiers = identifiers
+  def __init__(self, identifiers: Sequence[str] | None = None) -> None:
+    self.identifiers = identifiers or []
 
   def parse(self, params: Sequence) -> dict[str, dict | None]:
     return {
       identifier: self._parse_params(identifier, params)
       for identifier in self.identifiers
     }
+
+  def parse_all(self, params: Sequence) -> dict[str, dict | None]:
+    identifiers = []
+    for param in params:
+      identifier, value = param.split('.', maxsplit=1)
+      if value:
+        identifiers.append(identifier.replace('--', ''))
+    self.identifiers.extend(identifiers)
+    return self.parse(params)
 
   def _parse_params(self, identifier: str, params: Sequence[Any]) -> dict:
     parsed_params = {}

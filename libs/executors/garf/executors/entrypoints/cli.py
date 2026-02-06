@@ -95,8 +95,11 @@ def main():
   reader_client = reader.create_reader(args.input)
   param_types = ['source', 'macro', 'template']
   outputs = args.output.split(',')
-  extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse(kwargs)
+  extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse_all(
+    kwargs
+  )
   source_parameters = extra_parameters.get('source', {})
+  source_parameters.update(extra_parameters.get(args.source, {}))
   writer_parameters = {}
   for output in outputs:
     writer_parameters.update(extra_parameters.get(output))
