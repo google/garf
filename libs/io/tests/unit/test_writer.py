@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ def test_create_writer_returns_correct_fields_for_sheets_option(option):
     share_with='1@google.com',
     credentials_file='home/me/client_secret.json',
   )
-  assert sheet_writer.share_with == '1@google.com'
+  assert sheet_writer.share_with == ['1@google.com']
   assert sheet_writer.credentials_file == 'home/me/client_secret.json'
 
 

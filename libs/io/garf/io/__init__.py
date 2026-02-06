@@ -13,4 +13,4 @@
 # limitations under the License.
 """Write GarfReport to anywhere."""
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
