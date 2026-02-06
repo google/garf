@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ except ImportError as e:
     'Please install garf-io with sheets support - `pip install garf-io[sheets]`'
   ) from e
 
-import functools
 import logging
 import pathlib
 import uuid
@@ -47,26 +46,31 @@ class SheetWriter(AbsWriter):
 
   def __init__(
     self,
-    share_with: str | None = None,
+    share_with: str | list[str] | None = None,
     credentials_file: str | None = None,
     spreadsheet_url: str | None = None,
     is_append: bool = False,
     **kwargs: str,
   ) -> None:
-    """Initialize the SheetWriter to write reports to Google Sheets.
+    """Initializes the SheetWriter to write reports to Google Sheets.
 
     Args:
-        share_with: Email address to share the spreadsheet.
-        credentials_file: Path to the service account credentials file.
-        spreadsheet_url: URL of the Google Sheets spreadsheet.
-        is_append: Whether you want to append data to the spreadsheet.
+      share_with: Email address to share the spreadsheet.
+      credentials_file: Path to the service account credentials file.
+      spreadsheet_url: URL of the Google Sheets spreadsheet.
+      is_append: Whether you want to append data to the spreadsheet.
+      spreadsheet: Initialized and shared spreadsheet.
     """
     super().__init__(**kwargs)
+    if isinstance(share_with, str):
+      share_with = share_with.split(',')
+    elif share_with is None:
+      share_with = []
     self.share_with = share_with
     self.credentials_file = credentials_file
     self.spreadsheet_url = spreadsheet_url
     self.is_append = is_append
-    self._spreadsheet = None
+    self._client = None
 
   @override
   @tracer.start_as_current_span('sheets.write')
@@ -98,27 +102,29 @@ class SheetWriter(AbsWriter):
 
     success_msg = f'Report is saved to {sheet.url}'
     logger.info(success_msg)
-    if self.share_with:
-      self.spreadsheet.share(self.share_with, perm_type='user', role='writer')
     return success_msg
 
-  @functools.cached_property
   def client(self) -> gspread.Client:
+    if self._client:
+      return self._client
     config_dir = pathlib.Path.home() / '.config/gspread'
     if not self.credentials_file:
       if (credentials_file := config_dir / 'credentials.json').is_file():
-        return gspread.oauth(credentials_filename=credentials_file)
-      if (credentials_file := config_dir / 'service_account.json').is_file():
-        return self._init_service_account(credentials_file)
-      raise SheetWriterError(
-        'Failed to find either service_accounts.json or '
-        'credentials.json files.'
-        'Provide path to service account via `credentials_file` option'
-      )
-    try:
-      return self._init_service_account(self.credential_file)
-    except auth_exceptions.MalformedError:
-      return gspread.oauth(credentials_filename=self.credentials_file)
+        self._client = gspread.oauth(credentials_filename=credentials_file)
+      elif (credentials_file := config_dir / 'service_account.json').is_file():
+        self._client = self._init_service_account(credentials_file)
+      else:
+        raise SheetWriterError(
+          'Failed to find either service_accounts.json or '
+          'credentials.json files.'
+          'Provide path to service account via `credentials_file` option'
+        )
+    else:
+      try:
+        self._client = self._init_service_account(self.credential_file)
+      except auth_exceptions.MalformedError:
+        self._client = gspread.oauth(credentials_filename=self.credentials_file)
+    return self._client
 
   def _init_service_account(
     self, credentials_file: str | pathlib.Path
@@ -131,16 +137,23 @@ class SheetWriter(AbsWriter):
       )
     return client
 
-  @property
-  def spreadsheet(self) -> gspread.spreadsheet.Spreadsheet:
-    if not self._spreadsheet:
-      self._spreadsheet = self.create_or_get_spreadsheet()
-    return self._spreadsheet
-
   def create_or_get_spreadsheet(self) -> gspread.spreadsheet.Spreadsheet:
     if not self.spreadsheet_url:
-      return self.client.create(title=f'Garf {uuid.uuid4().hex}')
-    return self.client.open_by_url(self.spreadsheet_url)
+      spreadsheet = self.client.create(title=f'Garf {uuid.uuid4().hex}')
+      if not self.share_with:
+        raise SheetWriterError('Provide your email in `share_with` parameter')
+    else:
+      spreadsheet = self.client.open_by_url(self.spreadsheet_url)
+    if self.share_with:
+      for email_address in self.share_with:
+        spreadsheet.share(
+          email_address=email_address,
+          perm_type='user',
+          role='writer',
+          notify=False,
+        )
+    self.spreadsheet = spreadsheet
+    return self.spreadsheet
 
   def _add_rows_if_needed(
     self, num_data_rows: int, sheet: gspread.worksheet.Worksheet
