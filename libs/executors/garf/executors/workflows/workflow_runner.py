@@ -149,6 +149,7 @@ class WorkflowRunner:
           step.parallel_threshold or self.parallel_threshold,
         )
         execution_results.append(step_name)
+    logger.info('Garf Workflow completed.')
     return execution_results
 
   def compile(self, path: str | pathlib.Path) -> str:
