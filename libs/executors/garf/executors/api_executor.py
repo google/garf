@@ -117,6 +117,8 @@ class ApiQueryExecutor(executor.Executor):
     Raises:
       GarfExecutorError: When failed to execute query.
     """
+    if not (self.writers or context.writer):
+      raise exceptions.GarfExecutorError('No writer specified')
     if self.simulator:
       return self.simulate(query=query, title=title, context=context)
     context = query_processor.process_gquery(context)
@@ -125,44 +127,27 @@ class ApiQueryExecutor(executor.Executor):
     span.set_attribute(
       'api.client.class', self.fetcher.api_client.__class__.__name__
     )
+    logger.debug('starting query %s', query)
+    title = pathlib.Path(title).name.split('.')[0]
     try:
-      logger.debug('starting query %s', query)
-      title = pathlib.Path(title).name.split('.')[0]
-      api_counter.add(
-        1, {'api.client.class': self.fetcher.api_client.__class__.__name__}
-      )
       results = self.fetcher.fetch(
         query_specification=query,
         args=context.query_parameters,
         title=title,
         **context.fetcher_parameters,
       )
-      writer_clients = self.writers or context.writer_clients
-      if not writer_clients:
-        logger.warning('No writers configured, skipping write operation')
-        return None
-      writing_results = []
-      for writer_client in writer_clients:
-        logger.debug(
-          'Start writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        result = writer_client.write(results, title)
-        logger.debug(
-          'Finish writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        writing_results.append(result)
-      logger.info('%s executed successfully', title)
-      # Return the last writer's result for backward compatibility
-      return writing_results[-1] if writing_results else None
+      api_counter.add(
+        1, {'api.client.class': self.fetcher.api_client.__class__.__name__}
+      )
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e
+    writer_clients = self.writers or context.writer_clients
+    return executor.write_many(
+      writer_clients=writer_clients, results=results, title=title
+    )
 
   @tracer.start_as_current_span('api.simulate')
   def simulate(
@@ -184,44 +169,29 @@ class ApiQueryExecutor(executor.Executor):
     Raises:
       GarfExecutorError: When failed to execute query.
     """
+    if not (self.writers or context.writer):
+      raise exceptions.GarfExecutorError('No writer specified')
     context = query_processor.process_gquery(context)
     span = trace.get_current_span()
     span.set_attribute('simulator.class', self.simulator.__class__.__name__)
     span.set_attribute(
       'api.client.class', self.simulator.api_client.__class__.__name__
     )
+    logger.debug('starting query %s', query)
+    title = pathlib.Path(title).name.split('.')[0]
     try:
-      logger.debug('starting query %s', query)
-      title = pathlib.Path(title).name.split('.')[0]
       results = self.simulator.simulate(
         query_specification=query,
         args=context.query_parameters,
         title=title,
         **context.fetcher_parameters,
       )
-      writer_clients = self.writers or context.writer_clients
-      if not writer_clients:
-        logger.warning('No writers configured, skipping write operation')
-        return None
-      writing_results = []
-      for writer_client in writer_clients:
-        logger.debug(
-          'Start writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        result = writer_client.write(results, title)
-        logger.debug(
-          'Finish writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        writing_results.append(result)
-      logger.info('%s executed successfully', title)
-      # Return the last writer's result for backward compatibility
-      return writing_results[-1] if writing_results else None
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e
+    writer_clients = self.writers or context.writer_clients
+    return executor.write_many(
+      writer_clients=writer_clients, results=results, title=title
+    )
