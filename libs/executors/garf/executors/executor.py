@@ -16,12 +16,16 @@
 
 import asyncio
 import inspect
+import logging
 from typing import Optional
 
-from garf.core import report_fetcher
+from garf.core import report, report_fetcher
 from garf.executors import execution_context, query_processor
 from garf.executors.telemetry import tracer
+from garf.io.writers import abs_writer
 from opentelemetry import trace
+
+logger = logging.getLogger(__name__)
 
 
 class Executor:
@@ -122,3 +126,26 @@ def _handle_processors(
         if k in processor_signature
       }
       context.fetcher_parameters[k] = processor(**processor_parameters)
+
+
+def write_many(
+  writer_clients: list[abs_writer.AbsWriter],
+  results: report.GarfReport,
+  title: str,
+) -> Optional[str]:
+  writing_results = []
+  for writer_client in writer_clients:
+    logger.debug(
+      'Start writing data for query %s via %s writer',
+      title,
+      type(writer_client),
+    )
+    writing_result = writer_client.write(results, title)
+    logger.debug(
+      'Finish writing data for query %s via %s writer',
+      title,
+      type(writer_client),
+    )
+    writing_results.append(writing_result)
+  logger.info('%s executed successfully', title)
+  return writing_results[-1] if writing_results else None

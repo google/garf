@@ -45,7 +45,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
   """Handles query execution via SqlAlchemy.
 
   Attributes:
-      engine: Initialized Engine object to operated on a given database.
+    engine: Initialized Engine object to operated on a given database.
   """
 
   def __init__(
@@ -131,25 +131,8 @@ class SqlAlchemyQueryExecutor(executor.Executor):
           conn.connection.execute(f'DROP TABLE {temp_table_name}')
       if results and (self.writers or context.writer):
         writer_clients = self.writers or context.writer_clients
-        if not writer_clients:
-          logger.warning('No writers configured, skipping write operation')
-        else:
-          writing_results = []
-          for writer_client in writer_clients:
-            logger.debug(
-              'Start writing data for query %s via %s writer',
-              title,
-              type(writer_client),
-            )
-            writing_result = writer_client.write(results, title)
-            logger.debug(
-              'Finish writing data for query %s via %s writer',
-              title,
-              type(writer_client),
-            )
-            writing_results.append(writing_result)
-          logger.info('%s executed successfully', title)
-          # Return the last writer's result for backward compatibility
-          return writing_results[-1] if writing_results else None
+        return executor.write_many(
+          writer_clients=writer_clients, results=results, title=title
+        )
       span.set_attribute('execute.num_results', len(results))
       return results
