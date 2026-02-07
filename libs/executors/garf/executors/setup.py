@@ -58,6 +58,9 @@ def setup_executor(
         writers=writer_clients,
       )
     )
+  elif source == 'duckdb':
+    duckdb_executor = importlib.import_module('garf.executors.duckdb_executor')
+    query_executor = duckdb_executor.DuckDBExecutor(writers=writer_clients)
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:
