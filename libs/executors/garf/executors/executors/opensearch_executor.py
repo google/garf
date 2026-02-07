@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,17 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Defines mechanism for executing queries via SqlAlchemy."""
+"""Executes SQL queries via OpenSearch."""
 
 from __future__ import annotations
 
 try:
-  import sqlalchemy
+  from opensearchpy import OpenSearch, helpers
 except ImportError as e:
   raise ImportError(
-    'Please install garf-executors with sqlalchemy support '
-    '- `pip install garf-executors[sqlalchemy]`'
+    'Please install garf-executors with OpenSearch support - '
+    '`pip install garf-executors[opensearch]`'
   ) from e
+
 
 import logging
 import re
@@ -37,11 +38,11 @@ from opentelemetry import trace
 logger = logging.getLogger(__name__)
 
 
-class SqlAlchemyQueryExecutorError(exceptions.GarfExecutorError):
-  """Error when SqlAlchemyQueryExecutor fails to run query."""
+class OpenSearchQueryExecutorError(exceptions.GarfExecutorError):
+  """Error when OpenSearchQueryExecutor fails to run query."""
 
 
-class SqlAlchemyQueryExecutor(executor.Executor):
+class OpenSearchQueryExecutor(executor.Executor):
   """Handles query execution via SqlAlchemy.
 
   Attributes:
@@ -50,7 +51,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
 
   def __init__(
     self,
-    engine: sqlalchemy.engine.base.Engine | None = None,
+    client: OpenSearch | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
   ) -> None:
@@ -59,22 +60,13 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Args:
         engine: Initialized Engine object to operated on a given database.
     """
-    self.engine = engine or sqlalchemy.create_engine('sqlite://')
+    self.client = client or OpenSearch(
+      hosts=[{'host': 'localhost', 'port': 9200}]
+    )
     self.writers = writers
     super().__init__()
 
-  @classmethod
-  def from_connection_string(
-    cls, connection_string: str | None, writers: list[str] | None = None
-  ) -> SqlAlchemyQueryExecutor:
-    """Creates executor from SqlAlchemy connection string.
-
-    https://docs.sqlalchemy.org/en/20/core/engines.html
-    """
-    engine = sqlalchemy.create_engine(connection_string or 'sqlite://')
-    return cls(engine=engine, writers=writers)
-
-  @tracer.start_as_current_span('sql.execute')
+  @tracer.start_as_current_span('opensearch.execute')
   def execute(
     self,
     query: str,
@@ -106,31 +98,20 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     span.set_attribute('query.title', title)
     span.set_attribute('query.text', query_text)
     logger.info('Executing script: %s', title)
-    with self.engine.begin() as conn:
-      if re.findall(r'(create|update) ', query_text.lower()):
-        try:
-          conn.connection.executescript(query_text)
-          results = report.GarfReport()
-        except Exception as e:
-          raise SqlAlchemyQueryExecutorError(
-            f'Failed to execute query {title}: Reason: {e}'
-          ) from e
-      else:
-        temp_table_name = f'temp_{uuid.uuid4().hex}'
-        query_text = f'CREATE TABLE {temp_table_name} AS {query_text}'
-        conn.connection.executescript(query_text)
-        try:
-          results = report.GarfReport.from_pandas(
-            pd.read_sql(f'SELECT * FROM {temp_table_name}', conn)
-          )
-        except Exception as e:
-          raise SqlAlchemyQueryExecutorError(
-            f'Failed to execute query {title}: Reason: {e}'
-          ) from e
-        finally:
-          conn.connection.execute(f'DROP TABLE {temp_table_name}')
-      if results and (self.writers or context.writer):
-        writer_clients = self.writers or context.writer_clients
-        return executor.write_many(writer_clients, results, title)
-      span.set_attribute('execute.num_results', len(results))
-      return results
+    response = self.client.transport.perform_request(
+      'POST', '/_plugins/_sql', body={'query': query}
+    )
+    if 'datarows' in response and 'schema' in response:
+      data = []
+      headers = [col['name'] for col in response['schema']]
+      for row in response['datarows']:
+        data.append(row)
+      results = report.GarfReport(results=data, column_names=headers)
+    else:
+      results = report.GarfReport()
+
+    if results and (self.writers or context.writer):
+      writer_clients = self.writers or context.writer_clients
+      return executor.write_many(writer_clients, results, title)
+    span.set_attribute('execute.num_results', len(results))
+    return results

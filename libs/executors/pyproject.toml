@@ -67,6 +67,10 @@ tests = [
   "pytest-xdist",
   "pytest-grpc",
 ]
+opensearch = [
+  "opensearch-py",
+]
+
 all = [
   "garf-executors[bq,sql,server,gcp]"
 ]

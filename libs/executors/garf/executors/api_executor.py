@@ -200,26 +200,7 @@ class ApiQueryExecutor(executor.Executor):
         **context.fetcher_parameters,
       )
       writer_clients = self.writers or context.writer_clients
-      if not writer_clients:
-        logger.warning('No writers configured, skipping write operation')
-        return None
-      writing_results = []
-      for writer_client in writer_clients:
-        logger.debug(
-          'Start writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        result = writer_client.write(results, title)
-        logger.debug(
-          'Finish writing data for query %s via %s writer',
-          title,
-          type(writer_client),
-        )
-        writing_results.append(result)
-      logger.info('%s executed successfully', title)
-      # Return the last writer's result for backward compatibility
-      return writing_results[-1] if writing_results else None
+      return executor.write_many(writer_clients, results, title)
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
       raise exceptions.GarfExecutorError(
