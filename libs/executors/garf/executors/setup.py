@@ -58,6 +58,13 @@ def setup_executor(
         writers=writer_clients,
       )
     )
+  elif source == 'opensearch':
+    opensearch_executor = importlib.import_module(
+      'garf.executors.executors.opensearch_executor'
+    )
+    query_executor = opensearch_executor.OpenSearchQueryExecutor(
+      writers=writer_clients,
+    )
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:
