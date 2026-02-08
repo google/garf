@@ -67,6 +67,10 @@ tests = [
   "pytest-xdist",
   "pytest-grpc",
 ]
+duckdb = [
+  "duckdb",
+  "pandas",
+]
 all = [
   "garf-executors[bq,sql,server,gcp]"
 ]

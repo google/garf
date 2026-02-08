@@ -37,7 +37,7 @@ jobs:
         run: |
           uv pip install -e libs/core/.[all]
           uv pip install -e libs/io/.[test,all]
-          uv pip install -e libs/executors/.[tests,all]
+          uv pip install -e libs/executors/.[tests,duckdb,all]
           cd libs/${{ matrix.library }}
           pytest tests/unit
       - name: Generate Report for ${{ matrix.library }}
