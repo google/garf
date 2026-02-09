@@ -26,11 +26,10 @@ except ImportError as e:
 
 import logging
 
-from garf.core import query_editor, report
+from garf.core import report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
-from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
@@ -65,13 +64,8 @@ class OpenSearchQueryExecutor(executor.Executor):
     super().__init__()
 
   @tracer.start_as_current_span('opensearch.execute')
-  def execute(
-    self,
-    query: str,
-    title: str,
-    context: execution_context.ExecutionContext = (
-      execution_context.ExecutionContext()
-    ),
+  def _execute(
+    self, query: str, title: str, context: execution_context.ExecutionContext
   ) -> report.GarfReport:
     """Executes query in a given database via SqlAlchemy.
 
@@ -83,19 +77,6 @@ class OpenSearchQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    span = trace.get_current_span()
-    query_spec = (
-      query_editor.QuerySpecification(
-        text=query, title=title, args=context.query_parameters
-      )
-      .remove_comments()
-      .expand()
-    )
-    query_text = query_spec.query.text
-    title = query_spec.query.title
-    span.set_attribute('query.title', title)
-    span.set_attribute('query.text', query_text)
-    logger.info('Executing script: %s', title)
     response = self.client.transport.perform_request(
       'POST', '/_plugins/_sql', body={'query': query}
     )
@@ -104,12 +85,5 @@ class OpenSearchQueryExecutor(executor.Executor):
       headers = [col['name'] for col in response['schema']]
       for row in response['datarows']:
         data.append(row)
-      results = report.GarfReport(results=data, column_names=headers)
-    else:
-      results = report.GarfReport()
-
-    if results and (self.writers or context.writer):
-      writer_clients = self.writers or context.writer_clients
-      return executor.write_many(writer_clients, results, title)
-    span.set_attribute('execute.num_results', len(results))
-    return results
+      return report.GarfReport(results=data, column_names=headers)
+    return report.GarfReport()

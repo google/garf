@@ -28,11 +28,10 @@ import re
 import uuid
 
 import pandas as pd
-from garf.core import query_editor, report
+from garf.core import report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
-from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
@@ -75,13 +74,11 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     return cls(engine=engine, writers=writers)
 
   @tracer.start_as_current_span('sql.execute')
-  def execute(
+  def _execute(
     self,
     query: str,
     title: str,
-    context: execution_context.ExecutionContext = (
-      execution_context.ExecutionContext()
-    ),
+    context: execution_context.ExecutionContext,
   ) -> report.GarfReport:
     """Executes query in a given database via SqlAlchemy.
 
@@ -93,23 +90,10 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    span = trace.get_current_span()
-    query_spec = (
-      query_editor.QuerySpecification(
-        text=query, title=title, args=context.query_parameters
-      )
-      .remove_comments()
-      .expand()
-    )
-    query_text = query_spec.query.text
-    title = query_spec.query.title
-    span.set_attribute('query.title', title)
-    span.set_attribute('query.text', query_text)
-    logger.info('Executing script: %s', title)
     with self.engine.begin() as conn:
-      if re.findall(r'(create|update) ', query_text.lower()):
+      if re.findall(r'(create|update) ', query.lower()):
         try:
-          conn.connection.executescript(query_text)
+          conn.connection.executescript(query)
           results = report.GarfReport()
         except Exception as e:
           raise SqlAlchemyQueryExecutorError(
@@ -117,8 +101,8 @@ class SqlAlchemyQueryExecutor(executor.Executor):
           ) from e
       else:
         temp_table_name = f'temp_{uuid.uuid4().hex}'
-        query_text = f'CREATE TABLE {temp_table_name} AS {query_text}'
-        conn.connection.executescript(query_text)
+        query = f'CREATE TABLE {temp_table_name} AS {query}'
+        conn.connection.executescript(query)
         try:
           results = report.GarfReport.from_pandas(
             pd.read_sql(f'SELECT * FROM {temp_table_name}', conn)
@@ -129,10 +113,4 @@ class SqlAlchemyQueryExecutor(executor.Executor):
           ) from e
         finally:
           conn.connection.execute(f'DROP TABLE {temp_table_name}')
-      if results and (self.writers or context.writer):
-        writer_clients = self.writers or context.writer_clients
-        return executor.write_many(
-          writer_clients=writer_clients, results=results, title=title
-        )
-      span.set_attribute('execute.num_results', len(results))
       return results

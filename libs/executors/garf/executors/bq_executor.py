@@ -29,12 +29,11 @@ except ImportError as e:
 
 import logging
 
-from garf.core import query_editor, report
+from garf.core import report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
-from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,7 @@ class BigQueryExecutor(executor.Executor):
     return self.project
 
   @tracer.start_as_current_span('bq.execute')
-  def execute(
+  def _execute(
     self,
     query: str,
     title: str,
@@ -119,30 +118,19 @@ class BigQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    span = trace.get_current_span()
-    query_spec = (
-      query_editor.QuerySpecification(
-        text=query, title=title, args=context.query_parameters
-      )
-      .remove_comments()
-      .expand()
-    )
-    query_text = query_spec.query.text
-    title = query_spec.query.title
-    span.set_attribute('query.title', title)
-    span.set_attribute('query.text', query)
-    logger.info('Executing script: %s', title)
     # TODO: move to initialization
     self.create_datasets(context.query_parameters.macro)
-    results = self._query(query_text, title)
-    if results and (self.writers or context.writer):
-      writer_clients = self.writers or context.writer_clients
-      return executor.write_many(
-        writer_clients=writer_clients, results=results, title=title
-      )
-    logger.info('%s executed successfully', title)
-    span.set_attribute('execute.num_results', len(results))
-    return results
+    job = self.client.query(query)
+    try:
+      result = job.result()
+    except google_cloud_exceptions.GoogleCloudError as e:
+      raise BigQueryExecutorError(
+        f'Failed to execute query {title}: Reason: {e}'
+      ) from e
+      logger.debug('%s launched successfully', title)
+    if result.total_rows:
+      return report.GarfReport.from_pandas(result.to_dataframe())
+    return report.GarfReport()
 
   @tracer.start_as_current_span('bq.create_datasets')
   def create_datasets(self, macros: dict | None) -> None:
@@ -165,19 +153,6 @@ class BigQueryExecutor(executor.Executor):
           with contextlib.suppress(google_cloud_exceptions.Conflict):
             self.client.create_dataset(bq_dataset, timeout=30)
             logger.info('Created new dataset %s', dataset_id)
-
-  def _query(self, query_text, title) -> report.GarfReport:
-    job = self.client.query(query_text)
-    try:
-      result = job.result()
-    except google_cloud_exceptions.GoogleCloudError as e:
-      raise BigQueryExecutorError(
-        f'Failed to execute query {title}: Reason: {e}'
-      ) from e
-      logger.debug('%s launched successfully', title)
-    if result.total_rows:
-      return report.GarfReport.from_pandas(result.to_dataframe())
-    return report.GarfReport()
 
 
 def extract_datasets(macros: dict | None) -> list[str]:
