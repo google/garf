@@ -61,7 +61,7 @@ class TestBigQueryExecutor:
     query = 'SELECT 1 AS one;'
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
     mocker.patch(
-      'garf.executors.bq_executor.BigQueryExecutor._query',
+      'garf.executors.bq_executor.BigQueryExecutor._execute',
       return_value=expected_result,
     )
     result = executor.execute(title='test', query=query)
@@ -77,7 +77,7 @@ class TestBigQueryExecutor:
     )
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
     mocker.patch(
-      'garf.executors.bq_executor.BigQueryExecutor._query',
+      'garf.executors.bq_executor.BigQueryExecutor._execute',
       return_value=expected_result,
     )
     query = 'SELECT 1 AS one;'
@@ -97,7 +97,7 @@ class TestBigQueryExecutor:
     )
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
     mocker.patch(
-      'garf.executors.bq_executor.BigQueryExecutor._query',
+      'garf.executors.bq_executor.BigQueryExecutor._execute',
       return_value=expected_result,
     )
     query = 'SELECT 1 AS one;'

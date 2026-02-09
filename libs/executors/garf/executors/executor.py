@@ -19,7 +19,7 @@ import inspect
 import logging
 from typing import Optional
 
-from garf.core import report, report_fetcher
+from garf.core import query_editor, report, report_fetcher
 from garf.executors import execution_context, query_processor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
@@ -39,7 +39,57 @@ class Executor:
     self.preprocessors = preprocessors or {}
     self.postprocessors = postprocessors or {}
 
-  @tracer.start_as_current_span('api.execute_batch')
+  @tracer.start_as_current_span('executor.execute')
+  def execute(
+    self,
+    query: str,
+    title: str,
+    context: execution_context.ExecutionContext = (
+      execution_context.ExecutionContext()
+    ),
+  ) -> report.GarfReport:
+    """Executes query.
+
+    Args:
+      query: Location of the query.
+      title: Name of the query.
+      context: Query execution context.
+
+    Returns:
+      Report with data if query returns some data otherwise empty Report.
+    """
+    span = trace.get_current_span()
+    query_spec = (
+      query_editor.QuerySpecification(
+        text=query, title=title, args=context.query_parameters
+      )
+      .remove_comments()
+      .expand()
+    )
+    query_text = query_spec.query.text
+    title = query_spec.query.title
+    span.set_attribute('query.title', title)
+    span.set_attribute('query.text', query_text)
+    logger.info('Executing script: %s', title)
+    results = self._execute(query=query_text, title=title, context=context)
+    if results and (self.writers or context.writer):
+      writer_clients = self.writers or context.writer_clients
+      return write_many(writer_clients, results, title)
+    span.set_attribute('execute.num_results', len(results))
+    return results
+
+  def _execute(
+    self,
+    query: str,
+    title: str,
+    context: execution_context.ExecutionContext = (
+      execution_context.ExecutionContext()
+    ),
+  ) -> report.GarfReport:
+    """Executes query."""
+    raise NotImplementedError
+
+  @tracer.start_as_current_span('executor.execute_batch')
   def execute_batch(
     self,
     batch: dict[str, str],
@@ -128,6 +178,7 @@ def _handle_processors(
       context.fetcher_parameters[k] = processor(**processor_parameters)
 
 
+@tracer.start_as_current_span('executor.write')
 def write_many(
   writer_clients: list[abs_writer.AbsWriter],
   results: report.GarfReport,
