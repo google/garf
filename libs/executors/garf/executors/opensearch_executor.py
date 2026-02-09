@@ -48,6 +48,7 @@ class OpenSearchQueryExecutor(executor.Executor):
   def __init__(
     self,
     client: OpenSearch | None = None,
+    hosts: str | list[str] | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
   ) -> None:
@@ -55,11 +56,14 @@ class OpenSearchQueryExecutor(executor.Executor):
 
     Args:
       client: Initialized OpenSearch client.
+      hosts: Host(s) for Opensearch in addr:port format.
       writers: Initialized writers.
     """
-    self.client = client or OpenSearch(
-      hosts=[{'host': 'localhost', 'port': 9200}]
-    )
+    if hosts:
+      hosts = _normalize_hosts(hosts)
+    else:
+      hosts = [{'host': 'localhost', 'port': 9200}]
+    self.client = client or OpenSearch(hosts=hosts)
     self.writers = writers
     super().__init__()
 
@@ -87,3 +91,16 @@ class OpenSearchQueryExecutor(executor.Executor):
         data.append(row)
       return report.GarfReport(results=data, column_names=headers)
     return report.GarfReport()
+
+
+def _normalize_hosts(hosts: str | list[str]) -> list[dict[str, str | int]]:
+  if isinstance(hosts, str):
+    hosts = hosts.split(',')
+  normalized_hosts = []
+  for host in hosts:
+    if isinstance(host, dict):
+      normalized_hosts.append(host)
+    else:
+      hostname, port = host.split(':')
+      normalized_hosts.append({'host': hostname, 'port': int(port)})
+  return normalized_hosts
