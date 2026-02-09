@@ -2,7 +2,7 @@ site_name: Garf
 site_url: https://github.com/google/garf
 repo_name: garf
 repo_url: https://github.com/google/garf
-copyright: Copyright Google 2025
+copyright: Copyright Google 2026
 
 theme:
   name: material
@@ -79,6 +79,8 @@ nav:
       - API: usage/executors/api-executor.md
       - BigQuery: usage/executors/bq-executor.md
       - SQL: usage/executors/sql-executor.md
+      - DuckDB: usage/executors/duckdb-executor.md
+      - OpenSearch: usage/executors/opensearch-executor.md
     - Exporters: usage/exporters.md
   - Development:
     - Overview: development/overview.md
