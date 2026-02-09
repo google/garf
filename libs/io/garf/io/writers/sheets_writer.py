@@ -32,6 +32,7 @@ from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
 from garf.io.writers.abs_writer import AbsWriter
+from opentelemetry import trace
 from typing_extensions import override
 
 logger = logging.getLogger(__name__)
@@ -104,15 +105,20 @@ class SheetWriter(AbsWriter):
     logger.info(success_msg)
     return success_msg
 
+  @property
+  @tracer.start_as_current_span('sheets.create_client')
   def client(self) -> gspread.Client:
+    span = trace.get_current_span()
     if self._client:
       return self._client
     config_dir = pathlib.Path.home() / '.config/gspread'
     if not self.credentials_file:
       if (credentials_file := config_dir / 'credentials.json').is_file():
         self._client = gspread.oauth(credentials_filename=credentials_file)
+        span.set_attribute('sheets.auth_mode', 'oauth')
       elif (credentials_file := config_dir / 'service_account.json').is_file():
         self._client = self._init_service_account(credentials_file)
+        span.set_attribute('sheets.auth_mode', 'service_account')
       else:
         raise SheetWriterError(
           'Failed to find either service_accounts.json or '
@@ -137,9 +143,12 @@ class SheetWriter(AbsWriter):
       )
     return client
 
+  @tracer.start_as_current_span('sheets.create_or_get_spreadsheet')
   def create_or_get_spreadsheet(self) -> gspread.spreadsheet.Spreadsheet:
+    span = trace.get_current_span()
     if not self.spreadsheet_url:
       spreadsheet = self.client.create(title=f'Garf {uuid.uuid4().hex}')
+      span.set_attribute('sheets.is_new_spreadsheet', True)
       if not self.share_with:
         raise SheetWriterError('Provide your email in `share_with` parameter')
     else:
