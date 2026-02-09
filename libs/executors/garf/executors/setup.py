@@ -61,6 +61,13 @@ def setup_executor(
   elif source == 'duckdb':
     duckdb_executor = importlib.import_module('garf.executors.duckdb_executor')
     query_executor = duckdb_executor.DuckDBExecutor(writers=writer_clients)
+  elif source == 'opensarch':
+    opensearch_executor = importlib.import_module(
+      'garf.executors.opensearch_executor'
+    )
+    query_executor = opensearch_executor.OpenSearchQueryExecutor(
+      writers=writer_clients
+    )
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:
