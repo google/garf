@@ -14,7 +14,7 @@ and write it virtually anywhere.
 * Rich [SQL-like syntax](usage/queries.md) to interact with reporting APIs.
 * Built-in support for [writing data](usage/writers.md) into various local / remote storage.
 * Easily [extendable](development/overview.md) to support various APIs.
-* Built-in support for post-processing saved data in [BigQuery](usage/bq-executor.md) & [SQL](usage/sql-executor.md) databases.
+* Built-in support for post-processing saved data in [BigQuery](usage/executors/bq-executor.md) & [SQL](usage/executors/sql-executor.md) databases.
 * Available as library, CLI, FastAPI endpoint.
 
 ## Supported APIs

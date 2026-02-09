@@ -63,17 +63,22 @@ nav:
       - Report: usage/reports.md
     - Writers:
       - usage/writers.md
-      - Console: usage/console-writer.md
-      - CSV: usage/csv-writer.md
-      - Json: usage/json-writer.md
-      - BigQuery: usage/bq-writer.md
-      - SQL: usage/sql-writer.md
-      - Sheets: usage/sheets-writer.md
+      - Console: usage/writers/console-writer.md
+      - CSV: usage/writers/csv-writer.md
+      - Json: usage/writers/json-writer.md
+      - BigQuery: usage/writers/bq-writer.md
+      - SQL: usage/writers/sql-writer.md
+      - Google Sheets: usage/writers/sheets-writer.md
+      - Excel: usage/writers/excel-writer.md
+      - Google PubSub: usage/writers/pubsub-writer.md
+      - Kafka: usage/writers/kafka-writer.md
+      - ElasticSearch: usage/writers/elasticsearch-writer.md
+      - OpenSearch: usage/writers/opensearch-writer.md
     - Executors:
       - usage/executors.md
-      - API: usage/api-executor.md
-      - BigQuery: usage/bq-executor.md
-      - SQL: usage/sql-executor.md
+      - API: usage/executors/api-executor.md
+      - BigQuery: usage/executors/bq-executor.md
+      - SQL: usage/executors/sql-executor.md
     - Exporters: usage/exporters.md
   - Development:
     - Overview: development/overview.md

@@ -7,9 +7,9 @@
 
 Currently the following executors are supported:
 
-* [`ApiExecutor`](api-executor.md) - fetching data from reporting API and saves it to a requested destination.
-* [`BigQueryExecutor`](bq-executor.md) - executes SQL code in BigQuery.
-* [`SqlExecutor`](sql-executor.md) - executes SQL code in a SqlAlchemy supported DB.
+* [`ApiExecutor`](executors/api-executor.md) - fetching data from reporting API and saves it to a requested destination.
+* [`BigQueryExecutor`](executors/bq-executor.md) - executes SQL code in BigQuery.
+* [`SqlExecutor`](executors/sql-executor.md) - executes SQL code in a SqlAlchemy supported DB.
 
 ## Installation
 
