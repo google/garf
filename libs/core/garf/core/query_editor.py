@@ -78,6 +78,7 @@ class BaseQueryElements(pydantic.BaseModel):
   fields: list[str] = pydantic.Field(default_factory=list)
   filters: list[str] = pydantic.Field(default_factory=list)
   sorts: list[str] = pydantic.Field(default_factory=list)
+  limit: int | None = None
   column_names: list[str] = pydantic.Field(default_factory=list)
   customizers: dict[str, query_parser.Customizer] = pydantic.Field(
     default_factory=dict
@@ -223,6 +224,7 @@ class QuerySpecification(CommonParametersMixin):
       .extract_fields()
       .extract_filters()
       .extract_sorts()
+      .extract_limit()
       .extract_column_names()
       .extract_virtual_columns()
       .extract_customizers()
@@ -308,8 +310,9 @@ class QuerySpecification(CommonParametersMixin):
     return self
 
   def extract_filters(self) -> Self:
+    filter_regexp = r'WHERE\s+(.*?)(?=\s+ORDER BY|\s+LIMIT|$)'
     if filters := re.findall(
-      r'WHERE\s+(.+)(ORDER BY|LIMIT|PARAMETERS)?',
+      filter_regexp,
       self.query.text,
       flags=re.IGNORECASE,
     ):
@@ -325,7 +328,7 @@ class QuerySpecification(CommonParametersMixin):
 
         return replacer
 
-      joined_filters = ' '.join(filters[0])
+      joined_filters = ''.join(filters[0])
       in_groups = re.findall(in_pattern, joined_filters)
       group_replacements = {
         f'group_{i}': group for i, group in enumerate(in_groups, 1)
@@ -347,11 +350,28 @@ class QuerySpecification(CommonParametersMixin):
 
   def extract_sorts(self) -> Self:
     if sorts := re.findall(
-      r'ORDER BY\s+(.+)(LIMIT|PARAMETERS)?',
+      r'ORDER\s+BY\s+(.*?)(?=\s+LIMIT|$)',
       self.query.text,
       flags=re.IGNORECASE,
     ):
-      self.query.sorts = re.split('AND', sorts[0][0], flags=re.IGNORECASE)
+      self.query.sorts = [
+        sort.strip() for sort in re.split(',', sorts[0], flags=re.IGNORECASE)
+      ]
+    return self
+
+  def extract_limit(self) -> Self:
+    if limit := re.findall(
+      r'LIMIT\s+(\d+)',
+      self.query.text,
+      flags=re.IGNORECASE,
+    ):
+      limit = limit[0]
+      try:
+        self.query.limit = int(limit)
+      except ValueError as e:
+        raise exceptions.GarfQueryError(
+          f'Incorrect query: LIMIT should be a digit, got {limit}'
+        ) from e
     return self
 
   def extract_column_names(self) -> Self:

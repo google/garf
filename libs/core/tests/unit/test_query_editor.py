@@ -50,6 +50,11 @@ SELECT
         campaign.selective_optimization AS selective_optimization,
     {% endif %}
 from ad_group_ad;
+WHERE
+  segment.campaign_type = UNKNOWN
+  AND customer.id IN (1, 2)
+ORDER BY metrics.clicks DESC, metrics.impressions ASC
+LIMIT 10
 """
 
 
@@ -72,6 +77,12 @@ class TestQuerySpecification:
         'metrics.cost_micros',
         'video.video_id',
       ],
+      filters=[
+        'segment.campaign_type = UNKNOWN',
+        'customer.id IN (1, 2)',
+      ],
+      sorts=['metrics.clicks DESC', 'metrics.impressions ASC'],
+      limit=10,
       column_names=[
         'constant',
         'date',
