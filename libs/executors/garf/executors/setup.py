@@ -61,7 +61,7 @@ def setup_executor(
   elif source == 'duckdb':
     duckdb_executor = importlib.import_module('garf.executors.duckdb_executor')
     query_executor = duckdb_executor.DuckDBExecutor(writers=writer_clients)
-  elif source == 'opensarch':
+  elif source == 'opensearch':
     opensearch_executor = importlib.import_module(
       'garf.executors.opensearch_executor'
     )
