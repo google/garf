@@ -14,6 +14,11 @@
 | `bq`       | BigQueryWriter   | `project`, `dataset`, `location`, `write-disposition` |
 | `sqldb`    | SqlAlchemyWriter | `connection-string`, `if-exists=fail|replace|append` |
 | `sheets`   | SheetsWriter     | `share-with`, `credentials-file`, `spreadsheet-url`, `is_append=True|False`|
+| `elasticsearch`| ElasticsearchWriter| `hosts` |
+| `excel`    | ExcelWriter      | `destination-folder`, `file` |
+| `kafka`    | KafkaWriter      | `bootstrap-servers` |
+| `opensearch`| OpenSearchWriter | `hosts` |
+| `pubsub`   | PubSubWriter     | `project` |
 
 
 ## Installation
@@ -39,6 +44,11 @@ To install specific writers use:
 * `pip install garf-io[bq]` for BigQuery support
 * `pip install garf-io[sheets]` for Google spreadsheets support
 * `pip install garf-io[sqlalchemy]` for SqlAlchemy support
+* `pip install garf-io[elasticsearch]` for Elasticsearch support
+* `pip install garf-io[excel]` for Excel support
+* `pip install garf-io[kafka]` for Kafka support
+* `pip install garf-io[opensearch]` for OpenSearch support
+* `pip install garf-io[pubsub]` for PubSub support
 
 
 ## Usage

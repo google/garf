@@ -11,7 +11,7 @@ pip install garf-executors
 ```
 ## Run
 
-Let's take an example of working with [YouTube Data API fetcher](../fetchers/youtube.md#youtube-data-api) to get some stats on YouTube video.
+Let's take an example of working with [YouTube Data API fetcher](../../fetchers/youtube.md#youtube-data-api) to get some stats on YouTube video.
 !!! important
     Make sure that corresponding library for interacting with YouTube Data API is installed
 
