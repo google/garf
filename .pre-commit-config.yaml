@@ -47,29 +47,25 @@ repos:
     entry: pytest -n auto libs/core/tests/unit/
     language: system
     pass_filenames: false
-    files:  ^libs/
-    exclude: ^libs/community
+    files: ^libs/core/.*\.py$
   - id: pytest-check-io
     name: pytest-check-io
     entry: pytest -n auto libs/io/tests/unit/
     language: system
     pass_filenames: false
-    files:  ^libs/
-    exclude: ^libs/community
+    files: ^libs/(core/.*|io/.*)\.py$
   - id: pytest-check-executors
     name: pytest-check-executors
     entry: pytest -n auto libs/executors/tests/unit/
     language: system
     pass_filenames: false
-    files:  ^libs/
-    exclude: ^libs/community
+    files: ^libs/(core/.*|io/.*|executors/.*)\.py$
   - id: pytest-check-exporters
     name: pytest-check-exporters
     entry: pytest -n auto libs/exporters/tests/unit/
     language: system
     pass_filenames: false
-    files:  ^libs/
-    exclude: ^libs/community
+    files: ^libs/(core/.*|io/.*|executors/.*|exporter/.*)\.py$
   - id: pytest-check-youtube
     name: pytest-check-youtube
     entry: pytest -n auto libs/community/google/youtube/tests/unit/
