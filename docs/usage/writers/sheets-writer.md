@@ -136,7 +136,33 @@ from garf.io.writers import sheets_writer
 # Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
-writer = sheets_writer.SheetsWriter(credentials_file='/path/to/credentials.json`)
+writer = sheets_writer.SheetsWriter(credentials_file='/path/to/credentials.json')
+writer.write(sample_report, 'query')
+```
+///
+
+### auth_mode
+
+By default `garf` will try to authenticate with [user credentials](https://docs.gspread.org/en/latest/oauth2.html#for-end-users-using-oauth-client-id)
+You can overwrite it via `auth_mode` parameter (which can be either `oauth` or `service_account`)
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output sheets \
+  --sheets.auth_mode=service_account
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf.core import report
+from garf.io.writers import sheets_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = sheets_writer.SheetsWriter(auth_mode='service_account')
 writer.write(sample_report, 'query')
 ```
 ///
