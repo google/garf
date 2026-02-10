@@ -15,6 +15,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from google.auth import exceptions as auth_exceptions
 
 try:
@@ -50,6 +52,7 @@ class SheetWriter(AbsWriter):
     share_with: str | list[str] | None = None,
     credentials_file: str | None = None,
     spreadsheet_url: str | None = None,
+    auth_mode: Literal['oauth', 'service_account'] = 'oauth',
     is_append: bool = False,
     **kwargs: str,
   ) -> None:
@@ -59,6 +62,7 @@ class SheetWriter(AbsWriter):
       share_with: Email address to share the spreadsheet.
       credentials_file: Path to the service account credentials file.
       spreadsheet_url: URL of the Google Sheets spreadsheet.
+      auth_mode: Type of authentication - OAuth2.0 or Service Account.
       is_append: Whether you want to append data to the spreadsheet.
       spreadsheet: Initialized and shared spreadsheet.
     """
@@ -70,6 +74,7 @@ class SheetWriter(AbsWriter):
     self.share_with = share_with
     self.credentials_file = credentials_file
     self.spreadsheet_url = spreadsheet_url
+    self.auth_mode = auth_mode
     self.is_append = is_append
     self._client = None
 
@@ -113,7 +118,10 @@ class SheetWriter(AbsWriter):
       return self._client
     config_dir = pathlib.Path.home() / '.config/gspread'
     if not self.credentials_file:
-      if (credentials_file := config_dir / 'credentials.json').is_file():
+      if (
+        self.auth_mode == 'oauth'
+        and (credentials_file := config_dir / 'credentials.json').is_file()
+      ):
         self._client = gspread.oauth(credentials_filename=credentials_file)
         span.set_attribute('sheets.auth_mode', 'oauth')
       elif (credentials_file := config_dir / 'service_account.json').is_file():
@@ -125,11 +133,12 @@ class SheetWriter(AbsWriter):
           'credentials.json files.'
           'Provide path to service account via `credentials_file` option'
         )
+    elif self.auth_mode == 'service_account':
+      self._client = self._init_service_account(self.credential_file)
+    elif self.auth_mode == 'oauth':
+      self._client = gspread.oauth(credentials_filename=self.credentials_file)
     else:
-      try:
-        self._client = self._init_service_account(self.credential_file)
-      except auth_exceptions.MalformedError:
-        self._client = gspread.oauth(credentials_filename=self.credentials_file)
+      raise SheetWriterError(f'Unknown auth_mode: {self.auth_mode}')
     return self._client
 
   def _init_service_account(
