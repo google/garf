@@ -169,7 +169,7 @@ def _handle_processors(
   context = query_processor.process_gquery(context)
   for k, processor in processors.items():
     processor_signature = list(inspect.signature(processor).parameters.keys())
-    if k in context.fetcher_parameters:
+    if k == 'init' or k in context.fetcher_parameters:
       processor_parameters = {
         k: v
         for k, v in context.fetcher_parameters.items()
