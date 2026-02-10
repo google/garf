@@ -443,13 +443,19 @@ def _create_gaql_query(query: query_editor.GoogleAdsApiQuery) -> str:
   else:
     filters = ''
   if sorts := query.sorts:
-    sort_conditions = ' AND '.join(sorts)
+    sort_conditions = ', '.join(sorts)
     sorts = f'ORDER BY {sort_conditions}'
   else:
     sorts = ''
-  query_text = (
-    f'SELECT {joined_fields} FROM {query.resource_name} {filters} {sorts}'
-  )
+  limit = f'LIMIT {query.limit}' if query.limit else ''
+  query_text = f"""
+   SELECT
+     {joined_fields}
+   FROM {query.resource_name}
+   {filters}
+   {sorts}
+   {limit}
+   """
   query_text = _unformat_type_field_name(query_text)
   return re.sub(r'\s+', ' ', query_text).strip()
 
