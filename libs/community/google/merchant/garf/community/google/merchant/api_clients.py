@@ -13,8 +13,8 @@
 # limitations under the License.
 """Creates API client for Merchant API."""
 
-from garf.community.google.merchant import exceptions
-from garf.core import api_clients, query_editor
+from garf.community.google.merchant import exceptions, query_editor
+from garf.core import api_clients
 from google.shopping import merchant_reports_v1beta
 from typing_extensions import override
 
@@ -33,7 +33,7 @@ class MerchantApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.MerchantApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     if not (account := kwargs.get('account')):
       raise MerchantApiError('Missing account parameter')

@@ -24,8 +24,8 @@ from typing import Any, Final
 
 import dateutil
 import pydantic
-from garf.community.google.youtube import exceptions, telemetry
-from garf.core import api_clients, query_editor
+from garf.community.google.youtube import exceptions, query_editor, telemetry
+from garf.core import api_clients
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -172,7 +172,7 @@ class YouTubeDataApiClient(api_clients.BaseClient):
   @override
   @telemetry.tracer.start_as_current_span('youtube_data_api.get_response')
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.YouTubeDataApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     span = trace.get_current_span()
     api_parameters = {}
@@ -304,7 +304,7 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.YouTubeAnalyticsApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     metrics = []
     dimensions = []

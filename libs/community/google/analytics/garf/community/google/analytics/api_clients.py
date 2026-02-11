@@ -16,7 +16,8 @@
 import re
 from collections import defaultdict
 
-from garf.core import api_clients, query_editor
+from garf.community.google.analytics import query_editor
+from garf.core import api_clients
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
   DateRange,
@@ -40,7 +41,7 @@ class GoogleAnalyticsApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.GoogleAnalyticsApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     property_id = kwargs.get('property_id')
     dimensions = [
