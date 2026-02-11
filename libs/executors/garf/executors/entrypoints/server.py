@@ -157,9 +157,14 @@ def execute_workflow(
   dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
   enable_cache: bool = False,
   cache_ttl_seconds: int = 3600,
+  selected_aliases: Optional[list[str]] = None,
+  skipped_aliases: Optional[list[str]] = None,
 ) -> list[str]:
   return workflow_runner.WorkflowRunner.from_file(workflow_file).run(
-    enable_cache=enable_cache, cache_ttl_seconds=cache_ttl_seconds
+    enable_cache=enable_cache,
+    cache_ttl_seconds=cache_ttl_seconds,
+    selected_aliases=selected_aliases,
+    skipped_aliases=skipped_aliases,
   )
 
 
