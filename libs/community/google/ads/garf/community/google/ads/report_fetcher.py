@@ -27,6 +27,8 @@ from garf.community.google.ads import (
   parsers,
   query_editor,
 )
+from garf.community.google.ads.telemetry import tracer
+from opentelemetry import trace
 
 
 class GoogleAdsApiReportFetcherError(exceptions.GoogleAdsApiError):
@@ -139,6 +141,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     ]
     return await asyncio.gather(*(run_with_semaphore(task) for task in tasks))
 
+  @tracer.start_as_current_span('expand_mcc')
   def expand_mcc(
     self,
     account: str | list[str],
@@ -155,6 +158,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     Returns:
       All child accounts under provided customer_ids.
     """
+    span = trace.get_current_span()
     if customer_ids and not account:
       warnings.warn(
         '`customer_ids` is deprecated, used `account` instead',
@@ -162,32 +166,15 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         stacklevel=2,
       )
       account = customer_ids
-    return self._get_customer_ids(
-      seed_customer_ids=account, customer_ids_query=customer_ids_query
-    )
-
-  def _get_customer_ids(
-    self,
-    seed_customer_ids: str | list[str],
-    customer_ids_query: str | None = None,
-  ) -> list[str]:
-    """Gets list of customer_ids from an MCC account.
-
-    Args:
-      seed_customer_ids: MCC account_id(s).
-      customer_ids_query: GAQL query used to reduce the number of customer_ids.
-
-    Returns:
-      All customer_ids from MCC satisfying the condition.
-    """
     query = """
         SELECT customer_client.id FROM customer_client
         WHERE customer_client.manager = FALSE
         AND customer_client.status = ENABLED
         AND customer_client.hidden = FALSE
         """
-    if isinstance(seed_customer_ids, str):
-      seed_customer_ids = seed_customer_ids.split(',')
+    if isinstance(account, str):
+      seed_customer_ids = account.split(',')
+    span.set_attribute('accounts.seed_accounts', seed_customer_ids)
     child_customer_ids = self.fetch(
       query_specification=query, account=seed_customer_ids
     ).to_list()
@@ -196,7 +183,9 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         'No ENABLED accounts found under provided seed accounts '
         f'{seed_customer_ids}'
       )
+    span.set_attribute('accounts.child_accounts', child_customer_ids)
     if customer_ids_query:
+      span.set_attribute('accounts.customer_ids_query', customer_ids_query)
       child_customer_ids = self.fetch(
         query_specification=customer_ids_query,
         account=[str(a) for a in child_customer_ids],
@@ -209,7 +198,9 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         row[0] if isinstance(row, garf.core.report.GarfRow) else row
         for row in child_customer_ids
       ]
-
+      span.set_attribute(
+        'accounts.child_accounts_conditioned', len(child_customer_ids)
+      )
     return list(
       {
         str(customer_id)
