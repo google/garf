@@ -16,7 +16,8 @@
 import os
 
 import requests
-from garf.core import api_clients, query_editor
+from garf.community.google.knowledge_graph import query_editor
+from garf.core import api_clients
 from typing_extensions import override
 
 
@@ -32,7 +33,7 @@ class KnowledgeGraphApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.KnowledgeGraphApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     service_url = 'https://kgsearch.googleapis.com/v1/entities:search'
     params = {
