@@ -17,7 +17,7 @@
 """GarfExporter is responsible for preparing data for Prometheus."""
 
 from __future__ import annotations
-
+from itertools import zip_longest
 import logging
 import time
 from collections import abc
@@ -161,7 +161,9 @@ class GarfExporter:
     metrics = {}
     labels = self._define_labels(query_specification)
     non_virtual_columns = self._get_non_virtual_columns(query_specification)
-    for column, field in zip(non_virtual_columns, query_specification.fields):
+    for column, field in zip_longest(non_virtual_columns, query_specification.fields):
+    if not column or not field:
+        continue
       if 'metric' in field or 'metric' in column:
         metrics[column] = self._define_gauge(column, suffix, labels)
     if virtual_columns := query_specification.virtual_columns:
@@ -188,7 +190,9 @@ class GarfExporter:
     """
     labelnames = []
     non_virtual_columns = self._get_non_virtual_columns(query_specification)
-    for column, field in zip(non_virtual_columns, query_specification.fields):
+    for column, field in zip_longest(non_virtual_columns, query_specification.fields):
+    if not column or not field:
+        continue
       if 'metric' not in field and 'metric' not in column:
         labelnames.append(str(column))
     logger.debug('labelnames: %s', labelnames)
