@@ -70,3 +70,9 @@ csv_writer = writer.create_writer('csv')
 csv_writer.write(fetched_report, 'query')
 ```
 ///
+
+###  Available source parameters
+
+| name | values| comments |
+|----- | ----- | -------- |
+| `property_id`   | Google Analytics 4 Property ID |  |
