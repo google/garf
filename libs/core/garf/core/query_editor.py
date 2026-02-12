@@ -310,7 +310,7 @@ class QuerySpecification(CommonParametersMixin):
     return self
 
   def extract_filters(self) -> Self:
-    filter_regexp = r'WHERE\s+(.*?)(?=\s+ORDER BY|\s+LIMIT|$)'
+    filter_regexp = r'WHERE\s+(.*?)(?=\s+ORDER BY\s+\w+|\s+LIMIT\s+\d+|$)'
     if filters := re.findall(
       filter_regexp,
       self.query.text,

@@ -51,8 +51,9 @@ SELECT
     {% endif %}
 from ad_group_ad;
 WHERE
-  segment.campaign_type = UNKNOWN
+  segment.campaign_type = LIMIT
   AND customer.id IN (1, 2)
+  AND customer.name = "ORDER BY"
 ORDER BY metrics.clicks DESC, metrics.impressions ASC
 LIMIT 10
 """
@@ -78,8 +79,9 @@ class TestQuerySpecification:
         'video.video_id',
       ],
       filters=[
-        'segment.campaign_type = UNKNOWN',
+        'segment.campaign_type = LIMIT',
         'customer.id IN (1, 2)',
+        'customer.name = "ORDER BY"',
       ],
       sorts=['metrics.clicks DESC', 'metrics.impressions ASC'],
       limit=10,
