@@ -13,13 +13,10 @@
 # limitations under the License.
 """Writes GarfReport to Google PubSub topic."""
 
-import json
 import logging
 import os
 
-from garf.core import report as garf_report
-from garf.io.telemetry import tracer
-from garf.io.writers import abs_writer
+from garf.io.writers import topic_writer
 
 try:
   from google.cloud import pubsub_v1
@@ -31,7 +28,7 @@ except ImportError as e:
 logger = logging.getLogger(__name__)
 
 
-class PubSubWriter(abs_writer.AbsWriter):
+class PubSubWriter(topic_writer.TopicWriter):
   """Publishes Garf Report to a pubsub topic.
 
   Attributes:
@@ -41,25 +38,33 @@ class PubSubWriter(abs_writer.AbsWriter):
   def __init__(
     self,
     project: str = os.getenv('GOOGLE_CLOUD_PROJECT'),
+    push_strategy: topic_writer.PushStrategy = topic_writer.PushStrategy.REPORT,
+    batch_size: int = 10,
     **kwargs: str,
   ) -> None:
     """Initializes PubSubWriter based on project."""
-    super().__init__(**kwargs)
+    super().__init__(
+      provider='pubsub',
+      push_strategy=push_strategy,
+      batch_size=batch_size,
+      **kwargs,
+    )
     self.project = project
-    self._publisher = None
 
-  @property
-  def publisher(self) -> pubsub_v1.PublisherClient:
-    if not self._publisher:
-      self._publisher = pubsub_v1.PublisherClient()
-    return self._publisher
+  def _init_producer(self):
+    self.publisher = pubsub_v1.PublisherClient()
 
-  @tracer.start_as_current_span('pubsub.write')
-  def write(self, report: garf_report.GarfReport, destination: str) -> None:
-    topic_path = self.publisher.topic_path(self.project, destination)
+  def create_topic(self, topic: str) -> str:
+    topic_path = self.publisher.topic_path(self.project, topic)
     if not self.publisher.get_topic(request={'topic': topic_path}):
       self.publisher.create_topic(request={'name': topic_path})
-    future = self.publisher.publish(
-      topic_path, json.dumps(report.to_list('dict')).encode('utf-8')
-    )
-    return f'[Pubsub] - published message ID {future.result()}'
+    return topic_path
+
+  def _send(self, data: bytes, topic: str) -> None:
+    """Writes data to Google Cloud PubSub topic.
+
+    Args:
+      data: Bytes to send.
+      topic: PubSub topic name.
+    """
+    self.publisher.publish(topic=topic, data=data)

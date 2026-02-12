@@ -13,12 +13,9 @@
 # limitations under the License.
 """Writes GarfReport to Kafka topic."""
 
-import json
 import logging
 
-from garf.core import report as garf_report
-from garf.io.telemetry import tracer
-from garf.io.writers import abs_writer
+from garf.io.writers import topic_writer
 
 try:
   from kafka import KafkaProducer
@@ -31,7 +28,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger('kafka.conn').setLevel(logging.WARNING)
 
 
-class KafkaWriter(abs_writer.AbsWriter):
+class KafkaWriter(topic_writer.TopicWriter):
   """Publishes Garf Report to a Kafka topic.
 
   Attributes:
@@ -41,35 +38,29 @@ class KafkaWriter(abs_writer.AbsWriter):
   def __init__(
     self,
     bootstrap_servers: str = 'localhost:9092',
+    push_strategy: topic_writer.PushStrategy = topic_writer.PushStrategy.REPORT,
+    batch_size: int = 10,
     **kwargs: str,
   ) -> None:
     """Initializes KafkaWriter."""
-    super().__init__(**kwargs)
+    super().__init__(
+      provider='kafka',
+      push_strategy=push_strategy,
+      batch_size=batch_size,
+      **kwargs,
+    )
     if isinstance(bootstrap_servers, str):
       bootstrap_servers = bootstrap_servers.split(',')
     self.bootstrap_servers = bootstrap_servers
-    self._producer = None
 
-  @property
-  def producer(self) -> KafkaProducer:
-    if not self._producer:
-      self._producer = KafkaProducer(bootstrap_servers=self.bootstrap_servers)
-    return self._producer
+  def _init_producer(self):
+    self.producer = KafkaProducer(bootstrap_servers=self.bootstrap_servers)
 
-  @tracer.start_as_current_span('kafka.write')
-  def write(self, report: garf_report.GarfReport, destination: str) -> str:
-    """Writes report to Kafka topic.
+  def _send(self, data: bytes, topic: str):
+    """Writes data to Kafka topic.
 
     Args:
-      report: GarfReport to write.
-      destination: Kafka topic name.
+      data: Bytes to send.
+      topic: Kafka topic name.
     """
-    future = self.producer.send(
-      topic=destination,
-      value=json.dumps(report.to_list('dict')).encode('utf-8'),
-    )
-    result = future.get(timeout=60)
-    return (
-      f'[Kafka] - published message to {result.topic} '
-      'partition {result.partition} offset {result.offset}'
-    )
+    self.producer.send(topic=topic, value=data)
