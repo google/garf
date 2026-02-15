@@ -14,6 +14,7 @@
 
 """FastAPI endpoint for executing queries."""
 
+import os
 from typing import Optional, Union
 
 import fastapi
@@ -24,6 +25,7 @@ import uvicorn
 from garf.executors import exceptions, setup
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import (
+  initialize_logger,
   initialize_meter,
   initialize_tracer,
 )
@@ -33,8 +35,9 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
-initialize_tracer()
-initialize_meter()
+if os.getenv('GARF_ENABLE_TELEMETRY') or os.getenv('GARF_TRACES_TO_OTEL'):
+  initialize_tracer()
+
 app = fastapi.FastAPI()
 FastAPIInstrumentor.instrument_app(app)
 typer_app = typer.Typer()
@@ -57,17 +60,25 @@ class GarfSettings(BaseSettings):
   loglevel: str = 'INFO'
   log_name: str = 'garf'
   logger_type: str = 'local'
+  enable_telemetry: bool = False
+  metrics_to_otel: bool = False
+  logs_to_otel: bool = False
 
 
 class GarfDependencies:
   def __init__(self) -> None:
     """Initializes GarfDependencies."""
     settings = GarfSettings()
-    self.logger = utils.init_logging(
+    logger = utils.init_logging(
       loglevel=settings.loglevel,
       logger_type=settings.logger_type,
       name=settings.log_name,
     )
+    if settings.enable_telemetry or settings.metrics_to_otel:
+      initialize_meter()
+    if settings.enable_telemetry or settings.logs_to_otel:
+      logger.addHandler(initialize_logger())
+    self.logger = logger
 
 
 class ApiExecutorRequest(pydantic.BaseModel):
