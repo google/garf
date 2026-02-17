@@ -146,4 +146,4 @@ def init_logging(
     )
   logging.getLogger('smart_open.smart_open_lib').setLevel(logging.WARNING)
   logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-  return logging.getLogger(name)
+  return logging.getLogger()
