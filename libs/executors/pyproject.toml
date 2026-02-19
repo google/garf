@@ -66,6 +66,7 @@ tests = [
   "pytest-mock",
   "pytest-xdist",
   "pytest-grpc",
+  "pytest-env",
 ]
 duckdb = [
   "duckdb",
@@ -87,3 +88,6 @@ garf="garf.executors.entrypoints.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include=["garf_executors*", "garf.*"]
+
+[tool.pytest_env]
+GOOGLE_CLOUD_PROJECT = {unset = true}
