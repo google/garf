@@ -42,7 +42,8 @@ test =  [
   "pytest",
   "pytest-cov",
   "pytest-asyncio",
-  "pandas"
+  "pandas",
+  "pytest-env",
 ]
 bq=[
   "google-cloud-bigquery",
@@ -96,3 +97,6 @@ kafka = "garf.io.writers.kafka_writer"
 [tool.setuptools.packages.find]
 where = ["."]
 include=["garf_io*", "garf.*"]
+
+[tool.pytest_env]
+GOOGLE_CLOUD_PROJECT = {unset = true}

@@ -46,14 +46,14 @@ class BigQueryExecutor(executor.Executor):
   """Handles query execution in BigQuery.
 
   Attributes:
-    project_id: Google Cloud project id.
+    project: Google Cloud project id.
     location: BigQuery dataset location.
     client: BigQuery client.
   """
 
   def __init__(
     self,
-    project: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
+    project: str | None = None,
     location: str | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
@@ -61,10 +61,12 @@ class BigQueryExecutor(executor.Executor):
     """Initializes BigQueryExecutor.
 
     Args:
-      project_id: Google Cloud project id.
+      project: Google Cloud project id.
       location: BigQuery dataset location.
       writers: Instantiated writers.
     """
+    if not project:
+      project = os.getenv('GOOGLE_CLOUD_PROJECT')
     if not project and 'project_id' not in kwargs:
       raise BigQueryExecutorError(
         'project is required. Either provide it as project parameter '
