@@ -175,7 +175,9 @@ class EmptyMessageParser(BaseParser):
         Parsed GoogleAdsRow element.
     """
     if issubclass(type(element), proto.Message):
-      return 'Not set'
+      return protobuf.json_format.MessageToDict(
+        element._pb, preserving_proto_field_name=True
+      )
     return super().parse(element)
 
 
