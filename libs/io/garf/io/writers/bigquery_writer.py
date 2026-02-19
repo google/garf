@@ -64,7 +64,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
 
   def __init__(
     self,
-    project: str | None = os.getenv('GOOGLE_CLOUD_PROJECT'),
+    project: str | None = None,
     dataset: str = 'garf',
     location: str = 'US',
     write_disposition: bigquery.WriteDisposition
@@ -81,6 +81,8 @@ class BigQueryWriter(abs_writer.AbsWriter):
       kwargs: Optional keywords arguments.
     """
     super().__init__(**kwargs)
+    if not project:
+      project = os.getenv('GOOGLE_CLOUD_PROJECT')
     if not project:
       raise BigQueryWriterError(
         'project is required. Either provide it as project parameter '
