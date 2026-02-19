@@ -159,12 +159,17 @@ class BaseParser(abc.ABC):
         row=nested_field, customizer=new_customizer, field=values_[0]
       )
     if isinstance(nested_field, MutableSequence):
-      return list(
-        {
-          self.parse_row_element(field, customizer.value)
-          for field in nested_field
-        }
-      )
+      results = []
+      for f in nested_field:
+        result = self.parse_row_element(f, customizer.value)
+        if result:
+          if isinstance(result, MutableSequence):
+            for r in result:
+              if r not in results:
+                results.append(r)
+          elif result not in results:
+            results.append(result)
+      return results
     try:
       return self.parse_row_element(nested_field, customizer.value)
     except (query_parser.GarfFieldError, AttributeError) as e:
