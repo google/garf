@@ -69,6 +69,11 @@ class BigQueryWriter(abs_writer.AbsWriter):
     location: str = 'US',
     write_disposition: bigquery.WriteDisposition
     | Literal['append', 'replace', 'fail'] = 'replace',
+    time_partitioning_column: str | None = None,
+    time_partitioning_type: str | None = None,
+    range_partitioning_column: str | None = None,
+    range_partitioning_range: str | None = None,  # Should be dict
+    clustering_columns: str | None = None,
     **kwargs,
   ):
     """Initializes BigQueryWriter.
@@ -105,6 +110,46 @@ class BigQueryWriter(abs_writer.AbsWriter):
       raise BigQueryWriterError(
         'Unsupported writer disposition, choose one of: replace, append, fail'
       )
+    self.time_partitioning_column = time_partitioning_column
+    if time_partitioning_column:
+      if not time_partitioning_type:
+        self.time_partitioning_type = 'DAY'
+      elif time_partitioning_type not in (
+        'DAY',
+        'HOUR',
+        'MONTH',
+        'YEAR',
+      ):
+        raise BigQueryWriterError(
+          'Unsupported time_partitioning type, '
+          'choose one of: DAY, HOUR, MONTH, YEAR'
+        )
+      else:
+        self.time_partitioning_type = time_partitioning_type
+    else:
+      self.time_partitioning_type = None
+    if range_partitioning_range:
+      try:
+        start, end, interval = range_partitioning_range.split(':')
+        self.range_partitioning_range = {
+          'start': int(start),
+          'end': int(end),
+          'interval': int(interval),
+        }
+      except ValueError as e:
+        raise BigQueryWriterError(
+          'Unsupported range_partitioning_range, '
+          'specify in start:end:interval format'
+        ) from e
+
+    else:
+      self.range_partitioning_range = None
+    self.range_partitioning_column = range_partitioning_column
+    if clustering_columns:
+      self.clustering_columns = clustering_columns.split(',')
+    else:
+      self.clustering_columns = None
+
     self._client = None
 
   def __str__(self) -> str:
@@ -158,6 +203,11 @@ class BigQueryWriter(abs_writer.AbsWriter):
       destination_table=table,
       if_exists=self.write_disposition,
       progress_bar=False,
+      time_partitioning_column=self.time_partitioning_column,
+      time_partitioning_type=self.time_partitioning_type,
+      range_partitioning_column=self.range_partitioning_column,
+      range_partitioning_range=self.range_partitioning_range,
+      clustering_columns=self.clustering_columns,
     )
     logger.debug('Writing to %s is completed', destination)
     return f'[BigQuery] - at {self.dataset_id}.{destination}'

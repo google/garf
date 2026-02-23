@@ -58,3 +58,58 @@ class TestBigQueryWriter:
       project='test', write_disposition=disposition
     )
     assert writer.write_disposition == expected
+
+  @pytest.mark.parametrize(
+    ('column', 'time_partitioning_type', 'expected'),
+    [
+      (None, None, None),
+      ('column', None, 'DAY'),
+      ('column', 'DAY', 'DAY'),
+    ],
+  )
+  def test_init_creates_correct_time_partitioning(
+    self, column, time_partitioning_type, expected
+  ):
+    writer = bigquery_writer.BigQueryWriter(
+      project='test',
+      time_partitioning_column=column,
+      time_partitioning_type=time_partitioning_type,
+    )
+    assert writer.time_partitioning_type == expected
+
+  def test_init_raises_error_incorrect_time_partitioning(self):
+    with pytest.raises(
+      bigquery_writer.BigQueryWriterError,
+      match='Unsupported time_partitioning type, choose one of: DAY, HOUR, MONTH, YEAR',
+    ):
+      bigquery_writer.BigQueryWriter(
+        project='test',
+        time_partitioning_column='column',
+        time_partitioning_type='UNKNOWN_TYPE',
+      )
+
+  def test_init_creates_correct_range_partitioning_range(self):
+    writer = bigquery_writer.BigQueryWriter(
+      project='test',
+      range_partitioning_column='column',
+      range_partitioning_range='1:100:10',
+    )
+    assert writer.range_partitioning_range == {
+      'start': 1,
+      'end': 100,
+      'interval': 10,
+    }
+
+  @pytest.mark.parametrize('partition_range', ['1', '1:2', '1:s:3', '1:2:3:4'])
+  def test_init_raises_error_incorrect_range_partitioning(
+    self, partition_range
+  ):
+    with pytest.raises(
+      bigquery_writer.BigQueryWriterError,
+      match='Unsupported range_partitioning_range',
+    ):
+      bigquery_writer.BigQueryWriter(
+        project='test',
+        range_partitioning_column='column',
+        range_partitioning_range=partition_range,
+      )
