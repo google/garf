@@ -15,10 +15,12 @@
 
 from __future__ import annotations
 
+import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Union, get_args
+from typing import Literal, Union, get_args
 
+from garf.core import api_clients
 from garf.core import report as garf_report
 from garf.io.telemetry import tracer
 from typing_extensions import TypeAlias
@@ -29,15 +31,104 @@ _NESTED_FIELD: TypeAlias = Union[list, tuple]
 class FormattingStrategy:
   """Interface for all formatting strategies applied to GarfReport."""
 
-  def apply_transformations(
-    self, report: garf_report.GarfReport
-  ) -> garf_report.GarfReport:
-    """Applies class transformation to report."""
-    raise NotImplementedError
+  def __init__(self, columns: str | None = None) -> str:
+    self.columns = columns.split(',') if columns else []
 
   def _cast_to_enum(self, enum: type[Enum], value: str | Enum) -> Enum:
     """Ensures that strings are always converted to Enums."""
     return enum[value.upper()] if isinstance(value, str) else value
+
+  @tracer.start_as_current_span('apply_transformations')
+  def apply_transformations(
+    self, report: garf_report.GarfReport
+  ) -> garf_report.GarfReport:
+    """Replaces arrays in the report."""
+    formatted_rows = self._format_rows(report.results)
+    formatted_placeholders = self._format_rows(report.results_placeholder)
+    return garf_report.GarfReport(
+      results=formatted_rows,
+      column_names=report.column_names,
+      results_placeholder=formatted_placeholders,
+    )
+
+  def _format_rows(
+    self, rows: list[list[api_clients.ApiRowElement]]
+  ) -> list[list[api_clients.ApiRowElement]]:
+    """Formats rows of report based on formatting strategy for each element.
+
+    Args:
+      rows: Rows in report.
+
+    Returns:
+      Formatted rows.
+    """
+    formatted_rows = []
+    for row in rows:
+      formatted_row = []
+      for field in row:
+        formatted_row.append(self.format_field(field))
+      formatted_rows.append(formatted_row)
+    return formatted_rows
+
+  def format_field(
+    self, field: api_clients.ApiRowElement
+  ) -> api_clients.ApiRowElement:
+    raise NotImplementedError
+
+
+class DateHandlingStrategy(FormattingStrategy):
+  def __init__(
+    self,
+    type: Literal['strings', 'dates', 'datetimes', 'timestamp'] = 'strings',
+    format_string: str | None = None,
+  ) -> None:
+    self.type_ = type
+    self.format_string = format_string or '%Y-%m-%d'
+
+  def format_field(self, field) -> datetime.date:
+    try:
+      datetime_obj = datetime.datetime.strptime(field, self.format_string)
+      if self.type_ == 'dates':
+        return datetime_obj.date()
+      if self.type_ == 'datetimes':
+        return datetime_obj
+      if self.type_ == 'timestamps':
+        return datetime_obj.timestamp()
+
+    except TypeError:
+      return field
+
+  def apply_transformations(
+    self, report: garf_report.GarfReport
+  ) -> garf_report.GarfReport:
+    """Replaces arrays in the report."""
+    if self.type_ == 'strings':
+      return report
+    return super().apply_transformations(report)
+
+
+class DateTimeHandlingStrategy(FormattingStrategy):
+  def __init__(
+    self,
+    type: Literal['strings', 'datetimes'] = 'strings',
+    format_string: str | None = None,
+  ) -> None:
+    self.type_ = type
+    self.format_string = format_string or '%Y-%m-%d %H:%M-%S'
+
+  def format_field(self, field) -> datetime.date:
+    try:
+      return datetime.datetime.strptime(field, self.format_string)
+    except TypeError:
+      return field
+
+  def apply_transformations(
+    self, report: garf_report.GarfReport
+  ) -> garf_report.GarfReport:
+    """Replaces arrays in the report."""
+    if self.type_ == 'strings':
+      return report
+    return super().apply_transformations(report)
 
 
 class ArrayHandling(Enum):
@@ -53,8 +144,8 @@ class ArrayHandlingStrategy(FormattingStrategy):
   Arrays can be left as-is or converted to strings with required delimiter.
 
   Attributes:
-      type_: Type of array handling (ARRAYS, STRINGS).
-      delimiter: Symbol used as delimiter when type_ is STRINGS.
+    type_: Type of array handling (ARRAYS, STRINGS).
+    delimiter: Symbol used as delimiter when type_ is STRINGS.
   """
 
   def __init__(
@@ -71,56 +162,18 @@ class ArrayHandlingStrategy(FormattingStrategy):
     self.type_ = self._cast_to_enum(ArrayHandling, type_)
     self.delimiter = delimiter
 
-  @tracer.start_as_current_span('apply_transformations')
+  def format_field(self, field):
+    if isinstance(field, get_args(_NESTED_FIELD)):
+      return self.delimiter.join([str(element) for element in field])
+    return field
+
   def apply_transformations(
     self, report: garf_report.GarfReport
   ) -> garf_report.GarfReport:
     """Replaces arrays in the report."""
     if self.type_ == ArrayHandling.ARRAYS:
       return report
-
-    formatted_rows = self._format_rows(report.results, self._delimiter_join)
-    formatted_placeholders = self._format_rows(
-      report.results_placeholder, lambda x: ''
-    )
-    return garf_report.GarfReport(
-      results=formatted_rows,
-      column_names=report.column_names,
-      results_placeholder=formatted_placeholders,
-    )
-
-  def _format_rows(
-    self, rows: list[list], nested_field_handler: Callable
-  ) -> list[list]:
-    """Formats rows of report based on join_strategy.
-
-    Args:
-        rows: Rows on garf_report.GarfReport.
-        nested_field_handler: Handlers to nested structures.
-
-    Returns:
-        Formatted rows.
-    """
-    formatted_rows = []
-    for row in rows:
-      formatted_row = []
-      for field in row:
-        if isinstance(field, get_args(_NESTED_FIELD)):
-          field = nested_field_handler(field)
-        formatted_row.append(field)
-      formatted_rows.append(formatted_row)
-    return formatted_rows
-
-  def _delimiter_join(self, field: _NESTED_FIELD) -> str:
-    """Helper function to perform join by an instance delimiter.
-
-    Args:
-        field: A nested field.
-
-    Returns:
-        The same field but concatenated to string.
-    """
-    return self.delimiter.join([str(element) for element in field])
+    return super().apply_transformations(report)
 
 
 @tracer.start_as_current_span('format_report_for_writing')

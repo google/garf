@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+import datetime
+
 import pytest
 from garf.core import report as garf_report
 from garf.io import formatter
@@ -123,6 +125,17 @@ class TestFormatterWithPlaceholders:
       results_placeholder=[[0, [0]]],
     )
 
+  @pytest.fixture
+  def report_with_dates(self):
+    return garf_report.GarfReport(
+      results=[
+        ['2025-01-01', 2],
+        ['2025-01-01', 3],
+        ['2025-01-01', 5],
+      ],
+      column_names=['date', 'ad_group_id'],
+    )
+
   def test_format_report_for_writing_keeps_placeholders_the_same(
     self, report_with_arrays
   ):
@@ -159,11 +172,48 @@ class TestFormatterWithPlaceholders:
         [3, '4|5'],
       ],
       column_names=['campaign_id', 'ad_group_id'],
-      results_placeholder=[[0, '']],
+      results_placeholder=[[0, '0']],
     )
-    assert expected_report.results_placeholder == (
-      formatted_report.results_placeholder
+    assert formatted_report == expected_report
+
+  @pytest.mark.parametrize(
+    ('date_type', 'date_obj', 'placeholder_date'),
+    [
+      ('strings', '2025-01-01', '1970-01-01'),
+      ('dates', datetime.date(2025, 1, 1), datetime.date(1970, 1, 1)),
+      (
+        'datetimes',
+        datetime.datetime(2025, 1, 1),
+        datetime.datetime(1970, 1, 1),
+      ),
+      (
+        'timestamps',
+        datetime.datetime(2025, 1, 1).timestamp,
+        datetime.datetime(1970, 1, 1).timestamp,
+      ),
+    ],
+  )
+  def test_format_report_for_writing_convert_date_string_to_date(
+    self,
+    report_with_dates,
+    date_type,
+    date_obj,
+    placeholder_date,
+  ):
+    date_handling_strategy = formatter.DateHandlingStrategy(type=date_type)
+    formatted_report = formatter.format_report_for_writing(
+      report_with_dates, [date_handling_strategy]
     )
+    expected_report = garf_report.GarfReport(
+      results=[
+        [date_obj, 2],
+        [date_obj, 3],
+        [date_obj, 5],
+      ],
+      column_names=['date', 'ad_group_id'],
+      results_placeholder=[[placeholder_date, 0]],
+    )
+    assert expected_report == formatted_report
 
 
 def test_format_extension_returns_correct_extensions():
