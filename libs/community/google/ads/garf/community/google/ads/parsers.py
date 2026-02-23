@@ -158,7 +158,7 @@ class AttributeParser(BaseParser):
     return super().parse(element)
 
 
-class EmptyMessageParser(BaseParser):
+class MessageToDictParser(BaseParser):
   """Generates placeholder for empty Message objects."""
 
   def parse(self, element: GoogleAdsRowElement) -> GoogleAdsRowElement:
@@ -175,7 +175,9 @@ class EmptyMessageParser(BaseParser):
         Parsed GoogleAdsRow element.
     """
     if issubclass(type(element), proto.Message):
-      return 'Not set'
+      return protobuf.json_format.MessageToDict(
+        element._pb, preserving_proto_field_name=True
+      )
     return super().parse(element)
 
 
@@ -217,7 +219,7 @@ class GoogleAdsRowParser(parsers.ProtoParser):
     """Initializes chain of parsers."""
     parser_chain = BaseParser(None)
     for parser in [
-      EmptyMessageParser,
+      MessageToDictParser,
       AttributeParser,
       RepeatedCompositeParser,
       RepeatedParser,
