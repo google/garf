@@ -34,11 +34,17 @@ class AbsWriter(abc.ABC):
     self,
     array_handling: Literal['strings', 'arrays'] = 'strings',
     array_separator: str = '|',
+    date_handling: Literal[
+      'strings', 'dates', 'datetimes', 'timestamps'
+    ] = 'strings',
+    date_format_string: str | None = None,
     **kwargs,
   ) -> None:
     """Initializes AbsWriter."""
     self.array_handling = array_handling
     self.array_separator = array_separator
+    self.date_handling = date_handling
+    self.date_format_string = date_format_string
     self.kwargs = kwargs
 
   async def awrite(self, report: GarfReport, destination: str) -> str | None:
@@ -57,6 +63,9 @@ class AbsWriter(abc.ABC):
     array_handling_strategy = formatter.ArrayHandlingStrategy(
       type_=self.array_handling, delimiter=self.array_separator
     )
+    date_handling_strategy = formatter.DateHandlingStrategy(
+      type=self.date_handling, format_string=self.date_format_string
+    )
     return formatter.format_report_for_writing(
-      report, [array_handling_strategy]
+      report, [array_handling_strategy, date_handling_strategy]
     )

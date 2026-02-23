@@ -95,7 +95,7 @@ class DateHandlingStrategy(FormattingStrategy):
       if self.type_ == 'timestamps':
         return datetime_obj.timestamp()
 
-    except TypeError:
+    except (ValueError, TypeError):
       return field
 
   def apply_transformations(
