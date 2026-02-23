@@ -173,15 +173,14 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         AND customer_client.hidden = FALSE
         """
     if isinstance(account, str):
-      seed_customer_ids = account.split(',')
-    span.set_attribute('accounts.seed_accounts', seed_customer_ids)
+      account = account.split(',')
+    span.set_attribute('accounts.seed_accounts', account)
     child_customer_ids = self.fetch(
-      query_specification=query, account=seed_customer_ids
+      query_specification=query, account=account
     ).to_list()
     if not child_customer_ids:
       raise GoogleAdsApiReportFetcherError(
-        'No ENABLED accounts found under provided seed accounts '
-        f'{seed_customer_ids}'
+        f'No ENABLED accounts found under provided seed accounts {account}'
       )
     span.set_attribute('accounts.child_accounts', child_customer_ids)
     if customer_ids_query:
