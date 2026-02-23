@@ -42,7 +42,8 @@ class TestBigQueryExecutor:
   def executor(self):
     return bq_executor.BigQueryExecutor(project='test')
 
-  def test_init_raises_error_on_missing_project(self):
+  def test_init_raises_error_on_missing_project(self, monkeypatch):
+    monkeypatch.setenv('GOOGLE_CLOUD_PROJECT', '')
     with pytest.raises(
       bq_executor.BigQueryExecutorError, match='project is required'
     ):
