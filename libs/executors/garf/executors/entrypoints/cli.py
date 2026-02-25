@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import pathlib
 import sys
 
@@ -30,13 +29,14 @@ from garf.executors import config, exceptions, setup
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
-  initialize_meter,
   initialize_tracer,
 )
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
 from opentelemetry import trace
+
+initialize_tracer()
 
 
 @tracer.start_as_current_span('garf.entrypoints.cli')
@@ -58,25 +58,12 @@ def main():
     '--no-parallel-queries', dest='parallel_queries', action='store_false'
   )
   parser.add_argument('--simulate', dest='simulate', action='store_true')
-  parser.add_argument('--dry-run', dest='dry_run', action='store_true')
   parser.add_argument('-v', '--version', dest='version', action='store_true')
   parser.add_argument(
     '--parallel-threshold', dest='parallel_threshold', default=10, type=int
   )
   parser.add_argument(
     '--enable-cache', dest='enable_cache', action='store_true'
-  )
-  parser.add_argument(
-    '--enable-telemetry', dest='enable_telemetry', action='store_true'
-  )
-  parser.add_argument(
-    '--traces-to-otel', dest='traces_to_otel', action='store_true'
-  )
-  parser.add_argument(
-    '--metrics-to-otel', dest='metrics_to_otel', action='store_true'
-  )
-  parser.add_argument(
-    '--logs-to-otel', dest='logs_to_otel', action='store_true'
   )
   parser.add_argument(
     '--cache-ttl-seconds',
@@ -91,30 +78,18 @@ def main():
   parser.set_defaults(parallel_queries=True)
   parser.set_defaults(simulate=False)
   parser.set_defaults(enable_cache=False)
-  parser.set_defaults(enable_telemetry=False)
-  parser.set_defaults(traces_to_otel=False)
-  parser.set_defaults(metrics_to_otel=False)
-  parser.set_defaults(logs_to_otel=False)
-  parser.set_defaults(dry_run=False)
   args, kwargs = parser.parse_known_args()
 
   command_args = ' '.join(sys.argv[1:])
-  enable_telemetry = args.enable_telemetry or os.getenv('GARF_ENABLE_TELEMETRY')
-  if enable_telemetry or args.traces_to_otel:
-    initialize_tracer()
-    span = trace.get_current_span()
-    span.set_attribute('cli.command', f'garf {command_args}')
-  if enable_telemetry or args.metrics_to_otel:
-    meter_provider = initialize_meter()
-
+  span = trace.get_current_span()
+  span.set_attribute('cli.command', f'garf {command_args}')
   if args.version:
     print(garf.executors.__version__)
     sys.exit()
   logger = utils.init_logging(
     loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
   )
-  if enable_telemetry or args.logs_to_otel:
-    logger.addHandler(initialize_logger())
+  logger.addHandler(initialize_logger())
   reader_client = reader.create_reader(args.input)
   param_types = ['source', 'macro', 'template']
   outputs = args.output.split(',')
@@ -150,8 +125,6 @@ def main():
       skipped_aliases=workflow_skip,
       simulate=args.simulate,
     )
-    if enable_telemetry or args.metrics_to_otel:
-      meter_provider.shutdown()
     sys.exit()
 
   if not args.query:
@@ -187,8 +160,6 @@ def main():
         query=reader_client.read(query), title=query, context=context
       )
   logging.shutdown()
-  if enable_telemetry or args.metrics_to_otel:
-    meter_provider.shutdown()
 
 
 if __name__ == '__main__':
