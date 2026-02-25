@@ -35,6 +35,9 @@ from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
 from opentelemetry import trace
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
+LoggingInstrumentor().instrument(set_logging_format=False)
 
 initialize_tracer()
 

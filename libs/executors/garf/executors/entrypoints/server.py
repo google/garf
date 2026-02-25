@@ -31,10 +31,12 @@ from garf.executors.entrypoints.tracer import (
 from garf.executors.workflows import workflow_runner
 from garf.io import reader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
 OTEL_SERVICE_NAME = 'garf'
+LoggingInstrumentor().instrument(set_logging_format=False)
 
 initialize_tracer()
 meter = initialize_meter()
