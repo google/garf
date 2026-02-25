@@ -11,14 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Writes GarfReport to Opensearch index."""
+"""Writes GarfReport to OpenSearch index."""
 
-import logging
 from typing import Any, List, Union
-
-from garf.core import report as garf_report
-from garf.io.telemetry import tracer
-from garf.io.writers import abs_writer
 
 try:
   from opensearchpy import OpenSearch, helpers
@@ -28,11 +23,11 @@ except ImportError as e:
     '`pip install garf-io[opensearch]`'
   ) from e
 
-logger = logging.getLogger(__name__)
+from garf.io.writers import search_writer
 
 
-class OpenSearchWriter(abs_writer.AbsWriter):
-  """Writes Garf Report to OpenSearch index.
+class OpenSearchWriter(search_writer.SearchWriter):
+  """Writes Garf Report to OpenSearch.
 
   Attributes:
     client: OpenSearch client.
@@ -51,33 +46,11 @@ class OpenSearchWriter(abs_writer.AbsWriter):
       http_auth: Authentication credentials (user, password) or similar.
       **kwargs: Other arguments for OpenSearch client.
     """
-    super().__init__(**kwargs)
-    if isinstance(hosts, str):
-      hosts = hosts.split(',')
-
-    self.client = OpenSearch(hosts=hosts, http_auth=http_auth, **kwargs)
-
-  def _create_index_if_not_exists(self, index_name: str) -> None:
-    """Creates index if it does not exist."""
-    if not self.client.indices.exists(index=index_name):
-      self.client.indices.create(index=index_name)
-      logger.info(f'Created index {index_name}')
-
-  @tracer.start_as_current_span('opensearch.write')
-  def write(self, report: garf_report.GarfReport, destination: str) -> str:
-    """Writes report to OpenSearch.
-
-    Args:
-      report: GarfReport to write.
-      destination: OpenSearch index name.
-    """
-    self._create_index_if_not_exists(destination)
-
-    data = report.to_list(row_type='dict')
-    actions = [{'_index': destination, '_source': row} for row in data]
-
-    success, failed = helpers.bulk(self.client, actions)
-    return (
-      f'[OpenSearch] - successfully indexed {success} documents to '
-      f'{destination}. Failed: {failed}'
+    super().__init__(
+      client=OpenSearch,
+      bulk=helpers.bulk,
+      name='OpenSearch',
+      hosts=hosts,
+      http_auth=http_auth,
+      **kwargs,
     )
