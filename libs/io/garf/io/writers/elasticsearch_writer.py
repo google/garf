@@ -13,12 +13,9 @@
 # limitations under the License.
 """Writes GarfReport to Elasticsearch index."""
 
-import logging
 from typing import Any, List, Union
 
-from garf.core import report as garf_report
-from garf.io.telemetry import tracer
-from garf.io.writers import abs_writer
+from garf.io.writers import search_writer
 
 try:
   from elasticsearch import Elasticsearch, helpers
@@ -28,10 +25,7 @@ except ImportError as e:
     '`pip install garf-io[elasticsearch]`'
   ) from e
 
-logger = logging.getLogger(__name__)
-
-
-class ElasticsearchWriter(abs_writer.AbsWriter):
+class ElasticsearchWriter(search_writer.SearchWriter):
   """Writes Garf Report to Elasticsearch.
 
   Attributes:
@@ -51,33 +45,11 @@ class ElasticsearchWriter(abs_writer.AbsWriter):
       http_auth: Authentication credentials (user, password) or similar.
       **kwargs: Other arguments for Elasticsearch client.
     """
-    super().__init__(**kwargs)
-    if isinstance(hosts, str):
-      hosts = hosts.split(',')
-
-    self.client = Elasticsearch(hosts=hosts, http_auth=http_auth, **kwargs)
-
-  def _create_index_if_not_exists(self, index_name: str) -> None:
-    """Creates index if it does not exist."""
-    if not self.client.indices.exists(index=index_name):
-      self.client.indices.create(index=index_name)
-      logger.info(f'Created index {index_name}')
-
-  @tracer.start_as_current_span('elasticsearch.write')
-  def write(self, report: garf_report.GarfReport, destination: str) -> str:
-    """Writes report to Elasticsearch.
-
-    Args:
-      report: GarfReport to write.
-      destination: Elasticsearch index name.
-    """
-    self._create_index_if_not_exists(destination)
-
-    data = report.to_list(row_type='dict')
-    actions = [{'_index': destination, '_source': row} for row in data]
-
-    success, failed = helpers.bulk(self.client, actions)
-    return (
-      f'[Elasticsearch] - successfully indexed {success} documents to '
-      f'{destination}. Failed: {failed}'
+    super().__init__(
+      client=Elasticsearch,
+      bulk=helpers.bulk,
+      name='ElasticSearch',
+      hosts=hosts,
+      http_auth=http_auth,
+      **kwargs,
     )
