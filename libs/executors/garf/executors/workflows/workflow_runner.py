@@ -17,14 +17,12 @@ from __future__ import annotations
 
 import logging
 import pathlib
-import re
 from typing import Final
 
 import yaml
 from garf.executors import exceptions, setup
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow
-from garf.io import reader
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +44,7 @@ class WorkflowRunner:
   def __init__(
     self,
     execution_workflow: workflow.Workflow,
-    wf_parent: pathlib.Path | str,
+    wf_parent: pathlib.Path | str | None = None,
     parallel_threshold: int = 10,
   ) -> None:
     """Initializes WorkflowRunner."""
@@ -75,9 +73,9 @@ class WorkflowRunner:
     skipped_aliases: list[str] | None = None,
     simulate: bool = False,
   ) -> list[str]:
+    self.workflow.compile()
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
-    reader_client = reader.create_reader('file')
     execution_results = []
     logger.info('Starting Garf Workflow...')
     for i, step in enumerate(self.workflow.steps, 1):
@@ -120,29 +118,11 @@ class WorkflowRunner:
             'Please provide one or more queries to run'
           )
         for query in queries:
-          if isinstance(query, workflow.QueryPath):
-            query_path = query.full_path
-            if re.match(_REMOTE_FILES_PATTERN, query_path):
-              batch[query.path] = reader_client.read(query_path)
-            else:
-              if not query.prefix:
-                query_path = self.wf_parent / pathlib.Path(query.path)
-              if not query_path.exists():
-                raise workflow.GarfWorkflowError(
-                  f'Query: {query_path} not found'
-                )
-              batch[query.path] = reader_client.read(query_path)
-          elif isinstance(query, workflow.QueryFolder):
-            query_path = self.wf_parent / pathlib.Path(query.folder)
-            if not query_path.exists():
-              raise workflow.GarfWorkflowError(
-                f'Folder: {query_path} not found'
-              )
-            for p in query_path.rglob('*'):
-              if p.suffix == '.sql':
-                batch[p.stem] = reader_client.read(p)
+          if isinstance(query, workflow.QueryFolder):
+            for q in query.queries:
+              batch[q.title] = q.text
           else:
-            batch[query.query.title] = query.query.text
+            batch[query.title] = query.text
         query_executor.execute_batch(
           batch,
           step.context,
@@ -154,6 +134,7 @@ class WorkflowRunner:
 
   def compile(self, path: str | pathlib.Path) -> str:
     """Saves workflow with expanded anchors."""
+    self.workflow.compile()
     return self.workflow.save(path)
 
   def deploy(self, path: str | pathlib.Path) -> str:
