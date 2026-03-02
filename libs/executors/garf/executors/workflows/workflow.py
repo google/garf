@@ -18,15 +18,18 @@ from __future__ import annotations
 import copy
 import os
 import pathlib
-import re
 from collections import defaultdict
 from typing import Any
 
 import pydantic
 import smart_open
 import yaml
+from garf.core import query_editor
 from garf.executors import exceptions
 from garf.executors.execution_context import ExecutionContext
+from garf.io import reader
+
+reader_client = reader.create_reader('file')
 
 
 class GarfWorkflowError(exceptions.GarfExecutorError):
@@ -37,25 +40,73 @@ class QueryFolder(pydantic.BaseModel):
   """Path to folder with queries."""
 
   folder: str
+  prefix: str | None = None
+
+  @property
+  def queries(self) -> list[QueryPath]:
+    batch = []
+    query_path = (
+      self.prefix / pathlib.Path(self.folder)
+      if self.prefix
+      else pathlib.Path(self.folder)
+    )
+    if not query_path.exists():
+      raise GarfWorkflowError(f'Folder: {query_path} not found')
+    for p in query_path.rglob('*'):
+      if p.suffix == '.sql':
+        batch.append(QueryPath(path=str(p.name), prefix=str(query_path)))
+    return batch
 
 
 class QueryPath(pydantic.BaseModel):
   """Path file with query."""
 
   path: str
-  prefix: str | None = None
+  prefix: str | pathlib.Path | None = None
+
+  def model_post_init(self, __context__) -> None:
+    if self.prefix:
+      self.prefix = pathlib.Path(self.prefix)
 
   @property
   def full_path(self) -> str:
     if self.prefix:
-      return re.sub('/$', '', self.prefix) + '/' + self.path
+      return self.prefix / self.path
     return self.path
+
+  @property
+  def text(self) -> str:
+    return reader_client.read(self.full_path)
+
+  @property
+  def title(self) -> str:
+    return self.path
+
+  def to_query(self) -> Query:
+    query_spec = query_editor.QuerySpecification(
+      text=self.text, title=self.title
+    ).remove_comments()
+    return Query(title=self.title, text=query_spec.query.text.strip())
 
 
 class QueryDefinition(pydantic.BaseModel):
   """Definition of a query."""
 
   query: Query
+
+  @property
+  def text(self) -> str:
+    return self.query.text
+
+  @property
+  def title(self) -> str:
+    return self.query.title
+
+  def to_query(self) -> Query:
+    query_spec = query_editor.QuerySpecification(
+      text=self.text, title=self.title
+    ).remove_comments()
+    return Query(title=self.title, text=query_spec.query.text.strip())
 
 
 class Query(pydantic.BaseModel):
@@ -83,7 +134,7 @@ class ExecutionStep(ExecutionContext):
 
   fetcher: str | None = None
   alias: str | None = pydantic.Field(default=None, pattern=r'^[a-zA-Z0-9_]+$')
-  queries: list[QueryPath | QueryDefinition | QueryFolder] | None = None
+  queries: list[Query | QueryPath | QueryDefinition | QueryFolder] | None = None
   parallel_threshold: int | None = None
 
   @property
@@ -106,6 +157,7 @@ class Workflow(pydantic.BaseModel):
 
   steps: list[ExecutionStep]
   context: ExecutionContext | None = None
+  prefix: str | pathlib.Path | None = None
 
   def model_post_init(self, __context__) -> None:
     if context := self.context:
@@ -137,7 +189,11 @@ class Workflow(pydantic.BaseModel):
     with smart_open.open(path, 'r', encoding='utf-8') as f:
       data = yaml.safe_load(f)
     try:
-      return Workflow(steps=data.get('steps'), context=context)
+      if isinstance(path, str):
+        path = pathlib.Path(path)
+      return Workflow(
+        steps=data.get('steps'), context=context, prefix=path.parent
+      )
     except pydantic.ValidationError as e:
       raise GarfWorkflowError(f'Incorrect workflow:\n {e}') from e
 
@@ -148,6 +204,17 @@ class Workflow(pydantic.BaseModel):
         self.model_dump(exclude_none=True), f, encoding='utf-8', sort_keys=False
       )
     return f'Workflow is saved to {str(path)}'
+
+  def compile(self) -> None:
+    for step in self.steps:
+      new_queries = []
+      for query in step.queries:
+        if isinstance(query, QueryFolder):
+          for q in query.queries:
+            new_queries.append(q.to_query())
+        else:
+          new_queries.append(query.to_query())
+      step.queries = new_queries
 
 
 def _merge_dicts(
