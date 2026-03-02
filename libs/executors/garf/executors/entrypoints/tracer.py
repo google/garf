@@ -59,7 +59,7 @@ def initialize_tracer():
         ) from e
 
       cloud_span_processor = BatchSpanProcessor(
-        CloudTraceSpanExporter(project_id=gcp_project_id, resource_regexp='*')
+        CloudTraceSpanExporter(project_id=gcp_project_id, resource_regex='*')
       )
       tracer_provider.add_span_processor(cloud_span_processor)
     else:
@@ -90,7 +90,7 @@ def initialize_meter():
         ) from e
 
       metric_exporter = CloudMonitoringMetricsExporter(
-        project_id=gcp_project_id, resource_regexp='*'
+        project_id=gcp_project_id, resource_regex='*'
       )
     else:
       metric_exporter = OTLPMetricExporter(
