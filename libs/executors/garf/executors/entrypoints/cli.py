@@ -105,7 +105,7 @@ def main():
   for output in outputs:
     writer_parameters.update(extra_parameters.get(output))
 
-  context = garf.executors.api_executor.ApiExecutionContext(
+  context = garf.executors.execution_context.ExecutionContext(
     query_parameters={
       'macro': extra_parameters.get('macro'),
       'template': extra_parameters.get('template'),

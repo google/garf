@@ -14,13 +14,14 @@
 
 """FastAPI endpoint for executing queries."""
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import fastapi
 import garf.executors
 import pydantic
 import typer
 import uvicorn
+import yaml
 from garf.executors import exceptions, setup
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import (
@@ -28,7 +29,7 @@ from garf.executors.entrypoints.tracer import (
   initialize_meter,
   initialize_tracer,
 )
-from garf.executors.workflows import workflow_runner
+from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
@@ -98,7 +99,7 @@ class ApiExecutorRequest(pydantic.BaseModel):
   title: Optional[str] = None
   query: Optional[str] = None
   query_path: Optional[Union[str, list[str]]] = None
-  context: garf.executors.api_executor.ApiExecutionContext
+  context: garf.executors.execution_context.ExecutionContext
 
   @pydantic.model_validator(mode='after')
   def check_query_specified(self):
@@ -122,7 +123,7 @@ class ApiExecutorResponse(pydantic.BaseModel):
     results: Results of query execution.
   """
 
-  results: list[str]
+  results: list[str | Any]
 
 
 @app.get('/api/version')
@@ -147,7 +148,11 @@ def execute(
     request.source, request.context.fetcher_parameters
   )
   result = query_executor.execute(request.query, request.title, request.context)
-  return ApiExecutorResponse(results=[result])
+  if isinstance(result, garf.core.GarfReport):
+    result = result.to_list('dict')
+  else:
+    result = [result]
+  return ApiExecutorResponse(results=result)
 
 
 @app.post('/api/execute:batch')
@@ -165,15 +170,20 @@ def execute_batch(
 
 
 @app.post('/api/execute:workflow')
-def execute_workflow(
-  workflow_file: str,
+async def execute_workflow(
   dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
+  workflow_file: fastapi.UploadFile = fastapi.File(...),
   enable_cache: bool = False,
   cache_ttl_seconds: int = 3600,
   selected_aliases: Optional[list[str]] = None,
   skipped_aliases: Optional[list[str]] = None,
 ) -> list[str]:
-  return workflow_runner.WorkflowRunner.from_file(workflow_file).run(
+  content = await workflow_file.read()
+  workflow_data = yaml.safe_load(content.decode('utf-8'))
+  execution_workflow = workflow.Workflow(**workflow_data)
+  return workflow_runner.WorkflowRunner(
+    execution_workflow=execution_workflow
+  ).run(
     enable_cache=enable_cache,
     cache_ttl_seconds=cache_ttl_seconds,
     selected_aliases=selected_aliases,
