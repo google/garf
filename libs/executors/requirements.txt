@@ -3,7 +3,9 @@
 annotated-doc==0.0.4 \
     --hash=sha256:571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320 \
     --hash=sha256:fbcda96e87e9c92ad167c2e53839e57503ecfda18804ea28102353485033faa4
-    # via fastapi
+    # via
+    #   fastapi
+    #   typer
 annotated-types==0.7.0 \
     --hash=sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53 \
     --hash=sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89
@@ -19,9 +21,9 @@ asgiref==3.11.1 \
     --hash=sha256:5f184dc43b7e763efe848065441eac62229c9f7b0475f41f80e207a114eda4ce \
     --hash=sha256:e8667a091e69529631969fd45dc268fa79b99c92c5fcdda727757e52146ec133
     # via opentelemetry-instrumentation-asgi
-certifi==2026.1.4 \
-    --hash=sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c \
-    --hash=sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120
+certifi==2026.2.25 \
+    --hash=sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa \
+    --hash=sha256:e887ab5cee78ea814d3472169153c2d12cd43b14bd03329a39a9c6e2e80bfba7
     # via
     #   httpcore
     #   httpx
@@ -169,17 +171,17 @@ eval-type-backport==0.3.1 \
     --hash=sha256:279ab641905e9f11129f56a8a78f493518515b83402b860f6f06dd7c011fdfa8 \
     --hash=sha256:57e993f7b5b69d271e37482e62f74e76a0276c82490cf8e4f0dffeb6b332d5ed
     # via garf-core
-fastapi[standard]==0.128.6 \
-    --hash=sha256:0cb3946557e792d731b26a42b04912f16367e3c3135ea8290f620e234f2b604f \
-    --hash=sha256:bb1c1ef87d6086a7132d0ab60869d6f1ee67283b20fbf84ec0003bd335099509
+fastapi[standard]==0.135.1 \
+    --hash=sha256:46e2fc5745924b7c840f71ddd277382af29ce1cdb7d5eab5bf697e3fb9999c9e \
+    --hash=sha256:d04115b508d936d254cea545b7312ecaa58a7b3a0f84952535b4c9afae7668cd
     # via garf-executors
-fastapi-cli[standard]==0.0.20 \
-    --hash=sha256:d17c2634f7b96b6b560bc16b0035ed047d523c912011395f49f00a421692bc3a \
-    --hash=sha256:e58b6a0038c0b1532b7a0af690656093dee666201b6b19d3c87175b358e9f783
+fastapi-cli[standard]==0.0.24 \
+    --hash=sha256:1afc9c9e21d7ebc8a3ca5e31790cd8d837742be7e4f8b9236e99cb3451f0de00 \
+    --hash=sha256:4a1f78ed798f106b4fee85ca93b85d8fe33c0a3570f775964d37edb80b8f0edc
     # via fastapi
-fastapi-cloud-cli==0.11.0 \
-    --hash=sha256:76857b0f09d918acfcb50ade34682ba3b2079ca0c43fda10215de301f185a7f8 \
-    --hash=sha256:ecc83a5db106be35af528eccb01aa9bced1d29783efd48c8c1c831cf111eea99
+fastapi-cloud-cli==0.14.0 \
+    --hash=sha256:325fcb4b45e661184152da6db861d9fb718739fbcd561a4d334dbe78c026586f \
+    --hash=sha256:d3ecb8c942685a71df0af7bd59f463b5eff76f5818b48e5a03c6159726831e68
     # via fastapi-cli
 fastar==0.8.0 \
     --hash=sha256:003b59a7c3e405b6a7bff8fab17d31e0ccbc7f06730a8f8ca1694eeea75f3c76 \
@@ -337,19 +339,19 @@ fastar==0.8.0 \
     --hash=sha256:feb8f73ad25ad84f986dc53e7c6561b281ee2087500f6e400899c3bf1a3f6dc0 \
     --hash=sha256:ff85094f10003801339ac4fa9b20a3410c2d8f284d4cba2dc99de6e98c877812
     # via fastapi-cloud-cli
-garf-core==1.1.2 \
-    --hash=sha256:cd6ba23b15ed89969df04f0816ae31e50a046ac18394f423029507178ad4499c \
-    --hash=sha256:f82f1491d21ea3e0da5df8c1960a06d35e2906cb45c8658b9428d9d7dcb5336e
+garf-core==1.1.4 \
+    --hash=sha256:15daa77ce28cacbe6a45e476ab91c7e68a8ff8d3e5e507ab81dec9e8c6240259 \
+    --hash=sha256:97e1d90b034a7ad7aa7359955fe13ec3ff59506018236c2554ef7f50a4ffd38d
     # via
     #   garf-executors
     #   garf-io
-garf-executors[server]==1.3.0 \
-    --hash=sha256:27ca2367312c9d6f64cbf6e43f50cee464b6d8e264ec5e638f3215dafc1951ef \
-    --hash=sha256:9995fc44e13b3152da4525a337ed0051ccfd9ea9988087ffd19298be44695257
+garf-executors[server]==1.3.5 \
+    --hash=sha256:10be26af54a29e0bcbe01bdc9563f256f21be16b00e4460390ead15df879afb7 \
+    --hash=sha256:68c51ce52eca567447b21a3f477fd2a9c8f3b4198423276a796e5109e7178d38
     # via -r requirements.in
-garf-io==1.2.1 \
-    --hash=sha256:87b18101fb3338cc46188a5bbc6c2d44f992d38ce97ecf4e498330f32aad4904 \
-    --hash=sha256:c8577337c678b8deeb4e6252f69fd25ccaa1f3560086b1cbe2e684231d0e38a4
+garf-io==1.2.2 \
+    --hash=sha256:3ec2617d32d84d57ccfdeba9db3fef863b2640093cd4778ae22d5e9127dc2e4f \
+    --hash=sha256:c9105d122e48464233c7702acde359faa4fe6735bbe5f6eba8f7e5646fe724de
     # via garf-executors
 googleapis-common-protos==1.72.0 \
     --hash=sha256:4299c5a82d5ae1a9702ada957347726b167f9f8d1fc352477702a1e851ff4038 \
@@ -616,6 +618,7 @@ opentelemetry-api==1.39.1 \
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-instrumentation-logging
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
 opentelemetry-exporter-otlp==1.39.1 \
@@ -642,6 +645,7 @@ opentelemetry-instrumentation==0.60b1 \
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-instrumentation-logging
 opentelemetry-instrumentation-asgi==0.60b1 \
     --hash=sha256:16bfbe595cd24cda309a957456d0fc2523f41bc7b076d1f2d7e98a1ad9876d6f \
     --hash=sha256:d48def2dbed10294c99cfcf41ebbd0c414d390a11773a41f472d20000fcddc25
@@ -649,6 +653,10 @@ opentelemetry-instrumentation-asgi==0.60b1 \
 opentelemetry-instrumentation-fastapi==0.60b1 \
     --hash=sha256:af94b7a239ad1085fc3a820ecf069f67f579d7faf4c085aaa7bd9b64eafc8eaf \
     --hash=sha256:de608955f7ff8eecf35d056578346a5365015fd7d8623df9b1f08d1c74769c01
+    # via garf-executors
+opentelemetry-instrumentation-logging==0.60b1 \
+    --hash=sha256:98f4b9c7aeb9314a30feee7c002c7ea9abea07c90df5f97fb058b850bc45b89a \
+    --hash=sha256:f2e18cbc7e1dd3628c80e30d243897fdc93c5b7e0c8ae60abd2b9b6a99f82343
     # via garf-executors
 opentelemetry-proto==1.39.1 \
     --hash=sha256:22cdc78efd3b3765d09e68bfbd010d4fc254c9818afd0b6b423387d9dee46007 \
@@ -834,9 +842,9 @@ pydantic-extra-types==2.11.0 \
     --hash=sha256:4e9991959d045b75feb775683437a97991d02c138e00b59176571db9ce634f0e \
     --hash=sha256:84b864d250a0fc62535b7ec591e36f2c5b4d1325fa0017eb8cda9aeb63b374a6
     # via fastapi
-pydantic-settings==2.12.0 \
-    --hash=sha256:005538ef951e3c2a68e1c08b292b5f2e71490def8589d4221b95dab00dafcfd0 \
-    --hash=sha256:fddb9fd99a5b18da837b29710391e945b1e30c135477f484084ee513adb93809
+pydantic-settings==2.13.1 \
+    --hash=sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025 \
+    --hash=sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237
     # via
     #   fastapi
     #   garf-executors
@@ -848,9 +856,9 @@ python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
     --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
     # via garf-core
-python-dotenv==1.2.1 \
-    --hash=sha256:42667e897e16ab0d66954af0e60a9caa94f0fd4ecf3aaf6d2d260eec1aa36ad6 \
-    --hash=sha256:b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61
+python-dotenv==1.2.2 \
+    --hash=sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a \
+    --hash=sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3
     # via
     #   pydantic-settings
     #   uvicorn
@@ -942,16 +950,16 @@ requests==2.32.5 \
     # via
     #   garf-core
     #   opentelemetry-exporter-otlp-proto-http
-rich==14.3.2 \
-    --hash=sha256:08e67c3e90884651da3239ea668222d19bea7b589149d8014a21c633420dbb69 \
-    --hash=sha256:e712f11c1a562a11843306f5ed999475f09ac31ffb64281f73ab29ffdda8b3b8
+rich==14.3.3 \
+    --hash=sha256:793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d \
+    --hash=sha256:b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b
     # via
     #   garf-io
     #   rich-toolkit
     #   typer
-rich-toolkit==0.19.0 \
-    --hash=sha256:2cd1960e7538751d78203a118efad50e89e4102b63b4233ead5defb43251a13b \
-    --hash=sha256:f2997d6c3face4d10d775a5dd712b99fbcd7306083466557ddfa43e33cbf4d05
+rich-toolkit==0.19.7 \
+    --hash=sha256:0288e9203728c47c5a4eb60fd2f0692d9df7455a65901ab6f898437a2ba5989d \
+    --hash=sha256:133c0915872da91d4c25d85342d5ec1dfacc69b63448af1a08a0d4b4f23ef46e
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
@@ -1111,9 +1119,9 @@ rignore==0.7.6 \
     --hash=sha256:fe6c41175c36554a4ef0994cd1b4dbd6d73156fca779066456b781707402048e \
     --hash=sha256:ffa86694fec604c613696cb91e43892aa22e1fec5f9870e48f111c603e5ec4e9
     # via fastapi-cloud-cli
-sentry-sdk==2.52.0 \
-    --hash=sha256:931c8f86169fc6f2752cb5c4e6480f0d516112e78750c312e081ababecbaf2ed \
-    --hash=sha256:fa0bec872cfec0302970b2996825723d67390cdd5f0229fb9efed93bd5384899
+sentry-sdk==2.53.0 \
+    --hash=sha256:46e1ed8d84355ae54406c924f6b290c3d61f4048625989a723fd622aab838899 \
+    --hash=sha256:6520ef2c4acd823f28efc55e43eb6ce2e6d9f954a95a3aa96b6fd14871e92b77
     # via fastapi-cloud-cli
 shellingham==1.5.4 \
     --hash=sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686 \
@@ -1123,17 +1131,17 @@ six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
     # via python-dateutil
-smart-open==7.5.0 \
-    --hash=sha256:87e695c5148bbb988f15cec00971602765874163be85acb1c9fb8abc012e6599 \
-    --hash=sha256:f394b143851d8091011832ac8113ea4aba6b92e6c35f6e677ddaaccb169d7cb9
+smart-open==7.5.1 \
+    --hash=sha256:3e07cbbd9c8a908bcb8e25d48becf1a5cbb4886fa975e9f34c672ed171df2318 \
+    --hash=sha256:3f08e16827c4733699e6b2cc40328a3568f900cb12ad9a3ad233ba6c872d9fe7
     # via garf-io
 starlette==0.52.1 \
     --hash=sha256:0029d43eb3d273bc4f83a08720b4912ea4b071087a3b48db01b7c839f7954d74 \
     --hash=sha256:834edd1b0a23167694292e94f597773bc3f89f362be6effee198165a35d62933
     # via fastapi
-typer==0.21.1 \
-    --hash=sha256:7985e89081c636b88d172c2ee0cfe33c253160994d47bdfdc302defd7d1f1d01 \
-    --hash=sha256:ea835607cd752343b6b2b7ce676893e5a0324082268b48f27aa058bdb7d2145d
+typer==0.24.1 \
+    --hash=sha256:112c1f0ce578bfb4cab9ffdabc68f031416ebcc216536611ba21f04e9aa84c9e \
+    --hash=sha256:e39b4732d65fbdcde189ae76cf7cd48aeae72919dea1fdfc16593be016256b45
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
@@ -1154,7 +1162,6 @@ typing-extensions==4.15.0 \
     #   pydantic-core
     #   pydantic-extra-types
     #   rich-toolkit
-    #   typer
     #   typing-inspection
 typing-inspection==0.4.2 \
     --hash=sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7 \
@@ -1169,9 +1176,9 @@ urllib3==2.6.3 \
     # via
     #   requests
     #   sentry-sdk
-uvicorn[standard]==0.40.0 \
-    --hash=sha256:839676675e87e73694518b5574fd0f24c9d97b46bea16df7b8c05ea1a51071ea \
-    --hash=sha256:c6c8f55bc8bf13eb6fa9ff87ad62308bbbc33d0b67f84293151efe87e0d5f2ee
+uvicorn[standard]==0.41.0 \
+    --hash=sha256:09d11cf7008da33113824ee5a1c6422d89fbc2ff476540d69a34c87fab8b571a \
+    --hash=sha256:29e35b1d2c36a04b9e180d4007ede3bcb32a85fbdfd6c6aeb3f26839de088187
     # via
     #   fastapi
     #   fastapi-cli
