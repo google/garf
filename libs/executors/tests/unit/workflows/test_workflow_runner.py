@@ -14,6 +14,7 @@
 import pathlib
 
 from garf.executors.workflows import workflow_runner
+from garf.executors.workflows.workflow import Workflow
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
@@ -22,13 +23,15 @@ _TEST_WORKFLOW_PATH = _SCRIPT_PATH / 'test_workflow.yaml'
 
 class TestWorkflowRunner:
   def test_run_returns_executed_step_names(self):
-    runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
     results = runner.run()
     assert results == ['1-fake-test']
 
   def test_compile_saves_file(self, tmp_path):
     tmp_workflow_path = tmp_path / 'workflow.yaml'
-    runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
     result = runner.compile(tmp_workflow_path)
     assert result == f'Workflow is saved to {tmp_workflow_path}'
 

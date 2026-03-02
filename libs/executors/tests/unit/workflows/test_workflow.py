@@ -12,8 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pathlib
+
 import yaml
-from garf.executors.workflows.workflow import Workflow
+from garf.executors.workflows.workflow import (
+  ExecutionStep,
+  Query,
+  QueryDefinition,
+  QueryFolder,
+  QueryPath,
+  Workflow,
+)
+
+_SCRIPT_PATH = str(pathlib.Path(__file__).parent)
 
 
 class TestWorkflow:
@@ -51,7 +62,9 @@ class TestWorkflow:
     with open(tmp_workflow, 'w', encoding='utf-8') as f:
       yaml.dump(self.data, f, encoding='utf-8')
     workflow = Workflow.from_file(tmp_workflow)
-    expected_workflow = Workflow(steps=self.data.get('steps'))
+    expected_workflow = Workflow(
+      steps=self.data.get('steps'), prefix=tmp_workflow.parent
+    )
     assert workflow == expected_workflow
 
   def test_save_returns_correct_data(self, tmp_path):
@@ -89,3 +102,35 @@ class TestWorkflow:
     assert step.query_parameters.template.get('cohorts') == new_cohort
     assert step.fetcher_parameters.get('id') == new_ids
     assert step.writer_parameters.get('destination_folder') == new_folder
+
+  def test_compile(self):
+    workflow = Workflow(
+      steps=[
+        ExecutionStep(
+          fetcher='test',
+          queries=[
+            QueryPath(path='query1.sql', prefix=_SCRIPT_PATH),
+            QueryDefinition(
+              query=Query(title='query2', text='-- It is a comment.\nSELECT 2')
+            ),
+            QueryFolder(folder='queries/', prefix=_SCRIPT_PATH),
+          ],
+        ),
+      ],
+    )
+
+    workflow.compile()
+    expected_workflow = Workflow(
+      steps=[
+        ExecutionStep(
+          fetcher='test',
+          queries=[
+            Query(title='query1.sql', text='SELECT 1'),
+            Query(title='query2', text='SELECT 2'),
+            Query(title='query3.sql', text='SELECT 3'),
+          ],
+        ),
+      ],
+    )
+
+    assert workflow == expected_workflow
