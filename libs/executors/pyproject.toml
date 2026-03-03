@@ -13,6 +13,7 @@ dependencies = [
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp",
   "opentelemetry-instrumentation-logging",
+  "typer",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
@@ -84,6 +85,7 @@ all = [
 
 [project.scripts]
 garf="garf.executors.entrypoints.cli:main"
+grf="garf.executors.entrypoints.typer_cli:typer_app"
 
 [tool.setuptools.packages.find]
 where = ["."]

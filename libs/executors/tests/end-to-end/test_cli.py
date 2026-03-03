@@ -17,13 +17,20 @@
 import json
 import pathlib
 import subprocess
+import sys
 
+import pytest
 import yaml
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
 
-class TestApiQueryExecutor:
+def _skip_python_39(command):
+  if sys.version_info[1] < 10 and command.startswith('grf'):
+    pytest.skip('Python 3.9 is not supported')
+
+
+class TestCli:
   query = (
     'SELECT resource, dimensions.name AS name, metrics.clicks AS clicks '
     'FROM resource'
@@ -51,10 +58,12 @@ class TestApiQueryExecutor:
     },
   ]
 
-  def test_fake_source_from_console(self):
+  @pytest.mark.parametrize('command', ['garf', 'grf execute'])
+  def test_fake_source_from_console(self, command):
+    _skip_python_39(command)
     fake_data = _SCRIPT_PATH / 'test.json'
     command = (
-      f'garf "{self.query}" --input console --source fake '
+      f'{command} "{self.query}" --input console --source fake '
       f'--source.data_location={fake_data} '
       '--output console --console.format=json '
       '--loglevel ERROR'
@@ -70,13 +79,15 @@ class TestApiQueryExecutor:
     assert result.returncode == 0
     assert json.loads(result.stdout) == self.expected_output
 
-  def test_fake_source_from_file(self, tmp_path):
+  @pytest.mark.parametrize('command', ['garf', 'grf execute'])
+  def test_fake_source_from_file(self, tmp_path, command):
+    _skip_python_39(command)
     query_path = tmp_path / 'query.sql'
     with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
       f.write(self.query)
     fake_data = _SCRIPT_PATH / 'test.json'
     command = (
-      f'garf {str(query_path)} --source fake '
+      f'{command} {str(query_path)} --source fake '
       f'--source.data_location={fake_data} '
       '--output console --console.format=json '
       '--loglevel ERROR'
@@ -92,7 +103,9 @@ class TestApiQueryExecutor:
     assert result.returncode == 0
     assert json.loads(result.stdout) == self.expected_output
 
-  def test_fake_source_from_config(self, tmp_path):
+  @pytest.mark.parametrize('command', ['garf', 'grf execute'])
+  def test_fake_source_from_config(self, tmp_path, command):
+    _skip_python_39(command)
     query_path = tmp_path / 'query.sql'
     with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
       f.write(self.query)
@@ -109,7 +122,7 @@ class TestApiQueryExecutor:
     with open(tmp_config, 'w', encoding='utf-8') as f:
       yaml.dump(config_data, f, encoding='utf-8')
     command = (
-      f'garf {str(query_path)} --source fake '
+      f'{command} {str(query_path)} --source fake '
       f'-c {str(tmp_config)} '
       '--loglevel ERROR'
     )
@@ -124,9 +137,11 @@ class TestApiQueryExecutor:
     assert result.returncode == 0
     assert json.loads(result.stdout) == self.expected_output
 
-  def test_fake_source_from_workflow(self):
+  @pytest.mark.parametrize('command', ['garf -w', 'grf workflow run -f'])
+  def test_fake_source_from_workflow(self, command):
+    _skip_python_39(command)
     workflow_path = _SCRIPT_PATH / 'test_workflow.yaml'
-    command = f'garf -w {str(workflow_path)} --loglevel ERROR'
+    command = f'{command} {str(workflow_path)} --loglevel ERROR'
     result = subprocess.run(
       command,
       shell=True,
