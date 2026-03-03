@@ -19,7 +19,7 @@ import pathlib
 import pytest
 from garf.core import api_clients, parsers, report_fetcher
 from garf.core.fetchers import fake as fake_fetcher
-from garf.executors import api_executor
+from garf.executors import api_executor, execution_context
 from garf.io.writers import json_writer
 
 _TEST_DATA = [
@@ -51,7 +51,7 @@ class TestApiQueryExecutor:
     return json_writer.JsonWriter(destination_folder=tmp_path)
 
   def test_execute_returns_success(self, executor, tmp_path):
-    context = api_executor.ApiExecutionContext(
+    context = execution_context.ExecutionContext(
       writer='json',
       writer_parameters={'destination_folder': str(tmp_path)},
     )
@@ -90,7 +90,7 @@ class TestApiQueryExecutor:
     self, executor, tmp_path, capsys
   ):
     """Test that multiple writers (console and json) both execute."""
-    context = api_executor.ApiExecutionContext(
+    context = execution_context.ExecutionContext(
       writer=['console', 'json'],
       writer_parameters={'destination_folder': str(tmp_path)},
     )

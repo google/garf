@@ -45,12 +45,6 @@ api_counter = meter.create_counter(
 )
 
 
-class ApiExecutionContext(execution_context.ExecutionContext):
-  """Common context for executing one or more queries."""
-
-  writer: str | list[str] = 'console'
-
-
 class ApiQueryExecutor(executor.Executor):
   """Gets data from API and writes them to local/remote storage.
 
@@ -102,7 +96,7 @@ class ApiQueryExecutor(executor.Executor):
     self,
     query: str,
     title: str,
-    context: ApiExecutionContext,
+    context: execution_context.ExecutionContext,
   ) -> str:
     """Reads query, extract results and stores them in a specified location.
 
@@ -117,8 +111,6 @@ class ApiQueryExecutor(executor.Executor):
     Raises:
       GarfExecutorError: When failed to execute query.
     """
-    if not (self.writers or context.writer):
-      raise exceptions.GarfExecutorError('No writer specified')
     if self.simulator:
       return self.simulate(query=query, title=title, context=context)
     context = query_processor.process_gquery(context)
@@ -144,17 +136,19 @@ class ApiQueryExecutor(executor.Executor):
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e
-    writer_clients = self.writers or context.writer_clients
-    return executor.write_many(
-      writer_clients=writer_clients, results=results, title=title
-    )
+    if self.writers or context.writer:
+      writer_clients = self.writers or context.writer_clients
+      return executor.write_many(
+        writer_clients=writer_clients, results=results, title=title
+      )
+    return results
 
   @tracer.start_as_current_span('api.simulate')
   def simulate(
     self,
     query: str,
     title: str,
-    context: ApiExecutionContext,
+    context: execution_context.ExecutionContext,
   ) -> str:
     """Reads query, simulates results and stores them in a specified location.
 
@@ -169,8 +163,6 @@ class ApiQueryExecutor(executor.Executor):
     Raises:
       GarfExecutorError: When failed to execute query.
     """
-    if not (self.writers or context.writer):
-      raise exceptions.GarfExecutorError('No writer specified')
     context = query_processor.process_gquery(context)
     span = trace.get_current_span()
     span.set_attribute('simulator.class', self.simulator.__class__.__name__)
