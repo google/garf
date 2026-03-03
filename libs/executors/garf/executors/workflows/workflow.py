@@ -87,7 +87,7 @@ class QueryPath(pydantic.BaseModel):
     return self.path
 
   def to_query(self, prefix: str | pathlib.Path | None) -> Query:
-    if prefix:
+    if not self.prefix and prefix:
       self.prefix = prefix
     query_spec = query_editor.QuerySpecification(
       text=self.text, title=self.title
@@ -125,6 +125,9 @@ class Query(pydantic.BaseModel):
 
   text: str
   title: str
+
+  def to_query(self, prefix):
+    return self
 
 
 class ExecutionStep(ExecutionContext):
