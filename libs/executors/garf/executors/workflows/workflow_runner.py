@@ -137,8 +137,12 @@ class WorkflowRunner:
     self.workflow.compile()
     return self.workflow.save(path)
 
-  def deploy(self, path: str | pathlib.Path) -> str:
+  def deploy(
+    self, path: str | pathlib.Path, embed_queries: bool = False
+  ) -> str:
     """Prepares workflow for deployment to Google Cloud Workflows."""
+    if embed_queries:
+      self.workflow.compile()
     wf = self.workflow.model_dump(exclude_none=True).get('steps')
     with open(_SCRIPT_PATH / 'gcp_workflow.yaml', 'r', encoding='utf-8') as f:
       cloud_workflow_run_template = yaml.safe_load(f)

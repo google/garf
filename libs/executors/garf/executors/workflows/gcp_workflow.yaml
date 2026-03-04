@@ -6,7 +6,7 @@ run:
       - log_source:
           call: sys.log
           args:
-            data: ${pair.alias}
+            data: ${pair.fetcher}
       - execute_queries:
           parallel:
             for:
@@ -17,7 +17,12 @@ run:
                     call: sys.log
                     args:
                       data: ${pair}
-                - execute_single_query:
+                - check_writer:
+                    switch:
+                      - condition: ${"writer" in pair}
+                        next: execute_api_query
+                    next: execute_postprocessing_query
+                - execute_postprocessing_query:
                     try:
                       call: http.post
                       args:
@@ -26,9 +31,39 @@ run:
                           type: OIDC
                         body:
                           source: ${pair.fetcher}
-                          # query_path: ${query.path}
-                          title: ${query.query.title}
-                          query: ${query.query.text}
+                          title: ${query.title}
+                          query: ${query.text}
+                          context:
+                            fetcher_parameters: ${pair.fetcher_parameters}
+                            query_parameters:
+                              macro: ${pair.query_parameters.macro}
+                              template: ${pair.query_parameters.template}
+                      result: task_resp
+                    except:
+                      as: e
+                      steps:
+                      - log_error_postproc:
+                          call: sys.log
+                          args:
+                            data:
+                              error: ${e}
+                              query: ${query.title}
+                              source: ${pair.fetcher}
+                            severity: ERROR
+                      - fail_postproc:
+                          raise: ${e}
+                    next: log_result
+                - execute_api_query:
+                    try:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("GARF_ENDPOINT") + "/api/execute"}
+                        auth:
+                          type: OIDC
+                        body:
+                          source: ${pair.fetcher}
+                          title: ${query.title}
+                          query: ${query.text}
                           context:
                             fetcher_parameters: ${pair.fetcher_parameters}
                             writer: ${pair.writer}
@@ -39,10 +74,17 @@ run:
                       result: task_resp
                     except:
                       as: e
-                      assign:
-                        - task_resp:
-                            status: "failed"
-                            error: ${e.message}
+                      steps:
+                      - log_error_api:
+                          call: sys.log
+                          args:
+                            data:
+                              error: ${e}
+                              query: ${query.title}
+                              source: ${pair.fetcher}
+                            severity: ERROR
+                      - fail_api:
+                          raise: ${e}
                 - log_result:
                     call: sys.log
                     args:

@@ -166,7 +166,9 @@ class Workflow(pydantic.BaseModel):
 
   steps: list[ExecutionStep]
   context: dict[str, dict[str, Any]] | None = None
-  prefix: str | pathlib.Path | None = None
+  prefix: str | pathlib.Path | None = pydantic.Field(
+    default=None, excluded=True
+  )
 
   def model_post_init(self, __context__) -> None:
     if context := self.context:
@@ -210,7 +212,10 @@ class Workflow(pydantic.BaseModel):
     """Saves workflow to local or remote yaml file."""
     with smart_open.open(path, 'w', encoding='utf-8') as f:
       yaml.dump(
-        self.model_dump(exclude_none=True), f, encoding='utf-8', sort_keys=False
+        self.model_dump(exclude_none=True, exclude={'prefix'}),
+        f,
+        encoding='utf-8',
+        sort_keys=False,
       )
     return f'Workflow is saved to {str(path)}'
 
