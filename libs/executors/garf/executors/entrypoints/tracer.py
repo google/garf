@@ -112,8 +112,9 @@ def initialize_logger():
   )
   logger_provider = LoggerProvider(resource=resource)
   set_logger_provider(logger_provider)
-  log_exporter = OTLPLogExporter(insecure=True)
-  logger_provider.add_log_record_processor(
-    BatchLogRecordProcessor(log_exporter)
-  )
+  if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+    log_exporter = OTLPLogExporter(endpoint=otel_endpoint, insecure=True)
+    logger_provider.add_log_record_processor(
+      BatchLogRecordProcessor(log_exporter)
+    )
   return LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
