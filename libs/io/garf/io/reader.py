@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import abc
+import enum
 
 import smart_open
-from garf.io.telemetry import tracer
 from typing_extensions import override
 
 
@@ -27,11 +27,15 @@ class AbsReader(abc.ABC):
     """Reads query from local or remote storage."""
 
 
+class InputEnum(str, enum.Enum):
+  console = 'console'
+  file = 'file'
+
+
 class FileReader(AbsReader):
   """Reads from file."""
 
   @override
-  @tracer.start_as_current_span('file.read')
   def read(self, query_path, **kwargs):
     with smart_open.open(query_path, 'r') as f:
       return f.read()
@@ -41,7 +45,6 @@ class ConsoleReader(AbsReader):
   """Read query from standard input."""
 
   @override
-  @tracer.start_as_current_span('console.read')
   def read(self, query_path, **kwargs):
     return query_path
 
