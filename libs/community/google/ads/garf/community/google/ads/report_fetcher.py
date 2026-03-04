@@ -55,12 +55,17 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     if not api_client:
       api_client = api_clients.GoogleAdsApiClient(**kwargs)
     self.parallel_threshold = parallel_threshold
+    preprocessors = (
+      {'account': self.expand_mcc}
+      if kwargs.get('expand_mcc') in (None, True)
+      else {}
+    )
     super().__init__(
       api_client=api_client,
       parser=parser,
       query_specification_builder=query_spec,
       builtin_queries=builtin_queries,
-      preprocessors={'account': self.expand_mcc},
+      preprocessors=preprocessors,
       **kwargs,
     )
 
