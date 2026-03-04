@@ -165,34 +165,34 @@ class Workflow(pydantic.BaseModel):
   """
 
   steps: list[ExecutionStep]
-  context: ExecutionContext | None = None
+  context: dict[str, dict[str, Any]] | None = None
   prefix: str | pathlib.Path | None = None
 
   def model_post_init(self, __context__) -> None:
     if context := self.context:
       custom_parameters = defaultdict(dict)
-      if custom_macros := context.query_parameters.macro:
+      if custom_macros := context.get('macro'):
         custom_parameters['query_parameters']['macro'] = custom_macros
-      if custom_templates := context.query_parameters.template:
+      if custom_templates := context.get('template'):
         custom_parameters['query_parameters']['template'] = custom_templates
-      if custom_fetcher_parameters := context.fetcher_parameters:
-        custom_parameters['fetcher_parameters'] = custom_fetcher_parameters
-      if custom_writer_parameters := context.writer_parameters:
-        custom_parameters['writer_parameters'] = custom_writer_parameters
 
-      if custom_parameters:
-        steps = self.steps
-        for i, step in enumerate(steps):
-          res = _merge_dicts(
-            step.model_dump(exclude_none=True), dict(custom_parameters)
-          )
-          steps[i] = ExecutionStep(**res)
+      steps = self.steps
+      for i, step in enumerate(steps):
+        if fetcher_parameters := context.get(step.fetcher):
+          custom_parameters['fetcher_parameters'] = fetcher_parameters
+        if writer_parameters := context.get(step.writer):
+          custom_parameters['writer_parameters'] = writer_parameters
+
+        res = _merge_dicts(
+          step.model_dump(exclude_none=True), custom_parameters
+        )
+        steps[i] = ExecutionStep(**res)
 
   @classmethod
   def from_file(
     cls,
     path: str | pathlib.Path | os.PathLike[str],
-    context: ExecutionContext | None = None,
+    context: dict[str, dict[str, Any]] | None = None,
   ) -> Workflow:
     """Builds workflow from local or remote yaml file."""
     with smart_open.open(path, 'r', encoding='utf-8') as f:

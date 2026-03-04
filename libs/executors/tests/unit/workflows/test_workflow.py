@@ -83,16 +83,10 @@ class TestWorkflow:
     workflow = Workflow(
       steps=self.data.get('steps'),
       context={
-        'query_parameters': {
-          'macro': {'start_date': new_start_date},
-          'template': {'cohorts': new_cohort},
-        },
-        'fetcher_parameters': {
-          'id': new_ids,
-        },
-        'writer_parameters': {
-          'destination_folder': new_folder,
-        },
+        'macro': {'start_date': new_start_date},
+        'template': {'cohorts': new_cohort},
+        'api': {'id': new_ids},
+        'csv': {'destination_folder': new_folder},
       },
     )
 
