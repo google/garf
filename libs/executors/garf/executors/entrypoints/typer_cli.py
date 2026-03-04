@@ -104,7 +104,7 @@ LogName = Annotated[
 ]
 
 
-def _init_runner(file, context) -> workflow_runner.WorkflowRunner:
+def _init_runner(file, context=None) -> workflow_runner.WorkflowRunner:
   wf_parent = pathlib.Path.cwd() / pathlib.Path(file).parent
   execution_workflow = workflow.Workflow.from_file(path=file, context=context)
   return workflow_runner.WorkflowRunner(
@@ -262,8 +262,11 @@ def run(
   )
 
 
-@workflow_app.command()
+@workflow_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
+)
 def compile(
+  ctx: typer.Context,
   file: Annotated[
     str,
     typer.Option('--workflow', '-f', help='Workflow YAML file'),
@@ -271,16 +274,20 @@ def compile(
   output_file: Annotated[
     Optional[str],
     typer.Option('--output-workflow', '-o', help='Output workflow YAML file'),
-  ],
+  ] = None,
 ):
   """Compiles workflow."""
   if not output_file:
     output_file = pathlib.Path(file).stem / '_compiled.yaml'
-  _init_runner(file).compile(output_file)
+  context = utils.ParamsParser().parse_all(ctx.args)
+  _init_runner(file, context).compile(output_file)
 
 
-@workflow_app.command()
+@workflow_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
+)
 def deploy(
+  ctx: typer.Context,
   file: Annotated[
     str,
     typer.Option('--workflow', '-f', help='Workflow YAML file'),
@@ -288,12 +295,21 @@ def deploy(
   output_file: Annotated[
     Optional[str],
     typer.Option('--output-workflow', '-o', help='Output workflow YAML file'),
-  ],
+  ] = None,
+  embed_queries: Annotated[
+    bool,
+    typer.Option(
+      help='Whether embed query texts into the output',
+    ),
+  ] = True,
 ):
   """Prepares deployment for Google Cloud Workflows."""
   if not output_file:
     output_file = pathlib.Path(file).stem / '_gcp.yaml'
-  _init_runner(file).deploy(output_file)
+  context = utils.ParamsParser().parse_all(ctx.args)
+  _init_runner(file, context).deploy(
+    path=output_file, embed_queries=embed_queries
+  )
 
 
 @typer_app.command()
