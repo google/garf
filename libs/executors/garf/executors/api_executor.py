@@ -92,7 +92,7 @@ class ApiQueryExecutor(executor.Executor):
     )
 
   @tracer.start_as_current_span('api.execute')
-  def execute(
+  def _execute(
     self,
     query: str,
     title: str,
@@ -113,7 +113,6 @@ class ApiQueryExecutor(executor.Executor):
     """
     if self.simulator:
       return self.simulate(query=query, title=title, context=context)
-    context = query_processor.process_gquery(context)
     span = trace.get_current_span()
     span.set_attribute('fetcher.class', self.fetcher.__class__.__name__)
     span.set_attribute(
@@ -131,17 +130,12 @@ class ApiQueryExecutor(executor.Executor):
       api_counter.add(
         1, {'api.client.class': self.fetcher.api_client.__class__.__name__}
       )
+      return results
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e
-    if self.writers or context.writer:
-      writer_clients = self.writers or context.writer_clients
-      return executor.write_many(
-        writer_clients=writer_clients, results=results, title=title
-      )
-    return results
 
   @tracer.start_as_current_span('api.simulate')
   def simulate(
