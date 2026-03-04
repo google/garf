@@ -71,11 +71,14 @@ class Executor:
     span.set_attribute('query.title', title)
     span.set_attribute('query.text', query_text)
     logger.info('Executing script: %s', title)
+    _handle_processors(processors=self.preprocessors, context=context)
+    context = query_processor.process_gquery(context)
     results = self._execute(query=query_text, title=title, context=context)
     if results and (self.writers or context.writer):
       writer_clients = self.writers or context.writer_clients
       return write_many(writer_clients, results, title)
     span.set_attribute('execute.num_results', len(results))
+    _handle_processors(processors=self.postprocessors, context=context)
     return results
 
   def _execute(
@@ -166,7 +169,6 @@ def _handle_processors(
   processors: dict[str, report_fetcher.Processor],
   context: execution_context.ExecutionContext,
 ) -> None:
-  context = query_processor.process_gquery(context)
   for k, processor in processors.items():
     processor_signature = list(inspect.signature(processor).parameters.keys())
     if k == 'init' or k in context.fetcher_parameters:

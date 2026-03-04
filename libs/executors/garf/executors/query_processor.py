@@ -63,8 +63,8 @@ def _handle_sub_context(context, sub_context):
         ).generate()
         if len(columns := [c for c in query_spec.column_names if c != '_']) > 1:
           raise GqueryError(f'Multiple columns in gquery definition: {columns}')
-      res = gquery_executor.execute(
-        query=query, title='gquery', context=no_writer_context
+      res = gquery_executor._execute(
+        query=query_spec.text, title='gquery', context=no_writer_context
       )
       if len(columns := [c for c in res.column_names if c != '_']) > 1:
         raise GqueryError(f'Multiple columns in gquery result: {columns}')
