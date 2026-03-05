@@ -21,6 +21,7 @@ import sys
 from typing import Optional
 
 import garf.executors
+import requests
 import rich
 import typer
 from garf.executors import exceptions, setup
@@ -35,6 +36,9 @@ from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
 from opentelemetry import trace
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.trace.propagation.tracecontext import (
+  TraceContextTextMapPropagator,
+)
 from typing_extensions import Annotated
 
 LoggingInstrumentor().instrument(set_logging_format=False)
@@ -137,6 +141,7 @@ def execute(
   enable_cache: EnableCache = False,
   cache_ttl_seconds: CacheTTL = 3600,
   simulate: Simulate = False,
+  server_url: str | None = None,
 ) -> None:
   """Runs queries."""
   span = trace.get_current_span()
@@ -195,28 +200,68 @@ def execute(
       raise exceptions.GarfExecutorError(
         f'No execution context found for source {source} in {config}'
       )
-  query_executor = setup.setup_executor(
-    source=source,
-    fetcher_parameters=context.fetcher_parameters,
-    enable_cache=enable_cache,
-    cache_ttl_seconds=cache_ttl_seconds,
-    simulate=simulate,
-    writers=context.writer,
-    writer_parameters=context.writer_parameters,
-  )
+  parallel_queries = parallel_threshold > 1
   with tracer.start_as_current_span('read_queries'):
     batch = {query: reader_client.read(query) for query in found_queries}
-  parallel_queries = parallel_threshold > 1
-  if parallel_queries and len(found_queries) > 1:
-    garf_logger.info('Running queries in parallel')
-    query_executor.execute_batch(batch, context, parallel_threshold)
+  if server_url:
+    rest_context = context.model_dump()
+    if rest_context.get('writer') == ['console']:
+      del rest_context['writer']
+    headers = {}
+    TraceContextTextMapPropagator().inject(headers)
+    if parallel_queries and len(batch) > 1:
+      endpoint = f'{server_url}/api/execute:batch'
+      request = {
+        'batch': batch,
+        'source': source,
+        'context': rest_context,
+      }
+      try:
+        response = requests.post(url=endpoint, json=request, headers=headers)
+        response.raise_for_status()
+      except requests.exceptions.HTTPError as e:
+        raise exceptions.GarfExecutorError(
+          f'Server error: {e.response.status_code} - {e.response.json()}'
+        ) from e
+
+      with tracer.start_as_current_span('parse_results batch'):
+        typer.secho(response.json().get('results'))
+    else:
+      endpoint = f'{server_url}/api/execute'
+      for title, text in batch.items():
+        request = {
+          'source': source,
+          'title': title,
+          'query': text,
+          'context': rest_context,
+        }
+        try:
+          response = requests.post(url=endpoint, json=request, headers=headers)
+          response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+          raise exceptions.GarfExecutorError(
+            f'Server error: {e.response.status_code} - {e.response.json()}'
+          ) from e
+      with tracer.start_as_current_span(f'parse_results {title}'):
+        typer.secho(response.json().get('results'))
   else:
-    if len(found_queries) > 1:
-      garf_logger.info('Running queries sequentially')
-    for query in found_queries:
-      query_executor.execute(
-        query=reader_client.read(query), title=query, context=context
-      )
+    query_executor = setup.setup_executor(
+      source=source,
+      fetcher_parameters=context.fetcher_parameters,
+      enable_cache=enable_cache,
+      cache_ttl_seconds=cache_ttl_seconds,
+      simulate=simulate,
+      writers=context.writer,
+      writer_parameters=context.writer_parameters,
+    )
+    if parallel_queries and len(batch) > 1:
+      garf_logger.info('Running queries in parallel')
+      query_executor.execute_batch(batch, context, parallel_threshold)
+    else:
+      if len(batch) > 1:
+        garf_logger.info('Running queries sequentially')
+      for title, text in batch.items():
+        query_executor.execute(query=text, title=title, context=context)
 
 
 @workflow_app.command(
