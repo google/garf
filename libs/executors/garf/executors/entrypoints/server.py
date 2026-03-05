@@ -17,6 +17,7 @@
 from typing import Any, Optional, Union
 
 import fastapi
+import garf.core
 import garf.executors
 import pydantic
 import typer
@@ -116,6 +117,20 @@ class ApiExecutorRequest(pydantic.BaseModel):
       self.title = str(self.query_path)
 
 
+class ApiExecutorBatchRequest(pydantic.BaseModel):
+  """Request for executing multiple queries.
+
+  Attributes:
+    source: Type of API to interact with.
+    batch: Mapping between query_title and its text.
+    context: Execution context.
+  """
+
+  source: str
+  batch: dict[str, str]
+  context: garf.executors.execution_context.ExecutionContext
+
+
 class ApiExecutorResponse(pydantic.BaseModel):
   """Response after executing a query.
 
@@ -124,6 +139,23 @@ class ApiExecutorResponse(pydantic.BaseModel):
   """
 
   results: list[Union[str, Any]]
+
+
+@app.exception_handler(garf.core.exceptions.GarfError)
+async def error_handlier(
+  request: fastapi.Request, exc: garf.core.exceptions.GarfError
+):
+  error_mapping = {}
+
+  status_code = error_mapping.get(type(exc), 400)
+
+  return fastapi.responses.JSONResponse(
+    status_code=status_code,
+    content={
+      'error_type': type(exc).__name__,
+      'detail': str(exc),
+    },
+  )
 
 
 @app.get('/api/version')
@@ -157,15 +189,13 @@ def execute(
 
 @app.post('/api/execute:batch')
 def execute_batch(
-  request: ApiExecutorRequest,
+  request: ApiExecutorBatchRequest,
   dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
 ) -> ApiExecutorResponse:
   query_executor = setup.setup_executor(
     request.source, request.context.fetcher_parameters
   )
-  reader_client = reader.FileReader()
-  batch = {query: reader_client.read(query) for query in request.query_path}
-  results = query_executor.execute_batch(batch, request.context)
+  results = query_executor.execute_batch(request.batch, request.context)
   return ApiExecutorResponse(results=results)
 
 

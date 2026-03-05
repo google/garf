@@ -81,10 +81,10 @@ class TestApiQueryExecutor:
     fake_data = _SCRIPT_PATH / 'test.json'
     request = {
       'source': 'fake',
-      'query_path': [
-        str(query_path1),
-        str(query_path2),
-      ],
+      'batch': {
+        'query1': self.query,
+        'query2': self.query,
+      },
       'context': {
         'fetcher_parameters': {
           'data_location': str(fake_data),
