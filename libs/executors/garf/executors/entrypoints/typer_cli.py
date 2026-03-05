@@ -21,6 +21,7 @@ import sys
 from typing import Optional
 
 import garf.executors
+import requests
 import rich
 import typer
 from garf.executors import exceptions, setup
@@ -137,6 +138,7 @@ def execute(
   enable_cache: EnableCache = False,
   cache_ttl_seconds: CacheTTL = 3600,
   simulate: Simulate = False,
+  server_url: str | None = None,
 ) -> None:
   """Runs queries."""
   span = trace.get_current_span()
@@ -214,9 +216,19 @@ def execute(
     if len(found_queries) > 1:
       garf_logger.info('Running queries sequentially')
     for query in found_queries:
-      query_executor.execute(
-        query=reader_client.read(query), title=query, context=context
-      )
+      if server_url:
+        request = {
+          'source': source,
+          'title': query,
+          'query': reader_client.read(query),
+          'context': context.model_dump(),
+        }
+        response = requests.post(server_url, json=request)
+        typer.secho(response.json().get('results'))
+      else:
+        query_executor.execute(
+          query=reader_client.read(query), title=query, context=context
+        )
 
 
 @workflow_app.command(
