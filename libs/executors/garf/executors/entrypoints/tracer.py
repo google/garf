@@ -16,6 +16,7 @@
 
 import logging
 import os
+from typing import Optional
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
@@ -41,10 +42,17 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 DEFAULT_SERVICE_NAME = 'garf'
 
 
-def initialize_tracer():
-  resource = Resource.create(
-    {SERVICE_NAME: os.getenv('OTLP_SERVICE_NAME', DEFAULT_SERVICE_NAME)}
+def _init_resource(otel_service_name: Optional[str] = None) -> Resource:
+  return Resource.create(
+    {
+      SERVICE_NAME: otel_service_name
+      or os.getenv('OTEL_SERVICE_NAME', DEFAULT_SERVICE_NAME)
+    }
   )
+
+
+def initialize_tracer(otel_service_name: Optional[str] = None):
+  resource = _init_resource(otel_service_name)
 
   tracer_provider = TracerProvider(resource=resource)
 
@@ -71,10 +79,8 @@ def initialize_tracer():
   trace.set_tracer_provider(tracer_provider)
 
 
-def initialize_meter():
-  resource = Resource.create(
-    {SERVICE_NAME: os.getenv('OTLP_SERVICE_NAME', DEFAULT_SERVICE_NAME)}
-  )
+def initialize_meter(otel_service_name: Optional[str] = None):
+  resource = _init_resource(otel_service_name)
   meter_provider = MeterProvider(resource=resource)
 
   if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
@@ -106,10 +112,8 @@ def initialize_meter():
   return meter_provider
 
 
-def initialize_logger():
-  resource = Resource.create(
-    {SERVICE_NAME: os.getenv('OTLP_SERVICE_NAME', DEFAULT_SERVICE_NAME)}
-  )
+def initialize_logger(otel_service_name: Optional[str] = None):
+  resource = _init_resource(otel_service_name)
   logger_provider = LoggerProvider(resource=resource)
   set_logger_provider(logger_provider)
   if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
