@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from garf.core import exceptions
 
-class GarfExecutorError(Exception):
+
+class GarfExecutorError(exceptions.GarfError):
   """Base class for garf executor exceptions."""

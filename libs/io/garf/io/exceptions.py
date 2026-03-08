@@ -14,6 +14,8 @@
 
 """Defines common library exceptions."""
 
+from garf.core import exceptions
 
-class GarfIoError(Exception):
-  """Base class for all library exceptions."""
+
+class GarfIoError(exceptions.GarfError):
+  """Base class for all IO related exceptions."""
