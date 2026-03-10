@@ -198,10 +198,10 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         raise GoogleAdsApiReportFetcherError(
           f'No accounts found satisfying the follow query: {customer_ids_query}'
         )
-      child_customer_ids = [
+      child_customer_ids = {
         row[0] if isinstance(row, garf.core.report.GarfRow) else row
         for row in child_customer_ids
-      ]
+      }
       span.set_attribute(
         'accounts.child_accounts_conditioned', len(child_customer_ids)
       )
