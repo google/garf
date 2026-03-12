@@ -20,53 +20,114 @@ class TestConfig:
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
     data = {
-      'api': {
-        'query_parameters': {
-          'macro': {
-            'start_date': '2025-01-01',
+      'sources': {
+        'api': {
+          'query_parameters': {
+            'macro': {
+              'start_date': '2025-01-01',
+            },
+            'template': {
+              'cohorts': 1,
+            },
           },
-          'template': {
-            'cohorts': 1,
+          'fetcher_parameters': {
+            'id': [1, 2, 3],
           },
-        },
-        'fetcher_parameters': {
-          'id': [1, 2, 3],
-        },
-        'writer': 'csv',
-        'writer_parameters': {
-          'destination_folder': '/tmp',
-        },
+          'writer': 'csv',
+          'writer_parameters': {
+            'destination_folder': '/tmp',
+          },
+        }
       }
     }
     with open(tmp_config, 'w', encoding='utf-8') as f:
       yaml.dump(data, f, encoding='utf-8')
     config = Config.from_file(tmp_config)
-    expected_config = Config(sources=data)
+    expected_config = Config(**data)
     assert config == expected_config
 
   def test_save_returns_correct_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
     data = {
-      'api': {
-        'query_parameters': {
-          'macro': {
-            'start_date': '2025-01-01',
+      'sources': {
+        'api': {
+          'query_parameters': {
+            'macro': {
+              'start_date': '2025-01-01',
+            },
+            'template': {
+              'cohorts': 1,
+            },
           },
-          'template': {
-            'cohorts': 1,
+          'fetcher_parameters': {
+            'id': [1, 2, 3],
           },
-        },
-        'fetcher_parameters': {
-          'id': [1, 2, 3],
-        },
-        'writer': 'csv',
-        'writer_parameters': {
-          'destination_folder': '/tmp',
-        },
+          'writer': 'csv',
+          'writer_parameters': {
+            'destination_folder': '/tmp',
+          },
+        }
       }
     }
-    config = Config(sources=data)
+    config = Config(**data)
     config.save(tmp_config)
     with open(tmp_config, 'r', encoding='utf-8') as f:
       config_data = yaml.safe_load(f)
     assert config_data == data
+
+  def test_expand(self):
+    data = {
+      'global_parameters': {
+        'query_parameters': {
+          'macro': {
+            'start_date': '2025-01-01',
+            'end_date': '2025-12-31',
+          },
+        },
+        'writer_parameters': {
+          'destination_folder': '/tmp/data',
+        },
+      },
+      'sources': {
+        'api': {
+          'query_parameters': {
+            'macro': {
+              'start_date': '2025-12-01',
+            },
+            'template': {
+              'cohorts': 1,
+            },
+          },
+          'writer': 'csv',
+          'writer_parameters': {
+            'destination_folder': '/tmp',
+          },
+        },
+        'api2': {
+          'writer': 'csv',
+        },
+      },
+    }
+    config = Config(**data).expand()
+    expected_query_parameters = {
+      'macro': {
+        'start_date': '2025-12-01',
+        'end_date': '2025-12-31',
+      },
+      'template': {
+        'cohorts': 1,
+      },
+    }
+    assert (
+      config.sources.get('api').query_parameters.model_dump()
+      == expected_query_parameters
+    )
+    assert config.sources.get('api').writer_parameters == {
+      'destination_folder': '/tmp',
+    }
+    assert config.sources.get('api2').query_parameters.model_dump().get(
+      'macro'
+    ) == data.get('global_parameters').get('query_parameters').get('macro')
+    assert config.sources.get('api2').writer_parameters == {
+      'destination_folder': '/tmp/data',
+    }

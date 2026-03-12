@@ -19,6 +19,7 @@ steps:
             SELECT
               resource,
               dimensions.name AS name,
+              dimensions.values AS values,
               metrics.clicks AS clicks
             FROM resource
     <<: [*empty_context, *writer_defaults]
@@ -28,6 +29,7 @@ steps:
           dimensions:
             name: Ad Group 1
             id: 101
+            values: [1, 2]
           metrics:
             clicks: 1500
             cost: 250.75
@@ -35,6 +37,7 @@ steps:
           dimensions:
             name: Ad Group 2
             id: 102
+            values: [1, 2]
           metrics:
             clicks: 2300
             cost: 410.20
@@ -42,6 +45,7 @@ steps:
           dimensions:
             name: Ad Group 3
             id: 103
+            values: [1, 2]
           metrics:
             clicks: 800
             cost: 120.50
@@ -49,6 +53,7 @@ steps:
           dimensions:
             name: Ad Group 4
             id: 104
+            values: [1, 2]
           metrics:
             clicks: 3200
             cost: 600.00

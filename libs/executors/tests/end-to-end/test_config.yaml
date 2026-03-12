@@ -1,6 +1,8 @@
-fake:
-  writer: console
-  writer_parameters:
-    format: json
-  fetcher_parameters:
-    data_location: test.json
+sources:
+  fake:
+    writer: console
+    writer_parameters:
+      format: json
+      array_handling: arrays
+    fetcher_parameters:
+      data_location: test.json

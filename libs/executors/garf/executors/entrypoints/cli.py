@@ -119,7 +119,7 @@ def main():
 
     extra_parameters = utils.ParamsParser().parse_all(kwargs)
     execution_workflow = workflow.Workflow.from_file(
-      workflow_file, context=extra_parameters
+      workflow_file, context=extra_parameters, config_file=args.config
     )
     workflow_skip = args.workflow_skip if args.workflow_skip else None
     workflow_include = args.workflow_include if args.workflow_include else None
