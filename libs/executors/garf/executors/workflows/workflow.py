@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-import copy
 import os
 import pathlib
 from collections import defaultdict
@@ -25,7 +24,7 @@ import pydantic
 import smart_open
 import yaml
 from garf.core import query_editor
-from garf.executors import exceptions
+from garf.executors import config, exceptions, utils
 from garf.executors.execution_context import ExecutionContext
 from garf.io import reader
 
@@ -166,35 +165,49 @@ class Workflow(pydantic.BaseModel):
 
   steps: list[ExecutionStep]
   context: dict[str, dict[str, Any]] | None = None
+  execution_config: config.Config | None = None
   prefix: str | pathlib.Path | None = pydantic.Field(
     default=None, excluded=True
   )
 
   def model_post_init(self, __context__) -> None:
+    if self.execution_config:
+      self.execution_config.expand()
+      config_parameters = self.execution_config.sources
+    else:
+      config_parameters = {}
+    custom_parameters = defaultdict(dict)
     if context := self.context:
-      custom_parameters = defaultdict(dict)
       if custom_macros := context.get('macro'):
         custom_parameters['query_parameters']['macro'] = custom_macros
       if custom_templates := context.get('template'):
         custom_parameters['query_parameters']['template'] = custom_templates
 
-      steps = self.steps
-      for i, step in enumerate(steps):
+    steps = self.steps
+    for i, step in enumerate(steps):
+      if context:
         if fetcher_parameters := context.get(step.fetcher):
           custom_parameters['fetcher_parameters'] = fetcher_parameters
         if writer_parameters := context.get(step.writer):
           custom_parameters['writer_parameters'] = writer_parameters
 
-        res = _merge_dicts(
-          step.model_dump(exclude_none=True), custom_parameters
+      if source_config_parameters := config_parameters.get(step.fetcher):
+        res = utils.merge_dicts(
+          step.model_dump(exclude_none=True),
+          source_config_parameters.model_dump(exclude_none=True),
         )
-        steps[i] = ExecutionStep(**res)
+      else:
+        res = step.model_dump(exclude_none=True)
+      res = utils.merge_dicts(res, custom_parameters)
+
+      steps[i] = ExecutionStep(**res)
 
   @classmethod
   def from_file(
     cls,
     path: str | pathlib.Path | os.PathLike[str],
     context: dict[str, dict[str, Any]] | None = None,
+    config_file: str | pathlib.Path | os.PathLike[str] | None = None,
   ) -> Workflow:
     """Builds workflow from local or remote yaml file."""
     with smart_open.open(path, 'r', encoding='utf-8') as f:
@@ -203,7 +216,12 @@ class Workflow(pydantic.BaseModel):
       if isinstance(path, str):
         path = pathlib.Path(path)
       return Workflow(
-        steps=data.get('steps'), context=context, prefix=path.parent
+        steps=data.get('steps'),
+        context=context,
+        prefix=path.parent,
+        execution_config=config.Config.from_file(config_file)
+        if config_file
+        else None,
       )
     except pydantic.ValidationError as e:
       raise GarfWorkflowError(f'Incorrect workflow:\n {e}') from e
@@ -229,19 +247,3 @@ class Workflow(pydantic.BaseModel):
         else:
           new_queries.append(query.to_query(self.prefix))
       step.queries = new_queries
-
-
-def _merge_dicts(
-  dict1: dict[str, Any], dict2: dict[str, Any]
-) -> dict[str, Any]:
-  result = copy.deepcopy(dict1)
-  for key, value in dict2.items():
-    if (
-      key in result
-      and isinstance(result[key], dict)
-      and isinstance(value, dict)
-    ):
-      result[key] = _merge_dicts(result[key], value)
-    else:
-      result[key] = value
-  return result

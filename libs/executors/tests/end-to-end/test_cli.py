@@ -32,28 +32,58 @@ def _skip_python_39(command):
 
 class TestCli:
   query = (
-    'SELECT resource, dimensions.name AS name, metrics.clicks AS clicks '
-    'FROM resource'
+    'SELECT resource, dimensions.name AS name, dimensions.values AS values, '
+    'metrics.clicks AS clicks FROM resource'
   )
   expected_output = [
     {
       'resource': 'Campaign A',
       'name': 'Ad Group 1',
+      'values': '1|2',
       'clicks': 1500,
     },
     {
       'resource': 'Campaign B',
       'name': 'Ad Group 2',
+      'values': '1|2',
       'clicks': 2300,
     },
     {
       'resource': 'Campaign C',
       'name': 'Ad Group 3',
+      'values': '1|2',
       'clicks': 800,
     },
     {
       'resource': 'Campaign A',
       'name': 'Ad Group 4',
+      'values': '1|2',
+      'clicks': 3200,
+    },
+  ]
+  expected_output_arrays = [
+    {
+      'resource': 'Campaign A',
+      'name': 'Ad Group 1',
+      'values': [1, 2],
+      'clicks': 1500,
+    },
+    {
+      'resource': 'Campaign B',
+      'name': 'Ad Group 2',
+      'values': [1, 2],
+      'clicks': 2300,
+    },
+    {
+      'resource': 'Campaign C',
+      'name': 'Ad Group 3',
+      'values': [1, 2],
+      'clicks': 800,
+    },
+    {
+      'resource': 'Campaign A',
+      'name': 'Ad Group 4',
+      'values': [1, 2],
       'clicks': 3200,
     },
   ]
@@ -109,18 +139,7 @@ class TestCli:
     query_path = tmp_path / 'query.sql'
     with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
       f.write(self.query)
-    test_config = _SCRIPT_PATH / 'test_config.yaml'
-    with open(test_config, 'r', encoding='utf-8') as f:
-      config_data = yaml.safe_load(f)
-      original_data_location = config_data['fake']['fetcher_parameters'][
-        'data_location'
-      ]
-      config_data['fake']['fetcher_parameters']['data_location'] = str(
-        _SCRIPT_PATH / original_data_location
-      )
-    tmp_config = tmp_path / 'config.yaml'
-    with open(tmp_config, 'w', encoding='utf-8') as f:
-      yaml.dump(config_data, f, encoding='utf-8')
+    tmp_config = _prepare_config(tmp_path)
     command = (
       f'{command} {str(query_path)} --source fake '
       f'-c {str(tmp_config)} '
@@ -135,7 +154,7 @@ class TestCli:
     )
 
     assert result.returncode == 0
-    assert json.loads(result.stdout) == self.expected_output
+    assert json.loads(result.stdout) == self.expected_output_arrays
 
   @pytest.mark.parametrize('command', ['garf -w', 'grf workflow run -f'])
   def test_fake_source_from_workflow(self, command):
@@ -154,3 +173,40 @@ class TestCli:
     for output in result.stdout.split('\n'):
       if output:
         assert json.loads(output) == self.expected_output
+
+  @pytest.mark.parametrize('command', ['garf -w', 'grf workflow run -f'])
+  def test_fake_source_from_workflow_with_config(self, command, tmp_path):
+    _skip_python_39(command)
+    workflow_path = _SCRIPT_PATH / 'test_workflow.yaml'
+    tmp_config = _prepare_config(tmp_path)
+    command = (
+      f'{command} {str(workflow_path)} --loglevel ERROR -c {str(tmp_config)}'
+    )
+    result = subprocess.run(
+      command,
+      shell=True,
+      check=False,
+      capture_output=True,
+      text=True,
+    )
+
+    assert result.returncode == 0
+    for output in result.stdout.split('\n'):
+      if output:
+        assert json.loads(output) == self.expected_output_arrays
+
+
+def _prepare_config(path):
+  test_config = _SCRIPT_PATH / 'test_config.yaml'
+  with open(test_config, 'r', encoding='utf-8') as f:
+    config_data = yaml.safe_load(f)
+    original_data_location = config_data['sources']['fake'][
+      'fetcher_parameters'
+    ]['data_location']
+    config_data['sources']['fake']['fetcher_parameters']['data_location'] = str(
+      _SCRIPT_PATH / original_data_location
+    )
+  tmp_config = path / 'config.yaml'
+  with open(tmp_config, 'w', encoding='utf-8') as f:
+    yaml.dump(config_data, f, encoding='utf-8')
+  return tmp_config

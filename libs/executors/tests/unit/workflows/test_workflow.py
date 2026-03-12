@@ -15,6 +15,7 @@
 import pathlib
 
 import yaml
+from garf.executors import config
 from garf.executors.workflows.workflow import (
   ExecutionStep,
   Query,
@@ -96,6 +97,63 @@ class TestWorkflow:
     assert step.query_parameters.template.get('cohorts') == new_cohort
     assert step.fetcher_parameters.get('id') == new_ids
     assert step.writer_parameters.get('destination_folder') == new_folder
+
+  def test_init_with_context_and_config(self):
+    test_config = config.Config(
+      global_parameters={
+        'query_parameters': {
+          'macro': {
+            'min_impressions': 1,
+          }
+        },
+        'writer_parameters': {
+          'destination_folder': '/tmp/data',
+          'array_handling': 'arrays',
+        },
+      },
+      sources={
+        'api': {
+          'query_parameters': {
+            'macro': {'start_date': '2025-01-01'},
+            'template': {
+              'custom_conversions': ['One', 'Two'],
+            },
+          }
+        }
+      },
+    )
+    new_start_date = '2026-01-01'
+    new_cohort = '2'
+    new_ids = [4, 5, 6]
+    new_folder = '/app'
+    workflow = Workflow(
+      steps=self.data.get('steps'),
+      context={
+        'macro': {'start_date': new_start_date},
+        'template': {
+          'cohorts': new_cohort,
+        },
+        'api': {'id': new_ids},
+        'csv': {'destination_folder': new_folder},
+      },
+      execution_config=test_config,
+    )
+
+    step = workflow.steps[0]
+    assert step.query_parameters.macro == {
+      'start_date': new_start_date,
+      'end_date': '2025-12-31',
+      'min_impressions': 1,
+    }
+    assert step.query_parameters.template == {
+      'cohorts': new_cohort,
+      'custom_conversions': ['One', 'Two'],
+    }
+    assert step.fetcher_parameters.get('id') == new_ids
+    assert step.writer_parameters == {
+      'destination_folder': new_folder,
+      'array_handling': 'arrays',
+    }
 
   def test_compile(self):
     workflow = Workflow(

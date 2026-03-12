@@ -3,7 +3,8 @@
     "resource": "Campaign A",
     "dimensions": {
       "name": "Ad Group 1",
-      "id": 101
+      "id": 101,
+      "values": [1, 2]
     },
     "metrics": {
       "clicks": 1500,
@@ -14,7 +15,8 @@
     "resource": "Campaign B",
     "dimensions": {
       "name": "Ad Group 2",
-      "id": 102
+      "id": 102,
+      "values": [1, 2]
     },
     "metrics": {
       "clicks": 2300,
@@ -25,7 +27,8 @@
     "resource": "Campaign C",
     "dimensions": {
       "name": "Ad Group 3",
-      "id": 103
+      "id": 103,
+      "values": [1, 2]
     },
     "metrics": {
       "clicks": 800,
@@ -36,7 +39,8 @@
     "resource": "Campaign A",
     "dimensions": {
       "name": "Ad Group 4",
-      "id": 104
+      "id": 104,
+      "values": [1, 2]
     },
     "metrics": {
       "clicks": 3200,

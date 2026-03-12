@@ -108,9 +108,13 @@ LogName = Annotated[
 ]
 
 
-def _init_runner(file, context=None) -> workflow_runner.WorkflowRunner:
+def _init_runner(
+  file, context=None, config=None
+) -> workflow_runner.WorkflowRunner:
   wf_parent = pathlib.Path.cwd() / pathlib.Path(file).parent
-  execution_workflow = workflow.Workflow.from_file(path=file, context=context)
+  execution_workflow = workflow.Workflow.from_file(
+    path=file, context=context, config_file=config
+  )
   return workflow_runner.WorkflowRunner(
     execution_workflow=execution_workflow, wf_parent=wf_parent
   )
@@ -274,6 +278,10 @@ def run(
     str,
     typer.Option('--workflow', '-f', help='Workflow YAML file'),
   ],
+  config: Annotated[
+    Optional[str],
+    typer.Option('--config', '-c', help='Yaml file with parameters'),
+  ] = None,
   include: Annotated[
     Optional[str],
     typer.Option('--include', '-i', help='Steps of workflow to execute'),
@@ -298,7 +306,7 @@ def run(
   )
   garf_logger.addHandler(initialize_logger())
   context = utils.ParamsParser().parse_all(ctx.args)
-  _init_runner(file, context).run(
+  _init_runner(file, context, config).run(
     enable_cache=enable_cache,
     cache_ttl_seconds=cache_ttl_seconds,
     selected_aliases=include,
@@ -320,12 +328,16 @@ def compile(
     Optional[str],
     typer.Option('--output-workflow', '-o', help='Output workflow YAML file'),
   ] = None,
+  config: Annotated[
+    Optional[str],
+    typer.Option('--config', '-c', help='Yaml file with parameters'),
+  ] = None,
 ):
   """Compiles workflow."""
   if not output_file:
     output_file = pathlib.Path(file).stem / '_compiled.yaml'
   context = utils.ParamsParser().parse_all(ctx.args)
-  _init_runner(file, context).compile(output_file)
+  _init_runner(file, context, config).compile(output_file)
 
 
 @workflow_app.command(
@@ -341,6 +353,10 @@ def deploy(
     Optional[str],
     typer.Option('--output-workflow', '-o', help='Output workflow YAML file'),
   ] = None,
+  config: Annotated[
+    Optional[str],
+    typer.Option('--config', '-c', help='Yaml file with parameters'),
+  ] = None,
   embed_queries: Annotated[
     bool,
     typer.Option(
@@ -352,7 +368,7 @@ def deploy(
   if not output_file:
     output_file = pathlib.Path(file).stem / '_gcp.yaml'
   context = utils.ParamsParser().parse_all(ctx.args)
-  _init_runner(file, context).deploy(
+  _init_runner(file, context, config).deploy(
     path=output_file, embed_queries=embed_queries
   )
 
