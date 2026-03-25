@@ -7,9 +7,13 @@
 
 Currently the following executors are supported:
 
-* [`ApiExecutor`](executors/api-executor.md) - fetching data from reporting API and saves it to a requested destination.
+* [`ApiExecutor`](executors/api-executor.md) - fetches data from reporting API and saves it to a requested destination.
 * [`BigQueryExecutor`](executors/bq-executor.md) - executes SQL code in BigQuery.
 * [`SqlExecutor`](executors/sql-executor.md) - executes SQL code in a SqlAlchemy supported DB.
+* [`DuckDBExecutor`](executors/duckdb-executor.md) - executes SQL code over various files formats
+supported by [DuckDB](https://duckdb.org/docs/stable/data/data_sources).
+* [`OpenSearchExecutor`](executors/opensearch-executor.md) - executes SQL code over indexes in
+[OpenSearch](https://docs.opensearch.org/latest/sql-and-ppl/sql/index/).
 
 ## Installation
 
@@ -236,7 +240,7 @@ curl -X 'POST' \
   -d '{
   "source": "API_SOURCE",
   "title": "query",
-  "query": "YOUR_QUERY_HERE",
+  "query": "SELECT {key} AS value FROM resource",
   "context": {
     "writer": "OUTPUT_TYPE",
     "query_parameters": {
@@ -332,6 +336,124 @@ curl -X 'POST' \
 }'
 ```
 ///
+
+
+## gQuery expansion
+
+`garf` allows you to call itself to dynamically provide parameters for macro,
+template, or source using `gquery` prefix.
+
+The structure of `gquery` is follows:
+
+```
+gquery:source_alias:select_statement
+```
+
+where:
+
+* `source_alias` is an alias for a source (currently only `bq` and `sqldb`
+are supported).
+* `select_statement` - valid SQL statement that should return **a single column**.
+
+For example, if your query hash `ids` macro and you want to dynamically provide
+them based on some table in BigQuery, you can include use the following `gquery`
+as a macro.
+
+/// tab | cli
+```bash hl_lines="6"
+echo 'SELECT {key} AS value FROM resource WHERE id IN ({ids})' > query.sql
+
+garf query.sql --source <API_SOURCE> \
+  --output <OUTPUT_TYPE> \
+  --macro.key=VALUE \
+  --macro.ids=gquery:bq:SELECT id FROM my_dataset.my_table
+```
+///
+
+/// tab | Python
+```python hl_lines="14"
+from garf.executors import api_executor
+
+
+query_executor = (
+  api_executor.ApiQueryExecutor.from_fetcher_alias(
+    source='API_SOURCE',
+)
+context = api_executor.ApiExecutionContext(
+  writer='OUTPUT_TYPE',
+  query_parameters={
+    'query_parameters': {
+      'macro': {
+        'key': 'VALUE',
+        'ids': 'gquery:bq:SELECT id FROM my_dataset.my_table',
+      }
+    }
+  }
+)
+
+query_text = 'SELECT {key} AS value FROM resource WHERE id IN ({ids})'
+
+query_executor.execute(
+  query=query_text,
+  title="query",
+  context=context
+)
+```
+///
+
+/// tab | server
+```bash hl_lines="14"
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "API_SOURCE",
+  "title": "query",
+  "query": "SELECT {key} AS value FROM resource WHERE id IN ({ids})",
+  "context": {
+    "writer": "OUTPUT_TYPE",
+    "query_parameters": {
+      "macro":  {
+        "key": "VALUE",
+        "ids": "gquery:bq:SELECT id FROM my_dataset.my_table"
+      }
+    }
+  }
+}'
+```
+///
+
+!!!note
+    If your `gquery` contains macros and templates you need to explicitly
+    provide them as `macro` or `template` parameter.
+
+    ```bash hl_lines="6"
+    echo 'SELECT {key} AS value FROM resource WHERE id IN ({ids})' > query.sql
+
+    garf query.sql --source <API_SOURCE> \
+      --output <OUTPUT_TYPE> \
+      --macro.key=VALUE \
+      --macro.dataset=my_dataset \
+      --macro.ids=gquery:bq:SELECT id FROM {dataset}.my_table
+    ```
+
+### Setting up executor for gquery
+
+Depending on setup you might need to configure `bq` or `sqldb` executor.
+
+```bash hl_lines="6"
+echo 'SELECT {key} AS value FROM resource WHERE id IN ({ids})' > query.sql
+
+garf query.sql --source <API_SOURCE> \
+  --output <OUTPUT_TYPE> \
+  --macro.key=VALUE \
+  --bq.project=my-bq-project \
+  --macro.dataset=my_dataset \
+  --macro.ids=gquery:bq:SELECT id FROM {dataset}.my_table
+```
+
+
 
 
 ## Batch execution

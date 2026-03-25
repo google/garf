@@ -4,6 +4,10 @@ Workflows in `garf` allow you to orchestrate complex data fetching and processin
 Instead of running individual queries, you can define a sequence of steps,
 where each step interacts with a specific data source (fetcher) and writes to a destination.
 
+!!! important
+    Starting from version 1.4.0 there have been added an experimental `grf` utility
+    which simplifies working with workflows.
+
 ## Configuration
 
 Workflows are defined in YAML files. The core structure consists of a list of
@@ -78,7 +82,7 @@ steps:
 
 /// tab | cli
 ```bash
-garf -w workflow.yaml
+grf workflow run -f workflow.yaml
 ```
 
 ///
@@ -111,13 +115,53 @@ curl -X 'POST' \
 
 ## Customization
 
-### Include/Exclude Steps
+### Overwrite parameters
+
+#### With CLI flags
+
+Your workflow might contain some parameters that should be provided during runtime
+(macros, templates, source parameters).
+
+Suppose your workflow writes data to BigQuery and for a particular execution
+you want to provide a different dataset than one specified in a workflow.
+
+/// tab | cli
+```bash
+grf workflow run -f workflow.yaml \
+  --bq.project=my-other-project --bq.dataset=my_other_dataset
+```
+///
+
+
+
+#### With config file
+
+When number of parameters is huge or you want to have different configurations
+at hand, you can use [config](configs.md).
+
+/// tab | cli
+```bash
+grf workflow run -f workflow.yaml -c config.yaml
+```
+///
+
+You can overwrite parameters specified in config and workflow;
+`garf` respects the following precedence of parameters:
+**CLI > Config > Workflow**.
+
+/// tab | cli
+```bash
+grf workflow run -f workflow.yaml -c config.yaml --bq.dataset=new_dataset
+```
+///
+
+### Include/Exclude steps
 
 Instead of running the whole workflow you can selected or omit certain steps.
 
 /// tab | cli
 ```bash
-garf -w workflow.yaml --workflow-include alias_1 --workflow-exclude alias_3
+grf workflow run -f workflow.yaml --include alias_1 --exclude alias_3
 ```
 
 ///
@@ -154,6 +198,24 @@ curl -X 'POST' \
 }'
 ```
 ///
+
+### Embed queries
+
+You can embed all necessary queries as texts into you workflow.
+
+/// tab | cli
+```bash
+grf workflow compile -f workflow.yaml -o compiled-workflow.yaml
+```
+
+### Deploy to Cloud Workflows
+
+You can convert workflow to Google Cloud workflow yaml file for further deployment.
+
+/// tab | cli
+```bash
+grf workflow deploy -f workflow.yaml -o gcp-cloud-workflow.yaml
+```
 
 ## Example
 
