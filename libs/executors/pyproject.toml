@@ -76,6 +76,9 @@ duckdb = [
 opensearch = [
   "opensearch-py",
 ]
+elasticsearch = [
+  "elasticsearch",
+]
 all = [
   "garf-executors[bq,sql,server,gcp]"
 ]
