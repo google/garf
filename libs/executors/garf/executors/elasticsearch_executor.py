@@ -11,16 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Executes SQL queries via OpenSearch."""
+"""Executes SQL queries via Elasticsearch."""
 
 from __future__ import annotations
 
 try:
-  from opensearchpy import OpenSearch
+  from elasticsearch import Elasticsearch
 except ImportError as e:
   raise ImportError(
-    'Please install garf-executors with OpenSearch support - '
-    '`pip install garf-executors[opensearch]`'
+    'Please install garf-executors with Elasticsearch support - '
+    '`pip install garf-executors[elasticsearch]`'
   ) from e
 
 
@@ -34,36 +34,36 @@ from garf.io.writers import abs_writer
 logger = logging.getLogger(__name__)
 
 
-class OpenSearchQueryExecutorError(exceptions.GarfExecutorError):
-  """Error when OpenSearchQueryExecutor fails to run query."""
+class ElasticsearchQueryExecutorError(exceptions.GarfExecutorError):
+  """Error when ElasticsearchQueryExecutor fails to run query."""
 
 
-class OpenSearchQueryExecutor(executor.Executor):
-  """Handles query execution via OpenSearch SQL plugin.
+class ElasticsearchQueryExecutor(executor.Executor):
+  """Handles query execution via Elasticsearch SQL plugin.
 
   Attributes:
-    client: Initialized OpenSearch client.
+    client: Initialized Elasticsearch client.
   """
 
   def __init__(
     self,
-    client: OpenSearch | None = None,
+    client: Elasticsearch | None = None,
     hosts: str | list[str] | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
   ) -> None:
-    """Initializes executor with a given OpenSearch client.
+    """Initializes executor with a given Elasticsearch client.
 
     Args:
-      client: Initialized OpenSearch client.
-      hosts: Host(s) for Opensearch in addr:port format.
+      client: Initialized Elasticsearch client.
+      hosts: Host(s) for Elasticsearch in addr:port format.
       writers: Initialized writers.
     """
     if hosts:
       hosts = _normalize_hosts(hosts)
     else:
       hosts = [{'host': 'localhost', 'port': 9200}]
-    self.client = client or OpenSearch(hosts=hosts)
+    self.client = client or Elasticsearch(hosts=hosts)
     self.writers = writers
     super().__init__()
 
@@ -71,7 +71,7 @@ class OpenSearchQueryExecutor(executor.Executor):
   def _execute(
     self, query: str, title: str, context: execution_context.ExecutionContext
   ) -> report.GarfReport:
-    """Executes query via Opensearch SQL plugin.
+    """Executes query via Elasticsearch SQL plugin.
 
     Args:
       query: Location of the query.
