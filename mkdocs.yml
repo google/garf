@@ -76,13 +76,15 @@ nav:
       - OpenSearch: usage/writers/opensearch-writer.md
     - Executors:
       - usage/executors.md
-      - API: usage/executors/api-executor.md
-      - BigQuery: usage/executors/bq-executor.md
-      - SQL: usage/executors/sql-executor.md
-      - DuckDB: usage/executors/duckdb-executor.md
-      - OpenSearch: usage/executors/opensearch-executor.md
+      - Executor Types:
+        - API: usage/executors/api-executor.md
+        - BigQuery: usage/executors/bq-executor.md
+        - SQL: usage/executors/sql-executor.md
+        - DuckDB: usage/executors/duckdb-executor.md
+        - OpenSearch: usage/executors/opensearch-executor.md
+      - Configs: usage/configs.md
+      - Workflows: usage/workflows.md
     - Exporters: usage/exporters.md
-    - Workflows: usage/workflows.md
   - Development:
     - Overview: development/overview.md
     - Create API client: development/create-api-client.md
