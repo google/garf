@@ -10,4 +10,7 @@ export class GarfService {
   getVersion() {
     return this.httpClient.get<string>('api/version');
   }
+  getFetchers() {
+    return this.httpClient.get<string>('api/fetchers');
+  }
 }
