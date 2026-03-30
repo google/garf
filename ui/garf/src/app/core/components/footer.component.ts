@@ -5,7 +5,7 @@ import { GarfService } from './../../services/garf.service';
   selector: 'app-footer',
   imports: [],
   template: `
-  <p>Garf Version: {{version}}</p>
+  <p>garf version: {{version}}</p>
   <p> Available Fetchers: {{fetchers}}</p>
   `,
 })
