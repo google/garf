@@ -140,7 +140,7 @@ def main():
       'Please provide one or more queries to run'
     )
   if config_file := args.config:
-    execution_config = config.Config.from_file(config_file)
+    execution_config = config.Config.from_file(config_file).expand()
     if not (context := execution_config.sources.get(args.source)):
       raise exceptions.GarfExecutorError(
         f'No execution context found for source {args.source} in {config_file}'

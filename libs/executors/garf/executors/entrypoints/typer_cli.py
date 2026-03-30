@@ -199,7 +199,7 @@ def execute(
 
   if config:
     garf_logger.info('Running queries with config: %s', config)
-    execution_config = Config.from_file(config)
+    execution_config = Config.from_file(config).expand()
     if not (context := execution_config.sources.get(source)):
       raise exceptions.GarfExecutorError(
         f'No execution context found for source {source} in {config}'
