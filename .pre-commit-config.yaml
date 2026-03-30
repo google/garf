@@ -25,6 +25,7 @@ repos:
   - id: check-yaml
     exclude: ^mkdocs\.yml$
   - id: check-added-large-files
+    exclude: package-lock.json
   - id: debug-statements
   - id: double-quote-string-fixer
 - repo: https://github.com/pre-commit/mirrors-mypy
