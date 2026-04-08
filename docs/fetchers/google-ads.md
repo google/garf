@@ -80,6 +80,54 @@ console_writer.write(fetched_report, 'query')
 | `customer-ids-query`   | Optional query to find account satisfying specific condition | |
 | `version`   | Version of Google Ads API |  |
 
+### Built-in queries
+
+`garf-google-ads` supports several [built-in queries](../usage/queries.md#built-in-queries):
+
+#### ocid_mapping
+
+Returns mapping between `account_id` and `ocid` parameter
+that used to provide deep links to Google Ads UI.
+
+Returned columns:
+
+* `account_id` - Id of Google Ads Account.
+* `ocid` - linking parameter.
+
+#### budget_history
+
+Returns table with historical budgets for each campaign_id for each day
+for the previous 28 days.
+
+Returned columns:
+
+* `day` - Day.
+* `campaign_id` - Id of campaign.
+* `budget_amount` - Budget amount in micros for a given day and campaign.
+
+#### target_cpa_history
+
+Returns table with historical target_cpas for each campaign_id with TARGET_CPA
+bidding_strategy_type for each day for the previous 28 days.
+
+Returned columns:
+
+* `day` - Day.
+* `campaign_id` - Id of campaign.
+* `target_cpa` - Budget amount in micros for a given day and campaign.
+
+#### target_roas_history
+
+Returns table with historical target_ROAS for each campaign_id with TARGET_ROAS
+bidding_strategy_type for each day for the previous 28 days.
+
+Returned columns:
+
+* `day` - Day.
+* `campaign_id` - Id of campaign.
+* `target_roas` - Budget amount in micros for a given day and campaign.
+
+
 ## Search Ads 360
 
 !!!note

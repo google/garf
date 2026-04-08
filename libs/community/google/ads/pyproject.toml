@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-google-ads"
 dependencies = [
-  "garf-core>=1.1.2",
+  "garf-core[pandas]>=1.1.2",
   "garf-io>=1.0.0",
   "google-ads",
   "tenacity",
@@ -39,6 +39,7 @@ google-ads = "garf.community.google.ads.simulator"
 test =  [
   "pytest",
   "pytest-cov",
+  "pytest-mock",
   "python-dotenv",
 ]
 search-ads-360 = [
