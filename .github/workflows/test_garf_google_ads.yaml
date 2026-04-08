@@ -33,5 +33,5 @@ jobs:
           uv pip install -e libs/io/.[test,all]
           uv pip install -e libs/executors/.[all]
           cd libs/community/google/ads/
-          uv pip install -e .
+          uv pip install -e .[test]
           pytest tests/unit

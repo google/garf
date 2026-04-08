@@ -11,8 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from garf.community.google.ads.builtins import ocid_mapping
+from garf.community.google.ads.builtins import change_history, ocid_mapping
 
 BUILTIN_QUERIES = {
   'ocid_mapping': ocid_mapping.get_ocid_mapping,
+  'budget_history': change_history.budget_history,
+  'target_cpa_history': change_history.target_cpa_history,
+  'target_roas_history': change_history.target_roas_history,
 }
