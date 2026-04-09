@@ -1,3 +1,8 @@
+## garf for YouTube APIs
+
+[![PyPI](https://img.shields.io/pypi/v/garf-youtube?logo=pypi&logoColor=white&style=flat-square)](https://pypi.org/project/garf-youtube)
+[![Downloads PyPI](https://img.shields.io/pypi/dw/garf-youtube?logo=pypi)](https://pypi.org/project/garf-youtube/)
+
 The `garf-youtube` library provides a unified way to interact with various YouTube APIs, streamlining data fetching and reporting within the `garf` framework. It acts as an umbrella library, allowing you to access both the YouTube Data API and the YouTube Analytics API through consistent `garf` queries.
 
 ## Overview
