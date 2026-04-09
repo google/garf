@@ -192,7 +192,8 @@ class ApiReportFetcher:
         raise query_editor.GarfBuiltInQueryError(
           f'Cannot find the built-in query "{query.title}"'
         )
-      rep = builtin_report(self, **kwargs)
+      runtime_parameters = {**query_specification.macros, **kwargs}
+      rep = builtin_report(self, **runtime_parameters)
       if columns := query.column_names:
         rep.column_names = columns
       return rep

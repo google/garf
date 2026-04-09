@@ -118,7 +118,7 @@ class TestApiReportFetcher:
   ):
     test_report = report.GarfReport(results=[[1]], column_names=['test'])
 
-    def builtin_query(report_fetcher):
+    def builtin_query(report_fetcher, **kwargs):
       return test_report
 
     test_dict_report_fetcher.add_builtin_queries({'test': builtin_query})
