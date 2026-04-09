@@ -74,7 +74,9 @@ class Executor:
     _handle_processors(processors=self.preprocessors, context=context)
     context = query_processor.process_gquery(context)
     results = self._execute(query=query_text, title=title, context=context)
-    if results and (self.writers or context.writer):
+    if (results or results.results_placeholder) and (
+      self.writers or context.writer
+    ):
       writer_clients = self.writers or context.writer_clients
       return write_many(writer_clients, results, title)
     span.set_attribute('execute.num_results', len(results))
