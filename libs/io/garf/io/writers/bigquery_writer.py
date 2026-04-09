@@ -36,6 +36,7 @@ from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
+from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 logging.getLogger('pandas_gbq').setLevel(logging.WARNING)
@@ -187,6 +188,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     Returns:
       Name of the table in `dataset.table` format.
     """
+    span = trace.get_current_span()
     report = self.format_for_write(report)
     destination = formatter.format_extension(destination)
     table = f'{self.dataset_id}.{destination}'
@@ -194,6 +196,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       df = pd.DataFrame(
         data=report.results_placeholder, columns=report.column_names
       ).head(0)
+      span.set_attribute('is_placeholder_report', True)
     else:
       df = report.to_pandas()
     df = df.replace({np.nan: None})
