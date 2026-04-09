@@ -179,6 +179,8 @@ class BaseParser(abc.ABC):
 
   def _process_resource_index(self, row, customizer, field):
     resource = self.get_row_element(row, field)
+    if not resource:
+      return ''
     _, *elements = resource.split('/')
     if not elements:
       raise query_parser.GarfCustomizerError(
