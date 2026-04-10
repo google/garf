@@ -61,6 +61,13 @@ class BigQueryWriter(abs_writer.AbsWriter):
     dataset: BigQuery dataset to write data to.
     location: Location of a newly created dataset.
     write_disposition: Option for overwriting data.
+    time_partitioning_column: Column to partition tables by date.
+    time_partitioning_type: Type of time partitioning (DAY, HOUR, MONTH, YEAR).
+    time_partitioning_expiration_ms:
+      Expiration of time partitioned tables in milliseconds.
+    range_partitioning_column: Column to partition tables into ranges.
+    range_partitioning_range: Range definition in start:end:interval format.
+    clustering_columns: Column(s) to perform clustering of table.
   """
 
   def __init__(
@@ -72,6 +79,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     | Literal['append', 'replace', 'fail'] = 'replace',
     time_partitioning_column: str | None = None,
     time_partitioning_type: str | None = None,
+    time_partitioning_expiration_ms: int | None = None,
     range_partitioning_column: str | None = None,
     range_partitioning_range: str | None = None,  # Should be dict
     clustering_columns: str | None = None,
@@ -84,6 +92,14 @@ class BigQueryWriter(abs_writer.AbsWriter):
       dataset: BigQuery dataset to write data to.
       location: Location of a newly created dataset.
       write_disposition: Option for overwriting data.
+      time_partitioning_column: Column to partition tables by date.
+      time_partitioning_type:
+        Type of time partitioning (DAY, HOUR, MONTH, YEAR).
+      time_partitioning_expiration_ms:
+        Expiration of time partitioned tables in milliseconds.
+      range_partitioning_column: Column to partition tables into ranges.
+      range_partitioning_range: Range definition in start:end:interval format.
+      clustering_columns: Column(s) to perform clustering of table.
       kwargs: Optional keywords arguments.
     """
     super().__init__(**kwargs)
@@ -129,6 +145,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
         self.time_partitioning_type = time_partitioning_type
     else:
       self.time_partitioning_type = None
+    self.time_partitioning_expiration_ms = time_partitioning_expiration_ms
     if range_partitioning_range:
       try:
         start, end, interval = range_partitioning_range.split(':')
@@ -208,6 +225,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       progress_bar=False,
       time_partitioning_column=self.time_partitioning_column,
       time_partitioning_type=self.time_partitioning_type,
+      time_partitioning_expiration_ms=self.time_partitioning_expiration_ms,
       range_partitioning_column=self.range_partitioning_column,
       range_partitioning_range=self.range_partitioning_range,
       clustering_columns=self.clustering_columns,
