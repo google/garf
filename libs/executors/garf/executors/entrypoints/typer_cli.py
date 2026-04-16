@@ -22,7 +22,6 @@ from typing import Optional
 
 import garf.executors
 import requests
-import rich
 import typer
 from garf.executors import exceptions, setup
 from garf.executors.config import Config
@@ -39,10 +38,11 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
 )
+from rich.console import Console
 from typing_extensions import Annotated
 
 LoggingInstrumentor().instrument(set_logging_format=False)
-console = rich.console.Console()
+console = Console()
 
 
 FetcherEnum = enum.Enum(

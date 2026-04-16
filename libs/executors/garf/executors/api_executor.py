@@ -155,7 +155,7 @@ class ApiQueryExecutor(executor.Executor):
       Result of writing the report.
 
     Raises:
-      GarfExecutorError: When failed to execute query.
+      GarfExecutorError: When failed to simulate query.
     """
     context = query_processor.process_gquery(context)
     span = trace.get_current_span()
@@ -166,7 +166,7 @@ class ApiQueryExecutor(executor.Executor):
     logger.debug('starting query %s', query)
     title = pathlib.Path(title).name.split('.')[0]
     try:
-      results = self.simulator.simulate(
+      return self.simulator.simulate(
         query_specification=query,
         args=context.query_parameters,
         title=title,
@@ -177,7 +177,3 @@ class ApiQueryExecutor(executor.Executor):
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e
-    writer_clients = self.writers or context.writer_clients
-    return executor.write_many(
-      writer_clients=writer_clients, results=results, title=title
-    )
