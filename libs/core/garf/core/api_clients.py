@@ -18,10 +18,12 @@ from __future__ import annotations
 import abc
 import contextlib
 import csv
+import ipaddress
 import json
 import os
 from collections.abc import Sequence
 from typing import Any, Union
+from urllib.parse import urlparse
 
 import pydantic
 import requests
@@ -63,6 +65,56 @@ class GarfApiError(exceptions.GarfError):
   """API specific exception."""
 
 
+# Blocked IP ranges for SSRF protection.
+# Defined at module level so it is built once and reused on every call.
+_SSRF_BLOCKED_RANGES: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = [
+  ipaddress.ip_network(n)
+  for n in (
+    '169.254.0.0/16',  # link-local — AWS IMDS & GCE metadata endpoint
+    '127.0.0.0/8',     # IPv4 loopback
+    '10.0.0.0/8',      # RFC-1918 private
+    '172.16.0.0/12',   # RFC-1918 private
+    '192.168.0.0/16',  # RFC-1918 private
+    '::1/128',         # IPv6 loopback
+    'fe80::/10',       # IPv6 link-local
+  )
+]
+
+
+def _validate_endpoint_url(url: str) -> None:
+  """Validates an endpoint URL to prevent SSRF attacks.
+
+  Ensures the URL uses an allowed scheme (http or https) and does not
+  resolve to a loopback, link-local, or RFC-1918 IP address that could
+  be used to reach cloud metadata services or internal infrastructure.
+
+  Args:
+    url: The endpoint URL to validate.
+
+  Raises:
+    GarfApiError: If the URL scheme is not http/https, or if the host is
+      a bare IP address that falls within a blocked range.
+  """
+  try:
+    parsed = urlparse(url)
+  except Exception as e:
+    raise GarfApiError(f'Invalid endpoint URL: {url!r}') from e
+  if parsed.scheme not in ('http', 'https'):
+    raise GarfApiError(
+      f'Endpoint must use http or https scheme, got: {parsed.scheme!r}'
+    )
+  if parsed.hostname:
+    try:
+      addr = ipaddress.ip_address(parsed.hostname)
+      for net in _SSRF_BLOCKED_RANGES:
+        if addr in net:
+          raise GarfApiError(
+            f'Endpoint resolves to a blocked address range: {addr}'
+          )
+    except ValueError:
+      pass  # hostname string rather than a bare IP — allowed through
+
+
 class BaseClient(abc.ABC):
   """Base API client class."""
 
@@ -97,6 +149,7 @@ class RestApiClient(BaseClient):
 
   def __init__(self, endpoint: str, **kwargs: str) -> None:
     """Initializes RestApiClient."""
+    _validate_endpoint_url(endpoint)
     self.endpoint = endpoint
     self.query_args = kwargs
 
