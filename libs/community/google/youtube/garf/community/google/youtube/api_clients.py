@@ -229,9 +229,21 @@ class YouTubeDataApiClient(api_clients.BaseClient):
                 },
               )
             else:
-              include_row = eval(
-                f'{res} {comparator.operator} {comparator.value}', globals()
-              )
+              import operator as _op_module
+              _SAFE_OPS = {
+                '==': _op_module.eq,
+                '!=': _op_module.ne,
+                '>':  _op_module.gt,
+                '>=': _op_module.ge,
+                '<':  _op_module.lt,
+                '<=': _op_module.le,
+              }
+              _op_fn = _SAFE_OPS.get(comparator.operator)
+              if _op_fn is None:
+                raise YouTubeDataApiClientError(
+                  f'Unsupported filter operator: {comparator.operator!r}'
+                )
+              include_row = _op_fn(res, comparator.value)
             if not include_row:
               break
           if include_row:
