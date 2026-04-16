@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 from typing import Any
 
@@ -125,6 +126,12 @@ class ApiReportSimulator:
     for key, value in response_types.items():
       if isinstance(value, dict):
         results[key] = self._generate_random_values(value)
+      elif key.endswith('date'):
+        results[key] = _generate_date()
       else:
         results[key] = type_mapping.get(value)
     return results
+
+
+def _generate_date() -> str:
+  return datetime.datetime.now().strftime('%Y-%m-%d')

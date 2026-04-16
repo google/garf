@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 from typing import Any
 
@@ -49,4 +50,10 @@ class GoogleAdsApiReportSimulator(simulator.ApiReportSimulator):
     self,
     response_types: dict[str, Any],
   ) -> dict[str, Any]:
-    return self.api_client._get_google_ads_row()
+    response = self.api_client._get_google_ads_row()
+    response.segments.date = _generate_date()
+    return response
+
+
+def _generate_date() -> str:
+  return datetime.datetime.now().strftime('%Y-%m-%d')
