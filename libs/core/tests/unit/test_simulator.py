@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import datetime
+
 import pytest
 from garf.core import api_clients, simulator
 
@@ -19,8 +21,8 @@ class TestSimulator:
   @pytest.fixture
   def fake_simulator(self):
     data = [
-      {'resource': {'name': 1}, 'field2': 2},
-      {'resource': {'name': 10}, 'field2': 2},
+      {'resource': {'name': 1}, 'date': 2},
+      {'resource': {'name': 10}, 'date': 2},
     ]
 
     return simulator.ApiReportSimulator(
@@ -30,7 +32,10 @@ class TestSimulator:
     )
 
   def test_simulate_fake(self, fake_simulator):
-    query_spec = 'SELECT resource.name FROM resource'
+    query_spec = 'SELECT resource.name, date FROM resource'
     simulator_spec = simulator.SimulatorSpecification()
     simulated_report = fake_simulator.simulate(query_spec, simulator_spec)
     assert len(simulated_report) == simulator_spec.n_rows
+    assert simulated_report[0].date == datetime.datetime.now().strftime(
+      '%Y-%m-%d'
+    )
