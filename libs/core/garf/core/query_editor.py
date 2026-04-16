@@ -149,7 +149,8 @@ def expand_jinja(
 ) -> str:
   file_inclusions = ('% include', '% import', '% extend')
   if any(file_inclusion in query_text for file_inclusion in file_inclusions):
-    template = jinja2.Environment(loader=jinja2.FileSystemLoader('.'))
+    from jinja2.sandbox import SandboxedEnvironment
+    template = SandboxedEnvironment(loader=jinja2.FileSystemLoader('.'))
     query = template.from_string(query_text)
   else:
     query = jinja2.Template(query_text)
