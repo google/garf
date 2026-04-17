@@ -379,3 +379,32 @@ def test_convert_date_returns_correct_datestring():
 def test_convert_date_raise_garf_macro_error(date):
   with pytest.raises(query_editor.GarfMacroError):
     query_editor.convert_date(date)
+
+
+class TestExpandJinja:
+  def test_expand_jinja_renders_basic_query(self):
+    query_text = 'SELECT id FROM resource'
+    result = query_editor.expand_jinja(query_text)
+    assert 'SELECT id FROM resource' in result
+
+  def test_expand_jinja_blocks_file_inclusion_via_sandboxed_env(
+    self, tmp_path
+  ):
+    secret = tmp_path / 'secret.yaml'
+    secret.write_text('password: supersecret')
+    malicious = (
+      f'SELECT id FROM resource\n'
+      f'-- % include trigger\n'
+      f"{{% include '{secret}' %}}"
+    )
+    with pytest.raises(Exception):
+      query_editor.expand_jinja(malicious)
+
+  def test_expand_jinja_blocks_python_object_traversal(self):
+    payload = (
+      'SELECT id FROM resource\n'
+      '-- % include\n'
+      "{% set x = ''.__class__ %}{{ x }}"
+    )
+    with pytest.raises(Exception):
+      query_editor.expand_jinja(payload)

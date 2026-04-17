@@ -76,6 +76,15 @@ ALLOWED_PARAMETERS: Final[tuple[str, ...]] = (
   'filterByMemberChannelId',
 )
 
+_SAFE_OPS = {
+  '==': operator.eq,
+  '!=': operator.ne,
+  '>':  operator.gt,
+  '>=': operator.ge,
+  '<':  operator.lt,
+  '<=': operator.le,
+}
+
 
 class YouTubeDataApiClientError(exceptions.GarfYouTubeDataApiError):
   """API client specific exception."""
@@ -229,21 +238,18 @@ class YouTubeDataApiClient(api_clients.BaseClient):
                 },
               )
             else:
-              import operator as _op_module
-              _SAFE_OPS = {
-                '==': _op_module.eq,
-                '!=': _op_module.ne,
-                '>':  _op_module.gt,
-                '>=': _op_module.ge,
-                '<':  _op_module.lt,
-                '<=': _op_module.le,
-              }
-              _op_fn = _SAFE_OPS.get(comparator.operator)
-              if _op_fn is None:
+              op_fn = _SAFE_OPS.get(comparator.operator)
+              if op_fn is None:
                 raise YouTubeDataApiClientError(
                   f'Unsupported filter operator: {comparator.operator!r}'
                 )
-              include_row = _op_fn(res, comparator.value)
+              value = comparator.value
+              if isinstance(res, (int, float)) and isinstance(value, str):
+                try:
+                  value = type(res)(value)
+                except (ValueError, TypeError):
+                  pass
+              include_row = op_fn(res, value)
             if not include_row:
               break
           if include_row:

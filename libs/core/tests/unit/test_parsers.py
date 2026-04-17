@@ -295,3 +295,38 @@ class TestProtoParser:
     expected_row = [1, [100]]
 
     assert parsed_row == expected_row
+
+
+class TestVirtualColumnValidation:
+  def test_virtual_column_returns_correct_arithmetic_result(self):
+    spec = query_editor.QuerySpecification(
+      'SELECT metrics.clicks / metrics.impressions AS ctr FROM test'
+    ).generate()
+    parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[{'metrics.clicks': 1000, 'metrics.impressions': 50000}]
+    )
+    parsed = parser.parse_response(test_response)
+    assert parsed == [[0.02]]
+
+  def test_virtual_column_returns_none_for_non_numeric_api_value(self):
+    spec = query_editor.QuerySpecification(
+      'SELECT metrics.clicks / metrics.impressions AS ctr FROM test'
+    ).generate()
+    parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[{'metrics.clicks': 'injected_string', 'metrics.impressions': 50000}]
+    )
+    parsed = parser.parse_response(test_response)
+    assert parsed == [[None]]
+
+  def test_virtual_column_blocks_expression_injection_via_api_data(self):
+    spec = query_editor.QuerySpecification(
+      'SELECT metrics.clicks / metrics.impressions AS ctr FROM test'
+    ).generate()
+    parser = parsers.DictParser(spec)
+    test_response = api_clients.GarfApiResponse(
+      results=[{'metrics.clicks': '1000 * 1000000', 'metrics.impressions': 50000}]
+    )
+    parsed = parser.parse_response(test_response)
+    assert parsed == [[None]]
