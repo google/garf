@@ -19,12 +19,13 @@ from typing import Any, Optional, Union
 import fastapi
 import garf.core
 import garf.executors
+import garf.io
 import pydantic
 import typer
 import uvicorn
 import yaml
 from garf.executors import exceptions, setup
-from garf.executors.entrypoints import utils
+from garf.executors.entrypoints import tasks, utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
   initialize_meter,
@@ -32,6 +33,8 @@ from garf.executors.entrypoints.tracer import (
 )
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
+from opentelemetry import trace
+from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -48,6 +51,7 @@ logger = utils.init_logging(
 )
 logger.addHandler(initialize_logger())
 
+CeleryInstrumentor().instrument()
 app = fastapi.FastAPI(
   title='Garf API',
   version=garf.executors.__version__,
@@ -163,6 +167,16 @@ async def version() -> str:
   return garf.executors.__version__
 
 
+@app.get('/api/info')
+async def info() -> dict[str, str]:
+  """Returns version of installed core libraries."""
+  return {
+    'executors': garf.executors.__version__,
+    'core': garf.core.__version__,
+    'io': garf.io.__version__,
+  }
+
+
 @app.get('/api/fetchers')
 async def get_fetchers(
   dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
@@ -171,20 +185,41 @@ async def get_fetchers(
   return list(garf.executors.fetchers.find_fetchers())
 
 
-@app.post('/api/execute')
+@app.post('/api/execute:task', status_code=fastapi.status.HTTP_202_ACCEPTED)
 def execute(
   request: ApiExecutorRequest,
-  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
-) -> ApiExecutorResponse:
-  query_executor = setup.setup_executor(
-    request.source, request.context.fetcher_parameters
-  )
-  result = query_executor.execute(request.query, request.title, request.context)
-  if isinstance(result, garf.core.GarfReport):
-    result = result.to_list('dict')
-  else:
-    result = [result]
+) -> dict[str, str]:
+  task = tasks.execute.delay(request.model_dump())
+  span = trace.get_current_span()
+  span.set_attribute('garf.operation.id', task.id)
+  return {'operation_id': task.id, 'status': 'PENDING'}
+
+
+@app.get('/api/operations/{operation_id}')
+def operation_status(operation_id: str):
+  """Gets garf execution status and results."""
+  operation = tasks.app.AsyncResult(operation_id)
+  return {
+    'operation_id': operation_id,
+    'status': operation.status,
+    'results': operation.result if operation.status == 'SUCCESS' else None,
+  }
+
+
+@app.post('/api/execute')
+def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
+  result = tasks.execute(request.model_dump())
   return ApiExecutorResponse(results=result)
+
+
+@app.post('/api/execute:batch:task')
+def execute_batch_task(
+  request: ApiExecutorBatchRequest,
+) -> dict[str, str]:
+  task = tasks.execute_batch.delay(request.model_dump())
+  span = trace.get_current_span()
+  span.set_attribute('garf.operation.id', task.id)
+  return {'operation_id': task.id, 'status': 'PENDING'}
 
 
 @app.post('/api/execute:batch')
