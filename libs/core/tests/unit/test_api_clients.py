@@ -74,3 +74,65 @@ class TestFakeApiClient:
       api_clients.GarfApiError, match='Unsupported file extension'
     ):
       api_clients.FakeApiClient.from_file('not-existing.yaml')
+
+
+class TestValidateEndpointUrl:
+  def test_blocks_gce_metadata_endpoint(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url('http://169.254.169.254')
+
+  def test_blocks_aws_imds_path(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url(
+        'http://169.254.169.254/latest/meta-data/iam/security-credentials/'
+      )
+
+  def test_blocks_ipv4_loopback(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url('http://127.0.0.1')
+
+  def test_blocks_ipv4_loopback_with_port(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url('http://127.0.0.1:6379')
+
+  def test_blocks_rfc1918_10_range(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url('http://10.0.0.1')
+
+  def test_blocks_rfc1918_172_range(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url('http://172.16.0.1')
+
+  def test_blocks_rfc1918_192_range(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients._validate_endpoint_url('http://192.168.1.1')
+
+  def test_blocks_ftp_scheme(self):
+    with pytest.raises(api_clients.GarfApiError, match='http or https scheme'):
+      api_clients._validate_endpoint_url('ftp://example.com')
+
+  def test_blocks_file_scheme(self):
+    with pytest.raises(api_clients.GarfApiError, match='http or https scheme'):
+      api_clients._validate_endpoint_url('file:///etc/passwd')
+
+  def test_allows_https_hostname(self):
+    api_clients._validate_endpoint_url('https://api.restful-api.dev')
+
+  def test_allows_http_hostname(self):
+    api_clients._validate_endpoint_url('http://api.google.com')
+
+  def test_allows_googleapis_endpoint(self):
+    api_clients._validate_endpoint_url('https://www.googleapis.com/youtube/v3')
+
+  def test_rest_api_client_raises_on_ssrf_endpoint(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients.RestApiClient(endpoint='http://169.254.169.254')
+
+  def test_rest_api_client_raises_on_localhost_endpoint(self):
+    with pytest.raises(api_clients.GarfApiError, match='blocked address range'):
+      api_clients.RestApiClient(endpoint='http://127.0.0.1:9200')
+
+  def test_rest_api_client_accepts_valid_endpoint(self):
+    client = api_clients.RestApiClient(endpoint='https://api.restful-api.dev')
+
+    assert client.endpoint == 'https://api.restful-api.dev'
