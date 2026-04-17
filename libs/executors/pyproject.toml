@@ -62,6 +62,9 @@ server=[
   "opentelemetry-instrumentation-fastapi",
   "typer",
   "grpcio-reflection",
+  "celery[redis]",
+  "opentelemetry-instrumentation-celery",
+
 ]
 tests = [
   "pytest",
