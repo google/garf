@@ -19,6 +19,7 @@ import abc
 import ast
 import contextlib
 import functools
+import logging
 import operator
 from collections.abc import Mapping, MutableSequence
 from typing import Any
@@ -30,6 +31,8 @@ from garf.core import (
   query_parser,
 )
 from garf.core.telemetry import tracer
+
+logger = logging.getLogger(__name__)
 
 VALID_VIRTUAL_COLUMN_OPERATORS = (
   ast.BinOp,
