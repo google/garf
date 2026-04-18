@@ -406,5 +406,6 @@ class TestExpandJinja:
       '-- % include\n'
       "{% set x = ''.__class__ %}{{ x }}"
     )
-    with pytest.raises(Exception):
-      query_editor.expand_jinja(payload)
+    result = query_editor.expand_jinja(payload)
+    assert '__class__' not in result
+    assert '<class' not in result
