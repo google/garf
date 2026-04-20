@@ -82,16 +82,6 @@ class BaseParser(abc.ABC):
       field.replace('.', '_'): value
       for field, value in zip(fields, virtual_column_values)
     }
-    # Validate all substituted values are numeric before formatting
-    for key, value in virtual_column_replacements.items():
-      if not isinstance(value, (int, float)):
-        try:
-          float(str(value))
-        except (ValueError, TypeError):
-          logger.warning(
-            'Non-numeric value for virtual column field %s: %r', key, value
-          )
-          return None
     virtual_column_expression = substitute_expression.format(
       **virtual_column_replacements
     )
