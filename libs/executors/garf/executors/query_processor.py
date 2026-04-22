@@ -18,6 +18,7 @@ import contextlib
 
 from garf.core import query_editor, query_parser
 from garf.executors import execution_context
+from garf.executors.telemetry import tracer
 
 
 class GqueryError(query_parser.GarfQueryError):
@@ -63,17 +64,36 @@ def _handle_sub_context(context, sub_context):
         ).generate()
         if len(columns := [c for c in query_spec.column_names if c != '_']) > 1:
           raise GqueryError(f'Multiple columns in gquery definition: {columns}')
-      res = gquery_executor._execute(
-        query=query_spec.text, title='gquery', context=no_writer_context
-      )
+      with tracer.start_as_current_span('gquery.execute') as span:
+        res = gquery_executor._execute(
+          query=query_spec.text, title='gquery', context=no_writer_context
+        )
+        span.set_attribute('gquery.text', query_spec.text)
       if len(columns := [c for c in res.column_names if c != '_']) > 1:
         raise GqueryError(f'Multiple columns in gquery result: {columns}')
       sub_context[k] = res.to_list(row_type='scalar')
 
 
+@tracer.start_as_current_span('gquery.process')
 def process_gquery(
   context: execution_context.ExecutionContext,
 ) -> execution_context.ExecutionContext:
-  _handle_sub_context(context, context.fetcher_parameters)
-  _handle_sub_context(context, context.query_parameters.macro)
+  if fetcher_parameters := context.fetcher_parameters:
+    with tracer.start_as_current_span(
+      'gquery.handle.fetcher_parameters'
+    ) as span:
+      _handle_sub_context(context, fetcher_parameters)
+      span.set_attributes(
+        {
+          f'executor.source.parameters.{k}': v
+          for k, v in fetcher_parameters.items()
+          if v
+        }
+      )
+  if macros := context.query_parameters.macro:
+    with tracer.start_as_current_span('gquery.handle.query_parameters') as span:
+      _handle_sub_context(context, macros)
+      span.set_attributes(
+        {f'executor.query.macros.{k}': v for k, v in macros.items() if v}
+      )
   return context
