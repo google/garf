@@ -383,13 +383,11 @@ def test_convert_date_raise_garf_macro_error(date):
 
 class TestExpandJinja:
   def test_expand_jinja_renders_basic_query(self):
-    query_text = 'SELECT id FROM resource'
-    result = query_editor.expand_jinja(query_text)
-    assert 'SELECT id FROM resource' in result
+    query = query_editor.QuerySpecification(text='SELECT id FROM resource')
+    result = query.expand_template()
+    assert 'SELECT id FROM resource' in result.query.text
 
-  def test_expand_jinja_blocks_file_inclusion_via_sandboxed_env(
-    self, tmp_path
-  ):
+  def test_expand_jinja_blocks_file_inclusion_via_sandboxed_env(self, tmp_path):
     secret = tmp_path / 'secret.yaml'
     secret.write_text('password: supersecret')
     malicious = (
@@ -397,15 +395,15 @@ class TestExpandJinja:
       f'-- % include trigger\n'
       f"{{% include '{secret}' %}}"
     )
+    query = query_editor.QuerySpecification(text=malicious)
     with pytest.raises(Exception):
-      query_editor.expand_jinja(malicious)
+      query.expand_template()
 
   def test_expand_jinja_blocks_python_object_traversal(self):
     payload = (
-      'SELECT id FROM resource\n'
-      '-- % include\n'
-      "{% set x = ''.__class__ %}{{ x }}"
+      "SELECT id FROM resource\n-- % include\n{% set x = ''.__class__ %}{{ x }}"
     )
-    result = query_editor.expand_jinja(payload)
-    assert '__class__' not in result
-    assert '<class' not in result
+    query = query_editor.QuerySpecification(text=payload)
+    result = query.expand_template()
+    assert '__class__' not in result.query.text
+    assert '<class' not in result.query.text

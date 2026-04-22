@@ -26,6 +26,7 @@ import jinja2
 import pydantic
 from dateutil import relativedelta
 from garf.core import query_parser
+from jinja2.sandbox import SandboxedEnvironment
 from typing_extensions import Self, TypeAlias
 
 logger = logging.getLogger(__name__)
@@ -144,31 +145,6 @@ class SafeDict(dict):
     return '{' + key + '}'
 
 
-def expand_jinja(
-  query_text: str, template_params: QueryParameters | None = None
-) -> str:
-  file_inclusions = ('% include', '% import', '% extend')
-  if any(file_inclusion in query_text for file_inclusion in file_inclusions):
-    from jinja2.sandbox import SandboxedEnvironment
-    template = SandboxedEnvironment(loader=jinja2.BaseLoader())
-    query = template.from_string(query_text)
-  else:
-    query = jinja2.Template(query_text)
-  if not template_params:
-    return query.render()
-  for key, value in template_params.items():
-    if value:
-      if isinstance(value, list):
-        template_params[key] = value
-      elif len(splitted_param := value.split(',')) > 1:
-        template_params[key] = splitted_param
-      else:
-        template_params[key] = value
-    else:
-      template_params = ''
-  return query.render(template_params)
-
-
 class QuerySpecification(CommonParametersMixin):
   """Simplifies fetching data from API and its further parsing.
 
@@ -237,14 +213,44 @@ class QuerySpecification(CommonParametersMixin):
       self.query.is_builtin_query = True
     return self.query
 
+  def expand_template(self) -> str:
+    query_text = self.query.text
+    template_params = self.args.template
+    file_inclusions = ('% include', '% import', '% extend')
+    if any(file_inclusion in query_text for file_inclusion in file_inclusions):
+      template = SandboxedEnvironment(loader=jinja2.BaseLoader())
+      query = template.from_string(query_text)
+    else:
+      query = jinja2.Template(query_text)
+    if not template_params:
+      rendered_query = query.render()
+    else:
+      for key, value in template_params.items():
+        if value:
+          if isinstance(value, list):
+            template_params[key] = value
+          elif len(splitted_param := value.split(',')) > 1:
+            template_params[key] = splitted_param
+          else:
+            template_params[key] = value
+        else:
+          template_params = ''
+      rendered_query = query.render(template_params)
+    self.query.text = rendered_query
+    return self
+
   def expand(self) -> Self:
     """Applies necessary transformations to query."""
-    query_text = expand_jinja(self.query.text, self.args.template)
+    self.expand_template()
     try:
       if self.unsafe_macro:
-        self.query.text = query_text.format_map(SafeDict(**self.macros)).strip()
+        self.query.text = re.sub(
+          r'\{(\w+)\}',
+          lambda m: str(self.macros.get(m.group(1), m.group(0))),
+          self.query.text,
+        ).strip()
       else:
-        self.query.text = query_text.format(**self.macros).strip()
+        self.query.text = self.query.text.format(**self.macros).strip()
     except KeyError as e:
       raise GarfMacroError(f'No value provided for macro {str(e)}.') from e
     return self
@@ -253,7 +259,7 @@ class QuerySpecification(CommonParametersMixin):
     self.query.text = re.sub(';$', '', self.query.text)
     return self
 
-  def remove_comments(self) -> Self:
+  def remove_comments(self, keep_directives: bool = False) -> Self:
     """Removes comments and converts text to lines."""
     result: list[str] = []
     multiline_comment = False
@@ -274,7 +280,8 @@ class QuerySpecification(CommonParametersMixin):
             setattr(self, tag_name, True)
           elif action == 'disable':
             setattr(self, tag_name, False)
-
+          if keep_directives:
+            result.append(f'{line.strip()}\n')
         continue
       if re.match('^(#|--|//) ', line) or line in ('--', '#', '//'):
         continue
