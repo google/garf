@@ -19,6 +19,7 @@ from typing import Any, Optional, Union
 import fastapi
 import garf.core
 import garf.executors
+import garf.io
 import pydantic
 import typer
 import uvicorn
@@ -161,6 +162,15 @@ async def error_handlier(
 @app.get('/api/version')
 async def version() -> str:
   return garf.executors.__version__
+
+
+@app.get('/api/info')
+async def info() -> dict[str, str]:
+  return {
+    'executors': garf.executors.__version__,
+    'core': garf.core.__version__,
+    'io': garf.io.__version__,
+  }
 
 
 @app.get('/api/fetchers')
