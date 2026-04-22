@@ -63,7 +63,7 @@ class Executor:
       query_editor.QuerySpecification(
         text=query, title=title, args=context.query_parameters
       )
-      .remove_comments()
+      .remove_comments(keep_directives=True)
       .expand()
     )
     query_text = query_spec.query.text
@@ -71,8 +71,9 @@ class Executor:
     span.set_attribute('query.title', title)
     span.set_attribute('query.text', query_text)
     logger.info('Executing script: %s', title)
+    if context.has_gquery:
+      context = query_processor.process_gquery(context)
     _handle_processors(processors=self.preprocessors, context=context)
-    context = query_processor.process_gquery(context)
     results = self._execute(query=query_text, title=title, context=context)
     if (results or results.results_placeholder) and (
       self.writers or context.writer
@@ -117,6 +118,8 @@ class Executor:
     span = trace.get_current_span()
     span.set_attribute('api.parallel_threshold', parallel_threshold)
     _handle_processors(processors=self.preprocessors, context=context)
+    if context.has_gquery:
+      context = query_processor.process_gquery(context)
     results = asyncio.run(
       self._run(
         batch=batch, context=context, parallel_threshold=parallel_threshold
@@ -171,6 +174,8 @@ def _handle_processors(
   processors: dict[str, report_fetcher.Processor],
   context: execution_context.ExecutionContext,
 ) -> None:
+  if context.has_gquery:
+    context = query_processor.process_gquery(context)
   for k, processor in processors.items():
     processor_signature = list(inspect.signature(processor).parameters.keys())
     if k == 'init' or k in context.fetcher_parameters:
