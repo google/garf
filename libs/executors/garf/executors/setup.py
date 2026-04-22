@@ -23,11 +23,12 @@ from garf.executors import executor, fetchers
 from garf.executors.api_executor import ApiQueryExecutor
 from garf.executors.telemetry import tracer
 from garf.io import writer
+from opentelemetry import trace
 
 logger = logging.getLogger('garf.executors.setup')
 
 
-@tracer.start_as_current_span('setup_executor')
+@tracer.start_as_current_span('executor.setup')
 def setup_executor(
   source: str,
   fetcher_parameters: dict[str, str | int | bool],
@@ -38,10 +39,29 @@ def setup_executor(
   writer_parameters: dict[str, Any] | None = None,
 ) -> type[executor.Executor]:
   """Initializes executors based on a source and parameters."""
+  span = trace.get_current_span()
+  span.set_attribute('executor.source', source)
+  if fetcher_parameters:
+    span.set_attributes(
+      {
+        f'executor.source.parameters.{k}': v
+        for k, v in fetcher_parameters.items()
+        if v
+      }
+    )
   if simulate and enable_cache:
     logger.warning('Simulating API responses. Disabling cache.')
     enable_cache = False
   if writers:
+    span.set_attribute('executor.writers', writers)
+    if writer_parameters:
+      span.set_attributes(
+        {
+          f'executor.writer.parameters.{k}': v
+          for k, v in writer_parameters.items()
+          if v
+        }
+      )
     writer_clients = writer.setup_writers(writers, writer_parameters)
   else:
     writer_clients = None
@@ -71,6 +91,7 @@ def setup_executor(
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:
+      span.set_attribute('executor.simulate', True)
       concrete_simulator = fetchers.get_report_simulator(source)()
     else:
       concrete_simulator = None
