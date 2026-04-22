@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import pathlib
 
+import garf.core
 import pytest
 from garf.core import api_clients, parsers, report_fetcher
 from garf.core.fetchers import fake as fake_fetcher
@@ -49,6 +50,33 @@ class TestApiQueryExecutor:
   @pytest.fixture
   def test_json_writer(self, tmp_path):
     return json_writer.JsonWriter(destination_folder=tmp_path)
+
+  def test_execute_with_gquery(self, executor):
+    query = (
+      '--garf:allow-unsafe-macro\nSELECT '
+      'customer.id FROM customer WHERE customer.id IN ({fields})'
+    )
+    fields_macro = ['{one:key}', '{two}']
+    context = execution_context.ExecutionContext(
+      query_parameters={
+        'macro': {
+          'params': 'gquery:sqldb:SELECT 1 AS field UNION SELECT 2 AS field',
+          'fields': fields_macro,
+        }
+      },
+    )
+    result = executor.execute(
+      query=query,
+      title='test',
+      context=context,
+    )
+    expected_result = garf.core.GarfReport(
+      results=[[1], [2], [3]], column_names=['customer_id']
+    )
+    assert result.query_specification.text == (
+      f'SELECT customer.id FROM customer WHERE customer.id IN ({fields_macro})'
+    )
+    assert result == expected_result
 
   def test_execute_returns_success(self, executor, tmp_path):
     context = execution_context.ExecutionContext(

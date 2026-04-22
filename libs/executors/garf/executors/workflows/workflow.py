@@ -90,7 +90,7 @@ class QueryPath(pydantic.BaseModel):
       self.prefix = prefix
     query_spec = query_editor.QuerySpecification(
       text=self.text, title=self.title
-    ).remove_comments()
+    ).remove_comments(keep_directives=True)
     return Query(title=self.title, text=query_spec.query.text.strip())
 
 
@@ -110,7 +110,7 @@ class QueryDefinition(pydantic.BaseModel):
   def to_query(self, prefix: str | pathlib.Path | None) -> Query:
     query_spec = query_editor.QuerySpecification(
       text=self.text, title=self.title
-    ).remove_comments()
+    ).remove_comments(keep_directives=True)
     return Query(title=self.title, text=query_spec.query.text.strip())
 
 

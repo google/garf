@@ -75,6 +75,16 @@ class ExecutionContext(pydantic.BaseModel):
     return f'ExecutionContext is saved to {str(path)}'
 
   @property
+  def has_gquery(self) -> bool:
+    return any(
+      str(value).startswith('gquery')
+      for value in self.query_parameters.macro.values()
+    ) or any(
+      str(value).startswith('gquery')
+      for value in self.fetcher_parameters.values()
+    )
+
+  @property
   def writer_client(self) -> abs_writer.AbsWriter:
     """Returns single writer client."""
     if not self.writer:
