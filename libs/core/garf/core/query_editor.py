@@ -197,6 +197,17 @@ class QuerySpecification(CommonParametersMixin):
       common_params.update(converted_macros)
     return common_params
 
+  @property
+  def templates(self) -> QueryParameters:
+    """Returns macros with injected common parameters."""
+    common_params = dict(self.common_params)
+    if templates := self.args.template:
+      converted_templates = {
+        key: convert_date(value) for key, value in templates.items()
+      }
+      common_params.update(converted_templates)
+    return common_params
+
   def generate(self) -> BaseQueryElements:
     self.remove_comments().expand()
     self.extract_resource_name()
@@ -221,8 +232,7 @@ class QuerySpecification(CommonParametersMixin):
 
   def expand_template(self) -> str:
     query_text = self.query.text
-    template_params = dict(self.common_params)
-    template_params.update(self.args.template)
+    template_params = dict(self.templates)
     file_inclusions = ('% include', '% import', '% extend')
     if any(file_inclusion in query_text for file_inclusion in file_inclusions):
       template = SandboxedEnvironment(loader=jinja2.BaseLoader())
