@@ -39,11 +39,15 @@ class GarfQueryParameters(pydantic.BaseModel):
 
   macro: QueryParameters = pydantic.Field(default_factory=dict)
   template: QueryParameters = pydantic.Field(default_factory=dict)
+  macro_expansion: bool = pydantic.Field(default=True, exclude=True)
 
   @property
   def hash(self) -> str:
     hash_fields = self.model_dump(exclude_none=True)
     return hashlib.md5(json.dumps(hash_fields).encode('utf-8')).hexdigest()
+
+  def __eq__(self, other) -> bool:
+    return (self.macro, self.template) == (other.macro, other.template)
 
 
 class GarfMacroError(query_parser.GarfQueryError):
@@ -194,7 +198,8 @@ class QuerySpecification(CommonParametersMixin):
     return common_params
 
   def generate(self) -> BaseQueryElements:
-    self.remove_comments().expand().extract_resource_name()
+    self.remove_comments().expand()
+    self.extract_resource_name()
     (
       self.remove_final_semicolon()
       .remove_trailing_comma()
@@ -211,11 +216,13 @@ class QuerySpecification(CommonParametersMixin):
     ):
       self.query.title = self.query.resource_name.replace('builtin.', '')
       self.query.is_builtin_query = True
+    self.query.text = self.query.text.strip()
     return self.query
 
   def expand_template(self) -> str:
     query_text = self.query.text
-    template_params = self.args.template
+    template_params = dict(self.common_params)
+    template_params.update(self.args.template)
     file_inclusions = ('% include', '% import', '% extend')
     if any(file_inclusion in query_text for file_inclusion in file_inclusions):
       template = SandboxedEnvironment(loader=jinja2.BaseLoader())
@@ -229,7 +236,7 @@ class QuerySpecification(CommonParametersMixin):
         if value:
           if isinstance(value, list):
             template_params[key] = value
-          elif len(splitted_param := value.split(',')) > 1:
+          elif len(splitted_param := str(value).split(',')) > 1:
             template_params[key] = splitted_param
           else:
             template_params[key] = value
@@ -242,6 +249,8 @@ class QuerySpecification(CommonParametersMixin):
   def expand(self) -> Self:
     """Applies necessary transformations to query."""
     self.expand_template()
+    if not self.args.macro_expansion:
+      return self
     try:
       if self.unsafe_macro:
         self.query.text = re.sub(
@@ -342,17 +351,18 @@ class QuerySpecification(CommonParametersMixin):
         f'group_{i}': group for i, group in enumerate(in_groups, 1)
       }
 
-      final_filters = re.sub(in_pattern, create_replacer(), joined_filters)
-      if self.unsafe_macro:
-        found_filters = [
-          f.strip().format_map(SafeDict(**group_replacements))
-          for f in re.split(' AND ', final_filters, flags=re.IGNORECASE)
-        ]
-      else:
-        found_filters = [
-          f.strip().format(**group_replacements)
-          for f in re.split(' AND ', final_filters, flags=re.IGNORECASE)
-        ]
+      found_filters = re.sub(in_pattern, create_replacer(), joined_filters)
+      if self.args.macro_expansion:
+        if self.unsafe_macro:
+          found_filters = [
+            f.strip().format_map(SafeDict(**group_replacements))
+            for f in re.split(' AND ', found_filters, flags=re.IGNORECASE)
+          ]
+        else:
+          found_filters = [
+            f.strip().format(**group_replacements)
+            for f in re.split(' AND ', found_filters, flags=re.IGNORECASE)
+          ]
       self.query.filters = found_filters
     return self
 

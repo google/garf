@@ -145,7 +145,15 @@ def execute(
   enable_cache: EnableCache = False,
   cache_ttl_seconds: CacheTTL = 3600,
   simulate: Simulate = False,
-  server_url: str | None = None,
+  macro_expansion: Annotated[
+    bool,
+    typer.Option(
+      help='Whether to perform macro expansion in the queries',
+    ),
+  ] = True,
+  server_url: Annotated[
+    str | None, typer.Option(help='Address of garf server in HOST:PORT format')
+  ] = None,
 ) -> None:
   """Runs queries."""
   span = trace.get_current_span()
@@ -191,6 +199,7 @@ def execute(
     query_parameters={
       'macro': extra_parameters.get('macro'),
       'template': extra_parameters.get('template'),
+      'macro_expansion': macro_expansion,
     },
     writer=outputs,
     writer_parameters=writer_parameters,

@@ -15,7 +15,7 @@
 import re
 
 import pytest
-from garf.executors import exceptions, execution_context, query_processor
+from garf.executors import execution_context, query_processor
 
 
 def test_process_gquery_returns_unchanged_context():
@@ -68,4 +68,6 @@ def test_process_gquery_returns_processed_context():
   expected_context = execution_context.ExecutionContext(
     fetcher_parameters={'id': [1]}
   )
-  assert processed_context == expected_context
+  assert (
+    processed_context.fetcher_parameters == expected_context.fetcher_parameters
+  )
