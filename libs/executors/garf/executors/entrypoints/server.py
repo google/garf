@@ -24,20 +24,17 @@ import pydantic
 import typer
 import uvicorn
 import yaml
-from garf.executors import exceptions, setup
 from garf.executors.entrypoints import tasks, utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
   initialize_meter,
   initialize_tracer,
 )
-from garf.executors.workflows import workflow, workflow_runner
-from garf.io import reader
+from garf.executors.workflows import workflow
 from opentelemetry import trace
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
 OTEL_SERVICE_NAME = 'garf'
@@ -59,80 +56,6 @@ app = fastapi.FastAPI(
 )
 FastAPIInstrumentor.instrument_app(app)
 typer_app = typer.Typer()
-
-
-class GarfSettings(BaseSettings):
-  """Specifies environmental variables for garf.
-
-  Ensure that mandatory variables are exposed via
-  export ENV_VARIABLE_NAME=VALUE.
-
-  Attributes:
-    loglevel: Level of logging.
-    log_name: Name of log.
-    logger_type: Type of logger.
-  """
-
-  model_config = SettingsConfigDict(env_prefix='garf_')
-
-  loglevel: str = 'INFO'
-  log_name: str = 'garf'
-  logger_type: str = 'local'
-  enable_telemetry: bool = False
-  metrics_to_otel: bool = False
-  logs_to_otel: bool = False
-
-
-class GarfDependencies:
-  def __init__(self) -> None:
-    """Initializes GarfDependencies."""
-    settings = GarfSettings()
-
-
-class ApiExecutorRequest(pydantic.BaseModel):
-  """Request for executing a query.
-
-  Attributes:
-    source: Type of API to interact with.
-    title: Name of the query used as an output for writing.
-    query: Query to execute.
-    query_path: Local or remote path to query.
-    context: Execution context.
-  """
-
-  source: str
-  title: Optional[str] = None
-  query: Optional[str] = None
-  query_path: Optional[Union[str, list[str]]] = None
-  context: garf.executors.execution_context.ExecutionContext
-
-  @pydantic.model_validator(mode='after')
-  def check_query_specified(self):
-    if not self.query_path and not self.query:
-      raise exceptions.GarfExecutorError(
-        'Missing one of required parameters: query, query_path'
-      )
-    return self
-
-  def model_post_init(self, __context__) -> None:
-    if self.query_path and isinstance(self.query_path, str):
-      self.query = reader.FileReader().read(self.query_path)
-    if not self.title:
-      self.title = str(self.query_path)
-
-
-class ApiExecutorBatchRequest(pydantic.BaseModel):
-  """Request for executing multiple queries.
-
-  Attributes:
-    source: Type of API to interact with.
-    batch: Mapping between query_title and its text.
-    context: Execution context.
-  """
-
-  source: str
-  batch: dict[str, str]
-  context: garf.executors.execution_context.ExecutionContext
 
 
 class ApiExecutorResponse(pydantic.BaseModel):
@@ -178,19 +101,88 @@ async def info() -> dict[str, str]:
 
 
 @app.get('/api/fetchers')
-async def get_fetchers(
-  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
-) -> list[str]:
+async def get_fetchers() -> list[str]:
   """Shows all available API sources."""
   return list(garf.executors.fetchers.find_fetchers())
 
 
+@app.post('/api/execute')
+def execute(request: tasks.ApiExecutorRequest) -> ApiExecutorResponse:
+  """Executes a single query."""
+  result = tasks.execute(request.model_dump())
+  return ApiExecutorResponse(results=result)
+
+
 @app.post('/api/execute:task', status_code=fastapi.status.HTTP_202_ACCEPTED)
-def execute(
-  request: ApiExecutorRequest,
-) -> dict[str, str]:
+def execute_task(request: tasks.ApiExecutorRequest) -> dict[str, str]:
+  """Creates a single operation for running garf query."""
   task = tasks.execute.delay(request.model_dump())
   span = trace.get_current_span()
+  span.set_attribute('garf.operation.id', task.id)
+  return {'operation_id': task.id, 'status': 'PENDING'}
+
+
+@app.post('/api/execute:batch')
+def execute_batch(
+  request: tasks.ApiExecutorBatchRequest,
+) -> ApiExecutorResponse:
+  """Executes multiple queries in parallel."""
+  results = tasks.execute_batch(request.model_dump())
+  return ApiExecutorResponse(results=results)
+
+
+@app.post('/api/execute:batch_task')
+async def execute_batch_task(
+  request: tasks.ApiExecutorBatchRequest,
+) -> dict[str, str]:
+  """Creates a single operation for running multiple garf queries."""
+  task = tasks.execute_batch.delay(request.model_dump())
+  span = trace.get_current_span()
+  span.set_attribute('garf.operation.id', task.id)
+  return {'operation_id': task.id, 'status': 'PENDING'}
+
+
+@app.post('/api/execute:workflow')
+def execute_workflow(
+  workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
+  enable_cache: bool = False,
+  cache_ttl_seconds: int = 3600,
+  selected_aliases: Optional[list[str]] = None,
+  skipped_aliases: Optional[list[str]] = None,
+) -> list[str]:
+  """Runs garf workflow till completion."""
+  content = workflow_file.file.read()
+  workflow_data = yaml.safe_load(content.decode('utf-8'))
+  execution_workflow = workflow.Workflow(**workflow_data)
+  return tasks.execute_workflow(
+    execution_workflow=execution_workflow.model_dump(),
+    enable_cache=enable_cache,
+    cache_ttl_seconds=cache_ttl_seconds,
+    selected_aliases=selected_aliases,
+    skipped_aliases=skipped_aliases,
+  )
+
+
+@app.post('/api/execute:workflow_task')
+async def execute_workflow_task(
+  workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
+  enable_cache: bool = False,
+  cache_ttl_seconds: int = 3600,
+  selected_aliases: Optional[list[str]] = None,
+  skipped_aliases: Optional[list[str]] = None,
+) -> dict[str, str]:
+  """Creates a single operation for running garf workflow."""
+  span = trace.get_current_span()
+  content = await workflow_file.read()
+  workflow_data = yaml.safe_load(content.decode('utf-8'))
+  execution_workflow = workflow.Workflow(**workflow_data)
+  task = tasks.execute_workflow.delay(
+    execution_workflow=execution_workflow.model_dump(),
+    enable_cache=enable_cache,
+    cache_ttl_seconds=cache_ttl_seconds,
+    selected_aliases=selected_aliases,
+    skipped_aliases=skipped_aliases,
+  )
   span.set_attribute('garf.operation.id', task.id)
   return {'operation_id': task.id, 'status': 'PENDING'}
 
@@ -206,54 +198,14 @@ def operation_status(operation_id: str):
   }
 
 
-@app.post('/api/execute')
-def execute(request: ApiExecutorRequest) -> ApiExecutorResponse:
-  result = tasks.execute(request.model_dump())
-  return ApiExecutorResponse(results=result)
-
-
-@app.post('/api/execute:batch:task')
-def execute_batch_task(
-  request: ApiExecutorBatchRequest,
-) -> dict[str, str]:
-  task = tasks.execute_batch.delay(request.model_dump())
-  span = trace.get_current_span()
-  span.set_attribute('garf.operation.id', task.id)
-  return {'operation_id': task.id, 'status': 'PENDING'}
-
-
-@app.post('/api/execute:batch')
-def execute_batch(
-  request: ApiExecutorBatchRequest,
-  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
-) -> ApiExecutorResponse:
-  query_executor = setup.setup_executor(
-    request.source, request.context.fetcher_parameters
-  )
-  results = query_executor.execute_batch(request.batch, request.context)
-  return ApiExecutorResponse(results=results)
-
-
-@app.post('/api/execute:workflow')
-async def execute_workflow(
-  dependencies: Annotated[GarfDependencies, fastapi.Depends(GarfDependencies)],
-  workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
-  enable_cache: bool = False,
-  cache_ttl_seconds: int = 3600,
-  selected_aliases: Optional[list[str]] = None,
-  skipped_aliases: Optional[list[str]] = None,
-) -> list[str]:
-  content = await workflow_file.read()
-  workflow_data = yaml.safe_load(content.decode('utf-8'))
-  execution_workflow = workflow.Workflow(**workflow_data)
-  return workflow_runner.WorkflowRunner(
-    execution_workflow=execution_workflow
-  ).run(
-    enable_cache=enable_cache,
-    cache_ttl_seconds=cache_ttl_seconds,
-    selected_aliases=selected_aliases,
-    skipped_aliases=skipped_aliases,
-  )
+@app.post('/api/operations/{operation_id}:cancel')
+def cancel_operation(operation_id: str):
+  """Cancels garf operation."""
+  tasks.app.control.revoke(operation_id, terminate=True)
+  return {
+    'operation_id': operation_id,
+    'status': 'CANCELED',
+  }
 
 
 @typer_app.command()
@@ -261,7 +213,9 @@ def main(
   host: Annotated[
     str, typer.Option(help='Host to start the server')
   ] = '0.0.0.0',
-  port: Annotated[int, typer.Option(help='Port to start the server')] = 8000,
+  port: Annotated[
+    int, typer.Option('--port', '-p', help='Port to start the server')
+  ] = 8000,
 ):
   uvicorn.run(app, host=host, port=port, log_config=None)
 

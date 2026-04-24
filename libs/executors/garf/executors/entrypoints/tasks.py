@@ -18,13 +18,15 @@ import celery
 import garf.core
 import garf.executors
 import pydantic
-from garf.executors import setup
+from garf.executors import exceptions, setup
 from garf.executors.entrypoints import utils as garf_utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
   initialize_meter,
   initialize_tracer,
 )
+from garf.executors.workflows import workflow, workflow_runner
+from garf.io import reader
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
 redis_url = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
@@ -46,6 +48,20 @@ class ApiExecutorRequest(pydantic.BaseModel):
   query: Optional[str] = None
   query_path: Optional[Union[str, list[str]]] = None
   context: garf.executors.execution_context.ExecutionContext
+
+  @pydantic.model_validator(mode='after')
+  def check_query_specified(self):
+    if not self.query_path and not self.query:
+      raise exceptions.GarfExecutorError(
+        'Missing one of required parameters: query, query_path'
+      )
+    return self
+
+  def model_post_init(self, __context__) -> None:
+    if self.query_path and isinstance(self.query_path, str):
+      self.query = reader.FileReader().read(self.query_path)
+    if not self.title:
+      self.title = str(self.query_path)
 
 
 class ApiExecutorBatchRequest(pydantic.BaseModel):
@@ -104,6 +120,25 @@ def execute_batch(request: ApiExecutorBatchRequest):
   if all(isinstance(report, garf.core.GarfReport) for report in results):
     return [report.to_list('dict') for report in results]
   return results
+
+
+@app.task(pydantic=True)
+def execute_workflow(
+  execution_workflow: workflow.Workflow,
+  enable_cache: bool,
+  cache_ttl_seconds,
+  selected_aliases: list[str],
+  skipped_aliases: list[str],
+):
+  """Executes a batch of queries."""
+  return workflow_runner.WorkflowRunner(
+    execution_workflow=execution_workflow
+  ).run(
+    enable_cache=enable_cache,
+    cache_ttl_seconds=cache_ttl_seconds,
+    selected_aliases=selected_aliases,
+    skipped_aliases=skipped_aliases,
+  )
 
 
 @app.task(pydantic=True)
