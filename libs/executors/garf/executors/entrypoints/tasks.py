@@ -28,6 +28,7 @@ from garf.executors.entrypoints.tracer import (
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
 
 redis_url = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 
@@ -88,6 +89,7 @@ def init_celery_telemetry(*args, **kwargs):
     loglevel='INFO', logger_type='local', name=otel_service_name
   )
   logger.addHandler(initialize_logger(otel_service_name))
+  RedisInstrumentor().instrument()
   CeleryInstrumentor().instrument()
 
 

@@ -64,6 +64,7 @@ server=[
   "grpcio-reflection",
   "celery[redis]",
   "opentelemetry-instrumentation-celery",
+  "opentelemetry-instrumentation-redis",
 
 ]
 tests = [
