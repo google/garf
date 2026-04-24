@@ -35,6 +35,7 @@ from opentelemetry import trace
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
 from typing_extensions import Annotated
 
 OTEL_SERVICE_NAME = 'garf'
@@ -49,6 +50,7 @@ logger = utils.init_logging(
 logger.addHandler(initialize_logger())
 
 CeleryInstrumentor().instrument()
+RedisInstrumentor().instrument()
 app = fastapi.FastAPI(
   title='Garf API',
   version=garf.executors.__version__,
@@ -131,7 +133,9 @@ def execute_batch(
   return ApiExecutorResponse(results=results)
 
 
-@app.post('/api/execute:batch_task')
+@app.post(
+  '/api/execute:batch_task', status_code=fastapi.status.HTTP_202_ACCEPTED
+)
 async def execute_batch_task(
   request: tasks.ApiExecutorBatchRequest,
 ) -> dict[str, str]:
@@ -163,7 +167,9 @@ def execute_workflow(
   )
 
 
-@app.post('/api/execute:workflow_task')
+@app.post(
+  '/api/execute:workflow_task', status_code=fastapi.status.HTTP_202_ACCEPTED
+)
 async def execute_workflow_task(
   workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
   enable_cache: bool = False,
