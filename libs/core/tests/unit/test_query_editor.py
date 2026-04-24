@@ -256,6 +256,28 @@ class TestQuerySpecification:
         args=query_editor.GarfQueryParameters(macro={'metric': 'metric'}),
       ).generate()
 
+  def test_generates_does_not_expand_macros(self):
+    current_date = datetime.datetime.today().strftime('%Y-%m-%d')
+    query = """
+      SELECT
+        "{{ current_date }}" AS current_date,
+        test
+      FROM resource
+      WHERE
+        metric = {{ metric }}
+    """
+    result = query_editor.QuerySpecification(
+      text=query,
+      title='test',
+      args=query_editor.GarfQueryParameters(
+        template={'metric': '{metric}'}, macro_expansion=False
+      ),
+    ).generate()
+    assert result.text == (
+      f'SELECT "{current_date}" AS current_date, '
+      'test FROM resource WHERE metric = {metric}'
+    )
+
   def test_generate_handles_non_provided_macros_in_with_inline_tag(
     self, caplog
   ):
@@ -407,3 +429,16 @@ class TestExpandJinja:
     result = query.expand_template()
     assert '__class__' not in result.query.text
     assert '<class' not in result.query.text
+
+  def test_expand_jinja_works_with_expressions(self):
+    text = (
+      'SELECT "{{ client.upper() }}" AS client_name, id '
+      'FROM resource WHERE id = {{ a * 10 }}'
+    )
+    query = query_editor.QuerySpecification(
+      text=text, args={'template': {'a': 10, 'client': 'test'}}
+    )
+    result = query.expand_template()
+    assert result.query.text == (
+      'SELECT "TEST" AS client_name, id FROM resource WHERE id = 100'
+    )

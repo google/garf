@@ -61,6 +61,12 @@ def main():
     '--no-parallel-queries', dest='parallel_queries', action='store_false'
   )
   parser.add_argument('--simulate', dest='simulate', action='store_true')
+  parser.add_argument(
+    '--macro-expansion', dest='macro_expansion', action='store_true'
+  )
+  parser.add_argument(
+    '--no-macro-expansion', dest='macro_expansion', action='store_false'
+  )
   parser.add_argument('-v', '--version', dest='version', action='store_true')
   parser.add_argument(
     '--parallel-threshold', dest='parallel_threshold', default=10, type=int
@@ -80,6 +86,7 @@ def main():
   )
   parser.set_defaults(parallel_queries=True)
   parser.set_defaults(simulate=False)
+  parser.set_defaults(macro_expansion=True)
   parser.set_defaults(enable_cache=False)
   args, kwargs = parser.parse_known_args()
 
@@ -109,6 +116,7 @@ def main():
     query_parameters={
       'macro': extra_parameters.get('macro'),
       'template': extra_parameters.get('template'),
+      'macro_expansion': args.macro_expansion,
     },
     writer=outputs,
     writer_parameters=writer_parameters,

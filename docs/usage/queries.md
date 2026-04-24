@@ -164,34 +164,24 @@ WHERE
 
 When this query is executed it's expected that two macros `--macro.start_date=...` and `--macro.end_date=...` are supplied to `garf`.
 
-### Macros in virtual columns
-
-Macros can be used not only in WHERE statements as in the example above but also in the SELECT statement.
-In that case this macros will be expanded and then treated as a virtual column.
-
-```sql
-SELECT
-    "{current_date}" AS date,
-    campaign.id AS campaign_id,
-    campaign_budget.budget_amount_micros AS budget
-FROM campaign
-```
-
-This will return all campaign budgets and attach current date (i.e. 2023-06-01) as a date column in the output.
-
-### Common macros
-
-`garf` by default has several common macros:
-
-* `date_iso` - current date in YYYYMMDD format (i.e. *19700101*)
-* `yesterday_iso` - previous day date in YYYY-MM-DD format (i.e. *19700101*)
-* `current_date` - current_date in YYYY-MM-DD format (i.e. *1970-01-01*)
-* `current_datetime` - current datetime in YYYY-MM-DD HH:mm-ss format (i.e. *1970-01-01 00:00:00*)
-
 ## Templates
 
 Your queries can use templates using [Jinja](https://jinja.palletsprojects.com) engine.
 
+### Expressions
+
+```sql
+SELECT
+   "{{ client_name | upper }}"  AS client
+FROM dataset1.table1
+```
+
+When this query is executed it's expected to have template `--template.client-name=...` is supplied to `garf`.
+This will upper-cased version of `client-name`.
+
+Learn more about expressions [here](https://jinja.palletsprojects.com/en/stable/templates/#expressions).
+
+### Statements
 ```sql
 SELECT
   customer_id AS
@@ -221,6 +211,33 @@ When this query is executed it's expected to have template `--template.cohort_da
 
 Please note that all values passed through CLI arguments are strings. But there's a special case - a value containing "," - it's converted to an array.
 It will create 4 columns (named `installs_0_day`, `installs_1_day`, etc).
+
+Learn more about statements [here](https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures).
+
+## Common macros & templates
+
+`garf` by default has several common parameters you can use in macros & templates:
+
+* `date_iso` - current date in YYYYMMDD format (i.e. *19700101*)
+* `yesterday_iso` - previous day date in YYYY-MM-DD format (i.e. *19700101*)
+* `current_date` - current_date in YYYY-MM-DD format (i.e. *1970-01-01*)
+* `current_datetime` - current datetime in YYYY-MM-DD HH:mm-ss format (i.e. *1970-01-01 00:00:00*)
+
+## Macros & templates in virtual columns
+
+Macros & templates can be used not only in WHERE statements as in the example above but also in the SELECT statement.
+In that case this macros will be expanded and then treated as a virtual column.
+
+```sql
+SELECT
+    "{{ current_date }}" AS date,
+    campaign.id AS campaign_id,
+    campaign_budget.budget_amount_micros AS budget
+FROM campaign
+```
+
+This will return all campaign budgets and attach current date (i.e. 2023-06-01) as a date column in the output.
+
 
 
 ## Built-in queries
