@@ -127,20 +127,13 @@ def execute_batch(request: ApiExecutorBatchRequest):
 @app.task(pydantic=True)
 def execute_workflow(
   execution_workflow: workflow.Workflow,
-  enable_cache: bool,
-  cache_ttl_seconds,
   selected_aliases: list[str],
   skipped_aliases: list[str],
 ):
   """Executes a batch of queries."""
   return workflow_runner.WorkflowRunner(
     execution_workflow=execution_workflow
-  ).run(
-    enable_cache=enable_cache,
-    cache_ttl_seconds=cache_ttl_seconds,
-    selected_aliases=selected_aliases,
-    skipped_aliases=skipped_aliases,
-  )
+  ).run(selected_aliases=selected_aliases, skipped_aliases=skipped_aliases)
 
 
 @app.task(pydantic=True)
