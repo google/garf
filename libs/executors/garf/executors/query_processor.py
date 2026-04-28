@@ -91,9 +91,19 @@ def process_gquery(
         }
       )
   if macros := context.query_parameters.macro:
-    with tracer.start_as_current_span('gquery.handle.query_parameters') as span:
+    with tracer.start_as_current_span(
+      'gquery.handle.query_parameters.macro'
+    ) as span:
       _handle_sub_context(context, macros)
       span.set_attributes(
         {f'executor.query.macros.{k}': v for k, v in macros.items() if v}
+      )
+  if templates := context.query_parameters.template:
+    with tracer.start_as_current_span(
+      'gquery.handle.query_parameters.template'
+    ) as span:
+      _handle_sub_context(context, templates)
+      span.set_attributes(
+        {f'executor.query.templates.{k}': v for k, v in templates.items() if v}
       )
   return context
