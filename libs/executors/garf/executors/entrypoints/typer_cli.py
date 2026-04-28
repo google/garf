@@ -39,6 +39,7 @@ from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
 )
 from rich.console import Console
+from rich.table import Table
 from typing_extensions import Annotated
 
 LoggingInstrumentor().instrument(set_logging_format=False)
@@ -47,7 +48,7 @@ console = Console()
 
 FetcherEnum = enum.Enum(
   'FetcherEnum',
-  ((f, f) for f in sorted(garf.executors.fetchers.find_fetchers())),
+  ((f, f) for f in sorted(setup.find_executors())),
 )
 
 initialize_tracer()
@@ -385,8 +386,8 @@ def deploy(
 @typer_app.command()
 def fetchers() -> set[str]:
   """Displays all available fetchers."""
-  table = rich.table.Table('Fetcher')
-  for fetcher in garf.executors.fetchers.find_fetchers():
+  table = Table('Fetcher')
+  for fetcher in setup.find_executors():
     table.add_row(fetcher)
   console.print(table)
 

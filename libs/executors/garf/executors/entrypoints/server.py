@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """FastAPI endpoint for executing queries."""
+
 from __future__ import annotations
 
 import pathlib
@@ -108,7 +109,7 @@ async def info() -> dict[str, str]:
 @app.get('/api/fetchers')
 async def get_fetchers() -> list[str]:
   """Shows all available API sources."""
-  return list(garf.executors.fetchers.find_fetchers())
+  return list(garf.executors.setup.find_executors())
 
 
 @app.post('/api/execute')
@@ -177,7 +178,7 @@ def execute_workflow(
 )
 async def execute_workflow_task(
   workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
-  workflow_path: str |  pathlib.Path = None,
+  workflow_path: str | pathlib.Path = None,
   config_file: Optional[fastapi.UploadFile] = fastapi.File(None),
   config_path: str | pathlib.Path = None,
   selected_aliases: Optional[list[str]] = None,

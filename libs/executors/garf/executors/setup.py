@@ -28,6 +28,12 @@ from opentelemetry import trace
 logger = logging.getLogger('garf.executors.setup')
 
 
+def find_executors() -> set[str]:
+  available_fetchers = fetchers.find_fetchers()
+  available_executors = {'bq', 'duckdb', 'opensearch', 'sqldb', 'elasticsearch'}
+  return sorted(available_fetchers | available_executors)
+
+
 @tracer.start_as_current_span('executor.setup')
 def setup_executor(
   source: str,
