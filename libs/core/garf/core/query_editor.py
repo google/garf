@@ -251,7 +251,7 @@ class QuerySpecification(CommonParametersMixin):
           else:
             template_params[key] = value
         else:
-          template_params = ''
+          template_params[key] = ''
       rendered_query = query.render(template_params)
     self.query.text = rendered_query
     return self
