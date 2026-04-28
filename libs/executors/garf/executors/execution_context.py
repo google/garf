@@ -76,12 +76,19 @@ class ExecutionContext(pydantic.BaseModel):
 
   @property
   def has_gquery(self) -> bool:
-    return any(
-      str(value).startswith('gquery')
-      for value in self.query_parameters.macro.values()
-    ) or any(
-      str(value).startswith('gquery')
-      for value in self.fetcher_parameters.values()
+    return (
+      any(
+        str(value).startswith('gquery')
+        for value in self.query_parameters.macro.values()
+      )
+      or any(
+        str(value).startswith('gquery')
+        for value in self.query_parameters.template.values()
+      )
+      or any(
+        str(value).startswith('gquery')
+        for value in self.fetcher_parameters.values()
+      )
     )
 
   @property

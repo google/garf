@@ -62,11 +62,19 @@ def test_process_gquery_raises_error(gquery, error_message):
 
 def test_process_gquery_returns_processed_context():
   context = execution_context.ExecutionContext(
-    fetcher_parameters={'id': 'gquery:sqldb:SELECT 1 AS id'}
+    fetcher_parameters={'id': 'gquery:sqldb:SELECT 1 AS id'},
+    query_parameters={
+      'macro': {'id': 'gquery:sqldb:SELECT 2 AS id'},
+      'template': {'id': 'gquery:sqldb:SELECT 3 AS id'},
+    },
   )
   processed_context = query_processor.process_gquery(context)
   expected_context = execution_context.ExecutionContext(
-    fetcher_parameters={'id': [1]}
+    fetcher_parameters={'id': [1]},
+    query_parameters={
+      'macro': {'id': 2},
+      'template': {'id': 3},
+    },
   )
   assert (
     processed_context.fetcher_parameters == expected_context.fetcher_parameters
