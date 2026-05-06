@@ -84,7 +84,7 @@ class TopicWriter(abs_writer.AbsWriter):
         for batch in _batched(report, self.batch_size):
           data = [row.to_dict() for row in batch]
           self._send(data=json.dumps(data).encode('utf-8'), topic=topic)
-    return f'[self.provider] - published message to {topic}'
+    return f'[{self.provider}] - published message to {topic}'
 
 
 def _batched(report: garf_report.GarfReport, chunk_size: int):
