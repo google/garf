@@ -79,3 +79,24 @@ def test_process_gquery_returns_processed_context():
   assert (
     processed_context.fetcher_parameters == expected_context.fetcher_parameters
   )
+
+
+def test_process_gquery_returns_multi_column_result():
+  context = execution_context.ExecutionContext(
+    fetcher_parameters={'id': 'gquery:sqldb:SELECT 1 AS id'},
+    query_parameters={
+      'macro': {'id': 'gquery:sqldb:SELECT 2 AS id'},
+      'template': {'id': 'gquery:sqldb:SELECT 3 AS id, "VIDEO" AS type'},
+    },
+  )
+  processed_context = query_processor.process_gquery(context)
+  expected_context = execution_context.ExecutionContext(
+    fetcher_parameters={'id': [1]},
+    query_parameters={
+      'macro': {'id': 2},
+      'template': {'id': [{'id': 3, 'type': 'VIDEO'}]},
+    },
+  )
+  assert (
+    processed_context.fetcher_parameters == expected_context.fetcher_parameters
+  )

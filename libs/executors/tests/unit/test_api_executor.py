@@ -51,6 +51,47 @@ class TestApiQueryExecutor:
   def test_json_writer(self, tmp_path):
     return json_writer.JsonWriter(destination_folder=tmp_path)
 
+  def test_execute_multi_query_returns_combined_report(self, executor):
+    query = """
+    SELECT customer.id AS id; SELECT customer.id AS id;
+    """
+    result = executor.execute(
+      query=query,
+      title='test',
+    )
+    expected_result = garf.core.GarfReport(
+      results=[[1], [2], [3]], column_names=['id']
+    )
+    assert result == expected_result + expected_result
+
+  def test_execute_multi_query_writes_combined_report(self, executor, tmp_path):
+    query = """
+    SELECT customer.id AS id; SELECT customer.id AS id;
+    """
+    context = execution_context.ExecutionContext(
+      writer='json',
+      writer_parameters={'destination_folder': str(tmp_path)},
+    )
+    result = executor.execute(
+      query=query,
+      title='test',
+      context=context,
+    )
+    expected_result = garf.core.GarfReport(
+      results=[[1], [2], [3]], column_names=['id']
+    )
+    with pathlib.Path.open(
+      pathlib.Path(context.writer_client.destination_folder) / 'test.json',
+      'r',
+      encoding='utf-8',
+    ) as f:
+      result = json.load(f)
+    results = [[row.get('id')] for row in result]
+    assert (
+      garf.core.GarfReport(results=results, column_names=['id'])
+      == expected_result + expected_result
+    )
+
   def test_execute_with_gquery_in_templates(self, executor):
     query = 'SELECT customer.id FROM customer WHERE customer.id IN ({{fields}})'
     fields_template = ['{one:key}', '{two}']

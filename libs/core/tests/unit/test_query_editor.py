@@ -434,3 +434,15 @@ class TestExpandJinja:
     assert result.query.text == (
       'SELECT "TEST" AS client_name, id FROM resource WHERE id = 100'
     )
+
+  def test_expand_jinja_works_with_expressions_(self):
+    text = """
+    {% for input in inputs %}SELECT {{input.id}} AS id; {% endfor %}
+    """
+    query = query_editor.QuerySpecification(
+      text=text, args={'template': {'inputs': [{'id': 1}, {'id': 2}]}}
+    )
+    result = query.expand_template()
+    assert result.query.text.strip().replace('\n', '').replace('  ', ' ') == (
+      'SELECT 1 AS id; SELECT 2 AS id;'
+    )

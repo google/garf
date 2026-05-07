@@ -15,8 +15,10 @@
 """Defines common functionality between executors."""
 
 import asyncio
+import functools
 import inspect
 import logging
+import operator
 import time
 from typing import Optional
 
@@ -83,19 +85,27 @@ class Executor:
       context = query_processor.process_gquery(context)
     if self.preprocessors:
       _handle_processors(processors=self.preprocessors, context=context)
-    try:
-      results = self._execute(query=query_text, title=title, context=context)
-    except exceptions.GarfExecutorError as e:
-      telemetry.executor_error_counter.add(1, executor_attributes)
-      raise e
+    if len(query_parts := query_spec.query_parts) > 1:
+      no_writer_context = context.model_copy(update={'writer': 'unset'})
+      batch = {f'{title}_{i}': query for i, query in enumerate(query_parts)}
+      results = self.execute_batch(batch=batch, context=no_writer_context)
+      results = functools.reduce(operator.add, results)
+    else:
+      try:
+        results = self._execute(query=query_text, title=title, context=context)
+      except exceptions.GarfExecutorError as e:
+        telemetry.executor_error_counter.add(1, executor_attributes)
+        raise e
     if hasattr(self, 'fetcher'):
       fetcher_attributes = {
         'api.client.class': self.fetcher.api_client.__class__.__name__
       }
       executor_attributes.update(fetcher_attributes)
     telemetry.executor_counter.add(1, executor_attributes)
-    if (results or results.results_placeholder) and (
-      self.writers or context.writer
+    if (
+      (results or results.results_placeholder)
+      and context.writer != 'unset'
+      and (self.writers or context.writer)
     ):
       writer_clients = self.writers or context.writer_clients
       write_outputs = write_many(writer_clients, results, title)
@@ -146,11 +156,15 @@ class Executor:
       _handle_processors(processors=self.preprocessors, context=context)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
-    results = asyncio.run(
-      self._run(
-        batch=batch, context=context, parallel_threshold=parallel_threshold
+    if len(batch) > 1:
+      results = asyncio.run(
+        self._run(
+          batch=batch, context=context, parallel_threshold=parallel_threshold
+        )
       )
-    )
+    else:
+      title, text = next(iter(batch.items()))
+      results = self.execute(query=text, title=title, context=context)
     if self.postprocessors:
       _handle_processors(processors=self.postprocessors, context=context)
     return results

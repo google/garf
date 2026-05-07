@@ -24,6 +24,7 @@ class TestConfig:
       'sources': {
         'api': {
           'query_parameters': {
+            'macro_expansion': True,
             'macro': {
               'start_date': '2025-01-01',
             },
@@ -55,6 +56,7 @@ class TestConfig:
       'sources': {
         'api': {
           'query_parameters': {
+            'macro_expansion': True,
             'macro': {
               'start_date': '2025-01-01',
             },
@@ -83,6 +85,7 @@ class TestConfig:
     data = {
       'global_parameters': {
         'query_parameters': {
+          'macro_expansion': True,
           'macro': {
             'start_date': '2025-01-01',
             'end_date': '2025-12-31',
@@ -95,6 +98,7 @@ class TestConfig:
       'sources': {
         'api': {
           'query_parameters': {
+            'macro_expansion': False,
             'macro': {
               'start_date': '2025-12-01',
             },
@@ -114,6 +118,7 @@ class TestConfig:
     }
     config = Config(**data).expand()
     expected_query_parameters = {
+      'macro_expansion': False,
       'macro': {
         'start_date': '2025-12-01',
         'end_date': '2025-12-31',

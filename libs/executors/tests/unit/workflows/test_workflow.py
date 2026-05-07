@@ -39,6 +39,7 @@ class TestWorkflow:
           {'query': {'text': 'SELECT 1', 'title': 'example2'}},
         ],
         'query_parameters': {
+          'macro_expansion': True,
           'macro': {
             'start_date': '2025-01-01',
             'end_date': '2025-12-31',

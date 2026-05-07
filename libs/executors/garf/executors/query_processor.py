@@ -15,6 +15,7 @@
 """qQuery can be used as a parameter in garf queries."""
 
 import contextlib
+from typing import Any
 
 from garf.core import query_editor, query_parser
 from garf.executors import execution_context
@@ -25,7 +26,11 @@ class GqueryError(query_parser.GarfQueryError):
   """Errors on incorrect qQuery syntax."""
 
 
-def _handle_sub_context(context, sub_context):
+def _handle_sub_context(
+  context: execution_context.ExecutionContext,
+  sub_context: dict[str, Any],
+  allow_lists: bool = False,
+):
   for k, v in sub_context.items():
     if isinstance(v, str) and v.startswith('gquery'):
       no_writer_context = context.model_copy(update={'writer': None})
@@ -62,16 +67,27 @@ def _handle_sub_context(context, sub_context):
         query_spec = query_editor.QuerySpecification(
           text=query, args=context.query_parameters
         ).generate()
-        if len(columns := [c for c in query_spec.column_names if c != '_']) > 1:
+        if (
+          not allow_lists
+          and len(columns := [c for c in query_spec.column_names if c != '_'])
+          > 1
+        ):
           raise GqueryError(f'Multiple columns in gquery definition: {columns}')
       with tracer.start_as_current_span('gquery.execute') as span:
         res = gquery_executor._execute(
           query=query_spec.text, title='gquery', context=no_writer_context
         )
         span.set_attribute('gquery.text', query_spec.text)
-      if len(columns := [c for c in res.column_names if c != '_']) > 1:
+      if (
+        not allow_lists
+        and len(columns := [c for c in res.column_names if c != '_']) > 1
+      ):
         raise GqueryError(f'Multiple columns in gquery result: {columns}')
-      sub_context[k] = res.to_list(row_type='scalar')
+      sub_context[k] = (
+        res.to_list(row_type='dict')
+        if allow_lists
+        else res.to_list(row_type='scalar')
+      )
 
 
 @tracer.start_as_current_span('gquery.process')
@@ -102,7 +118,7 @@ def process_gquery(
     with tracer.start_as_current_span(
       'gquery.handle.query_parameters.template'
     ) as span:
-      _handle_sub_context(context, templates)
+      _handle_sub_context(context, templates, allow_lists=True)
       span.set_attributes(
         {f'executor.query.templates.{k}': v for k, v in templates.items() if v}
       )
