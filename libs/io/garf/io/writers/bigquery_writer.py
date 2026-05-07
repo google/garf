@@ -220,6 +220,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     logger.debug('Writing %d rows of data to %s', len(df), destination)
     pandas_gbq.to_gbq(
       dataframe=df,
+      project_id=self.project,
       destination_table=table,
       if_exists=self.write_disposition,
       progress_bar=False,
