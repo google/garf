@@ -40,7 +40,7 @@ class GarfQueryParameters(pydantic.BaseModel):
 
   macro: QueryParameters = pydantic.Field(default_factory=dict)
   template: QueryParameters = pydantic.Field(default_factory=dict)
-  macro_expansion: bool = pydantic.Field(default=True, exclude=True)
+  macro_expansion: bool = pydantic.Field(default=True)
 
   @property
   def hash(self) -> str:
@@ -180,6 +180,11 @@ class QuerySpecification(CommonParametersMixin):
       self.args = GarfQueryParameters(**args)
     self.query = BaseQueryElements(title=title, text=text)
     self.unsafe_macro = unsafe_macro
+
+  @property
+  def query_parts(self) -> list[str]:
+    statements = sqlparse.split(self.query.text)
+    return [s for s in statements if s.lower().startswith('select')]
 
   @property
   def macros(self) -> QueryParameters:
