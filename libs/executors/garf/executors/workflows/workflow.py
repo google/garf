@@ -45,6 +45,12 @@ class QueryFolder(pydantic.BaseModel):
     if self.prefix:
       self.prefix = pathlib.Path(self.prefix)
 
+  @pydantic.field_serializer('prefix')
+  def serialize_path(self, path: pathlib.Path, _info):
+    if path:
+      return str(path)
+    return path
+
   @property
   def queries(self) -> list[QueryPath]:
     batch = []
@@ -70,6 +76,12 @@ class QueryPath(pydantic.BaseModel):
   def model_post_init(self, __context__) -> None:
     if self.prefix:
       self.prefix = pathlib.Path(self.prefix)
+
+  @pydantic.field_serializer('prefix')
+  def serialize_path(self, path: pathlib.Path, _info):
+    if path:
+      return str(path)
+    return path
 
   @property
   def full_path(self) -> str:
