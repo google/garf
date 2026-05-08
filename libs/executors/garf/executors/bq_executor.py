@@ -18,6 +18,7 @@ from __future__ import annotations
 import contextlib
 import os
 import warnings
+from typing import Any
 
 try:
   from google.cloud import bigquery  # type: ignore
@@ -82,7 +83,9 @@ class BigQueryExecutor(executor.Executor):
     self.location = location
     self.writers = writers
     self._client = None
-    super().__init__()
+    super().__init__(
+      preprocessors={'init': self.create_datasets},
+    )
 
   @property
   def client(self) -> bigquery.Client:
@@ -120,8 +123,6 @@ class BigQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    # TODO: move to initialization
-    self.create_datasets(context.query_parameters.macro)
     job = self.client.query(query)
     try:
       result = job.result()
@@ -135,16 +136,16 @@ class BigQueryExecutor(executor.Executor):
     return report.GarfReport()
 
   @tracer.start_as_current_span('bq.create_datasets')
-  def create_datasets(self, macros: dict | None) -> None:
+  def create_datasets(self, macro: dict[str, Any] | None) -> None:
     """Creates datasets in BQ based on values in a dict.
 
     If dict contains keys with 'dataset' in them, then values for such keys
     are treated as dataset names.
 
     Args:
-      macros: Mapping containing data for query execution.
+      macro: Mapping containing data for query execution.
     """
-    if macros and (datasets := extract_datasets(macros)):
+    if macro and (datasets := extract_datasets(macro)):
       for dataset in datasets:
         dataset_id = f'{self.project}.{dataset}'
         try:
@@ -157,18 +158,18 @@ class BigQueryExecutor(executor.Executor):
             logger.info('Created new dataset %s', dataset_id)
 
 
-def extract_datasets(macros: dict | None) -> list[str]:
+def extract_datasets(macros: dict[str, Any] | None) -> set[str]:
   """Finds dataset-related keys based on values in a dict.
 
   If dict contains keys with 'dataset' in them, then values for such keys
   are treated as dataset names.
 
   Args:
-      macros: Mapping containing data for query execution.
+    macros: Mapping containing data for query execution.
 
   Returns:
-      Possible names of datasets.
+    Unique names of datasets.
   """
   if not macros:
-    return []
-  return [value for macro, value in macros.items() if 'dataset' in macro]
+    return {}
+  return {value for macro, value in macros.items() if 'dataset' in macro}
