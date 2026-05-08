@@ -47,7 +47,7 @@ class ExecutionContext(pydantic.BaseModel):
     default_factory=dict
   )
   writer: str | list[str] | None = None
-  writer_parameters: dict[str, str] | None = pydantic.Field(
+  writer_parameters: dict[str, Any] | None = pydantic.Field(
     default_factory=dict
   )
 

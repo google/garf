@@ -56,6 +56,7 @@ class BigQueryExecutor(executor.Executor):
     self,
     project: str | None = None,
     location: str | None = None,
+    default_table_expiration_ms: int | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     **kwargs: str,
   ) -> None:
@@ -64,6 +65,8 @@ class BigQueryExecutor(executor.Executor):
     Args:
       project: Google Cloud project id.
       location: BigQuery dataset location.
+      default_table_expiration_ms:
+        Expiration of tables in the dataset in milliseconds.
       writers: Instantiated writers.
     """
     if not project:
@@ -81,6 +84,7 @@ class BigQueryExecutor(executor.Executor):
       )
     self.project = project or project_id
     self.location = location
+    self.default_table_expiration_ms = default_table_expiration_ms
     self.writers = writers
     self._client = None
     super().__init__(
@@ -152,6 +156,8 @@ class BigQueryExecutor(executor.Executor):
           self.client.get_dataset(dataset_id)
         except google_cloud_exceptions.NotFound:
           bq_dataset = bigquery.Dataset(dataset_id)
+          if table_expiration := self.default_table_expiration_ms:
+            bq_dataset.default_table_expiration_ms = int(table_expiration)
           bq_dataset.location = self.location
           with contextlib.suppress(google_cloud_exceptions.Conflict):
             self.client.create_dataset(bq_dataset, timeout=30)
