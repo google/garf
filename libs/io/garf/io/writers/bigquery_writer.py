@@ -68,6 +68,8 @@ class BigQueryWriter(abs_writer.AbsWriter):
     range_partitioning_column: Column to partition tables into ranges.
     range_partitioning_range: Range definition in start:end:interval format.
     clustering_columns: Column(s) to perform clustering of table.
+    default_table_expiration_ms:
+      Expiration of tables in the dataset in milliseconds.
   """
 
   def __init__(
@@ -83,6 +85,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     range_partitioning_column: str | None = None,
     range_partitioning_range: str | None = None,  # Should be dict
     clustering_columns: str | None = None,
+    default_table_expiration_ms: int | None = None,
     **kwargs,
   ):
     """Initializes BigQueryWriter.
@@ -101,6 +104,8 @@ class BigQueryWriter(abs_writer.AbsWriter):
       range_partitioning_range: Range definition in start:end:interval format.
       clustering_columns: Column(s) to perform clustering of table.
       kwargs: Optional keywords arguments.
+      default_table_expiration_ms:
+        Expiration of tables in the dataset in milliseconds.
     """
     super().__init__(**kwargs)
     if not project:
@@ -167,6 +172,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       self.clustering_columns = clustering_columns.split(',')
     else:
       self.clustering_columns = None
+    self.default_table_expiration_ms = default_table_expiration_ms
 
     self._client = None
 
@@ -188,6 +194,8 @@ class BigQueryWriter(abs_writer.AbsWriter):
       bq_dataset = self.client.get_dataset(self.dataset_id)
     except google_cloud_exceptions.NotFound:
       bq_dataset = bigquery.Dataset(self.dataset_id)
+      if table_expiration := self.default_table_expiration_ms:
+        bq_dataset.default_table_expiration_ms = int(table_expiration)
       bq_dataset.location = self.location
       with contextlib.suppress(google_cloud_exceptions.Conflict):
         bq_dataset = self.client.create_dataset(bq_dataset, timeout=30)
