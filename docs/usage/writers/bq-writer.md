@@ -133,6 +133,32 @@ writer.write(sample_report, 'query')
 ```
 ///
 
+### default_table_expiration_ms
+
+Expiration of table in a dataset in milliseconds.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.default_table_expiration_ms=2592000000
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf.core import report
+from garf.io.writers import bigquery_writer
+
+# Create example report
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = bigquery_writer.BigQueryWriter(default_table_expiration_ms=2592000000)
+writer.write(sample_report, 'query')
+```
+///
+
+
 ### time_partitioning_column
 
 By default all reports are written into a single table. With `time_partitioning_column`
