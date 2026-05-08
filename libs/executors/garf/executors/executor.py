@@ -73,7 +73,8 @@ class Executor:
     logger.info('Executing script: %s', title)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
-    _handle_processors(processors=self.preprocessors, context=context)
+    if self.preprocessors:
+      _handle_processors(processors=self.preprocessors, context=context)
     results = self._execute(query=query_text, title=title, context=context)
     if (results or results.results_placeholder) and (
       self.writers or context.writer
@@ -81,7 +82,8 @@ class Executor:
       writer_clients = self.writers or context.writer_clients
       return write_many(writer_clients, results, title)
     span.set_attribute('execute.num_results', len(results))
-    _handle_processors(processors=self.postprocessors, context=context)
+    if self.postprocessors:
+      _handle_processors(processors=self.postprocessors, context=context)
     return results
 
   def _execute(
@@ -117,7 +119,8 @@ class Executor:
     """
     span = trace.get_current_span()
     span.set_attribute('api.parallel_threshold', parallel_threshold)
-    _handle_processors(processors=self.preprocessors, context=context)
+    if self.preprocessors:
+      _handle_processors(processors=self.preprocessors, context=context)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
     results = asyncio.run(
@@ -125,7 +128,8 @@ class Executor:
         batch=batch, context=context, parallel_threshold=parallel_threshold
       )
     )
-    _handle_processors(processors=self.postprocessors, context=context)
+    if self.postprocessors:
+      _handle_processors(processors=self.postprocessors, context=context)
     return results
 
   def add_preprocessor(
@@ -170,10 +174,12 @@ class Executor:
     return await asyncio.gather(*(run_with_semaphore(task) for task in tasks))
 
 
+@tracer.start_as_current_span('executor.handle_processors')
 def _handle_processors(
   processors: dict[str, report_fetcher.Processor],
   context: execution_context.ExecutionContext,
-) -> None:
+) -> list[str]:
+  processed = []
   if context.has_gquery:
     context = query_processor.process_gquery(context)
   for k, processor in processors.items():
@@ -181,10 +187,16 @@ def _handle_processors(
     if k == 'init' or k in context.fetcher_parameters:
       processor_parameters = {
         k: v
-        for k, v in context.fetcher_parameters.items()
+        for k, v in {
+          **context.fetcher_parameters,
+          **context.query_parameters.model_dump(),
+        }.items()
         if k in processor_signature
       }
       context.fetcher_parameters[k] = processor(**processor_parameters)
+      processed.append(k)
+  for p in processed:
+    processors.pop(p, None)
 
 
 @tracer.start_as_current_span('executor.write')
