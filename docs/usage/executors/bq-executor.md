@@ -151,3 +151,44 @@ curl -X 'POST' \
 }'
 ```
 ///
+
+### default_table_expiration_ms
+
+You can specify how long tables should stay in a dataset via `default_table_expiration_ms` parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source bq \
+  --output csv \
+  --bq.default_table_expiration_ms=2592000000
+```
+///
+
+/// tab | Python
+```python hl_lines="3"
+from garf.executors.bq_executor import BigQueryExecutor
+
+query_executor = BigQueryExecutor(default_table_expiration_ms=2592000000)
+```
+///
+
+/// tab | server
+
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "source": "bq",
+  "query": "SELECT campaign_id FROM project.dataset.table",
+  "title": "campaign",
+  "context": {
+    "writer": "csv",
+    "fetcher_parameters": {
+      "default_table_expiration_ms": 2592000000
+    }
+  }
+}'
+```
+///
