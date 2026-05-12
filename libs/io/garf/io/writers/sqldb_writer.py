@@ -30,6 +30,7 @@ from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 logger = logging.getLogger(__name__)
 
@@ -69,11 +70,12 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
     report = self.format_for_write(report)
     destination = formatter.format_extension(destination)
     dtypes = {}
-    for column in report.column_names:
-      if (report and isinstance(report[0][column], dict)) or (
-        not report and isinstance(report.results_placeholder[0][column], dict)
-      ):
-        dtypes.update({column: sqlalchemy.types.JSON})
+    if report:
+      for column in report.column_names:
+        if (isinstance(report[0][column], dict)) or (
+          not report and isinstance(report.results_placeholder[0][column], dict)
+        ):
+          dtypes.update({column: sqlalchemy.types.JSON})
     if not report:
       df = pd.DataFrame(
         data=report.results_placeholder, columns=report.column_names
@@ -95,4 +97,6 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
   @property
   def engine(self) -> sqlalchemy.engine.Engine:
     """Creates engine based on connection string."""
-    return sqlalchemy.create_engine(self.connection_string)
+    engine = sqlalchemy.create_engine(self.connection_string)
+    SQLAlchemyInstrumentor().instrument(engine=engine)
+    return engine
