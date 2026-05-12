@@ -13,8 +13,20 @@
 # limitations under the License.
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf.core',
+)
+meter = metrics.get_meter('garf.core')
+
+api_counter = meter.create_counter(
+  'garf_api_call_total',
+  unit='1',
+  description='Counts number of requests to API',
+)
+
+
+cache_size_meter = meter.create_gauge(
+  'garf_cache_size_bytes', unit='By', description='Size of garf cache in bytes'
 )

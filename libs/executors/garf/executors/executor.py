@@ -17,10 +17,11 @@
 import asyncio
 import inspect
 import logging
+import time
 from typing import Optional
 
 from garf.core import query_editor, report, report_fetcher
-from garf.executors import execution_context, query_processor
+from garf.executors import execution_context, query_processor, telemetry
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 from opentelemetry import trace
@@ -58,7 +59,9 @@ class Executor:
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
+    start_time = time.perf_counter()
     span = trace.get_current_span()
+    executor_attributes = {'executor.class': self.__class__.__name__}
     query_spec = (
       query_editor.QuerySpecification(
         text=query, title=title, args=context.query_parameters
@@ -76,14 +79,25 @@ class Executor:
     if self.preprocessors:
       _handle_processors(processors=self.preprocessors, context=context)
     results = self._execute(query=query_text, title=title, context=context)
+    if hasattr(self, 'fetcher'):
+      fetcher_attributes = {
+        'api.client.class': self.fetcher.api_client.__class__.__name__
+      }
+      executor_attributes.update(fetcher_attributes)
+    telemetry.executor_counter.add(1, executor_attributes)
     if (results or results.results_placeholder) and (
       self.writers or context.writer
     ):
       writer_clients = self.writers or context.writer_clients
-      return write_many(writer_clients, results, title)
+      write_outputs = write_many(writer_clients, results, title)
+      duration = time.perf_counter() - start_time
+      telemetry.executor_histogram.record(duration, executor_attributes)
+      return write_outputs
     span.set_attribute('execute.num_results', len(results))
     if self.postprocessors:
       _handle_processors(processors=self.postprocessors, context=context)
+    duration = time.perf_counter() - start_time
+    telemetry.executor_histogram.record(duration, executor_attributes)
     return results
 
   def _execute(
@@ -207,12 +221,17 @@ def write_many(
 ) -> Optional[str]:
   writing_results = []
   for writer_client in writer_clients:
+    start_time = time.perf_counter()
     logger.debug(
       'Start writing data for query %s via %s writer',
       title,
       type(writer_client),
     )
     writing_result = writer_client.write(results, title)
+    duration = time.perf_counter() - start_time
+    telemetry.write_histogram.record(
+      duration, {'writer_class': writer_client.__class__.__name__}
+    )
     logger.debug(
       'Finish writing data for query %s via %s writer',
       title,
