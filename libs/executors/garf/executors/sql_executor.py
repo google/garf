@@ -32,6 +32,7 @@ from garf.core import report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     https://docs.sqlalchemy.org/en/20/core/engines.html
     """
     engine = sqlalchemy.create_engine(connection_string or 'sqlite://')
+    SQLAlchemyInstrumentor().instrument(engine=engine)
     return cls(engine=engine, writers=writers)
 
   @tracer.start_as_current_span('sql.execute')

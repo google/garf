@@ -54,6 +54,7 @@ bq=[
 sqlalchemy = [
   "sqlalchemy",
   "pandas",
+  "opentelemetry-instrumentation-sqlalchemy",
 ]
 sheets = [
   "gspread",
