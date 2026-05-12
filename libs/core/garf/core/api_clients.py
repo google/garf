@@ -28,21 +28,13 @@ from urllib.parse import urlparse
 import pydantic
 import requests
 import smart_open
-from garf.core import exceptions, query_editor
+from garf.core import exceptions, query_editor, telemetry
 from garf.core.telemetry import tracer
 from opentelemetry import metrics, trace
 from typing_extensions import TypeAlias, override
 
 ApiRowElement: TypeAlias = Union[int, float, str, bool, list, dict, None]
 ApiResponseRow: TypeAlias = dict[str, ApiRowElement]
-
-meter = metrics.get_meter('garf.core')
-
-api_counter = meter.create_counter(
-  'garf_api_call_total',
-  unit='1',
-  description='Counts number of requests to API',
-)
 
 
 class GarfApiResponse(pydantic.BaseModel):
@@ -71,12 +63,12 @@ _SSRF_BLOCKED_RANGES: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = [
   ipaddress.ip_network(n)
   for n in (
     '169.254.0.0/16',  # link-local — AWS IMDS & GCE metadata endpoint
-    '127.0.0.0/8',     # IPv4 loopback
-    '10.0.0.0/8',      # RFC-1918 private
-    '172.16.0.0/12',   # RFC-1918 private
+    '127.0.0.0/8',  # IPv4 loopback
+    '10.0.0.0/8',  # RFC-1918 private
+    '172.16.0.0/12',  # RFC-1918 private
     '192.168.0.0/16',  # RFC-1918 private
-    '::1/128',         # IPv6 loopback
-    'fe80::/10',       # IPv6 link-local
+    '::1/128',  # IPv6 loopback
+    'fe80::/10',  # IPv6 link-local
   )
 ]
 
@@ -126,7 +118,7 @@ class BaseClient(abc.ABC):
     span = trace.get_current_span()
     response = self.get_response(request, **kwargs)
     span.set_attribute('num_rows_api_response', len(response.results))
-    api_counter.add(1, {'api.client.class': self.__class__.__name__})
+    telemetry.api_counter.add(1, {'api.client.class': self.__class__.__name__})
     return response
 
   @abc.abstractmethod

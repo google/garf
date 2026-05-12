@@ -13,8 +13,26 @@
 # limitations under the License.
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf.executors',
+)
+meter = metrics.get_meter('garf.executors')
+
+executor_counter = meter.create_counter(
+  'garf_execute_total',
+  unit='1',
+  description='Counts number of executor invocations',
+)
+
+executor_histogram = meter.create_histogram(
+  'garf_execute_duration_seconds',
+  unit='s',
+  description='Measures execution duration in seconds',
+)
+write_histogram = meter.create_histogram(
+  'garf_write_duration_seconds',
+  unit='s',
+  description='Measures report writes duration in seconds',
 )

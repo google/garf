@@ -33,16 +33,9 @@ from garf.executors import (
 )
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
-from opentelemetry import metrics, trace
+from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
-meter = metrics.get_meter('garf.executors')
-
-api_counter = meter.create_counter(
-  'garf_api_execute_total',
-  unit='1',
-  description='Counts number of API executions',
-)
 
 
 class ApiQueryExecutor(executor.Executor):
@@ -121,16 +114,12 @@ class ApiQueryExecutor(executor.Executor):
     logger.debug('starting query %s', query)
     title = pathlib.Path(title).name.split('.')[0]
     try:
-      results = self.fetcher.fetch(
+      return self.fetcher.fetch(
         query_specification=query,
         args=context.query_parameters,
         title=title,
         **context.fetcher_parameters,
       )
-      api_counter.add(
-        1, {'api.client.class': self.fetcher.api_client.__class__.__name__}
-      )
-      return results
     except Exception as e:
       logger.error('%s generated an exception: %s', title, str(e))
       raise exceptions.GarfExecutorError(
