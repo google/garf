@@ -21,7 +21,12 @@ import time
 from typing import Optional
 
 from garf.core import query_editor, report, report_fetcher
-from garf.executors import execution_context, query_processor, telemetry
+from garf.executors import (
+  exceptions,
+  execution_context,
+  query_processor,
+  telemetry,
+)
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 from opentelemetry import trace
@@ -78,7 +83,11 @@ class Executor:
       context = query_processor.process_gquery(context)
     if self.preprocessors:
       _handle_processors(processors=self.preprocessors, context=context)
-    results = self._execute(query=query_text, title=title, context=context)
+    try:
+      results = self._execute(query=query_text, title=title, context=context)
+    except exceptions.GarfExecutorError as e:
+      telemetry.executor_error_counter.add(1, executor_attributes)
+      raise e
     if hasattr(self, 'fetcher'):
       fetcher_attributes = {
         'api.client.class': self.fetcher.api_client.__class__.__name__

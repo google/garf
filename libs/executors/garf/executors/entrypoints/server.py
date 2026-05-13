@@ -28,6 +28,7 @@ import smart_open
 import typer
 import uvicorn
 import yaml
+from garf.executors import telemetry
 from garf.executors.entrypoints import tasks, utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
@@ -158,6 +159,7 @@ def execute_workflow(
   config_path: str | pathlib.Path = None,
   selected_aliases: Optional[list[str]] = None,
   skipped_aliases: Optional[list[str]] = None,
+  simulate: bool = False,
 ) -> list[str]:
   """Runs garf workflow till completion."""
   try:
@@ -170,6 +172,7 @@ def execute_workflow(
     execution_workflow=execution_workflow.model_dump(),
     selected_aliases=selected_aliases,
     skipped_aliases=skipped_aliases,
+    simulate=simulate,
   )
 
 
@@ -252,7 +255,7 @@ def _init_workflow(
   else:
     raise workflow.GarfWorkflowError('Neither workflow path nor file provided')
   return workflow.Workflow(
-    steps=workflow_data.get('steps'),
+    **workflow_data,
     execution_config=config_data,
   )
 
@@ -266,6 +269,14 @@ def main(
     int, typer.Option('--port', '-p', help='Port to start the server')
   ] = 8000,
 ):
+  telemetry.executor_info.set(
+    1,
+    {
+      'version_executors': garf.executors.__version__,
+      'version_core': garf.core.__version__,
+      'version_io': garf.io.__version__,
+    },
+  )
   uvicorn.run(app, host=host, port=port, log_config=None)
 
 

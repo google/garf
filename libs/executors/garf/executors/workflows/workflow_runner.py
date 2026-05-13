@@ -17,12 +17,14 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import time
 from typing import Final
 
 import yaml
-from garf.executors import exceptions, setup
+from garf.executors import exceptions, setup, telemetry
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow
+from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +67,7 @@ class WorkflowRunner:
       execution_workflow=execution_workflow, wf_parent=workflow_file.parent
     )
 
+  @tracer.start_as_current_span('workflow.run')
   def run(
     self,
     enable_cache: bool = False,
@@ -73,6 +76,15 @@ class WorkflowRunner:
     skipped_aliases: list[str] | None = None,
     simulate: bool = False,
   ) -> list[str]:
+    span = trace.get_current_span()
+    start_time = time.perf_counter()
+    workflow_attributes = {}
+    if name := self.workflow.name:
+      workflow_attributes.update({'workflow.name': name})
+    if version := self.workflow.metadata.version:
+      workflow_attributes.update({'workflow.version': version})
+    if workflow_attributes:
+      span.set_attributes(workflow_attributes)
     self.workflow.compile()
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
@@ -80,6 +92,7 @@ class WorkflowRunner:
     logger.info('Starting Garf Workflow...')
     for i, step in enumerate(self.workflow.steps, 1):
       step_name = f'{i}-{step.fetcher}'
+
       if step.alias:
         step_name = f'{step_name}-{step.alias}'
       if step.alias in skipped_aliases:
@@ -98,6 +111,10 @@ class WorkflowRunner:
           step.alias,
         )
         continue
+      workflow_step_attributes = {
+        **workflow_attributes,
+        'workflow.step.name': step_name,
+      }
       with tracer.start_as_current_span(step_name):
         logger.info(
           'Running step %d, fetcher: %s, alias: %s', i, step.fetcher, step.alias
@@ -123,13 +140,27 @@ class WorkflowRunner:
               batch[q.title] = q.text
           else:
             batch[query.title] = query.text
-        query_executor.execute_batch(
-          batch,
-          step.context,
-          step.parallel_threshold or self.parallel_threshold,
-        )
-        execution_results.append(step_name)
+        try:
+          step_start_time = time.perf_counter()
+          query_executor.execute_batch(
+            batch,
+            step.context,
+            step.parallel_threshold or self.parallel_threshold,
+          )
+          execution_results.append(step_name)
+          telemetry.workflow_step_counter.add(1, workflow_step_attributes)
+          step_duration = time.perf_counter() - step_start_time
+          telemetry.workflow_step_histogram.record(
+            step_duration, workflow_step_attributes
+          )
+        except exceptions.GarfExecutorError as e:
+          telemetry.workflow_step_error_counter.add(1, workflow_step_attributes)
+          telemetry.workflow_error_counter.add(1, workflow_attributes)
+          raise e
     logger.info('Garf Workflow completed.')
+    telemetry.workflow_counter.add(1, workflow_attributes)
+    duration = time.perf_counter() - start_time
+    telemetry.workflow_histogram.record(duration, workflow_attributes)
     return execution_results
 
   def compile(self, path: str | pathlib.Path) -> str:

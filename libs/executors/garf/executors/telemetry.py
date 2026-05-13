@@ -20,10 +20,22 @@ tracer = trace.get_tracer(
 )
 meter = metrics.get_meter('garf.executors')
 
+executor_info = meter.create_gauge(
+  'garf_info',
+  unit='',
+  description='Build info of garf executor',
+)
+
 executor_counter = meter.create_counter(
   'garf_execute_total',
   unit='1',
   description='Counts number of executor invocations',
+)
+
+executor_error_counter = meter.create_counter(
+  'garf_execute_errors_total',
+  unit='1',
+  description='Counts number of executor failures',
 )
 
 executor_histogram = meter.create_histogram(
@@ -35,4 +47,40 @@ write_histogram = meter.create_histogram(
   'garf_write_duration_seconds',
   unit='s',
   description='Measures report writes duration in seconds',
+)
+
+workflow_counter = meter.create_counter(
+  'garf_workflow_run_total',
+  unit='1',
+  description='Counts number of workflow runs',
+)
+
+workflow_histogram = meter.create_histogram(
+  'garf_workflow_run_duration_seconds',
+  unit='s',
+  description='Measures workflow run duration in seconds',
+)
+
+workflow_error_counter = meter.create_counter(
+  'garf_workflow_run_errors_total',
+  unit='1',
+  description='Counts number of workflow failures',
+)
+
+workflow_step_counter = meter.create_counter(
+  'garf_workflow_step_run_total',
+  unit='1',
+  description='Counts number of runs of workflow step',
+)
+
+workflow_step_histogram = meter.create_histogram(
+  'garf_workflow_step_run_duration_seconds',
+  unit='s',
+  description='Measures run duration in seconds of workflow step',
+)
+
+workflow_step_error_counter = meter.create_counter(
+  'garf_workflow_step_run_errors_total',
+  unit='1',
+  description='Counts number of workflow step failures',
 )
