@@ -83,6 +83,11 @@ class WorkflowRunner:
       workflow_attributes.update({'workflow.name': name})
     if version := self.workflow.metadata.version:
       workflow_attributes.update({'workflow.version': version})
+    if config := self.workflow.execution_config:
+      if config_version := config.metadata.version:
+        workflow_attributes.update({'config.version': config_version})
+      if config_name := config.name:
+        workflow_attributes.update({'config.name': config_name})
     if workflow_attributes:
       span.set_attributes(workflow_attributes)
     self.workflow.compile()

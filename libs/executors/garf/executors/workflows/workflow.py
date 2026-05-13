@@ -178,6 +178,10 @@ class Workflow(pydantic.BaseModel):
   Attributes:
     steps: Contains one or several fetcher executions.
     context: Query and fetcher parameters to overwrite in steps.
+    execution_config: Optional config for running workflow.
+    prefix: Optional location of workflow.
+    name: Optional name of workflow.
+    metadata: Optional metadata.
   """
 
   steps: list[ExecutionStep]
