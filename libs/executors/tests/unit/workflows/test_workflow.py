@@ -55,7 +55,9 @@ class TestWorkflow:
           'destination_folder': '/tmp',
         },
       }
-    ]
+    ],
+    'name': 'test workflow',
+    'metadata': {'description': 'Test Workflow'},
   }
 
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
@@ -64,13 +66,18 @@ class TestWorkflow:
       yaml.dump(self.data, f, encoding='utf-8')
     workflow = Workflow.from_file(tmp_workflow)
     expected_workflow = Workflow(
-      steps=self.data.get('steps'), prefix=tmp_workflow.parent
+      steps=self.data.get('steps'),
+      name='test workflow',
+      metadata={
+        'description': 'Test Workflow',
+      },
+      prefix=tmp_workflow.parent,
     )
     assert workflow == expected_workflow
 
   def test_save_returns_correct_data(self, tmp_path):
     tmp_workflow = tmp_path / 'workflow.yaml'
-    workflow = Workflow(steps=self.data.get('steps'))
+    workflow = Workflow(**self.data)
     workflow.save(tmp_workflow)
     with open(tmp_workflow, 'r', encoding='utf-8') as f:
       workflow_data = yaml.safe_load(f)

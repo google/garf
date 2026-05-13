@@ -8,6 +8,14 @@ common_context: &empty_context
       macro: {}
       template: {}
 
+name: test_workflow
+metadata:
+  description: Test Workflow
+  version: 0.0.0
+  required_garf_version: 0.0.0
+  required_fetchers:
+    google-ads: 0.0.0
+
 steps:
   - alias: test
     fetcher: fake

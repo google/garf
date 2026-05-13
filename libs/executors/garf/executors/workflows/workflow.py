@@ -155,6 +155,23 @@ class ExecutionStep(ExecutionContext):
     )
 
 
+class WorkflowMetadata(pydantic.BaseModel):
+  """Contains optional metadata on workflow.
+
+  Attributes:
+    description: Brief description of workflow.
+    version: Version of workflow.
+    required_garf_version: Minimal required version of garf-executors package.
+    required_fetchers:
+      Fetchers needed for workflow with minimal required version.
+  """
+
+  description: str | None = None
+  version: str | None = None
+  required_garf_version: str | None = None
+  required_fetchers: dict[str, str] | None = None
+
+
 class Workflow(pydantic.BaseModel):
   """Orchestrates execution of queries for multiple fetchers.
 
@@ -169,6 +186,8 @@ class Workflow(pydantic.BaseModel):
   prefix: str | pathlib.Path | None = pydantic.Field(
     default=None, excluded=True
   )
+  name: str | None = None
+  metadata: WorkflowMetadata = WorkflowMetadata()
 
   def model_post_init(self, __context__) -> None:
     if self.execution_config:
@@ -215,8 +234,11 @@ class Workflow(pydantic.BaseModel):
     try:
       if isinstance(path, str):
         path = pathlib.Path(path)
+      metadata = data.get('metadata') or WorkflowMetadata()
       return Workflow(
         steps=data.get('steps'),
+        name=data.get('name') or str(path.stem),
+        metadata=metadata,
         context=context,
         prefix=path.parent,
         execution_config=config.Config.from_file(config_file)
