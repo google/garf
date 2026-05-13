@@ -129,11 +129,16 @@ def execute_workflow(
   execution_workflow: workflow.Workflow,
   selected_aliases: list[str],
   skipped_aliases: list[str],
+  simulate: bool,
 ):
   """Executes a batch of queries."""
   return workflow_runner.WorkflowRunner(
     execution_workflow=execution_workflow
-  ).run(selected_aliases=selected_aliases, skipped_aliases=skipped_aliases)
+  ).run(
+    selected_aliases=selected_aliases,
+    skipped_aliases=skipped_aliases,
+    simulate=simulate,
+  )
 
 
 @app.task(pydantic=True)
