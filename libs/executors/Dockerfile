@@ -1,4 +1,4 @@
-FROM python:3.11.8-alpine
+FROM python:3.13-slim
 COPY --from=ghcr.io/astral-sh/uv:0.5.18 /uv /bin/
 ENV UV_SYSTEM_PYTHON=1
 WORKDIR /app
