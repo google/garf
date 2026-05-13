@@ -13,9 +13,16 @@ where each step interacts with a specific data source (fetcher) and writes to a 
 Workflows are defined in YAML files. The core structure consists of a list of
 `steps`, where each step defines what data to fetch and where to save it.
 
-### Workflow Step Structure
+### Workflow Structure
 
 ```yaml
+name: test_workflow
+metadata:
+  description: Test workflow description
+  version: '0.0.0'
+  required_garf_version: ""
+  required_fetchers:
+    garf-google-ads: "1.0.0"
 steps:
   - alias: step_name
     fetcher: source_name
@@ -40,6 +47,12 @@ steps:
 
 ### Components
 
+*   **name**: Optional name of the workflow
+*   **metadata**: Optional metadata for the workflow.
+      * **description**: Short description of the workflow.
+      * **version**: Version of the workflow.
+      * **required_garf_version**: Minimal required version of garf-executors library.
+      * **required_fetchers**: Required fetchers and their version.
 *   **fetcher**: The source of data. Check [available fetchers](../fetchers/overview.md).
 *   **fetcher_parameters**: Key value pairs used to fine-tune fetching process.
 *   **alias**: A unique identifier for the step. Useful for logging and [selective execution](#selective-execution).
