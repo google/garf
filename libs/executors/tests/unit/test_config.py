@@ -20,6 +20,7 @@ class TestConfig:
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
     data = {
+      'name': 'test_config',
       'sources': {
         'api': {
           'query_parameters': {
@@ -38,7 +39,8 @@ class TestConfig:
             'destination_folder': '/tmp',
           },
         }
-      }
+      },
+      'metadata': {'version': '0.0.0'},
     }
     with open(tmp_config, 'w', encoding='utf-8') as f:
       yaml.dump(data, f, encoding='utf-8')
@@ -49,6 +51,7 @@ class TestConfig:
   def test_save_returns_correct_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
     data = {
+      'name': 'test_config',
       'sources': {
         'api': {
           'query_parameters': {
@@ -67,7 +70,8 @@ class TestConfig:
             'destination_folder': '/tmp',
           },
         }
-      }
+      },
+      'metadata': {'version': '0.0.0'},
     }
     config = Config(**data)
     config.save(tmp_config)

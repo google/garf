@@ -30,15 +30,32 @@ from garf.executors.execution_context import ExecutionContext
 from typing_extensions import Self
 
 
+class ConfigMetadata(pydantic.BaseModel):
+  """Contains optional metadata on config.
+
+  Attributes:
+    description: Brief description of workflow.
+    version: Version of workflow.
+  """
+
+  description: str | None = None
+  version: str | None = None
+
+
 class Config(pydantic.BaseModel):
   """Stores necessary parameters for one or multiple API sources.
 
   Attributes:
     source: Mapping between API source alias and execution parameters.
+    global_parameters: Common parameters for each source.
+    name: Optional name of config.
+    metadata: Optional metadata for config.
   """
 
   sources: dict[str, ExecutionContext]
   global_parameters: ExecutionContext | None = None
+  name: str | None = None
+  metadata: ConfigMetadata = ConfigMetadata()
 
   @classmethod
   def from_file(cls, path: str | pathlib.Path | os.PathLike[str]) -> Config:
