@@ -12,6 +12,9 @@ Configs are defined in YAML files. The core structure consists of a two elements
 source in `sources`.
 
 ```yaml
+name: config_name
+metadata:
+  version: '0.0.0'
 sources:
   source-alias:
     writer: bq
@@ -27,6 +30,8 @@ global_parameters:
 
 where:
 
+*   **name**: Optional config name.
+*   **metadata**: Optional metadata on config (version, description).
 *   **source-alias**: The source of data. Check [available fetchers](../fetchers/overview.md).
 *   **fetcher_parameters**: Key value pairs used to fine-tune fetching process.
 *   **writer**: Where the data should be saved. Check [available writers](writers.md).
