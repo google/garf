@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import os
 import pathlib
+import re
+import urllib
 from collections import defaultdict
 from typing import Any
 
@@ -30,6 +32,10 @@ from garf.io import reader
 
 reader_client = reader.create_reader('file')
 
+_REMOTE_FILES_PATTERN: Final[str] = (
+  '^(http|gs|s3|aruze|hdfs|webhdfs|ssh|scp|sftp)'
+)
+
 
 class GarfWorkflowError(exceptions.GarfExecutorError):
   """Workflow specific exception."""
@@ -42,7 +48,7 @@ class QueryFolder(pydantic.BaseModel):
   prefix: str | pathlib.Path | None = None
 
   def model_post_init(self, __context__) -> None:
-    if self.prefix:
+    if self.prefix and not re.match(_REMOTE_FILES_PATTERN, str(self.prefix)):
       self.prefix = pathlib.Path(self.prefix)
 
   @property
@@ -68,12 +74,14 @@ class QueryPath(pydantic.BaseModel):
   prefix: str | pathlib.Path | None = None
 
   def model_post_init(self, __context__) -> None:
-    if self.prefix:
+    if self.prefix and not re.match(_REMOTE_FILES_PATTERN, str(self.prefix)):
       self.prefix = pathlib.Path(self.prefix)
 
   @property
   def full_path(self) -> str:
     if self.prefix:
+      if re.match(_REMOTE_FILES_PATTERN, str(self.prefix)):
+        return urllib.parse.urljoin(self.prefix, self.path)
       return self.prefix / self.path
     return self.path
 

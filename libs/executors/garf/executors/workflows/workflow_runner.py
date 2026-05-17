@@ -18,7 +18,6 @@ from __future__ import annotations
 import logging
 import pathlib
 import time
-from typing import Final
 
 import yaml
 from garf.executors import exceptions, setup, telemetry
@@ -28,9 +27,6 @@ from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
-_REMOTE_FILES_PATTERN: Final[str] = (
-  '^(http|gs|s3|aruze|hdfs|webhdfs|ssh|scp|sftp)'
-)
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
 
