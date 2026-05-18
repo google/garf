@@ -95,7 +95,10 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     with self.engine.begin() as conn:
       if re.findall(r'(create|update) ', query.lower()):
         try:
-          conn.connection.executescript(query)
+          if conn.engine.dialect.name == 'sqlite':
+            conn.connection.executescript(query)
+          else:
+            conn.execute(sqlalchemy.text(query))
           results = report.GarfReport()
         except Exception as e:
           raise SqlAlchemyQueryExecutorError(
@@ -104,7 +107,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
       else:
         temp_table_name = f'temp_{uuid.uuid4().hex}'
         query = f'CREATE TABLE {temp_table_name} AS {query}'
-        conn.connection.executescript(query)
+        conn.execute(sqlalchemy.text(query))
         try:
           results = report.GarfReport.from_pandas(
             pd.read_sql(f'SELECT * FROM {temp_table_name}', conn)
@@ -114,5 +117,5 @@ class SqlAlchemyQueryExecutor(executor.Executor):
             f'Failed to execute query {title}: Reason: {e}'
           ) from e
         finally:
-          conn.connection.execute(f'DROP TABLE {temp_table_name}')
+          conn.execute(sqlalchemy.text(f'DROP TABLE {temp_table_name}'))
       return results
