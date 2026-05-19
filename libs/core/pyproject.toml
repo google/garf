@@ -11,6 +11,7 @@ dependencies = [
     "requests",
     "pyyaml",
     "pydantic",
+    "sqlparse",
     "eval_type_backport",
     "opentelemetry-api",
 ]

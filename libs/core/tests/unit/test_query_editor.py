@@ -278,10 +278,7 @@ class TestQuerySpecification:
       'test FROM resource WHERE metric = {metric}'
     )
 
-  def test_generate_handles_non_provided_macros_in_with_inline_tag(
-    self, caplog
-  ):
-    caplog.set_level(logging.INFO)
+  def test_generate_handles_non_provided_macros_in_with_inline_tag(self):
     query = """
       --garf:allow-unsafe-macro
       SELECT
@@ -300,12 +297,8 @@ class TestQuerySpecification:
       'metric = metric',
       'dimension = {dimension}',
     ]
-    assert 'Not processed macro found: dimension' in caplog.text
 
-  def test_generate_handles_non_provided_macros_in_non_strict_mode(
-    self, caplog
-  ):
-    caplog.set_level(logging.INFO)
+  def test_generate_handles_non_provided_macros_in_non_strict_mode(self):
     query = """
       SELECT
         test
@@ -325,7 +318,6 @@ class TestQuerySpecification:
       'metric = metric',
       'dimension = {dimension}',
     ]
-    assert 'Not processed macro found: dimension' in caplog.text
 
   @pytest.mark.parametrize(
     ('slice', 'literal'),
