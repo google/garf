@@ -241,42 +241,44 @@ class DictParser(BaseParser):
       raise GarfParserError
     if result := row.get(key):
       return result
+    return self.get_row_element(row, key)
+
+  def get_row_element(self, row, key):
+    """Gets element from a dict by key."""
     key = key.split('.')
     try:
       return functools.reduce(operator.getitem, key, row)
     except (TypeError, KeyError):
       return None
 
-  def get_row_element(self, row, key):
-    """Gets element from a dict by key."""
-    return row.get(key)
-
 
 class NumericConverterDictParser(DictParser):
   """Extracts nested dict elements with numerical conversions."""
+
+  def _convert_field(self, value):
+    if value is None:
+      return value
+    for type_ in (int, float):
+      with contextlib.suppress(ValueError):
+        return type_(value)
+    return value
 
   def parse_row_element(
     self, row: api_clients.ApiResponseRow, key: str
   ) -> api_clients.ApiRowElement:
     """Extract nested field with int/float conversion."""
-
-    def convert_field(value):
-      if value is None:
-        return value
-      for type_ in (int, float):
-        with contextlib.suppress(ValueError):
-          return type_(value)
-      return value
-
     if result := row.get(key):
-      return convert_field(result)
+      return self._convert_field(result)
+    return self.get_row_element(row, key)
 
+  def get_row_element(self, row, key):
+    """Gets element from a dict by key."""
     key = key.split('.')
     try:
       field = functools.reduce(operator.getitem, key, row)
       if isinstance(field, MutableSequence) or field in (True, False):
         return field
-      return convert_field(field)
+      return self._convert_field(field)
     except KeyError:
       return None
 
@@ -288,16 +290,16 @@ class ProtoParser(BaseParser):
     self, row: api_clients.ApiResponseRow, key: str
   ) -> api_clients.ApiRowElement:
     """Returns attributes from a Protobuf message based on a key."""
+    return self.get_row_element(row, key)
+
+  def get_row_element(self, row, key):
+    """Gets nested attribute from a Protobuf message."""
     try:
       return operator.attrgetter(key)(row)
     except AttributeError as e:
       raise query_parser.GarfFieldError(
         f'field {key} is missing in row {row}'
       ) from e
-
-  def get_row_element(self, row, key):
-    """Gets nested attribute from a Protobuf message."""
-    return operator.attrgetter(key)(row)
 
 
 class GarfParserError(exceptions.GarfError):
