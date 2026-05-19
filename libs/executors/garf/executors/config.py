@@ -78,7 +78,9 @@ class Config(pydantic.BaseModel):
         }
         for k, s in self.sources.items():
           source_parameters = {
-            k: v for k, v in s.query_parameters.model_dump().items() if v
+            k: v
+            for k, v in s.query_parameters.model_dump().items()
+            if k == 'macro_expansion' or v
           }
           source_joined_parameters = utils.merge_dicts(
             dict(common_parameters), source_parameters
