@@ -131,9 +131,13 @@ def main():
     )
     workflow_skip = args.workflow_skip if args.workflow_skip else None
     workflow_include = args.workflow_include if args.workflow_include else None
-    workflow_runner.WorkflowRunner(
+    runner = workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow, wf_parent=wf_parent
-    ).run(
+    )
+    garf.executors.validate_version(
+      runner.workflow.metadata.required_garf_version
+    )
+    runner.run(
       enable_cache=args.enable_cache,
       cache_ttl_seconds=args.cache_ttl_seconds,
       selected_aliases=workflow_include,

@@ -316,7 +316,11 @@ def run(
   )
   garf_logger.addHandler(initialize_logger())
   context = utils.ParamsParser().parse_all(ctx.args)
-  _init_runner(file, context, config).run(
+  runner = _init_runner(file, context, config)
+  garf.executors.validate_version(
+    runner.workflow.metadata.required_garf_version
+  )
+  runner.run(
     enable_cache=enable_cache,
     cache_ttl_seconds=cache_ttl_seconds,
     selected_aliases=include,

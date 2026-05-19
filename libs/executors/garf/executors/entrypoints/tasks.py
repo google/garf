@@ -132,9 +132,11 @@ def execute_workflow(
   simulate: bool,
 ):
   """Executes a batch of queries."""
-  return workflow_runner.WorkflowRunner(
-    execution_workflow=execution_workflow
-  ).run(
+  runner = workflow_runner.WorkflowRunner(execution_workflow=execution_workflow)
+  garf.executors.validate_version(
+    runner.workflow.metadata.required_garf_version
+  )
+  return runner.run(
     selected_aliases=selected_aliases,
     skipped_aliases=skipped_aliases,
     simulate=simulate,
