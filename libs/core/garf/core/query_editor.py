@@ -24,6 +24,7 @@ from typing import Generator, Union
 
 import jinja2
 import pydantic
+import sqlparse
 from dateutil import relativedelta
 from garf.core import query_parser
 from jinja2.sandbox import SandboxedEnvironment
@@ -141,12 +142,6 @@ class CommonParametersMixin:
   def common_params(self):
     """Instantiates common parameters to the current values."""
     return {key: value() for key, value in self._common_params.items()}
-
-
-class SafeDict(dict):
-  def __missing__(self, key: str):
-    logger.warning('Not processed macro found: %s', key)
-    return '{' + key + '}'
 
 
 class QuerySpecification(CommonParametersMixin):
@@ -338,42 +333,33 @@ class QuerySpecification(CommonParametersMixin):
 
   def extract_filters(self) -> Self:
     filter_regexp = r'WHERE\s+(.*?)(?=\s+ORDER BY\s+\w+|\s+LIMIT\s+\d+|$)'
-    if filters := re.findall(
-      filter_regexp,
-      self.query.text,
-      flags=re.IGNORECASE,
+    if not (
+      raw_filters := re.findall(
+        filter_regexp,
+        self.query.text,
+        flags=re.IGNORECASE,
+      )
     ):
-      in_pattern = r'\((.*?)\)'
-
-      def create_replacer():
-        count = 0
-
-        def replacer(match):
-          nonlocal count
-          count += 1
-          return f'({{group_{count}}})'
-
-        return replacer
-
-      joined_filters = ''.join(filters[0])
-      in_groups = re.findall(in_pattern, joined_filters)
-      group_replacements = {
-        f'group_{i}': group for i, group in enumerate(in_groups, 1)
-      }
-
-      found_filters = re.sub(in_pattern, create_replacer(), joined_filters)
-      if self.args.macro_expansion:
-        if self.unsafe_macro:
-          found_filters = [
-            f.strip().format_map(SafeDict(**group_replacements))
-            for f in re.split(' AND ', found_filters, flags=re.IGNORECASE)
-          ]
-        else:
-          found_filters = [
-            f.strip().format(**group_replacements)
-            for f in re.split(' AND ', found_filters, flags=re.IGNORECASE)
-          ]
-      self.query.filters = found_filters
+      return self
+    where_clause = sqlparse.parse(raw_filters[0])[0]
+    filters = []
+    single_filter = []
+    for item in where_clause.tokens:
+      if not item.value.strip() or item.value.upper() == 'WHERE':
+        continue
+      if item.value.upper() == 'AND':
+        filters.append(single_filter)
+        single_filter = []
+      else:
+        single_filter.append(item.value)
+    if single_filter:
+      filters.append(single_filter)
+    found_filters = []
+    for v in filters:
+      joined = ' '.join(v)
+      joined = re.sub(r'\{\s*(.*?)\s*\}', r'{\1}', joined)
+      found_filters.append(joined)
+    self.query.filters = found_filters
     return self
 
   def extract_sorts(self) -> Self:
