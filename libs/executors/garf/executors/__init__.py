@@ -22,7 +22,7 @@ __all__ = [
   'ApiQueryExecutor',
 ]
 
-__version__ = '1.4.3'
+__version__ = '1.5.0'
 
 
 def validate_version(version: str | None = None):
