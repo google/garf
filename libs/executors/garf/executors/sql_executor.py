@@ -61,7 +61,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     """
     self.engine = engine or sqlalchemy.create_engine('sqlite://')
     self.writers = writers
-    super().__init__()
+    super().__init__(source='sqldb')
 
   @classmethod
   def from_connection_string(

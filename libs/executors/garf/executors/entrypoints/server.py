@@ -116,6 +116,9 @@ async def get_fetchers() -> list[str]:
 @app.post('/api/execute')
 def execute(request: tasks.ApiExecutorRequest) -> ApiExecutorResponse:
   """Executes a single query."""
+  telemetry.executor_requested_counter.add(
+    1, attributes={'executor.source': request.source}
+  )
   result = tasks.execute(request.model_dump())
   return ApiExecutorResponse(results=result)
 
@@ -123,6 +126,9 @@ def execute(request: tasks.ApiExecutorRequest) -> ApiExecutorResponse:
 @app.post('/api/execute:task', status_code=fastapi.status.HTTP_202_ACCEPTED)
 def execute_task(request: tasks.ApiExecutorRequest) -> dict[str, str]:
   """Creates a single operation for running garf query."""
+  telemetry.executor_requested_counter.add(
+    1, attributes={'executor.source': request.source}
+  )
   task = tasks.execute.delay(request.model_dump())
   span = trace.get_current_span()
   span.set_attribute('garf.operation.id', task.id)
@@ -134,6 +140,10 @@ def execute_batch(
   request: tasks.ApiExecutorBatchRequest,
 ) -> ApiExecutorResponse:
   """Executes multiple queries in parallel."""
+  n_queries = len(request.batch)
+  telemetry.executor_requested_counter.add(
+    n_queries, attributes={'executor.source': request.source}
+  )
   results = tasks.execute_batch(request.model_dump())
   return ApiExecutorResponse(results=results)
 
@@ -145,6 +155,10 @@ async def execute_batch_task(
   request: tasks.ApiExecutorBatchRequest,
 ) -> dict[str, str]:
   """Creates a single operation for running multiple garf queries."""
+  n_queries = len(request.batch)
+  telemetry.executor_requested_counter.add(
+    n_queries, attributes={'executor.source': request.source}
+  )
   task = tasks.execute_batch.delay(request.model_dump())
   span = trace.get_current_span()
   span.set_attribute('garf.operation.id', task.id)
@@ -162,6 +176,7 @@ def execute_workflow(
   simulate: bool = False,
 ) -> list[str]:
   """Runs garf workflow till completion."""
+  telemetry.workflow_requested(1)
   try:
     execution_workflow = _init_workflow(
       workflow_file, workflow_path, config_file, config_path
@@ -188,6 +203,7 @@ async def execute_workflow_task(
   skipped_aliases: Optional[list[str]] = None,
 ) -> dict[str, str]:
   """Creates a single operation for running garf workflow."""
+  telemetry.workflow_requested(1)
   span = trace.get_current_span()
   try:
     execution_workflow = _init_workflow(
