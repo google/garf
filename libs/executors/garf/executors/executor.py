@@ -41,9 +41,11 @@ class Executor:
 
   def __init__(
     self,
+    source: str,
     preprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
     postprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
   ) -> None:
+    self.source = source
     self.preprocessors = preprocessors or {}
     self.postprocessors = postprocessors or {}
 

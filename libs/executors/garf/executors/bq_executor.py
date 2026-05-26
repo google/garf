@@ -88,6 +88,7 @@ class BigQueryExecutor(executor.Executor):
     self.writers = writers
     self._client = None
     super().__init__(
+      source='bq',
       preprocessors={'init': self.create_datasets},
     )
 

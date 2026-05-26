@@ -52,7 +52,7 @@ class DuckDBExecutor(executor.Executor):
       writers: Instantiated writers.
     """
     self.writers = writers
-    super().__init__(**kwargs)
+    super().__init__(source='duckdb', **kwargs)
 
   @tracer.start_as_current_span('duckdb.execute')
   def _execute(

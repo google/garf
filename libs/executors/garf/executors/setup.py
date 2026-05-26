@@ -109,5 +109,6 @@ def setup_executor(
       ),
       report_simulator=concrete_simulator,
       writers=writer_clients,
+      source=source,
     )
   return query_executor

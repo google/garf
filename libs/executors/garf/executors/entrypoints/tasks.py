@@ -18,7 +18,7 @@ import celery
 import garf.core
 import garf.executors
 import pydantic
-from garf.executors import exceptions, setup
+from garf.executors import exceptions, setup, telemetry
 from garf.executors.entrypoints import utils as garf_utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
@@ -106,7 +106,13 @@ def execute(request: ApiExecutorRequest):
   query_executor = setup.setup_executor(
     request.source, request.context.fetcher_parameters
   )
+  telemetry.executor_active_executions.add(
+    1, attributes={'executor.source': query_executor.source}
+  )
   result = query_executor.execute(request.query, request.title, request.context)
+  telemetry.executor_active_executions.add(
+    -1, attributes={'executor.source': query_executor.source}
+  )
   if isinstance(result, garf.core.GarfReport):
     return result.to_list('dict')
   return [result]
@@ -115,10 +121,17 @@ def execute(request: ApiExecutorRequest):
 @app.task(pydantic=True)
 def execute_batch(request: ApiExecutorBatchRequest):
   """Executes a batch of queries."""
+  n_queries = len(request.batch)
   query_executor = setup.setup_executor(
     request.source, request.context.fetcher_parameters
   )
+  telemetry.executor_active_executions.add(
+    n_queries, attributes={'executor.source': query_executor.source}
+  )
   results = query_executor.execute_batch(request.batch, request.context)
+  telemetry.executor_active_executions.add(
+    -n_queries, attributes={'executor.source': query_executor.source}
+  )
   if all(isinstance(report, garf.core.GarfReport) for report in results):
     return [report.to_list('dict') for report in results]
   return results
@@ -136,11 +149,14 @@ def execute_workflow(
   garf.executors.validate_version(
     runner.workflow.metadata.required_garf_version
   )
-  return runner.run(
+  telemetry.executor_active_workflows.add(1)
+  results = runner.run(
     selected_aliases=selected_aliases,
     skipped_aliases=skipped_aliases,
     simulate=simulate,
   )
+  telemetry.executor_active_workflows.add(-1)
+  return results
 
 
 @app.task(pydantic=True)

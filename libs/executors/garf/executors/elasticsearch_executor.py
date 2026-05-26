@@ -65,7 +65,7 @@ class ElasticsearchQueryExecutor(executor.Executor):
       hosts = [{'host': 'localhost', 'port': 9200}]
     self.client = client or Elasticsearch(hosts=hosts)
     self.writers = writers
-    super().__init__()
+    super().__init__(source='elasticsearch')
 
   @tracer.start_as_current_span('opensearch.execute')
   def _execute(

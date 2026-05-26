@@ -26,6 +26,22 @@ executor_info = meter.create_gauge(
   description='Build info of garf executor',
 )
 
+executor_started_seconds = meter.create_gauge(
+  'garf_executor_started_seconds',
+  unit='s',
+  description='Timestamp when process started',
+)
+
+executor_active_executions = meter.create_up_down_counter(
+  'garf_execute_active',
+  unit='1',
+  description='Counts number of active executions',
+)
+executor_requested_counter = meter.create_counter(
+  'garf_execute_requested_total',
+  unit='1',
+  description='Counts number of executor invocations requested',
+)
 executor_counter = meter.create_counter(
   'garf_execute_total',
   unit='1',
@@ -49,6 +65,16 @@ write_histogram = meter.create_histogram(
   description='Measures report writes duration in seconds',
 )
 
+executor_active_workflows = meter.create_up_down_counter(
+  'garf_workflow_active',
+  unit='1',
+  description='Counts number of active workflows',
+)
+workflow_requested = meter.create_counter(
+  'garf_workflow_run_requested_total',
+  unit='1',
+  description='Counts number of workflow run was requested',
+)
 workflow_counter = meter.create_counter(
   'garf_workflow_run_total',
   unit='1',

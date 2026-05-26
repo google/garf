@@ -50,6 +50,7 @@ class ApiQueryExecutor(executor.Executor):
     fetcher: report_fetcher.ApiReportFetcher,
     report_simulator: simulator.ApiReportSimulator | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
+    source: str | None = None,
   ) -> None:
     """Initializes ApiQueryExecutor.
 
@@ -61,6 +62,7 @@ class ApiQueryExecutor(executor.Executor):
     self.simulator = report_simulator
     self.writers = writers
     super().__init__(
+      source=source,
       preprocessors=self.fetcher.preprocessors,
       postprocessors=self.fetcher.postprocessors,
     )
