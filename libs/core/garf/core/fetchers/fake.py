@@ -50,14 +50,12 @@ class FakeApiReportFetcher(report_fetcher.ApiReportFetcher):
     **kwargs: str,
   ) -> None:
     if not api_client:
-      if data:
-        api_client = api_clients.FakeApiClient(results=list(data))
-      elif data_location := json_location or csv_location or data_location:
-        api_client = api_clients.FakeApiClient.from_file(data_location)
-      else:
-        raise report_fetcher.ApiReportFetcherError(
-          'Missing fake data for the fetcher.'
-        )
+      api_client = api_clients.FakeApiClient(
+        results=data,
+        data_location=json_location or csv_location or data_location,
+        options=api_clients.FakeApiClientOptions(**kwargs),
+        **kwargs,
+      )
     super().__init__(api_client, parser, query_specification_builder, **kwargs)
 
   @classmethod
