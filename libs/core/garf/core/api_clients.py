@@ -21,6 +21,9 @@ import csv
 import ipaddress
 import json
 import os
+import random
+import string
+import time
 from collections.abc import Sequence
 from typing import Any, Union
 from urllib.parse import urlparse
@@ -30,7 +33,7 @@ import requests
 import smart_open
 from garf.core import exceptions, query_editor, telemetry
 from garf.core.telemetry import tracer
-from opentelemetry import metrics, trace
+from opentelemetry import trace
 from typing_extensions import TypeAlias, override
 
 ApiRowElement: TypeAlias = Union[int, float, str, bool, list, dict, None]
@@ -163,30 +166,83 @@ class RestApiClient(BaseClient):
     raise GarfApiError('Failed to get data from API, reason: ', response.text)
 
 
+class FakeApiClientOptions(pydantic.BaseModel):
+  model_config = pydantic.ConfigDict(extra='allow')
+
+  n_rows: int = 0
+  delay_seconds: float = 0.0
+  failure_rate: float = 0.0
+
+
 class FakeApiClient(BaseClient):
   """Fake class for specifying API client."""
 
   def __init__(
     self,
-    results: Sequence[dict[str, Any]],
+    results: Sequence[dict[str, Any]] | None = None,
     results_placeholder: Sequence[dict[str, Any]] | None = None,
+    options: FakeApiClientOptions = FakeApiClientOptions(),
     **kwargs: str,
   ) -> None:
     """Initializes FakeApiClient."""
-    self.results = list(results)
+    if data := kwargs.get('data'):
+      self.results = list(data)
+    elif data_location := kwargs.get('data_location'):
+      self.results = FakeApiClient.from_file(data_location).results
+    else:
+      self.results = list(results) if results else []
     self.results_placeholder = (
       self.results if not results_placeholder else list(results_placeholder)
     )
     self.kwargs = kwargs
+    self.options = (
+      FakeApiClientOptions(**options) if isinstance(options, dict) else options
+    )
+    if (
+      not self.results
+      and not self.options.n_rows
+      and not self.results_placeholder
+    ):
+      raise GarfApiError('Missing data for FakeApiClient')
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self, request: query_editor.BaseQueryElements | None = None, **kwargs: str
   ) -> GarfApiResponse:
-    del request
+    if n_rows := self.options.n_rows:
+      results = []
+      for row in range(n_rows):
+        results.append(self._convert_request(request))
+    else:
+      results = self.results
+    results_placeholder = self.results_placeholder or results
+    if (
+      failure_rate := self.options.failure_rate
+    ) and random.random() < failure_rate:
+      raise GarfApiError(f'Failed with failure_rate {failure_rate}')
+    if delay := self.options.delay_seconds:
+      time.sleep(delay)
     return GarfApiResponse(
-      results=self.results, results_placeholder=self.results_placeholder
+      results=results, results_placeholder=results_placeholder
     )
+
+  def _convert_request(self, request: query_editor.BaseQueryElements):
+    characters = string.ascii_letters + string.digits
+    conversion_rules = {
+      'float': lambda: random.uniform(0, 100),
+      'int': lambda: int(random.uniform(0, 100)),
+      'bool': lambda: random.choice([True, False]),
+      'string': lambda: ''.join(random.choices(characters, k=8)),
+    }
+    conversion_rules['str'] = conversion_rules['string']
+    results = {}
+    for field in request.fields:
+      _, field_type = field.split('.')
+      if field_value := conversion_rules.get(field_type):
+        results[field] = field_value()
+      else:
+        results[field] = ''
+    return results
 
   @override
   def get_types(self, request=None, nested=None):
@@ -199,7 +255,9 @@ class FakeApiClient(BaseClient):
     return results
 
   @classmethod
-  def from_file(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
+  def from_file(
+    cls, file_location: str | os.PathLike[str], **kwargs
+  ) -> FakeApiClient:
     """Initializes FakeApiClient from json or csv files.
 
     Args:
@@ -212,15 +270,17 @@ class FakeApiClient(BaseClient):
       GarfApiError: When file with unsupported extension is provided.
     """
     if str(file_location).endswith('.json'):
-      return FakeApiClient.from_json(file_location)
+      return FakeApiClient.from_json(file_location, **kwargs)
     if str(file_location).endswith('.csv'):
-      return FakeApiClient.from_csv(file_location)
+      return FakeApiClient.from_csv(file_location, **kwargs)
     raise GarfApiError(
       'Unsupported file extension, only csv and json are supported.'
     )
 
   @classmethod
-  def from_json(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
+  def from_json(
+    cls, file_location: str | os.PathLike[str], **kwargs
+  ) -> FakeApiClient:
     """Initializes FakeApiClient from json file.
 
     Args:
@@ -235,12 +295,14 @@ class FakeApiClient(BaseClient):
     try:
       with smart_open.open(file_location, 'r', encoding='utf-8') as f:
         data = json.load(f)
-        return FakeApiClient(data)
+        return FakeApiClient(data, **kwargs)
     except FileNotFoundError as e:
       raise GarfApiError(f'Failed to open {file_location}') from e
 
   @classmethod
-  def from_csv(cls, file_location: str | os.PathLike[str]) -> FakeApiClient:
+  def from_csv(
+    cls, file_location: str | os.PathLike[str], **kwargs
+  ) -> FakeApiClient:
     """Initializes FakeApiClient from csv file.
 
     Args:
@@ -260,7 +322,7 @@ class FakeApiClient(BaseClient):
           data.append(
             {key: _field_converter(value) for key, value in row.items()}
           )
-        return FakeApiClient(data)
+        return FakeApiClient(data, **kwargs)
     except (AttributeError, FileNotFoundError) as e:
       raise GarfApiError(f'Failed to open {file_location}') from e
 

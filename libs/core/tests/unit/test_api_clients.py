@@ -15,12 +15,61 @@
 import csv
 import json
 import pathlib
+import time
 
 import pytest
-from garf.core import api_clients
+from garf.core import api_clients, query_editor
 
 
 class TestFakeApiClient:
+  def test_get_response_generates_data_from_request(self):
+    n_rows = 10
+    api_client = api_clients.FakeApiClient(
+      options=api_clients.FakeApiClientOptions(n_rows=n_rows)
+    )
+    test_query = """
+    SELECT
+      metric.float AS float,
+      metric.int AS int,
+      dimension.string AS string,
+      dimension.bool AS bool
+    FROM fake
+    """
+    request = query_editor.QuerySpecification(text=test_query).generate()
+    response = api_client.get_response(request)
+    assert len(response.results) == n_rows
+
+    response_types = [type(v) for v in response.results[0].values()]
+    assert response_types == [float, int, str, bool]
+
+  @pytest.mark.parametrize('delay_seconds', [0.0, 0.1, 0.5])
+  def test_get_response_respects_delay_seconds_option(self, delay_seconds):
+    data = [
+      {'field1': 1, 'field2': 2},
+      {'field1': 10, 'field2': 20},
+    ]
+    api_client = api_clients.FakeApiClient(
+      results=data,
+      options=api_clients.FakeApiClientOptions(delay_seconds=delay_seconds),
+    )
+    start_time = time.perf_counter()
+    api_client.get_response()
+    duration = time.perf_counter() - start_time
+    assert duration > delay_seconds
+
+  def test_get_response_respects_failure_rate_option(self):
+    data = [
+      {'field1': 1, 'field2': 2},
+      {'field1': 10, 'field2': 20},
+    ]
+    api_client = api_clients.FakeApiClient(
+      results=data, options=api_clients.FakeApiClientOptions(failure_rate=1.0)
+    )
+    with pytest.raises(
+      api_clients.GarfApiError, match='Failed with failure_rate 1.0'
+    ):
+      api_client.get_response()
+
   def test_from_csv_returns_correct_results(self, tmp_path):
     data = [
       {'field1': 1, 'field2': 2},
