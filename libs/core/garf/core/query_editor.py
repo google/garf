@@ -45,7 +45,7 @@ class GarfQueryParameters(pydantic.BaseModel):
   @property
   def hash(self) -> str:
     hash_fields = self.model_dump(exclude_none=True)
-    return hashlib.md5(json.dumps(hash_fields).encode('utf-8')).hexdigest()
+    return hashlib.md5(json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False).hexdigest()
 
   def __eq__(self, other) -> bool:
     return (self.macro, self.template) == (other.macro, other.template)
@@ -121,7 +121,7 @@ class BaseQueryElements(pydantic.BaseModel):
   @property
   def hash(self) -> str:
     hash_fields = self.model_dump(exclude_none=True, exclude={'title', 'text'})
-    return hashlib.md5(json.dumps(hash_fields).encode('utf-8')).hexdigest()
+    return hashlib.md5(json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False).hexdigest()
 
 
 class CommonParametersMixin:

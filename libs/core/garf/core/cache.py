@@ -83,7 +83,7 @@ class GarfCache:
     """
     args_hash = args.hash if args else ''
     kwargs_hash = (
-      hashlib.md5(json.dumps(kwargs).encode('utf-8')).hexdigest()
+      hashlib.md5(json.dumps(kwargs).encode('utf-8'), usedforsecurity=False).hexdigest()
       if kwargs
       else ''
     )
@@ -117,7 +117,7 @@ class GarfCache:
     self.location.mkdir(parents=True, exist_ok=True)
     args_hash = args.hash if args else ''
     kwargs_hash = (
-      hashlib.md5(json.dumps(kwargs).encode('utf-8')).hexdigest()
+      hashlib.md5(json.dumps(kwargs).encode('utf-8'), usedforsecurity=False).hexdigest()
       if kwargs
       else ''
     )
