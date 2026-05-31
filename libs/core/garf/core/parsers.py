@@ -239,7 +239,7 @@ class DictParser(BaseParser):
     """Returns nested fields from a dictionary."""
     if not isinstance(row, Mapping):
       raise GarfParserError
-    if result := row.get(key):
+    if (result := row.get(key)) is not None:
       return result
     return self.get_row_element(row, key)
 
