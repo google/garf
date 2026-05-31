@@ -34,13 +34,63 @@ from garf.core.telemetry import tracer
 
 logger = logging.getLogger(__name__)
 
-VALID_VIRTUAL_COLUMN_OPERATORS = (
-  ast.BinOp,
-  ast.UnaryOp,
-  ast.operator,
-  ast.Constant,
-  ast.Expression,
-)
+# Allowed AST node types for safe virtual column expression evaluation.
+# This replaces the original VALID_VIRTUAL_COLUMN_OPERATORS tuple which
+# incorrectly included `ast.operator` (a module, not a type) causing
+# isinstance() to fail for some operator nodes and creating a fragile
+# dependency on Python version internals.
+_ALLOWED_VIRTUAL_COLUMN_NODES: frozenset[type[ast.AST]] = frozenset({
+    ast.BinOp,
+    ast.UnaryOp,
+    ast.Constant,
+    ast.Expression,
+})
+
+
+class _SafeEvaluator(ast.NodeVisitor):
+  """Safe AST evaluator for virtual column expressions.
+
+  Replaces the previous eval()-based approach. Only evaluates arithmetic
+  expressions (BinaryOp, UnaryOp, Constant) with no access to builtins,
+  globals, or any callable objects. Impossible to escape via attribute
+  access (.__class__.__bases__...), subscript ([]), or function calls.
+  """
+
+  def visit_Constant(self, node: ast.Constant) -> Any:
+    return node.value
+
+  def visit_BinOp(self, node: ast.BinOp) -> Any:
+    left = self.visit(node.left)
+    right = self.visit(node.right)
+    # Map AST operator classes to operator module functions
+    op_map = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.FloorDiv: operator.floordiv,
+        ast.Mod: operator.mod,
+        ast.Pow: operator.pow,
+    }
+    op_fn = op_map.get(type(node.op))
+    if op_fn is None:
+      raise ValueError(f'Unsupported binary operator: {type(node.op).__name__}')
+    return op_fn(left, right)
+
+  def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
+    operand = self.visit(node.operand)
+    op_map = {
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+        ast.Not: operator.not_,
+    }
+    op_fn = op_map.get(type(node.op))
+    if op_fn is None:
+      raise ValueError(f'Unsupported unary operator: {type(node.op).__name__}')
+    return op_fn(operand)
+
+  def generic_visit(self, node: ast.AST) -> Any:
+    raise ValueError(f'Node type not allowed in virtual column expression: {type(node).__name__}')
 
 
 class BaseParser(abc.ABC):
@@ -87,17 +137,15 @@ class BaseParser(abc.ABC):
     )
     try:
       tree = ast.parse(virtual_column_expression, mode='eval')
-      valid = all(
-        isinstance(node, VALID_VIRTUAL_COLUMN_OPERATORS)
-        for node in ast.walk(tree)
-      )
-      if valid:
-        return eval(
-          compile(tree, filename='', mode='eval'), {'__builtins__': None}
-        )
-    except ZeroDivisionError:
-      return 0
-    return None
+      # Reject expressions containing disallowed node types (Call, Attribute,
+      # Subscript, etc.) that could enable code execution or data exfiltration.
+      for node in ast.walk(tree):
+        if not isinstance(node, _ALLOWED_VIRTUAL_COLUMN_NODES):
+          return None
+      evaluator = _SafeEvaluator()
+      return evaluator.visit(tree.body)
+    except (ZeroDivisionError, ValueError, TypeError):
+      return None
 
   def process_virtual_column(
     self,
