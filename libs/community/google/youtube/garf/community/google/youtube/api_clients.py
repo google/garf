@@ -85,6 +85,16 @@ _SAFE_OPS = {
   '<=': operator.le,
 }
 
+# Safe operator table for date comparisons (mirrors _SAFE_OPS to prevent eval injection)
+_DATE_OPS = {
+  '==': lambda a, b: a == b,
+  '!=': lambda a, b: a != b,
+  '>':  lambda a, b: a > b,
+  '>=': lambda a, b: a >= b,
+  '<':  lambda a, b: a < b,
+  '<=': lambda a, b: a <= b,
+}
+
 
 class YouTubeDataApiClientError(exceptions.GarfYouTubeDataApiError):
   """API client specific exception."""
@@ -229,13 +239,14 @@ class YouTubeDataApiClient(api_clients.BaseClient):
             key = comparator.field.split('.')
             res = functools.reduce(operator.getitem, key, row)
             if isinstance(comparator.value, datetime.date):
-              expr = f'res {comparator.operator} comp'
-              include_row = eval(
-                expr,
-                {
-                  'res': dateutil.parser.parse(res).date(),
-                  'comp': comparator.value,
-                },
+              op_fn = _DATE_OPS.get(comparator.operator)
+              if op_fn is None:
+                raise YouTubeDataApiClientError(
+                  f'Unsupported date filter operator: {comparator.operator!r}'
+                )
+              include_row = op_fn(
+                dateutil.parser.parse(res).date(),
+                comparator.value,
               )
             else:
               op_fn = _SAFE_OPS.get(comparator.operator)
