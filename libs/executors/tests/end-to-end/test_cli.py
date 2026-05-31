@@ -16,6 +16,7 @@
 
 import json
 import pathlib
+import shlex
 import subprocess
 import sys
 
@@ -99,8 +100,7 @@ class TestCli:
       '--loglevel ERROR'
     )
     result = subprocess.run(
-      command,
-      shell=True,
+      shlex.split(command),
       check=False,
       capture_output=True,
       text=True,
@@ -123,8 +123,7 @@ class TestCli:
       '--loglevel ERROR'
     )
     result = subprocess.run(
-      command,
-      shell=True,
+      shlex.split(command),
       check=False,
       capture_output=True,
       text=True,
@@ -146,8 +145,7 @@ class TestCli:
       '--loglevel ERROR'
     )
     result = subprocess.run(
-      command,
-      shell=True,
+      shlex.split(command),
       check=False,
       capture_output=True,
       text=True,
@@ -162,8 +160,7 @@ class TestCli:
     workflow_path = _SCRIPT_PATH / 'test_workflow.yaml'
     command = f'{command} {str(workflow_path)} --loglevel ERROR'
     result = subprocess.run(
-      command,
-      shell=True,
+      shlex.split(command),
       check=False,
       capture_output=True,
       text=True,
@@ -183,8 +180,7 @@ class TestCli:
       f'{command} {str(workflow_path)} --loglevel ERROR -c {str(tmp_config)}'
     )
     result = subprocess.run(
-      command,
-      shell=True,
+      shlex.split(command),
       check=False,
       capture_output=True,
       text=True,
