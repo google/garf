@@ -41,7 +41,7 @@ class KnowledgeGraphApiClient(api_clients.BaseClient):
       'limit': 100,
       'key': self.api_key,
     }
-    response = requests.get(service_url, params=params)
+    response = requests.get(service_url, params=params, timeout=10)
     results = []
     for result in response.json().get('itemListElement', []):
       tmp_result = result.get('result')

@@ -154,7 +154,7 @@ class RestApiClient(BaseClient):
     for param in request.filters:
       key, value = param.split('=')
       params[key.strip()] = value.strip()
-    response = requests.get(url, params=params, headers=kwargs)
+    response = requests.get(url, params=params, headers=kwargs, timeout=10)
     if response.status_code == self.OK:
       results = response.json()
       if not isinstance(results, list):
