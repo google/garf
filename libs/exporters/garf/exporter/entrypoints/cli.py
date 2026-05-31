@@ -59,7 +59,7 @@ def healthcheck(host: str, port: int) -> bool:
     Whether or not the check is successful.
   """
   try:
-    res = requests.get(f'http://{host}:{port}/metrics/').text.split('\n')
+    res = requests.get(f'http://{host}:{port}/metrics/', timeout=5).text.split('\n')
   except requests.exceptions.ConnectionError:
     return False
   last_exported = [r for r in res if 'export_completed_seconds 1' in r][

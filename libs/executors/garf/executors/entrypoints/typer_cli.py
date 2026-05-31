@@ -231,7 +231,7 @@ def execute(
         'context': rest_context,
       }
       try:
-        response = requests.post(url=endpoint, json=request, headers=headers)
+        response = requests.post(url=endpoint, json=request, headers=headers, timeout=10)
         response.raise_for_status()
       except requests.exceptions.HTTPError as e:
         raise exceptions.GarfExecutorError(
@@ -250,7 +250,7 @@ def execute(
           'context': rest_context,
         }
         try:
-          response = requests.post(url=endpoint, json=request, headers=headers)
+          response = requests.post(url=endpoint, json=request, headers=headers, timeout=10)
           response.raise_for_status()
         except requests.exceptions.HTTPError as e:
           raise exceptions.GarfExecutorError(
