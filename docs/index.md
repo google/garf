@@ -24,6 +24,7 @@ and write it virtually anywhere.
 * [Google Analytics](fetchers/google-analytics-api.md)
 * [Google Merchant Center](fetchers/merchant-center-api.md)
 * [Bid Manager](fetchers/bid-manager.md)
+* [Campaign Manager 360](fetchers/campaign-manager.md)
 * [Google Ads](fetchers/google-ads.md)
 * [Search Ads 360](fetchers/google-ads.md#search-ads-360)
 * [REST](fetchers/rest.md)
