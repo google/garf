@@ -4,7 +4,8 @@
 
 | CLI identifier | Fetcher Class | Library | Options |
 | :--- | :--- | :--- | :--- |
-| [`bid-manager`](bid-manager.md) | `BidManagerApiReportFetcher` | `garf-bid-manager` | `credentials_file`, `auth_mode` |
+| [`bid-manager`](bid-manager.md) | `BidManagerApiReportFetcher` | `garf-bid-manager` | `credentials_file`, `auth_mode` | |
+| [`campaign-manager`](campaign-manager.md) | `CampaignManager360ApiReportFetcher` | `garf-campaign-manager` | `profile_id`, `credentials_file`, `auth_mode` |
 | [`google-ads`](google-ads.md) | `GoogleAdsApiReportFetcher` | `garf-google-ads` | `account`, `path-to-config`, `expand-mcc`, `customer-ids-query`, `version` |
 | [`google-analytics`](google-analytics-api.md) | `GoogleAnalyticsApiReportFetcher` | `garf-google-analytics` | `property_id` |
 | [`merchant-api`](merchant-center-api.md) | `MerchantApiReportFetcher` | `garf-merchant-api` | `account` |
