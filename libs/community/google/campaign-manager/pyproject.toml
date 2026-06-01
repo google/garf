@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-campaign-manager"
+dependencies = [
+  "garf-core>=1.0.0",
+  "garf-io>=1.0.0",
+  "google-api-python-client",
+  "google_auth_oauthlib",
+  "tenacity",
+]
+authors = [
+  {name = "Andrei Markin", email = "amarkin@google.com"},
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+license = {text = "Apache 2.0"}
+requires-python = ">=3.9"
+description = "Garf implementation for Google Campaign Manager 360 API"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+dynamic=["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf.community.google.campaign_manager.__version__"}
+
+[project.entry-points.garf]
+campaign-manager = "garf.community.google.campaign_manager.report_fetcher"
+
+[options.extras_require]
+test =  [
+  "pytest",
+  "pytest-cov",
+  "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf.*"]
