@@ -13,3 +13,4 @@
 | [`search-ads-360`](google-ads.md#search-ads-360) | `SearchAds360ApiReportFetcher` | `garf-google-ads[search-ads-360]` | `account`, `path-to-config`, `expand-mcc`, `customer-ids-query` |
 | [`youtube-analytics`](youtube.md#youtube-analytics-api) | `YouTubeAnalyticsApiReportFetcher` | `garf-youtube` | |
 | [`youtube-data-api`](youtube.md#youtube-data-api) | `YouTubeDataApiReportFetcher` | `garf-youtube` | `id`, `forHandle`, `forUsername`, `regionCode`, `chart`, `videoId` |
+| [`media-tagging`](media-tagging.md) | `MediaTaggingApiReportFetcher` | `garf-media-tagging` | `db-uri`, `endpoint` |
