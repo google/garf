@@ -142,7 +142,7 @@ def execute_workflow(
   execution_workflow: workflow.Workflow,
   selected_aliases: list[str],
   skipped_aliases: list[str],
-  simulate: bool,
+  simulate: bool = False,
 ):
   """Executes a batch of queries."""
   runner = workflow_runner.WorkflowRunner(execution_workflow=execution_workflow)

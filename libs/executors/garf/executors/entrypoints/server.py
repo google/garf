@@ -202,6 +202,7 @@ async def execute_workflow_task(
   config_path: str | pathlib.Path = None,
   selected_aliases: Optional[list[str]] = None,
   skipped_aliases: Optional[list[str]] = None,
+  simulate: bool = False,
 ) -> dict[str, str]:
   """Creates a single operation for running garf workflow."""
   telemetry.workflow_requested.add(1)
@@ -217,6 +218,7 @@ async def execute_workflow_task(
     execution_workflow=execution_workflow.model_dump(),
     selected_aliases=selected_aliases,
     skipped_aliases=skipped_aliases,
+    simulate=simulate,
   )
   span.set_attribute('garf.operation.id', task.id)
   return {'operation_id': task.id, 'status': 'PENDING'}
