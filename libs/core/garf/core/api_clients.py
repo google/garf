@@ -142,9 +142,12 @@ class RestApiClient(BaseClient):
 
   OK = 200
 
-  def __init__(self, endpoint: str, **kwargs: str) -> None:
+  def __init__(
+    self, endpoint: str, allow_unsafe_endpoint: bool = False, **kwargs: str
+  ) -> None:
     """Initializes RestApiClient."""
-    _validate_endpoint_url(endpoint)
+    if not allow_unsafe_endpoint:
+      _validate_endpoint_url(endpoint)
     self.endpoint = endpoint
     self.query_args = kwargs
 
@@ -157,7 +160,8 @@ class RestApiClient(BaseClient):
     for param in request.filters:
       key, value = param.split('=')
       params[key.strip()] = value.strip()
-    response = requests.get(url, params=params, headers=kwargs)
+    headers = {k: v for k, v in kwargs.items() if not isinstance(v, bool)}
+    response = requests.get(url, params=params, headers=headers)
     if response.status_code == self.OK:
       results = response.json()
       if not isinstance(results, list):
