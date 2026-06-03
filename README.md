@@ -26,9 +26,11 @@ and writes it virtually anywhere.
 * [Google Analytics](https://google.github.io/garf/fetchers/google-analytics-api/)
 * [Google Merchant Center](https://google.github.io/garf/fetchers/merchant-center-api/)
 * [Bid Manager](https://google.github.io/garf/fetchers/bid-manager/)
+* [Campaign Manager](https://google.github.io/garf/fetchers/campaign-manager/)
 * [Google Ads](https://google.github.io/garf/fetchers/google-ads/)
 * [Search Ads 360](https://google.github.io/garf/fetchers/google-ads/#search-ads-360)
-* [REST](fetchers/rest.md)
+* [REST](https://google.github.io/garf/fetchers/rest.md)
+* [Prometheus HTTP API](https://google.github.io/garf/fetchers/prometheus.md)
 
 
 ## Installation
