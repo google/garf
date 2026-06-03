@@ -14,3 +14,4 @@
 | [`youtube-analytics`](youtube.md#youtube-analytics-api) | `YouTubeAnalyticsApiReportFetcher` | `garf-youtube` | |
 | [`youtube-data-api`](youtube.md#youtube-data-api) | `YouTubeDataApiReportFetcher` | `garf-youtube` | `id`, `forHandle`, `forUsername`, `regionCode`, `chart`, `videoId` |
 | [`media-tagging`](media-tagging.md) | `MediaTaggingApiReportFetcher` | `garf-media-tagging` | `db-uri`, `endpoint` |
+| [`prometheus`](prometheus.md) | `PrometheusApiReportFetcher` | `garf-prometheus` | `endpoint` |

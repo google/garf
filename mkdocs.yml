@@ -104,3 +104,4 @@ nav:
     - Campaign Manager 360: fetchers/campaign-manager.md
     - Google Ads: fetchers/google-ads.md
     - Media Tagging: fetchers/media-tagging.md
+    - Prometheus: fetchers/prometheus.md
