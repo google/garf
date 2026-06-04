@@ -181,6 +181,30 @@ report = report_fetcher.fetch(query)
 
     ```
 
+`FakeApiReportFetcher` supports specifying requested data types in a query.
+
+4 types of data can be generated:
+
+  * `float`
+  * `int`
+  * `str`
+  * `bool`
+
+Suppose you want to generate 4 metrics of each type.
+
+```python
+query = """
+SELECT
+  metric.float AS float,
+  metric.int AS int,
+  dimension.string AS string,
+  dimension.bool AS bool
+FROM fake
+"""
+
+report = report_fetcher.fetch(query)
+```
+
 ### Rest
 
 `RestApiReportFetcher` is based on [`RestApiClient`](api-client.md#rest).

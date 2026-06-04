@@ -94,4 +94,4 @@ Now you can explore various options `garf` provides:
 * **How to write queries**: Learn an extensive [SQL syntax](../usage/queries.md) capabilities `garf` supports.
 * **How to use garf in your Python projects**: `garf` makes it easy to [fetch data](../usage/fetcher.md) and works with fetched [reports](../usage/reports.md).
 * **Supported writers**: Learn where you can [write data](../usage/writers.md) fetched from your APIs.
-* **Executors**: Learn how to process multiple queries with [executors](../usage/executors.md).
+* **Executors**: Learn how to process multiple queries with [executors](../usage/executors.md) and [workflows](../usage/workflows.md).
