@@ -12,9 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 SELECT
-  dimensions.advertiser AS advertiser,
-  advertiserId AS advertiser_id,
-  metrics.clicks AS clicks
-FROM standard
-WHERE
-  dateRange IN (2026-05-01, 2026-05-02)
+  advertiser,
+  metrics.uniqueReachClickReach AS click_reach
+FROM reach
+WHERE dateRange IN (2026-05-01, 2026-05-02)

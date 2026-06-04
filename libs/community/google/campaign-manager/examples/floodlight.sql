@@ -12,9 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 SELECT
-  dimensions.advertiser AS advertiser,
-  advertiserId AS advertiser_id,
-  metrics.clicks AS clicks
-FROM standard
-WHERE
-  dateRange IN (2026-05-01, 2026-05-02)
+  advertiser,
+  floodlightConfigId AS floodlight_config_id,
+  metrics.floodlightImpressions AS impressions
+FROM floodlight
+WHERE dateRange IN (2026-05-01, 2026-05-02)
