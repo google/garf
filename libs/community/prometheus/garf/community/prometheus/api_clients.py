@@ -32,16 +32,8 @@ class PrometheusApiClient(api_clients.RestApiClient):
     **kwargs: str,
   ) -> api_clients.GarfApiResponse:
     url = f'{self.endpoint}/api/v1/{request.resource_name}'
-    params = {}
-    for field in request.fields:
-      if field == 'timestamp':
-        continue
-      params['query'] = field
-    for element in request.filters:
-      key, value = element.split(' = ')
-      params[key.strip()] = value.strip().replace(' ', '')
     headers = {k: v for k, v in kwargs.items() if not isinstance(v, bool)}
-    response = requests.get(url, params=params, headers=headers)
+    response = requests.get(url, params=request.filters, headers=headers)
     if response.status_code == self.OK:
       results = response.json()
       if request.resource_name == 'query_range':

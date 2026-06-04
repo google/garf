@@ -12,8 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+"""Formats Garf Prometheus query for simplified API requests."""
+
+import re
+from typing import override
+
+import dateutil
 from garf.core import query_editor
 
 
 class PrometheusApiQuery(query_editor.QuerySpecification):
   """Query to Prometheus API."""
+
+  @override
+  def generate(self):
+    query = super().generate()
+    updated_filters = {}
+    for filter_statement in query.filters:
+      key, value = filter_statement.split('=')
+      if re.match('^(start|end).*$', key):
+        value = value.strip().replace(' ', '')
+        formatted_datetime = dateutil.parser.parse(value).strftime(
+          '%Y-%m-%dT%H:%M:%S.000Z'
+        )
+        updated_filters[key.strip()] = formatted_datetime
+      else:
+        updated_filters[key.strip()] = value.strip()
+    query.filters = updated_filters
+    return query
