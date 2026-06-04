@@ -8,8 +8,22 @@ ApiClient is responsible for sending request to an API based on the query.
 
 `FakeApiClient` is ideal for prototyping and test.
 
-It allows you to specify sample response from an API as JSON or a dictionary.
+It allows you to specify sample response from an API as data (dictionary, CSV, JSON) or generate it from the query itself.
 
+
+#### From query
+
+`FakeApiClient` supports specifying requested data types in a query.
+
+4 types of data can be generated:
+
+  * `float`
+  * `int`
+  * `str`
+  * `bool`
+
+
+#### From data
 ```python
 from garf.core.api_clients import FakeApiClient
 
@@ -31,6 +45,21 @@ api_client = FakeApiClient.from_csv('path/to/csv')
 !!! note
     You can simplify fetching fake data with [`FakeApiReportFetcher`](fetcher.md#fake).
 
+#### Options
+
+`FakeApiClient` supports several options:
+
+* `failure_rate` - value from 0 to 1 to simulate API failure.
+* `delay_seconds` - delay before returning fake data.
+* `n_rows` - (for *from_query* option only) - specifies how many rows of data should be generated.
+
+```python
+from garf.core.api_clients import FakeApiClient
+
+api_client = FakeApiClient(
+  options={'n_rows': 10, 'delay_seconds': 10, 'failure_rate': 0.5}
+)
+```
 
 ### REST
 

@@ -44,9 +44,35 @@ first_campaign_row = campaigns[0]
 first_10_rows_from_campaigns = campaigns[0:10]
 ```
 
+#### Combining
+
+You can combine reports that share the same structure.
+
+```python
+report1 = GarfReport(results=[[1]], column_names=['column'])
+report2 = GarfReport(results=[[2]], column_names=['column'])
+
+combined_report = report1 + report2
+```
+
+When combining multiple reports you can use `functools.reduce` together with
+`operator.add` to simplify addition.
+
+```python
+import functools
+import operator
+
+reports = [report1, report2]
+combined_report = functools.reduce(operator.add, reports)
+```
+
+
 #### Converting
 
-`GarfReport` can be easily converted to common data structures:
+`GarfReport` can be easily converted to common data structures.
+
+
+##### to list
 
 ```python
 # convert `campaigns` to list of lists
@@ -65,14 +91,18 @@ campaigns_list = campaigns["campaign_id"].to_list(distinct=True)
 # each dictionary maps report column to its value, i.e.
 # {"campaign_name": "test_campaign", "campaign_id": 1, "clicks": 10}
 campaigns_list = campaigns.to_list(row_type="dict")
+```
 
-# convert `campaigns` to pandas DataFrame
+##### to pandas & polars
+
+```python
 campaigns_df = campaigns.to_pandas()
-
-# convert `campaigns` to polars DataFrame
 campaigns_df = campaigns.to_polars()
+```
 
-# convert `campaigns` to dictionary
+##### to dictionary
+
+```python
 # map campaign_id to campaign_name one-to-one
 campaigns_dict = campaigns.to_dict(
   key_column="campaign_id",
@@ -94,11 +124,17 @@ campaigns_dict = campaigns.to_dict(
   value_column_output="dict",
 )
 ```
+##### to json & jsonl
+```python
+campaigns_json = campaigns.to_json()
+campaigns_jsonl = campaigns.to_jsonl()
 ```
 
 #### Building
 
-`GarfReport` can be easily built from pandas or polars data frame:
+`GarfReport` can be easily built other data structures.
+
+##### from pandas & polars
 
 ```python
 import pandas as pd
@@ -112,6 +148,14 @@ report = GarfReport.from_pandas(df)
 df = pl.DataFrame(data=[[1]], schema=["one"], orient='row')
 report = GarfReport.from_polars(df)
 ```
+
+##### from json
+
+```python
+json_str = "[{\"one\": 1}]"
+report = GarfReport.from_json(json_str)
+```
+
 
 #### Saving
 
