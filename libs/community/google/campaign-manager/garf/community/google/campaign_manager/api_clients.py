@@ -228,12 +228,32 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
 
 def _build_request(request: query_editor.CampaignManager360ApiQuery):
   """Builds CM360 API query object from CampaignManager360ApiQuery."""
+  criteria_mapping = {
+    'standard': 'criteria',
+    'reach': 'reachCriteria',
+    'path_to_conversion': 'pathToConversionCriteria',
+    'floodlight': 'floodlightCriteria',
+    'cross_dimension_reach': 'crossDimensionReachCriteria',
+  }
+  criteria = criteria_mapping.get(request.resource_name.lower())
   query = {
     'name': request.title or 'garf',
     'type': request.resource_name.upper(),
     'fileName': request.title or 'garf',
     'format': 'CSV',
-    'criteria': {'dateRange': {}},
+    criteria: {
+      'dateRange': {},
+      'dimensionFilters': [],
+      'reportProperties': {},
+      'customRichMediaEvents': [],
+      'floodlightConfigId': {},
+      'activities': {},
+      'reachByFrequencyMetricNames': [],
+      'activityFilters': [],
+      'conversionDimensions': [],
+      'perInteractionDimensions': [],
+      'customFloodlightVariables': [],
+    },
   }
 
   metrics = []
@@ -250,11 +270,21 @@ def _build_request(request: query_editor.CampaignManager360ApiQuery):
 
   for field in request.filters:
     name, operator, *value = field.split()
+    filter_type, *identifier = name.split('.')
     if name.startswith('dateRange'):
-      _, *date_identifier = name.split('.')
-      query['criteria']['dateRange'][date_identifier[0]] = value[0]
-  query['criteria']['dimensions'] = dimensions
-  query['criteria']['metricNames'] = metrics
+      query[criteria]['dateRange'][identifier[0]] = value[0]
+    elif name.startswith('dimension'):
+      query[criteria]['dimensionFilters'].append(
+        {'dimensionName': identifier[0], 'value': value[0]}
+      )
+    elif name.startswith('customRichMediaEvents'):
+      query[criteria]['customRichMediaEvents'].append(
+        {'dimensionName': identifier[0], 'value': value[0]}
+      )
+    elif name.startswith('reportProperties'):
+      query[criteria]['reportProperties'][identifier[0]] = value[0]
+  query[criteria]['dimensions'] = dimensions
+  query[criteria]['metricNames'] = metrics
   return query
 
 
