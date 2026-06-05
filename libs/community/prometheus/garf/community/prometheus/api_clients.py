@@ -26,6 +26,11 @@ class PrometheusApiClientError(exceptions.PrometheusApiError):
 class PrometheusApiClient(api_clients.RestApiClient):
   """Specifies client for interacting with Prometheus HTTP API."""
 
+  def __init__(
+    self, endpoint: str = 'http://localhost:9090', **kwargs: str
+  ) -> None:
+    super().__init__(endpoint=endpoint, **kwargs)
+
   def get_response(
     self,
     request: query_editor.PrometheusApiQuery,
