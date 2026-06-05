@@ -14,4 +14,4 @@
 
 """Library for interacting with Prometheus Query API via garf."""
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
