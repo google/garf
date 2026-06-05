@@ -19,6 +19,7 @@ from typing import Literal
 
 import rich
 from garf.core import report as garf_report
+from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 from rich import console, table
@@ -58,6 +59,9 @@ class ConsoleWriter(abs_writer.AbsWriter):
       destination: Base file name report should be written to.
     """
     report = self.format_for_write(report)
+    destination = formatter.format_extension(
+      destination, prefix=self.options.prefix, suffix=self.options.suffix
+    )
     if self.format == 'table':
       self._write_rich_table(report, destination)
     elif self.format == 'json':

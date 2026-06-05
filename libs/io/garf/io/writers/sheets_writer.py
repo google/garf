@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from typing import Literal
 
-from google.auth import exceptions as auth_exceptions
-
 try:
   import gspread
 except ImportError as e:
@@ -88,7 +86,9 @@ class SheetWriter(AbsWriter):
     report = self.format_for_write(report)
     if not destination:
       destination = f'Report {uuid.uuid4().hex}'
-    destination = formatter.format_extension(destination)
+    destination = formatter.format_extension(
+      destination, prefix=self.options.prefix, suffix=self.options.suffix
+    )
     num_data_rows = len(report) + 1
     try:
       sheet = self.spreadsheet.worksheet(destination)

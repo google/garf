@@ -72,7 +72,11 @@ class SearchWriter(abs_writer.AbsWriter):
     """
     with tracer.start_as_current_span(f'{self.name.lower()}.write'):
       report = self.format_for_write(report)
-      destination = formatter.format_extension(destination)
+      destination = formatter.format_extension(
+        destination,
+        prefix=self.options.prefix,
+        suffix=self.options.suffix,
+      )
       self._create_index_if_not_exists(destination)
 
       data = report.to_list(row_type='dict')

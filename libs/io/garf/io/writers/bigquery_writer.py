@@ -215,7 +215,9 @@ class BigQueryWriter(abs_writer.AbsWriter):
     """
     span = trace.get_current_span()
     report = self.format_for_write(report)
-    destination = formatter.format_extension(destination)
+    destination = formatter.format_extension(
+      destination, prefix=self.options.prefix, suffix=self.options.suffix
+    )
     table = f'{self.dataset_id}.{destination}'
     if not report:
       df = pd.DataFrame(

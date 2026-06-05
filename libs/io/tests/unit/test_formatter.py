@@ -219,7 +219,7 @@ class TestFormatterWithPlaceholders:
 def test_format_extension_returns_correct_extensions():
   default_output = formatter.format_extension('test_query.sql')
   default_output_custom_extension = formatter.format_extension(
-    'test_query.txt', '.txt'
+    'test_query.txt',
   )
   csv_output = formatter.format_extension(
     'test_query.sql', new_extension='.csv'
@@ -227,3 +227,12 @@ def test_format_extension_returns_correct_extensions():
   assert default_output == 'test_query'
   assert default_output_custom_extension == 'test_query'
   assert csv_output == 'test_query.csv'
+
+
+def test_format_extension_adds_prefix_and_sufix():
+  prefix = 'prefix'
+  suffix = 'suffix'
+  test_output = formatter.format_extension(
+    'test/test_query.sql', prefix=prefix, suffix=suffix
+  )
+  assert test_output == f'{prefix}_test_query_{suffix}'

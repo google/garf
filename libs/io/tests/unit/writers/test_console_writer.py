@@ -39,7 +39,7 @@ class TestConsoleTableWriter:
   def test_write_multi_column_report_returns_arrays(
     self, capsys, console_writer, sample_data
   ):
-    console_writer.array_handling = 'arrays'
+    console_writer.options.array_handling = 'arrays'
     console_writer.write(sample_data, _TMP_NAME)
     output = capsys.readouterr().out.strip()
     prepared_output = ' '.join(output.replace('\n', '').split())
@@ -49,7 +49,7 @@ class TestConsoleTableWriter:
   def test_write_multi_column_report_with_arrays_returns_concatenated_strings(
     self, capsys, console_writer, sample_data
   ):
-    console_writer.array_handling = 'strings'
+    console_writer.options.array_handling = 'strings'
     console_writer.write(sample_data, _TMP_NAME)
     output = capsys.readouterr().out.strip()
     prepared_output = ' '.join(output.replace('\n', '').split())
@@ -74,7 +74,7 @@ class TestConsoleJsonWriter:
   def test_write_multi_column_report_returns_arrays(
     self, capsys, console_writer, sample_data
   ):
-    console_writer.array_handling = 'arrays'
+    console_writer.options.array_handling = 'arrays'
     console_writer.write(sample_data, _TMP_NAME)
     output = capsys.readouterr().out.strip()
     prepared_output = ' '.join(output.replace('\n', '').split())
@@ -85,7 +85,7 @@ class TestConsoleJsonWriter:
   def test_write_multi_column_report_with_arrays_returns_concatenated_strings(
     self, capsys, console_writer, sample_data
   ):
-    console_writer.array_handling = 'strings'
+    console_writer.options.array_handling = 'strings'
     console_writer.write(sample_data, _TMP_NAME)
     output = capsys.readouterr().out.strip()
     prepared_output = ' '.join(output.replace('\n', '').split())
@@ -103,7 +103,7 @@ class TestConsoleJsonlWriter:
   def test_write_multi_column_report_returns_arrays(
     self, capsys, console_writer, sample_data
   ):
-    console_writer.array_handling = 'arrays'
+    console_writer.options.array_handling = 'arrays'
     console_writer.write(sample_data, _TMP_NAME)
     output = capsys.readouterr().out.strip()
     for i, res in enumerate(output.split('\n')):
@@ -113,7 +113,7 @@ class TestConsoleJsonlWriter:
   def test_write_multi_column_report_with_arrays_returns_concatenated_strings(
     self, capsys, console_writer, sample_data
   ):
-    console_writer.array_handling = 'strings'
+    console_writer.options.array_handling = 'strings'
     console_writer.write(sample_data, _TMP_NAME)
     output = capsys.readouterr().out.strip()
     for i, res in enumerate(output.split('\n')):

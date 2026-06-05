@@ -95,7 +95,7 @@ class TestJsonWriter:
         'column_3': [3, 4],
       },
     ]
-    json_writer.array_handling = 'arrays'
+    json_writer.options.array_handling = 'arrays'
     json_writer.write(sample_data, _TMP_FILENAME)
 
     with open(output, 'r') as f:
@@ -114,7 +114,7 @@ class TestJsonWriter:
         'column_3': '3|4',
       },
     ]
-    json_writer.array_handling = 'strings'
+    json_writer.options.array_handling = 'strings'
     json_writer.write(sample_data, _TMP_FILENAME)
 
     with open(output, 'r') as f:

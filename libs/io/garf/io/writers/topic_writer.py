@@ -19,6 +19,7 @@ import json
 import logging
 
 from garf.core import report as garf_report
+from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
@@ -69,6 +70,11 @@ class TopicWriter(abs_writer.AbsWriter):
     self._init_producer()
     with tracer.start_as_current_span('f{self.provider}.write') as span:
       span.set_attribute('writer.type', str(self.push_strategy))
+      destination = formatter.format_extension(
+        destination,
+        prefix=self.options.prefix,
+        suffix=self.options.suffix,
+      )
       topic = self.create_topic(topic=destination)
       if self.push_strategy == PushStrategy.REPORT:
         self._send(
