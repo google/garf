@@ -20,6 +20,7 @@ import asyncio
 import logging
 from typing import Literal
 
+import pydantic
 from garf.core.report import GarfReport
 from garf.io import formatter
 from garf.io.telemetry import tracer
@@ -27,24 +28,29 @@ from garf.io.telemetry import tracer
 logger = logging.getLogger(__name__)
 
 
+class WriterOptions(pydantic.BaseModel):
+  model_config = pydantic.ConfigDict(extra='allow')
+
+  array_handling: Literal['strings', 'arrays'] = 'strings'
+  array_separator: str = '|'
+  date_handling: Literal['strings', 'dates', 'datetimes', 'timestamps'] = (
+    'strings'
+  )
+  date_format_string: str | None = None
+  suffix: str | None = None
+  prefix: str | None = None
+
+
 class AbsWriter(abc.ABC):
   """Base class for defining writers."""
 
   def __init__(
     self,
-    array_handling: Literal['strings', 'arrays'] = 'strings',
-    array_separator: str = '|',
-    date_handling: Literal[
-      'strings', 'dates', 'datetimes', 'timestamps'
-    ] = 'strings',
-    date_format_string: str | None = None,
+    options: WriterOptions | None = None,
     **kwargs,
   ) -> None:
     """Initializes AbsWriter."""
-    self.array_handling = array_handling
-    self.array_separator = array_separator
-    self.date_handling = date_handling
-    self.date_format_string = date_format_string
+    self.options = options if options else WriterOptions(**kwargs)
     self.kwargs = kwargs
 
   async def awrite(self, report: GarfReport, destination: str) -> str | None:
@@ -61,10 +67,11 @@ class AbsWriter(abc.ABC):
   def format_for_write(self, report: GarfReport) -> GarfReport:
     """Prepares report for writing."""
     array_handling_strategy = formatter.ArrayHandlingStrategy(
-      type_=self.array_handling, delimiter=self.array_separator
+      type_=self.options.array_handling, delimiter=self.options.array_separator
     )
     date_handling_strategy = formatter.DateHandlingStrategy(
-      type=self.date_handling, format_string=self.date_format_string
+      type=self.options.date_handling,
+      format_string=self.options.date_format_string,
     )
     return formatter.format_report_for_writing(
       report, [array_handling_strategy, date_handling_strategy]

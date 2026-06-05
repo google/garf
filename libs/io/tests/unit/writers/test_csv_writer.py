@@ -46,7 +46,7 @@ class TestCsvWriter:
       'column_1,column_2,column_3',
       '1,two,"[3, 4]"',
     ]
-    csv_writer.array_handling = 'arrays'
+    csv_writer.options.array_handling = 'arrays'
     csv_writer.write(sample_data, _TMP_FILENAME)
     with open(output, 'r') as f:
       file = f.readlines()
@@ -60,7 +60,7 @@ class TestCsvWriter:
       'column_1,column_2,column_3',
       '1,two,3|4',
     ]
-    csv_writer.array_handling = 'strings'
+    csv_writer.options.array_handling = 'strings'
     csv_writer.write(sample_data, _TMP_FILENAME)
     with open(output, 'r') as f:
       file = f.readlines()

@@ -81,10 +81,15 @@ class CsvWriter(file_writer.FileWriter):
       destination: Base file name report should be written to.
 
     Returns:
-        Full path where data are written.
+      Full path where data are written.
     """
     report = self.format_for_write(report)
-    destination = formatter.format_extension(destination, new_extension='.csv')
+    destination = formatter.format_extension(
+      destination,
+      new_extension='.csv',
+      prefix=self.options.prefix,
+      suffix=self.options.suffix,
+    )
     self.create_dir()
     logger.debug('Writing %d rows of data to %s', len(report), destination)
     output_path = os.path.join(self.destination_folder, destination)

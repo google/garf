@@ -83,7 +83,10 @@ class ExcelWriter(file_writer.FileWriter):
 
     if not self.file:
       destination = formatter.format_extension(
-        destination, new_extension='.xlsx'
+        destination,
+        new_extension='.xlsx',
+        prefix=self.options.prefix,
+        suffix=self.options.suffix,
       )
       output_path = os.path.join(self.destination_folder, destination)
       sheet_name = 'garf'

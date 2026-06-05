@@ -68,7 +68,10 @@ class JsonWriter(file_writer.FileWriter):
     report = self.format_for_write(report)
     file_extension = '.json' if self.format == 'json' else '.jsonl'
     destination = formatter.format_extension(
-      destination, new_extension=file_extension
+      destination,
+      new_extension=file_extension,
+      prefix=self.options.prefix,
+      suffix=self.options.suffix,
     )
     self.create_dir()
     logger.debug('Writing %d rows of data to %s', len(report), destination)

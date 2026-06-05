@@ -64,11 +64,15 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
     """Writes Garf report to the table.
 
     Args:
-        report: GarfReport to be written.
-        destination: Name of the output table.
+      report: GarfReport to be written.
+      destination: Name of the output table.
     """
     report = self.format_for_write(report)
-    destination = formatter.format_extension(destination)
+    destination = formatter.format_extension(
+      destination,
+      prefix=self.options.prefix,
+      suffix=self.options.suffix,
+    )
     dtypes = {}
     if report:
       for column in report.column_names:

@@ -197,19 +197,27 @@ def format_report_for_writing(
 
 
 def format_extension(
-  path_object: str, current_extension: str = '.sql', new_extension: str = ''
+  path_object: str,
+  new_extension: str = '',
+  prefix: str | None = None,
+  suffix: str | None = None,
 ) -> str:
   """Formats query path to required extension.
 
   Args:
-      path_object: Path to query.
-      current_extension: Extension of the query.
-      new_extension: Required extension
+    path_object: Path to query.
+    current_extension: Extension of the query.
+    new_extension: Required extension
+    prefix: Custom string at the beginning of destination name.
+    suffix: Custom string at the end of destination name.
 
   Returns:
      Path with an updated extension.
   """
-  path_object_name = Path(path_object).name
-  if len(path_object_name.split('.')) > 1:
-    return path_object_name.replace(current_extension, new_extension)
-  return f'{path_object}{new_extension}'
+  path = Path(path_object)
+  prefix = f'{prefix}_' if prefix else ''
+  suffix = f'_{suffix}' if suffix else ''
+  path = path.parent / f'{prefix}{path.stem}{suffix}'
+  if new_extension:
+    path = path.with_suffix(new_extension)
+  return str(path.name)
