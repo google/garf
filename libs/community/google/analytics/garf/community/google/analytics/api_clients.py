@@ -23,6 +23,7 @@ from google.analytics.data_v1beta.types import (
   Dimension,
   Filter,
   FilterExpression,
+  FilterExpressionList,
   Metric,
   NumericValue,
   RunReportRequest,
@@ -114,7 +115,10 @@ def build_request(
           ),
         )
       )
-    request.metric_filter = FilterExpression(filter=metric_filters[0])
+    if len(metric_filters) > 1:
+      request.metric_filter = _build_and_multi_filter(metric_filters)
+    else:
+      request.metric_filter = FilterExpression(filter=metric_filters[0])
 
   if dimension_filter := filters.get('dimension_filter'):
     dimension_filters = []
@@ -122,7 +126,7 @@ def build_request(
       string_filter = d.get('string_filter')
       dimension_filters.append(
         Filter(
-          field_name=m.get('field_name'),
+          field_name=d.get('field_name'),
           string_filter=Filter.StringFilter(
             match_type=Filter.StringFilter.MatchType[
               string_filter.get('match_type')
@@ -131,5 +135,18 @@ def build_request(
           ),
         )
       )
-    request.dimension_filter = FilterExpression(filter=dimension_filters[0])
+    if len(dimension_filters) > 1:
+      request.dimension_filter = _build_and_multi_filter(dimension_filters)
+    else:
+      request.dimension_filter = FilterExpression(filter=dimension_filters[0])
+  if limit := query_elements.limit:
+    request.limit = limit
   return request
+
+
+def _build_and_multi_filter(filters: list[Filter]) -> FilterExpression:
+  return FilterExpression(
+    and_group=FilterExpressionList(
+      expressions=[FilterExpression(filter=f) for f in filters]
+    )
+  )
