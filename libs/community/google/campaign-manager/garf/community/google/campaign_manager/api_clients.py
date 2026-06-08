@@ -243,16 +243,6 @@ def _build_request(request: query_editor.CampaignManager360ApiQuery):
     'format': 'CSV',
     criteria: {
       'dateRange': {},
-      'dimensionFilters': [],
-      'reportProperties': {},
-      'customRichMediaEvents': [],
-      'floodlightConfigId': {},
-      'activities': {},
-      'reachByFrequencyMetricNames': [],
-      'activityFilters': [],
-      'conversionDimensions': [],
-      'perInteractionDimensions': [],
-      'customFloodlightVariables': [],
     },
   }
 
@@ -268,21 +258,35 @@ def _build_request(request: query_editor.CampaignManager360ApiQuery):
     else:
       dimensions.append({'name': field})
 
+  additional_filters = {
+    'dimensionFilters': [],
+    'reportProperties': {},
+    'customRichMediaEvents': {},
+    'floodlightConfigId': {},
+    'activities': {},
+    'reachByFrequencyMetricNames': [],
+    'activityFilters': [],
+    'conversionDimensions': [],
+    'perInteractionDimensions': [],
+    'customFloodlightVariables': [],
+  }
   for field in request.filters:
     name, operator, *value = field.split()
     filter_type, *identifier = name.split('.')
     if name.startswith('dateRange'):
       query[criteria]['dateRange'][identifier[0]] = value[0]
     elif name.startswith('dimension'):
-      query[criteria]['dimensionFilters'].append(
+      additional_filters['dimensionFilters'].append(
         {'dimensionName': identifier[0], 'value': value[0]}
       )
     elif name.startswith('customRichMediaEvents'):
-      query[criteria]['customRichMediaEvents'].append(
+      additional_filters['customRichMediaEvents'].append(
         {'dimensionName': identifier[0], 'value': value[0]}
       )
     elif name.startswith('reportProperties'):
-      query[criteria]['reportProperties'][identifier[0]] = value[0]
+      additional_filters['reportProperties'][identifier[0]] = value[0]
+  if present_filters := {a: v for a, v in additional_filters.items() if v}:
+    query[criteria].update(present_filters)
   query[criteria]['dimensions'] = dimensions
   query[criteria]['metricNames'] = metrics
   return query
