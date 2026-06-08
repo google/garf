@@ -36,12 +36,14 @@ SELECT
   metric.activeUsers AS active_users
 FROM resource
 WHERE
-  start_date >= '2025-09-01'
-  AND end_date <= '2025-09-07'
+  startDate >= '2025-09-01'
+  AND endDate = 'yesterday'
+  AND metric.activeUsers > 10
+  AND dimension.country BEGINS_WITH 'United'
 " > query.sql
 garf query.sql --source google-analytics \
   --output csv \
-  --source.property-id=GA_PROPERTY_ID
+  --google-analytics.property-id=GA_PROPERTY_ID
 ```
 ///
 
@@ -57,8 +59,10 @@ SELECT
   metric.activeUsers AS active_users
 FROM resource
 WHERE
-  start_date >= '2025-09-01'
-  AND end_date <= '2025-09-07'
+  startDate >= '2025-09-01'
+  AND endDate = 'yesterday'
+  AND metric.activeUsers > 10
+  AND dimension.country BEGINS_WITH 'United'
 """
 
 fetched_report = (

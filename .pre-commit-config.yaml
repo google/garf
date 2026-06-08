@@ -84,6 +84,12 @@ repos:
     files: ^libs/community/google/bid-manager/
     language: system
     pass_filenames: false
+  - id: pytest-check-google-analytics
+    name: pytest-check-google-analytics
+    entry: pytest -n auto libs/community/google/analytics/tests/unit/
+    files: ^libs/community/google/analytics/
+    language: system
+    pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e

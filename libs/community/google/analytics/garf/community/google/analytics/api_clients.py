@@ -13,7 +13,6 @@
 # limitations under the License.
 """Creates API client for Google Analytics API."""
 
-import re
 from collections import defaultdict
 
 from garf.community.google.analytics import query_editor
@@ -22,10 +21,22 @@ from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
   DateRange,
   Dimension,
+  Filter,
+  FilterExpression,
   Metric,
+  NumericValue,
   RunReportRequest,
 )
 from typing_extensions import override
+
+_NUMERIC_OPERATORS = {
+  '>=': Filter.NumericFilter.Operation.GREATER_THAN_OR_EQUAL,
+  '>': Filter.NumericFilter.Operation.GREATER_THAN,
+  '<': Filter.NumericFilter.Operation.LESS_THAN,
+  '=<': Filter.NumericFilter.Operation.LESS_THAN_OR_EQUAL,
+  '=': Filter.NumericFilter.Operation.EQUAL,
+  '==': Filter.NumericFilter.Operation.EQUAL,
+}
 
 
 class GoogleAnalyticsApiClient(api_clients.BaseClient):
@@ -44,29 +55,8 @@ class GoogleAnalyticsApiClient(api_clients.BaseClient):
     self, request: query_editor.GoogleAnalyticsApiQuery, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     property_id = kwargs.get('property_id')
-    dimensions = [
-      Dimension(name=field.split('.')[1])
-      for field in request.fields
-      if field.startswith('dimension')
-    ]
-    metrics = [
-      Metric(name=field.split('.')[1])
-      for field in request.fields
-      if field.startswith('metric')
-    ]
-    date_dimensions = {}
-    date_pattern = r'\d{4}-\d{2}-\d{2}'
-    for field in request.filters:
-      if field.startswith('start_date'):
-        date_dimensions['start_date'] = re.findall(date_pattern, field)[0]
-      if field.startswith('end_date'):
-        date_dimensions['end_date'] = re.findall(date_pattern, field)[0]
-
-    analytics_request = RunReportRequest(
-      property=f'properties/{property_id}',
-      dimensions=dimensions,
-      metrics=metrics,
-      date_ranges=[DateRange(**date_dimensions)],
+    analytics_request = build_request(
+      property_id=property_id, query_elements=request
     )
     response = self.client.run_report(analytics_request)
     results = []
@@ -80,3 +70,66 @@ class GoogleAnalyticsApiClient(api_clients.BaseClient):
         response_row[f'metric.{header}'] = value.value
       results.append(response_row)
     return api_clients.GarfApiResponse(results=results)
+
+
+def build_request(
+  property_id: str,
+  query_elements: query_editor.GoogleAnalyticsApiQuery,
+) -> RunReportRequest:
+  dimensions = [
+    Dimension(name=field.split('.')[1])
+    for field in query_elements.fields
+    if field.startswith('dimension')
+  ]
+  metrics = [
+    Metric(name=field.split('.')[1])
+    for field in query_elements.fields
+    if field.startswith('metric')
+  ]
+  filters = query_elements.filters
+  date_ranges = [DateRange(**filters.get('date_dimensions'))]
+  request = RunReportRequest(
+    property=f'properties/{property_id}',
+    dimensions=dimensions,
+    metrics=metrics,
+    date_ranges=date_ranges,
+  )
+  if metric_filter := filters.get('metric_filter'):
+    metric_filters = []
+    for m in metric_filter:
+      numeric_filter = m.get('numeric_filter')
+      is_int = numeric_filter.get('value').get('int') is not None
+      metric_filters.append(
+        Filter(
+          field_name=m.get('field_name'),
+          numeric_filter=Filter.NumericFilter(
+            operation=_NUMERIC_OPERATORS.get(numeric_filter.get('operation')),
+            value=NumericValue(
+              int64_value=numeric_filter.get('value').get('int')
+            )
+            if is_int
+            else NumericValue(
+              double_value=numeric_filter.get('value').get('float')
+            ),
+          ),
+        )
+      )
+    request.metric_filter = FilterExpression(filter=metric_filters[0])
+
+  if dimension_filter := filters.get('dimension_filter'):
+    dimension_filters = []
+    for d in dimension_filter:
+      string_filter = d.get('string_filter')
+      dimension_filters.append(
+        Filter(
+          field_name=m.get('field_name'),
+          string_filter=Filter.StringFilter(
+            match_type=Filter.StringFilter.MatchType[
+              string_filter.get('match_type')
+            ],
+            value=string_filter.get('value'),
+          ),
+        )
+      )
+    request.dimension_filter = FilterExpression(filter=dimension_filters[0])
+  return request
