@@ -37,3 +37,26 @@ class TestGoogleAnalyticsApiClient:
     assert test_request.metric_filter
     assert test_request.dimension_filter
     assert test_request.date_ranges
+
+  def test_build_request_generates_and_groups(self):
+    query = """
+      SELECT
+        dimension.country,
+        metrics.adClicks
+      FROM core
+      WHERE
+        startDate = yesterday
+        AND endDate = '2025-01-01'
+        AND metric.adClicks > 1
+        AND metric.adClicks < 10
+        AND dimension.country BEGINS_WITH Ca
+        AND dimension.country ENDS_WITH da
+    """
+
+    query_elements = query_editor.GoogleAnalyticsApiQuery(text=query).generate()
+    test_request = api_clients.build_request(
+      property_id=1, query_elements=query_elements
+    )
+
+    assert test_request.metric_filter.and_group
+    assert test_request.dimension_filter.and_group
