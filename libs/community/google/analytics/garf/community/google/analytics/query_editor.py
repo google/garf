@@ -13,8 +13,86 @@
 # limitations under the License.
 """Defines Google Analytics API specific query parser."""
 
-from garf_core import query_editor
+import re
+
+from garf.community.google.analytics import exceptions
+from garf.core import query_editor
+from typing_extensions import Self
 
 
 class GoogleAnalyticsApiQuery(query_editor.QuerySpecification):
   """Query to Google Analytics API."""
+
+  def extract_filters(self) -> Self:
+    super().extract_filters()
+    filters = {}
+    date_dimensions = {}
+    metric_filters = []
+    dimension_filters = []
+    for field in self.query.filters:
+      if match := re.match('^(start|end)Date .?= (.+)', field):
+        date_type = match.group(1).strip()
+        date_value = match.group(2).strip()
+        date_dimensions[date_type + '_date'] = _normalize_date(date_value)
+      elif match := re.match(r'^metric.(\w+) (=|>=|>|<|<=|!=) (.+)', field):
+        metric_name = match.group(1).strip()
+        metric_operator = match.group(2).strip()
+        metric_value = match.group(3).strip()
+        metric_filters.append(
+          {
+            'field_name': metric_name,
+            'numeric_filter': {
+              'operation': metric_operator,
+              'value': _normalize_numeric(metric_value),
+            },
+          }
+        )
+      elif match := re.match(r'^dimension.(\w+) (=|\w.+) (.+)', field):
+        dimension_name = match.group(1).strip()
+        dimension_operator = match.group(2).strip()
+        dimension_value = match.group(3).strip()
+        dimension_filters.append(
+          {
+            'field_name': dimension_name,
+            'string_filter': {
+              'match_type': 'EXACT'
+              if dimension_operator == '='
+              else dimension_operator.upper(),
+              'value': _normalize_string(dimension_value),
+            },
+          }
+        )
+    if date_dimensions:
+      filters['date_dimensions'] = date_dimensions
+    if metric_filters:
+      filters['metric_filter'] = metric_filters
+    if dimension_filters:
+      filters['dimension_filter'] = dimension_filters
+    self.query.filters = filters
+    return self
+
+
+def _normalize_numeric(numeric: str) -> str:
+  """Parses numeric value as float or int."""
+  pattern = r'^[-+]?\d+\.\d+$'
+  if re.match(pattern, numeric):
+    return {'float': float(numeric)}
+  return {'int': int(numeric)}
+
+
+def _normalize_date(date: str) -> str:
+  date = re.sub('"|\'', '', date.replace(' ', ''))
+  if date in ('yesterday', 'today') or date.endswith('daysAgo'):
+    return date
+  date_pattern = r'\d{4}-\d{2}-\d{2}'
+  date = re.findall(date_pattern, date)
+  if date:
+    return date[0]
+  raise exceptions.GoogleAnalyticsApiError(
+    'Incorrect date format, expected either YYYY-MM-DD or '
+    f'yesterday, today, or NdaysAgo, got {date}'
+  )
+
+
+def _normalize_string(string: str) -> str:
+  return re.sub('"|\'', '', string.replace(' ', ''))
