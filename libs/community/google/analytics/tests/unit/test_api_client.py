@@ -57,6 +57,26 @@ class TestGoogleAnalyticsApiClient:
     test_request = api_clients.build_request(
       property_id=1, query_elements=query_elements
     )
-
     assert test_request.metric_filter.and_group
     assert test_request.dimension_filter.and_group
+
+  def test_build_request_generates_not_group(self):
+    query = """
+      SELECT
+        dimension.country,
+        metric.adClicks
+      FROM core
+      WHERE
+        startDate = yesterday
+        AND endDate = '2025-01-01'
+        AND metric.adClicks != 0
+        AND dimension.country != Canada
+    """
+
+    query_elements = query_editor.GoogleAnalyticsApiQuery(text=query).generate()
+    test_request = api_clients.build_request(
+      property_id=1, query_elements=query_elements
+    )
+
+    assert test_request.metric_filter.not_expression
+    assert test_request.dimension_filter.not_expression

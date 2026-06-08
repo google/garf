@@ -34,7 +34,7 @@ class GoogleAnalyticsApiQuery(query_editor.QuerySpecification):
         date_type = match.group(1).strip()
         date_value = match.group(2).strip()
         date_dimensions[date_type + '_date'] = _normalize_date(date_value)
-      elif match := re.match(r'^metric.(\w+) (=|>=|>|<|<=|!=) (.+)', field):
+      elif match := re.match(r'^metrics?.(\w+) (=|>=|>|<|<=|!=) (.+)', field):
         metric_name = match.group(1).strip()
         metric_operator = match.group(2).strip()
         metric_value = match.group(3).strip()
@@ -47,7 +47,7 @@ class GoogleAnalyticsApiQuery(query_editor.QuerySpecification):
             },
           }
         )
-      elif match := re.match(r'^dimension.(\w+) (=|\w.+) (.+)', field):
+      elif match := re.match(r'^dimensions?.(\w+) (=|!=|\w.+) (.+)', field):
         dimension_name = match.group(1).strip()
         dimension_operator = match.group(2).strip()
         dimension_value = match.group(3).strip()
