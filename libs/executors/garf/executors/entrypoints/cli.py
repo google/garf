@@ -33,7 +33,7 @@ from garf.executors.entrypoints.tracer import (
 )
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
-from garf.io import reader
+from garf.io import reader, writer
 from opentelemetry import trace
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
@@ -50,6 +50,9 @@ def main():
   parser.add_argument('-w', '--workflow', dest='workflow', default=None)
   parser.add_argument('--source', dest='source', default=None)
   parser.add_argument('--output', dest='output', default='console')
+  parser.add_argument(
+    '--additional-output', dest='additional_output', default=None
+  )
   parser.add_argument('--input', dest='input', default='file')
   parser.add_argument('--log', '--loglevel', dest='loglevel', default='info')
   parser.add_argument('--logger', dest='logger', default='local')
@@ -103,6 +106,13 @@ def main():
   reader_client = reader.create_reader(args.input)
   param_types = ['source', 'macro', 'template']
   outputs = args.output.split(',')
+  if additional_output := args.additional_output:
+    additional_output = additional_output.split(',')
+    outputs.extend(additional_output)
+    if incorrect_outputs := set(outputs).difference(writer.WriterOption):
+      raise exceptions.GarfExecutorError(
+        'Unsupported output(s): ', incorrect_outputs
+      )
   extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse_all(
     kwargs
   )
