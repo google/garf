@@ -155,6 +155,12 @@ def execute(
   server_url: Annotated[
     str | None, typer.Option(help='Address of garf server in HOST:PORT format')
   ] = None,
+  additional_output: Annotated[
+    Optional[str],
+    typer.Option(
+      help='Comma separated additional outputs',
+    ),
+  ] = None,
 ) -> None:
   """Runs queries."""
   span = trace.get_current_span()
@@ -187,7 +193,15 @@ def execute(
   output = output.value
   reader_client = reader.create_reader(input)
   param_types = ['source', 'macro', 'template']
-  outputs = output.split(',')
+  if additional_output:
+    outputs = additional_output.split(',')
+    if incorrect_outputs := set(outputs).difference(writer.WriterOption):
+      raise exceptions.GarfExecutorError(
+        'Unsupported output(s): ', incorrect_outputs
+      )
+    outputs.append(output)
+  else:
+    outputs = [output]
   extra_parameters = utils.ParamsParser([*param_types, *outputs]).parse_all(
     parameters
   )
