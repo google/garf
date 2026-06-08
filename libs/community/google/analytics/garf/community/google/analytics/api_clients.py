@@ -97,46 +97,80 @@ def build_request(
   )
   if metric_filter := filters.get('metric_filter'):
     metric_filters = []
+    not_metrics = []
     for m in metric_filter:
       numeric_filter = m.get('numeric_filter')
       is_int = numeric_filter.get('value').get('int') is not None
-      metric_filters.append(
-        Filter(
-          field_name=m.get('field_name'),
-          numeric_filter=Filter.NumericFilter(
-            operation=_NUMERIC_OPERATORS.get(numeric_filter.get('operation')),
-            value=NumericValue(
-              int64_value=numeric_filter.get('value').get('int')
-            )
-            if is_int
-            else NumericValue(
-              double_value=numeric_filter.get('value').get('float')
+      if numeric_filter.get('operation') == '!=':
+        not_metrics.append(
+          Filter(
+            field_name=m.get('field_name'),
+            numeric_filter=Filter.NumericFilter(
+              operation=Filter.NumericFilter.Operation.EQUAL,
+              value=NumericValue(
+                int64_value=numeric_filter.get('value').get('int')
+              )
+              if is_int
+              else NumericValue(
+                double_value=numeric_filter.get('value').get('float')
+              ),
             ),
-          ),
+          )
         )
-      )
+      else:
+        metric_filters.append(
+          Filter(
+            field_name=m.get('field_name'),
+            numeric_filter=Filter.NumericFilter(
+              operation=_NUMERIC_OPERATORS.get(numeric_filter.get('operation')),
+              value=NumericValue(
+                int64_value=numeric_filter.get('value').get('int')
+              )
+              if is_int
+              else NumericValue(
+                double_value=numeric_filter.get('value').get('float')
+              ),
+            ),
+          )
+        )
     if len(metric_filters) > 1:
       request.metric_filter = _build_and_multi_filter(metric_filters)
+    elif not_metrics:
+      request.metric_filter = _build_not_filter(not_metrics)
     else:
       request.metric_filter = FilterExpression(filter=metric_filters[0])
 
   if dimension_filter := filters.get('dimension_filter'):
     dimension_filters = []
+    not_dimensions = []
     for d in dimension_filter:
       string_filter = d.get('string_filter')
-      dimension_filters.append(
-        Filter(
-          field_name=d.get('field_name'),
-          string_filter=Filter.StringFilter(
-            match_type=Filter.StringFilter.MatchType[
-              string_filter.get('match_type')
-            ],
-            value=string_filter.get('value'),
-          ),
+      if string_filter.get('match_type') == '!=':
+        not_dimensions.append(
+          Filter(
+            field_name=d.get('field_name'),
+            string_filter=Filter.StringFilter(
+              match_type=Filter.StringFilter.MatchType.EXACT,
+              value=string_filter.get('value'),
+            ),
+          )
         )
-      )
+      else:
+        dimension_filters.append(
+          Filter(
+            field_name=d.get('field_name'),
+            string_filter=Filter.StringFilter(
+              match_type=Filter.StringFilter.MatchType[
+                string_filter.get('match_type')
+              ],
+              value=string_filter.get('value'),
+            ),
+          )
+        )
     if len(dimension_filters) > 1:
       request.dimension_filter = _build_and_multi_filter(dimension_filters)
+    elif not_dimensions:
+      request.dimension_filter = _build_not_filter(not_dimensions)
     else:
       request.dimension_filter = FilterExpression(filter=dimension_filters[0])
   if limit := query_elements.limit:
@@ -150,3 +184,7 @@ def _build_and_multi_filter(filters: list[Filter]) -> FilterExpression:
       expressions=[FilterExpression(filter=f) for f in filters]
     )
   )
+
+
+def _build_not_filter(filters: list[Filter]) -> FilterExpression:
+  return FilterExpression(not_expression=FilterExpression(filter=filters[0]))
