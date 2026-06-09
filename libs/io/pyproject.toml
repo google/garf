@@ -75,6 +75,12 @@ excel = [
 kafka = [
   "kafka-python",
 ]
+mongo = [
+  "pymongo",
+]
+firestore = [
+  "google-cloud-firestore",
+]
 all = [
   "garf-io[bq,sheets,sqlalchemy,excel]"
 ]
@@ -93,6 +99,8 @@ elasticsearch = "garf.io.writers.elasticsearch_writer"
 pubsub = "garf.io.writers.pubsub_writer"
 excel = "garf.io.writers.excel_writer"
 kafka = "garf.io.writers.kafka_writer"
+mongo = "garf.io.writers.mongodb_writer"
+firestore = "garf.io.writers.firestore_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]

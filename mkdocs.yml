@@ -74,6 +74,8 @@ nav:
       - Kafka: usage/writers/kafka-writer.md
       - ElasticSearch: usage/writers/elasticsearch-writer.md
       - OpenSearch: usage/writers/opensearch-writer.md
+      - MongoDB: usage/writers/mongo-writer.md
+      - Firestore: usage/writers/firestore-writer.md
     - Executors:
       - usage/executors.md
       - Executor Types:
