@@ -117,22 +117,22 @@ def build_request(
             ),
           )
         )
-      else:
-        metric_filters.append(
-          Filter(
-            field_name=m.get('field_name'),
-            numeric_filter=Filter.NumericFilter(
-              operation=_NUMERIC_OPERATORS.get(numeric_filter.get('operation')),
-              value=NumericValue(
-                int64_value=numeric_filter.get('value').get('int')
-              )
-              if is_int
-              else NumericValue(
-                double_value=numeric_filter.get('value').get('float')
-              ),
+        continue
+      metric_filters.append(
+        Filter(
+          field_name=m.get('field_name'),
+          numeric_filter=Filter.NumericFilter(
+            operation=_NUMERIC_OPERATORS.get(numeric_filter.get('operation')),
+            value=NumericValue(
+              int64_value=numeric_filter.get('value').get('int')
+            )
+            if is_int
+            else NumericValue(
+              double_value=numeric_filter.get('value').get('float')
             ),
-          )
+          ),
         )
+      )
     if len(metric_filters) > 1:
       request.metric_filter = _build_and_multi_filter(metric_filters)
     elif not_metrics:
@@ -144,6 +144,16 @@ def build_request(
     dimension_filters = []
     not_dimensions = []
     for d in dimension_filter:
+      if in_list_filter := d.get('in_list_filter'):
+        dimension_filters.append(
+          Filter(
+            field_name=d.get('field_name'),
+            in_list_filter=Filter.InListFilter(
+              values=in_list_filter.get('values')
+            ),
+          )
+        )
+        continue
       string_filter = d.get('string_filter')
       if string_filter.get('match_type') == '!=':
         not_dimensions.append(
@@ -155,18 +165,18 @@ def build_request(
             ),
           )
         )
-      else:
-        dimension_filters.append(
-          Filter(
-            field_name=d.get('field_name'),
-            string_filter=Filter.StringFilter(
-              match_type=Filter.StringFilter.MatchType[
-                string_filter.get('match_type')
-              ],
-              value=string_filter.get('value'),
-            ),
-          )
+        continue
+      dimension_filters.append(
+        Filter(
+          field_name=d.get('field_name'),
+          string_filter=Filter.StringFilter(
+            match_type=Filter.StringFilter.MatchType[
+              string_filter.get('match_type')
+            ],
+            value=string_filter.get('value'),
+          ),
         )
+      )
     if len(dimension_filters) > 1:
       request.dimension_filter = _build_and_multi_filter(dimension_filters)
     elif not_dimensions:
