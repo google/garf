@@ -37,7 +37,7 @@ class ParamsParser:
   def parse_all(self, params: Sequence) -> dict[str, dict | None]:
     identifiers = []
     for param in params:
-      identifier, value = param.split('.', maxsplit=1)
+      identifier, *value = param.split('.', maxsplit=1)
       if value:
         identifiers.append(identifier.replace('--', ''))
     self.identifiers.extend(identifiers)
