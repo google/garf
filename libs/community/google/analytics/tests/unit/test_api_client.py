@@ -80,3 +80,50 @@ class TestGoogleAnalyticsApiClient:
 
     assert test_request.metric_filter.not_expression
     assert test_request.dimension_filter.not_expression
+
+  def test_build_request_generates_in_list_filter(self):
+    query = """
+      SELECT
+        dimension.country,
+        metric.adClicks
+      FROM core
+      WHERE
+        startDate = yesterday
+        AND endDate = '2025-01-01'
+        AND dimension.country IN (Canada, Mexico)
+    """
+
+    query_elements = query_editor.GoogleAnalyticsApiQuery(text=query).generate()
+    test_request = api_clients.build_request(
+      property_id=1, query_elements=query_elements
+    )
+
+    assert test_request.dimension_filter.filter.in_list_filter.values == [
+      'Canada',
+      'Mexico',
+    ]
+
+  def test_build_request_generates_in_list_and_regular_filter(self):
+    query = """
+      SELECT
+        dimension.country,
+        metric.adClicks
+      FROM core
+      WHERE
+        startDate = yesterday
+        AND endDate = '2025-01-01'
+        AND dimension.country IN (Canada, Mexico)
+        AND dimension.city = Toronto
+    """
+
+    query_elements = query_editor.GoogleAnalyticsApiQuery(text=query).generate()
+    test_request = api_clients.build_request(
+      property_id=1, query_elements=query_elements
+    )
+
+    and_group = test_request.dimension_filter.and_group
+    assert and_group.expressions[0].filter.in_list_filter.values == [
+      'Canada',
+      'Mexico',
+    ]
+    assert and_group.expressions[1].filter.string_filter.value == 'Toronto'

@@ -47,21 +47,34 @@ class GoogleAnalyticsApiQuery(query_editor.QuerySpecification):
             },
           }
         )
-      elif match := re.match(r'^dimensions?.(\w+) (=|!=|\w.+) (.+)', field):
+      elif match := re.match(r'^dimensions?.(\w+) (=|!=|\w+) (.+)', field):
         dimension_name = match.group(1).strip()
         dimension_operator = match.group(2).strip()
         dimension_value = match.group(3).strip()
-        dimension_filters.append(
-          {
-            'field_name': dimension_name,
-            'string_filter': {
-              'match_type': 'EXACT'
-              if dimension_operator == '='
-              else dimension_operator.upper(),
-              'value': _normalize_string(dimension_value),
-            },
-          }
-        )
+        if dimension_operator.lower() == 'in':
+          dimension_filters.append(
+            {
+              'field_name': dimension_name,
+              'in_list_filter': {
+                'values': [
+                  re.sub(r'\)|\(|\[|\[', '', _normalize_string(v))
+                  for v in dimension_value.split(',')
+                ],
+              },
+            }
+          )
+        else:
+          dimension_filters.append(
+            {
+              'field_name': dimension_name,
+              'string_filter': {
+                'match_type': 'EXACT'
+                if dimension_operator == '='
+                else dimension_operator.upper(),
+                'value': _normalize_string(dimension_value),
+              },
+            }
+          )
     if date_dimensions:
       filters['date_dimensions'] = date_dimensions
     if metric_filters:
@@ -95,4 +108,4 @@ def _normalize_date(date: str) -> str:
 
 
 def _normalize_string(string: str) -> str:
-  return re.sub('"|\'', '', string.replace(' ', ''))
+  return re.sub('"|\'', '', string).strip()

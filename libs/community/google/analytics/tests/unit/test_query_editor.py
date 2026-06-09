@@ -112,3 +112,19 @@ class TestGoogleAnalyticsApiQuery:
       """
     spec = GoogleAnalyticsApiQuery(text=query).generate()
     assert len(spec.filters.get('dimension_filter')) == 2
+
+  def test_extract_filters_parses_in_list_dimensions(self):
+    query = """
+        SELECT
+          dimensions.country
+        FROM core
+        WHERE
+          dimension.country IN (Canada, Mexico)
+      """
+    spec = GoogleAnalyticsApiQuery(text=query).generate()
+    assert spec.filters.get('dimension_filter')[0].get('in_list_filter').get(
+      'values'
+    ) == [
+      'Canada',
+      'Mexico',
+    ]
