@@ -19,6 +19,8 @@
 | `kafka`    | KafkaWriter      | `bootstrap-servers` |
 | `opensearch`| OpenSearchWriter | `hosts` |
 | `pubsub`   | PubSubWriter     | `project` |
+| `mongo`    | MongoDbWriter     | `connection_string`, `db` |
+| `firestore`   | FirestoreWriter     | `project`, `db` |
 
 
 ## Installation
@@ -49,6 +51,8 @@ To install specific writers use:
 * `pip install garf-io[kafka]` for Kafka support
 * `pip install garf-io[opensearch]` for OpenSearch support
 * `pip install garf-io[pubsub]` for PubSub support
+* `pip install garf-io[mongo]` for MongoDB support
+* `pip install garf-io[firestore]` for Firestore support
 
 
 ## Usage

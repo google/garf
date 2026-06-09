@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Writes GarfReport to topics."""
+"""Writes GarfReport to NoSQL DBs."""
 
 import enum
 import itertools
-import json
 import logging
+from typing import Any
 
 from garf.core import report as garf_report
 from garf.io import formatter
@@ -29,46 +29,32 @@ logger = logging.getLogger(__name__)
 class PushStrategy(str, enum.Enum):
   ROW = 'row'
   BATCH = 'batch'
-  REPORT = 'report'
 
 
-class TopicWriter(abs_writer.AbsWriter):
-  """Publishes Garf Report to a topic.
-
-  Attributes:
-    push_strategy: Strategy for pushing messages to topic.
-  """
-
+class NoSqlWriter(abs_writer.AbsWriter):
   def __init__(
     self,
     provider: str,
-    push_strategy: PushStrategy == PushStrategy.REPORT,
-    batch_size: int = 10,
+    push_strategy: PushStrategy == PushStrategy.BATCH,
+    batch_size: int = 1000,
     **kwargs: str,
   ) -> None:
-    """Initializes KafkaWriter."""
+    """Initializes NoSqlWriter."""
     super().__init__(**kwargs)
     self.provider = provider
     self.push_strategy = push_strategy
     self.batch_size = int(batch_size)
 
-  def _send(self, data: bytes, topic: str) -> str:
-    raise NotImplementedError
-
-  def create_topic(self, topic: str) -> str:
-    return topic
-
-  def _init_producer(self):
+  def _write(self, data: list[dict[str, Any]], collection_name: str) -> str:
     raise NotImplementedError
 
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
-    """Writes report to Kafka topic.
+    """Writes report to NoSql collection.
 
     Args:
       report: GarfReport to write.
-      destination: Kafka topic name.
+      destination: collection name.
     """
-    self._init_producer()
     with tracer.start_as_current_span('f{self.provider}.write') as span:
       span.set_attribute('writer.type', str(self.push_strategy))
       destination = formatter.format_extension(
@@ -76,22 +62,14 @@ class TopicWriter(abs_writer.AbsWriter):
         prefix=self.options.prefix,
         suffix=self.options.suffix,
       )
-      topic = self.create_topic(topic=destination)
-      if self.push_strategy == PushStrategy.REPORT:
-        self._send(
-          data=json.dumps(report.to_list('dict')).encode('utf-8'),
-          topic=topic,
-        )
-      elif self.push_strategy == PushStrategy.ROW:
+      if self.push_strategy == PushStrategy.ROW:
         for row in report:
-          self._send(
-            data=json.dumps(row.to_dict()).encode('utf-8'), topic=topic
-          )
+          self._write(data=row.to_dict(), collection_name=destination)
       elif self.push_strategy == PushStrategy.BATCH:
         for batch in _batched(report, self.batch_size):
           data = [row.to_dict() for row in batch]
-          self._send(data=json.dumps(data).encode('utf-8'), topic=topic)
-    return f'[{self.provider}] - published message to {topic}'
+          self._write(data=data, collection_name=destination)
+    return f'[{self.provider}] - inserted data to {destination}'
 
 
 def _batched(report: garf_report.GarfReport, chunk_size: int):
