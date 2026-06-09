@@ -56,5 +56,9 @@ class CampaignManager360ApiReportFetcher(garf.core.ApiReportFetcher):
       api_client=api_client,
       parser=parser,
       query_specification_builder=query_spec,
+      preprocessors={'init': self._init_api_client},
       **kwargs,
     )
+
+  def _init_api_client(self, **kwargs) -> str:
+    return self.api_client.client
