@@ -25,6 +25,8 @@ except ImportError as e:
     'Please install garf-io with PubSub support - `pip install garf-io[pubsub]`'
   ) from e
 
+from google.api_core.exceptions import NotFound
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,8 +58,13 @@ class PubSubWriter(topic_writer.TopicWriter):
 
   def create_topic(self, topic: str) -> str:
     topic_path = self.publisher.topic_path(self.project, topic)
-    if not self.publisher.get_topic(request={'topic': topic_path}):
-      self.publisher.create_topic(request={'name': topic_path})
+    request = {'name': topic_path}
+    try:
+      if not self.publisher.get_topic(request={'topic': topic_path}):
+        self.publisher.create_topic(request=request)
+    except NotFound:
+      self.publisher.create_topic(request=request)
+
     return topic_path
 
   def _send(self, data: bytes, topic: str) -> None:
