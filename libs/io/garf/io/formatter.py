@@ -49,6 +49,7 @@ class FormattingStrategy:
       results=formatted_rows,
       column_names=report.column_names,
       results_placeholder=formatted_placeholders,
+      query_specification=report.query_specification,
     )
 
   def _format_rows(
