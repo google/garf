@@ -81,8 +81,11 @@ mongo = [
 firestore = [
   "google-cloud-firestore",
 ]
+pushgateway = [
+  "prometheus-client",
+]
 all = [
-  "garf-io[bq,sheets,sqlalchemy,excel]"
+  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway]"
 ]
 
 [project.entry-points.garf_writer]
@@ -101,6 +104,7 @@ excel = "garf.io.writers.excel_writer"
 kafka = "garf.io.writers.kafka_writer"
 mongo = "garf.io.writers.mongodb_writer"
 firestore = "garf.io.writers.firestore_writer"
+pushgateway = "garf.io.writers.pushgateway_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]
