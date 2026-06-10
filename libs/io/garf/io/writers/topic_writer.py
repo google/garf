@@ -46,7 +46,7 @@ class TopicWriter(abs_writer.AbsWriter):
     batch_size: int = 10,
     **kwargs: str,
   ) -> None:
-    """Initializes KafkaWriter."""
+    """Initializes TopicWriter."""
     super().__init__(**kwargs)
     self.provider = provider
     self.push_strategy = push_strategy
@@ -62,14 +62,14 @@ class TopicWriter(abs_writer.AbsWriter):
     raise NotImplementedError
 
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
-    """Writes report to Kafka topic.
+    """Writes report to topic.
 
     Args:
       report: GarfReport to write.
-      destination: Kafka topic name.
+      destination: Topic name.
     """
     self._init_producer()
-    with tracer.start_as_current_span('f{self.provider}.write') as span:
+    with tracer.start_as_current_span(f'{self.provider}.write') as span:
       span.set_attribute('writer.type', str(self.push_strategy))
       destination = formatter.format_extension(
         destination,

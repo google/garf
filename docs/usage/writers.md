@@ -92,7 +92,103 @@ concrete_writer.write(sample_report, 'query')
 
 ## Configuration
 
+### arrays
+
 Each of writer also support two options for dealing with arrays:
 
-* `WRITER.array-handling` - arrays handling method: "strings" (default)  - store arrays as strings (items combined via a separator, e.g. "item1|item2"), "arrays" - store arrays as arrays.
-* `WRITER.array-separator` - a separator symbol for joining arrays as strings, by default '|'.
+* `WRITER.array_handling` - arrays handling method:
+    * `strings` (default)  - store arrays as strings (items combined via a separator, e.g. "item1|item2")
+    * `arrays` - store arrays as arrays.
+* `WRITER.array_separator` - a separator symbol for joining arrays as strings, by default '|'.
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output json \
+  --json.array-handling=arrays
+
+garf query.sql --source API_SOURCE \
+  --output json \
+  --json.array-handling=strings --json.array-separator='*'
+```
+///
+
+/// tab | python
+```python
+from garf.io.writers import json_writer
+
+
+array_writer = json_writer.JsonWriter(array_handling='arrays')
+string_writer = json_writer.JsonWriter(
+  array_handling='strings', array_separator='*'
+)
+
+```
+
+### dates
+
+By default `garf` writes all date objects as strings. You can overwrite this with two options:
+
+* `WRITER.date_handling` - specifies ways of handling date object:
+    * `strings` (default)  - keeps date objects as strings .
+    * `date` - formats date objects to proper dates.
+    * `datetimes` - formats date objects to proper datetimes.
+    * `timestamps` - formats date objects to proper timestamps.
+* `WRITER.date_format_string` - specifies [format string](https://docs.python.org/3/library/datetime.html#format-codes).
+
+/// tab | cli
+```bash
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.date-handling=dates
+
+garf query.sql --source API_SOURCE \
+  --output bq \
+  --bq.date-handling=dates --json.date-format-string='%d/%m/%y'
+```
+///
+
+/// tab | python
+```python
+from garf.io.writers import bigquery_writer
+
+
+dates_writer = bigquery_writer.BigQueryWriter(date_handling='dates')
+dates_writer_with_format = bigquery_writer.BigQueryWriter(
+  date_handling='dates',
+  date_format_string='%d/%m/%y',
+)
+```
+
+### prefix / suffix
+
+When writing data with `garf` you can use `prefix` and `suffix` to dynamically
+update where (table / file / topic / index) data are written:
+
+/// tab | cli
+```bash
+# Saves results to `my_prefix_query.csv'
+garf query.sql --source API_SOURCE \
+  --output csv \
+  --csv.prefix=my_prefix
+
+# Saves results to `query_my_suffix.csv'
+garf query.sql --source API_SOURCE \
+  --output csv \
+  --csv.suffix=my_suffix
+
+# Saves results to `my_prefix_query_my_suffix.csv'
+garf query.sql --source API_SOURCE \
+  --output csv \
+  --csv.prefix=my_prefix \
+  --csv.suffix=my_suffix
+```
+///
+
+/// tab | python
+```python
+from garf.io.writers import csv_writer
+
+# Saves results to `my_prefix_query_my_suffix.csv'
+writer = csv_writer.CsvWriter(prefix='my_prefix', suffix='my_suffix')
+```
