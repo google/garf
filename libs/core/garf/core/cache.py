@@ -83,7 +83,9 @@ class GarfCache:
     """
     args_hash = args.hash if args else ''
     kwargs_hash = (
-      hashlib.md5(json.dumps(kwargs).encode('utf-8'), usedforsecurity=False).hexdigest()
+      hashlib.md5(
+        json.dumps(kwargs).encode('utf-8'), usedforsecurity=False
+      ).hexdigest()
       if kwargs
       else ''
     )
@@ -96,7 +98,9 @@ class GarfCache:
       with open(cached_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
       logger.debug('Report is loaded from cache: %s', str(cached_path))
-      return report.GarfReport.from_json(json.dumps(data))
+      loaded_report = report.GarfReport.from_json(json.dumps(data))
+      loaded_report.query_specification = query
+      return loaded_report
     raise GarfCacheFileNotFoundError
 
   def save(
@@ -117,7 +121,9 @@ class GarfCache:
     self.location.mkdir(parents=True, exist_ok=True)
     args_hash = args.hash if args else ''
     kwargs_hash = (
-      hashlib.md5(json.dumps(kwargs).encode('utf-8'), usedforsecurity=False).hexdigest()
+      hashlib.md5(
+        json.dumps(kwargs).encode('utf-8'), usedforsecurity=False
+      ).hexdigest()
       if kwargs
       else ''
     )

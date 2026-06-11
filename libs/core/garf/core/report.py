@@ -423,8 +423,8 @@ class GarfReport:
     return GarfReport(
       results=self.results + other.results,
       column_names=self.column_names,
-      results_placeholder=self.results_placeholder
-      and other.results_placeholder,
+      results_placeholder=self.results_placeholder or other.results_placeholder,
+      query_specification=self.query_specification or other.query_specification,
     )
 
   @classmethod
