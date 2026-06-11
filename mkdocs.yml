@@ -76,6 +76,7 @@ nav:
       - OpenSearch: usage/writers/opensearch-writer.md
       - MongoDB: usage/writers/mongo-writer.md
       - Firestore: usage/writers/firestore-writer.md
+      - Pushgateway: usage/writers/pushgateway-writer.md
     - Executors:
       - usage/executors.md
       - Executor Types:
