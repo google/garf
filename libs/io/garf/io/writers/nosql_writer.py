@@ -55,7 +55,7 @@ class NoSqlWriter(abs_writer.AbsWriter):
       report: GarfReport to write.
       destination: collection name.
     """
-    with tracer.start_as_current_span('f{self.provider}.write') as span:
+    with tracer.start_as_current_span(f'{self.provider}.write') as span:
       span.set_attribute('writer.type', str(self.push_strategy))
       destination = formatter.format_extension(
         destination,
