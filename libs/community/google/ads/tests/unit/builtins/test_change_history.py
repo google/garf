@@ -111,11 +111,105 @@ def test_budget_history(mocker):
   assert restored_history == expected_report
 
 
+def test_budget_history_no_campaigns(mocker):
+  mocker.patch(
+    'garf.community.google.ads.api_clients.GoogleAdsApiClient.__init__',
+    return_value=None,
+  )
+  campaign_report = garf.core.GarfReport(
+    results=[],
+    column_names=[
+      'campaign_id',
+      'budget_amount',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_budgets_static',
+    return_value=campaign_report,
+  )
+
+  restored_history = change_history.budget_history(
+    report_fetcher=garf.community.google.ads.report_fetcher.GoogleAdsApiReportFetcher(),
+    account=None,
+    start_date='2026-04-01',
+    end_date='2026-04-07',
+  )
+  expected_report = garf.core.GarfReport(
+    results=None,
+    results_placeholder=[['', 1, 0]],
+    column_names=[
+      'day',
+      'campaign_id',
+      'budget_amount',
+    ],
+  )
+
+  assert restored_history == expected_report
+
+
+def test_budget_history_no_changes(mocker):
+  test_report = garf.core.GarfReport(
+    results=None,
+    column_names=[
+      'change_date',
+      'campaign_id',
+      'old_budget_amount',
+      'new_budget_amount',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_budgets_changes',
+    return_value=test_report,
+  )
+  mocker.patch(
+    'garf.community.google.ads.api_clients.GoogleAdsApiClient.__init__',
+    return_value=None,
+  )
+  campaign_report = garf.core.GarfReport(
+    results=[
+      [1, 2500],
+    ],
+    column_names=[
+      'campaign_id',
+      'budget_amount',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_budgets_static',
+    return_value=campaign_report,
+  )
+
+  restored_history = change_history.budget_history(
+    report_fetcher=garf.community.google.ads.report_fetcher.GoogleAdsApiReportFetcher(),
+    account=None,
+    start_date='2026-04-01',
+    end_date='2026-04-07',
+  )
+  expected_report = garf.core.GarfReport(
+    results=[
+      ['2026-04-01', 1, 2500],
+      ['2026-04-02', 1, 2500],
+      ['2026-04-03', 1, 2500],
+      ['2026-04-04', 1, 2500],
+      ['2026-04-05', 1, 2500],
+      ['2026-04-06', 1, 2500],
+      ['2026-04-07', 1, 2500],
+    ],
+    column_names=[
+      'day',
+      'campaign_id',
+      'budget_amount',
+    ],
+  )
+
+  assert restored_history == expected_report
+
+
 def test_target_cpa_history(mocker):
   test_report = garf.core.GarfReport(
     results=[
-      ['2026-04-02', 1, 1000, 2000],
-      ['2026-04-05', 1, 2000, 2500],
+      ['2026-04-02', 1, 10, 20],
+      ['2026-04-05', 1, 20, 25],
     ],
     column_names=[
       'change_date',
@@ -134,7 +228,7 @@ def test_target_cpa_history(mocker):
   )
   campaign_report = garf.core.GarfReport(
     results=[
-      [1, 2500],
+      [1, 25],
     ],
     column_names=[
       'campaign_id',
@@ -154,13 +248,107 @@ def test_target_cpa_history(mocker):
   )
   expected_report = garf.core.GarfReport(
     results=[
-      ['2026-04-01', 1, 1000],
-      ['2026-04-02', 1, 2000],
-      ['2026-04-03', 1, 2000],
-      ['2026-04-04', 1, 2000],
-      ['2026-04-05', 1, 2500],
-      ['2026-04-06', 1, 2500],
-      ['2026-04-07', 1, 2500],
+      ['2026-04-01', 1, 10],
+      ['2026-04-02', 1, 20],
+      ['2026-04-03', 1, 20],
+      ['2026-04-04', 1, 20],
+      ['2026-04-05', 1, 25],
+      ['2026-04-06', 1, 25],
+      ['2026-04-07', 1, 25],
+    ],
+    column_names=[
+      'day',
+      'campaign_id',
+      'target_cpa',
+    ],
+  )
+
+  assert restored_history == expected_report
+
+
+def test_target_cpa_history_no_campaigns(mocker):
+  mocker.patch(
+    'garf.community.google.ads.api_clients.GoogleAdsApiClient.__init__',
+    return_value=None,
+  )
+  campaign_report = garf.core.GarfReport(
+    results=[],
+    column_names=[
+      'campaign_id',
+      'target_cpa',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_target_cpa_static',
+    return_value=campaign_report,
+  )
+
+  restored_history = change_history.target_cpa_history(
+    report_fetcher=garf.community.google.ads.report_fetcher.GoogleAdsApiReportFetcher(),
+    account=None,
+    start_date='2026-04-01',
+    end_date='2026-04-07',
+  )
+  expected_report = garf.core.GarfReport(
+    results=None,
+    results_placeholder=[['', 1, 0.0]],
+    column_names=[
+      'day',
+      'campaign_id',
+      'target_cpa',
+    ],
+  )
+
+  assert restored_history == expected_report
+
+
+def test_target_cpa_history_no_changes(mocker):
+  test_report = garf.core.GarfReport(
+    results=[],
+    column_names=[
+      'change_date',
+      'campaign_id',
+      'old_target_cpa',
+      'new_target_cpa',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.api_clients.GoogleAdsApiClient.__init__',
+    return_value=None,
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_target_cpa_changes',
+    return_value=test_report,
+  )
+  campaign_report = garf.core.GarfReport(
+    results=[
+      [1, 25],
+    ],
+    column_names=[
+      'campaign_id',
+      'target_cpa',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_target_cpa_static',
+    return_value=campaign_report,
+  )
+
+  restored_history = change_history.target_cpa_history(
+    report_fetcher=garf.community.google.ads.report_fetcher.GoogleAdsApiReportFetcher(),
+    account=None,
+    start_date='2026-04-01',
+    end_date='2026-04-07',
+  )
+  expected_report = garf.core.GarfReport(
+    results=[
+      ['2026-04-01', 1, 25],
+      ['2026-04-02', 1, 25],
+      ['2026-04-03', 1, 25],
+      ['2026-04-04', 1, 25],
+      ['2026-04-05', 1, 25],
+      ['2026-04-06', 1, 25],
+      ['2026-04-07', 1, 25],
     ],
     column_names=[
       'day',
@@ -175,8 +363,8 @@ def test_target_cpa_history(mocker):
 def test_target_roas_history(mocker):
   test_report = garf.core.GarfReport(
     results=[
-      ['2026-04-02', 1, 1.0, 2000],
-      ['2026-04-05', 1, 2000, 2.5],
+      ['2026-04-02', 1, 1.0, 2.0],
+      ['2026-04-05', 1, 2.0, 2.5],
     ],
     column_names=[
       'change_date',
@@ -216,9 +404,103 @@ def test_target_roas_history(mocker):
   expected_report = garf.core.GarfReport(
     results=[
       ['2026-04-01', 1, 1.0],
-      ['2026-04-02', 1, 2000],
-      ['2026-04-03', 1, 2000],
-      ['2026-04-04', 1, 2000],
+      ['2026-04-02', 1, 2.0],
+      ['2026-04-03', 1, 2.0],
+      ['2026-04-04', 1, 2.0],
+      ['2026-04-05', 1, 2.5],
+      ['2026-04-06', 1, 2.5],
+      ['2026-04-07', 1, 2.5],
+    ],
+    column_names=[
+      'day',
+      'campaign_id',
+      'target_roas',
+    ],
+  )
+
+  assert restored_history == expected_report
+
+
+def test_target_roas_history_no_campaigns(mocker):
+  mocker.patch(
+    'garf.community.google.ads.api_clients.GoogleAdsApiClient.__init__',
+    return_value=None,
+  )
+  campaign_report = garf.core.GarfReport(
+    results=[],
+    column_names=[
+      'campaign_id',
+      'target_roas',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_target_roas_static',
+    return_value=campaign_report,
+  )
+
+  restored_history = change_history.target_roas_history(
+    report_fetcher=garf.community.google.ads.report_fetcher.GoogleAdsApiReportFetcher(),
+    account=None,
+    start_date='2026-04-01',
+    end_date='2026-04-07',
+  )
+  expected_report = garf.core.GarfReport(
+    results=None,
+    results_placeholder=[['', 1, 0.0]],
+    column_names=[
+      'day',
+      'campaign_id',
+      'target_roas',
+    ],
+  )
+
+  assert restored_history == expected_report
+
+
+def test_target_roas_history_no_changes(mocker):
+  test_report = garf.core.GarfReport(
+    results=[],
+    column_names=[
+      'change_date',
+      'campaign_id',
+      'old_target_roas',
+      'new_target_roas',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.api_clients.GoogleAdsApiClient.__init__',
+    return_value=None,
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_target_roas_changes',
+    return_value=test_report,
+  )
+  campaign_report = garf.core.GarfReport(
+    results=[
+      [1, 2.5],
+    ],
+    column_names=[
+      'campaign_id',
+      'target_roas',
+    ],
+  )
+  mocker.patch(
+    'garf.community.google.ads.builtins.change_history._get_target_roas_static',
+    return_value=campaign_report,
+  )
+
+  restored_history = change_history.target_roas_history(
+    report_fetcher=garf.community.google.ads.report_fetcher.GoogleAdsApiReportFetcher(),
+    account=None,
+    start_date='2026-04-01',
+    end_date='2026-04-07',
+  )
+  expected_report = garf.core.GarfReport(
+    results=[
+      ['2026-04-01', 1, 2.5],
+      ['2026-04-02', 1, 2.5],
+      ['2026-04-03', 1, 2.5],
+      ['2026-04-04', 1, 2.5],
       ['2026-04-05', 1, 2.5],
       ['2026-04-06', 1, 2.5],
       ['2026-04-07', 1, 2.5],

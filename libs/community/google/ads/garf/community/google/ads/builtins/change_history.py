@@ -209,10 +209,10 @@ def target_roas_history(
   end_date: str | None = None,
   **kwargs: str,
 ):
-  current_target_roass = _get_target_roas_static(
+  current_target_roas = _get_target_roas_static(
     report_fetcher, account, start_date, end_date
   )
-  if not current_target_roass:
+  if not current_target_roas:
     logger.debug('No TARGET_ROAS campaigns found for account %s', account)
     return garf.core.GarfReport(
       results_placeholder=[['', 1, 0.0]],
@@ -222,11 +222,11 @@ def target_roas_history(
     report_fetcher, account, start_date, end_date
   )
   placeholders = _prepare_placeholders(
-    current_target_roass, start_date=start_date, end_date=end_date
+    current_target_roas, start_date=start_date, end_date=end_date
   )
   return _build_history_report(
     changes=target_roas_changes,
-    current_values=current_target_roass,
+    current_values=current_target_roas,
     placeholders=placeholders,
     event_type='target_roas',
   )
@@ -242,6 +242,12 @@ def budget_history(
   current_budgets = _get_budgets_static(
     report_fetcher, account, start_date, end_date
   )
+  if not current_budgets:
+    logger.debug('No active campaigns found for account %s', account)
+    return garf.core.GarfReport(
+      results_placeholder=[['', 1, 0]],
+      column_names=['day', 'campaign_id', 'budget_amount'],
+    )
   changes = _get_budgets_changes(report_fetcher, account, start_date, end_date)
   placeholders = _prepare_placeholders(
     current_budgets, start_date=start_date, end_date=end_date
