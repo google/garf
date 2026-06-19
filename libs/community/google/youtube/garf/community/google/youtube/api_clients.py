@@ -79,9 +79,9 @@ ALLOWED_PARAMETERS: Final[tuple[str, ...]] = (
 _SAFE_OPS = {
   '==': operator.eq,
   '!=': operator.ne,
-  '>':  operator.gt,
+  '>': operator.gt,
   '>=': operator.ge,
-  '<':  operator.lt,
+  '<': operator.lt,
   '<=': operator.le,
 }
 
