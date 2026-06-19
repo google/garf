@@ -33,7 +33,7 @@ class TestYouTubeDataApiReportFetcher:
         snippet.publishedAt AS published_at,
       FROM videos
       WHERE
-        snippet.publishedAt > 2025-01-01
+        snippet.publishedAt > '2025-01-01'
         AND statistics.viewCount = 11
         AND statistics.likeCount > 1
     """

@@ -336,6 +336,55 @@ csv_writer.write(fetched_report, 'video_commentaries')
 ```
 ///
 
+**Gets tops level commentaries for YouTube channel(s).**
+
+/// tab | cli
+```bash
+echo "
+SELECT
+  commentary_id,
+  video_id,
+  author,
+  published_at,
+  likes,
+  comment,
+FROM builtin.channelCommentaries
+" > channel_commentaries.sql
+
+garf channel_commentaries.sql --source youtube-data-api \
+  --output csv \
+  --source.id=CHANNEL_ID_1,CHANNEL_ID_2
+```
+///
+
+/// tab | python
+
+```python
+from garf.io import writer
+from garf.community.google.youtube import YouTubeDataApiReportFetcher
+
+
+query = """
+SELECT
+  commentary_id,
+  video_id,
+  author,
+  published_at,
+  likes,
+  comment,
+FROM builtin.channelCommentaries
+"""
+
+fetched_report = (
+  YouTubeDataApiReportFetcher()
+  .fetch(query, id=[CHANNEL_ID_1,CHANNEL_ID_2])
+)
+
+csv_writer = writer.create_writer('csv')
+csv_writer.write(fetched_report, 'channel_commentaries')
+```
+///
+
 ## YouTube Analytics API
 
 ### Prerequisites

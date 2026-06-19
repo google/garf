@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from garf.community.google.youtube.builtins import channel_videos
+from garf.community.google.youtube.builtins import (
+  channel_commentaries,
+  channel_videos,
+)
 
 BUILTIN_QUERIES = {
   'channelVideos': channel_videos.get_youtube_channel_videos,
+  'channelCommentaries': channel_commentaries.get_youtube_channel_commentaries,
 }
