@@ -70,7 +70,8 @@ WHERE
   * `n_tags` - number of tags to return.
   * `tags` - custom tags to find in the media.
   * `custom_prompt` - prompt to send to LLM.
-  * `custom_schema` - schema for structured output.
+  * `custom_schema` - schema for [structured output](https://ai.google.dev/gemini-api/docs/structured-output).
+    Supports several [built-in schemas](#built-in-schemas).
 
 ### Fields
 
@@ -84,3 +85,129 @@ You can extract one of the following elements from reach row of API response.
     * `text` for description
     * `{name, score}` for tag
 * `hash`
+
+## Custom schemas
+
+### Built-in schemas
+
+Instead of specifying a schema verbosely you can use a couple of built-in schemas:
+
+
+/// tab | string
+
+Used for returning text.
+
+```sql
+SELECT
+  media_url,
+  content.text AS description
+FROM description
+WHERE
+  media_type = 'image'
+  AND tagger_type = 'gemini'
+  AND media_path IN ({{media}})
+  AND tagging_options.custom_prompt='What is this image about?'
+  AND tagging_options.custom_schema='string'
+```
+///
+
+/// tab | number
+
+Returns floating-point numbers.
+
+```sql
+SELECT
+  media_url,
+  content.text AS description
+FROM description
+WHERE
+  media_type = 'image'
+  AND tagger_type = 'gemini'
+  AND media_path IN ({{media}})
+  AND tagging_options.custom_prompt='What is the share of green in this image?'
+  AND tagging_options.custom_schema='number'
+```
+///
+
+/// tab | integer
+
+Returns integers.
+
+```sql
+SELECT
+  media_url,
+  content.text AS description
+FROM description
+WHERE
+  media_type = 'image'
+  AND tagger_type = 'gemini'
+  AND media_path IN ({{media}})
+  AND tagging_options.custom_prompt='Rate quality of this image from 1 to 5.'
+  AND tagging_options.custom_schema='integer'
+```
+///
+
+/// tab | boolean
+
+Returns True/False
+
+```sql
+SELECT
+  media_url,
+  content.text AS description
+FROM description
+WHERE
+  media_type = 'image'
+  AND tagger_type = 'gemini'
+  AND media_path IN ({{media}})
+  AND tagging_options.custom_prompt='Is this image advertising?'
+  AND tagging_options.custom_schema='boolean'
+```
+///
+
+/// tab | enum
+
+ Returns value from a specific set of possible strings for classification tasks.
+
+```sql
+SELECT
+  media_url,
+  content.text AS description
+FROM description
+WHERE
+  media_type = 'image'
+  AND tagger_type = 'gemini'
+  AND media_path IN ({{media}})
+  AND tagging_options.custom_prompt='Classify this image into one of the categories.'
+  AND tagging_options.custom_schema='enum:Category1,Category2'
+```
+///
+
+
+### Full schema specification
+
+If built-in schema is not enough you can specify the directly in the query:
+
+```sql
+SELECT
+  media_url,
+  content.text AS description
+FROM description
+WHERE
+  media_type = 'image'
+  AND tagger_type = 'gemini'
+  AND media_path IN ({{media}})
+  AND tagging_options.custom_prompt='Rate this image quality and explain why.'
+  AND tagging_options.custom_schema = {{
+    {
+      "type": "object",
+      "properties": {
+          "quality_score": {"type": "integer",
+          "description":
+            "Number from 1 to 5 where 1 means the poorest quality and 5 is the highest"
+          },
+          "reason": {"type": "string", "description": "Reason for assigning a particular score."}
+      }
+    }
+  }}
+```
