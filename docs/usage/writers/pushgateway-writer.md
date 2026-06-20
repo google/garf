@@ -144,3 +144,10 @@ FROM resource
 ```
 
 two metrics will be pushed to Pushgateway - `<namespace>_<job>_field1` and `<namespace>_<job>_field2`.
+
+### Info metrics
+
+If you query does not contains any metric all it's dimensions will be bundled
+into `_info` metric (i.e. `<namespace>_<job>_info`) with a value of `1.0`.
+`info` metrics are useful when you need to capture the mapping between various
+attributes in an API but don't care about the actual value.
