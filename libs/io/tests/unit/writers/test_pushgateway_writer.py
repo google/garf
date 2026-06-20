@@ -47,3 +47,27 @@ class TestPushgatewayWriter:
     samples2 = expected_metric2.collect()[0].samples
     assert samples2[0].value == 2.0
     assert samples2[0].labels == {label: 'one', label2: 'two'}
+
+  def test_convert_report_creates_info_metric(self):
+    namespace = 'test_namespace'
+    job = 'test_job'
+    label = 'dimension'
+    label2 = 'dimension2'
+    query_spec = garf.core.query_editor.QuerySpecification(
+      text=f'SELECT {label}, {label2} FROM resource'
+    ).generate()
+    test_report = garf.core.GarfReport(
+      results=[['one', 'two']],
+      column_names=[label, label2],
+      query_specification=query_spec,
+    )
+    writer = pushgateway_writer.PushgatewayWriter(
+      namespace=namespace, endpoint=''
+    )
+    registry = writer.convert_report_to_metrics(test_report, job)
+    expected_metric_name = f'{namespace}_{job}_info'
+    expected_metric = registry._names_to_collectors.get(expected_metric_name)
+    assert expected_metric
+    samples = expected_metric.collect()[0].samples
+    assert samples[0].value == 1.0
+    assert samples[0].labels == {label: 'one', label2: 'two'}

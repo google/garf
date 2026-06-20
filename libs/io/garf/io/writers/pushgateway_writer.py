@@ -83,6 +83,7 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       grouping_key={'query': destination},
     )
 
+  @tracer.start_as_current_span('pushgateway.convert_report_to_metrics')
   def convert_report_to_metrics(
     self, report: garf.core.GarfReport, destination: str
   ) -> None:
@@ -90,7 +91,7 @@ class PushgatewayWriter(abs_writer.AbsWriter):
 
     Args:
       report: GarfReport to write.
-      destination: job name.
+      destination: Job name.
     """
     registry = prometheus_client.CollectorRegistry()
     report = self.format_for_write(report)
@@ -119,6 +120,11 @@ class PushgatewayWriter(abs_writer.AbsWriter):
         else:
           label_value = row.get(label)
         label_values.append(label_value)
+      if not metrics:
+        self._define_gauge(
+          name='info', suffix=suffix, registry=registry, labelnames=labels
+        ).labels(*label_values).set(value=1.0)
+        continue
       for name, metric in metrics.items():
         if (
           metric_value := getattr(row, name)
@@ -156,13 +162,14 @@ class PushgatewayWriter(abs_writer.AbsWriter):
     for column, field in zip_longest(
       non_virtual_columns, query_specification.fields
     ):
-      if not column or not field:
+      if not column or not field or column == '_':
         continue
       if 'metric' in field or 'metric' in column:
         metrics[column] = self._define_gauge(column, suffix, registry, labels)
     if virtual_columns := query_specification.virtual_columns:
       for column, field in virtual_columns.items():
-        metrics[column] = self._define_gauge(column, suffix, registry, labels)
+        if column != '_' and ('metric' in field.value or 'metric' in column):
+          metrics[column] = self._define_gauge(column, suffix, registry, labels)
     logger.debug('metrics: %s', metrics)
     return metrics
 
@@ -190,6 +197,9 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       if not column or not field:
         continue
       if 'metric' not in field and 'metric' not in column:
+        labelnames.append(str(column))
+    for column, virtual_column in query_specification.virtual_columns.items():
+      if virtual_column.type == 'built-in':
         labelnames.append(str(column))
     logger.debug('labelnames: %s', labelnames)
     return labelnames
