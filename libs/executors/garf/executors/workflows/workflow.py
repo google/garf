@@ -259,7 +259,7 @@ class Workflow(pydantic.BaseModel):
       if isinstance(path, str):
         path = pathlib.Path(path)
       metadata = data.get('metadata') or WorkflowMetadata()
-      return Workflow(
+      return cls(
         steps=data.get('steps'),
         name=data.get('name') or str(path.stem),
         metadata=metadata,
