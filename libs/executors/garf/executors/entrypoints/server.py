@@ -70,9 +70,17 @@ class ApiExecutorResponse(pydantic.BaseModel):
 
   Attributes:
     results: Results of query execution.
+    full_results: Mapping between query names and results of execution.
   """
 
   results: list[Union[str, Any]]
+  full_results: dict[str, Any] | None = None
+
+  def model_post_init(self, __context):
+    if self.full_results:
+      for query, data in self.full_results.items():
+        if isinstance(data, garf.core.GarfReport):
+          self.full_results[query] = data.to_list(row_type='dict')
 
 
 @app.exception_handler(garf.core.exceptions.GarfError)
@@ -120,7 +128,9 @@ def execute(request: tasks.ApiExecutorRequest) -> ApiExecutorResponse:
     1, attributes={'executor.source': request.source}
   )
   result = tasks.execute(request.model_dump())
-  return ApiExecutorResponse(results=result)
+  return ApiExecutorResponse(
+    results=result, full_results={request.title: result}
+  )
 
 
 @app.post('/api/execute:task', status_code=fastapi.status.HTTP_202_ACCEPTED)
@@ -145,7 +155,7 @@ def execute_batch(
     n_queries, attributes={'executor.source': request.source}
   )
   results = tasks.execute_batch(request.model_dump())
-  return ApiExecutorResponse(results=results)
+  return ApiExecutorResponse(results=list(results.keys()), full_results=results)
 
 
 @app.post(
@@ -174,7 +184,7 @@ def execute_workflow(
   selected_aliases: Optional[list[str]] = None,
   skipped_aliases: Optional[list[str]] = None,
   simulate: bool = False,
-) -> list[str]:
+) -> dict[str, Any]:
   """Runs garf workflow till completion."""
   telemetry.workflow_requested.add(1)
   try:
@@ -260,24 +270,23 @@ def _init_workflow(
         config_data = yaml.safe_load(f)
     except FileNotFoundError as e:
       raise workflow.GarfWorkflowError('Incorrect config path') from e
-
   else:
     config_data = None
   if workflow_file:
     content = workflow_file.file.read()
     workflow_data = yaml.safe_load(content.decode('utf-8'))
-  elif workflow_path:
+    return workflow.Workflow(
+      **workflow_data,
+      execution_config=config_data,
+    )
+  if workflow_path:
     try:
-      with smart_open.open(workflow_path, 'r', encoding='utf-8') as f:
-        workflow_data = yaml.safe_load(f)
+      return workflow.Workflow.from_file(
+        path=workflow_path, config_file=config_data
+      )
     except FileNotFoundError as e:
       raise workflow.GarfWorkflowError('Incorrect workflow path') from e
-  else:
-    raise workflow.GarfWorkflowError('Neither workflow path nor file provided')
-  return workflow.Workflow(
-    **workflow_data,
-    execution_config=config_data,
-  )
+  raise workflow.GarfWorkflowError('Neither workflow path nor file provided')
 
 
 @typer_app.command()

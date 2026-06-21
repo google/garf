@@ -14,6 +14,8 @@
 
 """Defines common functionality between executors."""
 
+from __future__ import annotations
+
 import asyncio
 import functools
 import inspect
@@ -91,7 +93,7 @@ class Executor:
       no_writer_context = context.model_copy(update={'writer': 'unset'})
       batch = {f'{title}_{i}': query for i, query in enumerate(query_parts)}
       results = self.execute_batch(batch=batch, context=no_writer_context)
-      results = functools.reduce(operator.add, results)
+      results = functools.reduce(operator.add, list(results.values()))
     else:
       try:
         results = self._execute(query=query_text, title=title, context=context)
@@ -138,7 +140,7 @@ class Executor:
     batch: dict[str, str],
     context: execution_context.ExecutionContext,
     parallel_threshold: int = 10,
-  ) -> list[str]:
+  ) -> dict[str, str | report.GarfReport]:
     """Executes batch of queries for a common context.
 
     If an executor has any pre/post processors, executes them first while
@@ -164,9 +166,10 @@ class Executor:
           batch=batch, context=context, parallel_threshold=parallel_threshold
         )
       )
+      results = functools.reduce(lambda x, y: x | y, results)
     else:
       title, text = next(iter(batch.items()))
-      results = self.execute(query=text, title=title, context=context)
+      results = {title: self.execute(query=text, title=title, context=context)}
     if self.postprocessors:
       _handle_processors(processors=self.postprocessors, context=context)
     return results
@@ -202,15 +205,17 @@ class Executor:
   ):
     semaphore = asyncio.Semaphore(value=parallel_threshold)
 
-    async def run_with_semaphore(fn):
+    async def run_with_semaphore(title, fn):
       async with semaphore:
-        return await fn
+        return {title: await fn}
 
-    tasks = [
-      self.aexecute(query=query, title=title, context=context)
+    tasks = {
+      title: self.aexecute(query=query, title=title, context=context)
       for title, query in batch.items()
-    ]
-    return await asyncio.gather(*(run_with_semaphore(task) for task in tasks))
+    }
+    return await asyncio.gather(
+      *(run_with_semaphore(title, task) for title, task in tasks.items())
+    )
 
 
 @tracer.start_as_current_span('executor.handle_processors')

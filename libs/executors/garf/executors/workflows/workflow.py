@@ -94,12 +94,12 @@ class QueryPath(pydantic.BaseModel):
     if self.prefix:
       if re.match(_REMOTE_FILES_PATTERN, str(self.prefix)):
         return urllib.parse.urljoin(self.prefix, self.path)
-      return self.prefix / self.path
+      return pathlib.Path(self.prefix) / self.path
     return self.path
 
   @property
   def text(self) -> str:
-    return reader_client.read(self.full_path)
+    return reader_client.read(self.full_path.absolute())
 
   @property
   def title(self) -> str:

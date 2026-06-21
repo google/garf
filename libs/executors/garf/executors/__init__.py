@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Executors to fetch data from various APIs."""
+"""Fetches data from various APIs and writes them to local/remote locations."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ __all__ = [
   'ApiQueryExecutor',
 ]
 
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 
 def validate_version(version: str | None = None):
