@@ -89,7 +89,7 @@ class WorkflowRunner:
     self.workflow.compile()
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
-    execution_results = []
+    execution_results = {}
     logger.info('Starting Garf Workflow...')
     for i, step in enumerate(self.workflow.steps, 1):
       step_name = f'{i}-{step.fetcher}'
@@ -143,12 +143,12 @@ class WorkflowRunner:
             batch[query.title] = query.text
         try:
           step_start_time = time.perf_counter()
-          query_executor.execute_batch(
+          results = query_executor.execute_batch(
             batch,
             step.context,
             step.parallel_threshold or self.parallel_threshold,
           )
-          execution_results.append(step_name)
+          execution_results[step_name] = results
           telemetry.workflow_step_counter.add(1, workflow_step_attributes)
           step_duration = time.perf_counter() - step_start_time
           telemetry.workflow_step_histogram.record(

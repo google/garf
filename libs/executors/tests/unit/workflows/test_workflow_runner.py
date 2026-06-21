@@ -26,7 +26,7 @@ class TestWorkflowRunner:
     workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
     runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
     results = runner.run()
-    assert results == ['1-fake-test']
+    assert '1-fake-test' in results
 
   def test_compile_saves_file(self, tmp_path):
     tmp_workflow_path = tmp_path / 'workflow.yaml'
