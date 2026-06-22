@@ -68,6 +68,7 @@ class ConsoleWriter(abs_writer.AbsWriter):
       print(report.to_json())
     elif self.format == 'jsonl':
       print(report.to_jsonl())
+    return f'[Console] - {destination}'
 
   def _write_rich_table(
     self, report: garf_report.GarfReport, destination: str
