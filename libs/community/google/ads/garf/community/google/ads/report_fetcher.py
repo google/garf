@@ -101,6 +101,8 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     if isinstance(account, str):
       account = account.replace('-', '')
       account = account.split(',')
+    elif isinstance(account, int):
+      account = [str(account)]
     else:
       account = [str(a).replace('-', '') for a in account]
     if not args:
