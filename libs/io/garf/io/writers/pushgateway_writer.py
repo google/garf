@@ -82,6 +82,7 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       registry=registry,
       grouping_key={'query': destination},
     )
+    return f'[Pushgateway] - {destination}'
 
   @tracer.start_as_current_span('pushgateway.convert_report_to_metrics')
   def convert_report_to_metrics(
