@@ -125,7 +125,7 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       return self._service
     return build('youtube', self.api_version, developerKey=self.api_key)
 
-  def get_types(self, request):
+  def get_types(self, request, **kwargs):
     resource_mapping = {
       'videos': 'Video',
       'channels': 'Channel',
