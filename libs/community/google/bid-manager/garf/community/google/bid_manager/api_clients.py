@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import pathlib
+import pickle
 import socket
 from typing import Literal
 
@@ -27,6 +28,7 @@ import smart_open
 import tenacity
 from garf.community.google.bid_manager import exceptions, query_editor
 from garf.core import api_clients
+from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -38,6 +40,7 @@ _DEFAULT_API_SCOPES = ['https://www.googleapis.com/auth/doubleclickbidmanager']
 _SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home() / 'dbm.json')
 _QUERY_CACHE_ENV = 'GARF_BID_MANAGER_QUERY_CACHE_DIR'
 _DEFAULT_QUERY_CACHE_DIR = pathlib.Path.home() / '.garf/bid_manager'
+_CREDENTIALS_PATH = pathlib.Path.home() / '.garf/bid_manager/token.pickle'
 
 
 logger = logging.getLogger(__name__)
@@ -75,11 +78,15 @@ class BidManagerApiClient(api_clients.BaseClient):
   @property
   def credentials(self):
     if not self._credentials:
-      self._credentials = (
-        self._get_oauth_credentials()
-        if self.auth_mode == 'oauth'
-        else self._get_service_account_credentials()
-      )
+      try:
+        self._credentials = _load_credentials()
+      except BidManagerApiClientError:
+        self._credentials = (
+          self._get_oauth_credentials()
+          if self.auth_mode == 'oauth'
+          else self._get_service_account_credentials()
+        )
+    _save_credentials(self._credentials)
     return self._credentials
 
   @property
@@ -134,6 +141,8 @@ class BidManagerApiClient(api_clients.BaseClient):
     ) as f:
       data = f.readlines()
     results = _process_api_response(data[1:], request.fields)
+    if not results:
+      raise BidManagerApiClientError('No data found in response')
     return api_clients.GarfApiResponse(results=results)
 
   def _get_service_account_credentials(self):
@@ -299,3 +308,23 @@ def _check_if_report_is_done(get_request) -> bool:
     )
     raise Exception
   return status
+
+
+def _load_credentials():
+  if not os.path.exists(_CREDENTIALS_PATH):
+    raise BidManagerApiClientError('Credentials file not found')
+  with open(_CREDENTIALS_PATH, 'rb') as f:
+    credentials = pickle.load(f)
+    if (
+      not credentials.valid
+      and credentials.expired
+      and credentials.refresh_token
+    ):
+      credentials.refresh(Request())
+    return credentials
+  raise BidManagerApiClientError('Credentials file not found')
+
+
+def _save_credentials(credentials) -> None:
+  with open(_CREDENTIALS_PATH, 'wb') as f:
+    pickle.dump(credentials, f)
