@@ -20,12 +20,14 @@ import json
 import logging
 import os
 import pathlib
+import pickle
 import socket
 from typing import Literal
 
 import tenacity
 from garf.community.google.campaign_manager import exceptions, query_editor
 from garf.core import api_clients
+from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -39,6 +41,7 @@ _DEFAULT_API_SCOPES = [
 _SERVICE_ACCOUNT_CREDENTIALS_FILE = str(pathlib.Path.home() / 'cm360.json')
 _QUERY_CACHE_ENV = 'GARF_CAMPAIGN_MANAGER_360_QUERY_CACHE_DIR'
 _DEFAULT_QUERY_CACHE_DIR = pathlib.Path.home() / '.garf/cm360'
+_CREDENTIALS_PATH = pathlib.Path.home() / '.garf/cm360/token.pickle'
 
 
 logger = logging.getLogger(__name__)
@@ -81,11 +84,15 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
   @property
   def credentials(self):
     if not self._credentials:
-      self._credentials = (
-        self._get_oauth_credentials()
-        if self.auth_mode == 'oauth'
-        else self._get_service_account_credentials()
-      )
+      try:
+        self._credentials = _load_credentials()
+      except CampaignManager360ApiClientError:
+        self._credentials = (
+          self._get_oauth_credentials()
+          if self.auth_mode == 'oauth'
+          else self._get_service_account_credentials()
+        )
+    _save_credentials(self._credentials)
     return self._credentials
 
   @property
@@ -141,6 +148,8 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
       .execute()
     )
     results = _process_api_response(data, request.fields)
+    if not results:
+      raise CampaignManager360ApiClientError('No data found in response')
     return api_clients.GarfApiResponse(results=results)
 
   def _get_service_account_credentials(self):
@@ -322,3 +331,23 @@ def _check_is_report_is_available(get_request) -> bool:
     logger.debug('Report %s it not ready, retrying...', status['reportId'])
     raise Exception
   return status
+
+
+def _load_credentials():
+  if not os.path.exists(_CREDENTIALS_PATH):
+    raise CampaignManager360ApiClientError('Credentials file not found')
+  with open(_CREDENTIALS_PATH, 'rb') as f:
+    credentials = pickle.load(f)
+    if (
+      not credentials.valid
+      and credentials.expired
+      and credentials.refresh_token
+    ):
+      credentials.refresh(Request())
+    return credentials
+  raise CampaignManager360ApiClientError('Credentials file not found')
+
+
+def _save_credentials(credentials) -> None:
+  with open(_CREDENTIALS_PATH, 'wb') as f:
+    pickle.dump(credentials, f)
