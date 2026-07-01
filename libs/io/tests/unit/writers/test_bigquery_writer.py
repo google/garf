@@ -21,22 +21,7 @@ from garf.io.writers import bigquery_writer
 from google.cloud import bigquery
 
 
-class TestBigQueryWriter:
-  @pytest.mark.skipif(
-    not os.environ.get('GOOGLE_CLOUD_PROJECT'),
-    reason='GOOGLE_CLOUD_PROJECT env variable not set.',
-  )
-  def test_write(self):
-    writer = bigquery_writer.BigQueryWriter(array_handling='arrays')
-    report = garf.core.GarfReport(
-      results=[
-        [{'key': ['one', 'two']}, 'three'],
-      ],
-      column_names=['column1', 'column2'],
-    )
-    result = writer.write(report, 'test')
-    assert result
-
+class TestBigQueryWriterOptions:
   @pytest.mark.parametrize(
     ('disposition', 'expected'),
     [
@@ -54,10 +39,21 @@ class TestBigQueryWriter:
     ],
   )
   def test_init_creates_correct_write_disposition(self, disposition, expected):
-    writer = bigquery_writer.BigQueryWriter(
+    options = bigquery_writer.BigQueryWriterOptions(
       project='test', write_disposition=disposition
     )
-    assert writer.write_disposition == expected
+    assert options.write_disposition == expected
+
+  def test_init_raises_error_incorrect_disposition(self):
+    with pytest.raises(
+      bigquery_writer.BigQueryWriterError,
+      match=(
+        'Unsupported writer disposition, choose one of: replace, append, fail'
+      ),
+    ):
+      bigquery_writer.BigQueryWriterOptions(
+        project='test', write_disposition='unknown'
+      )
 
   @pytest.mark.parametrize(
     ('column', 'time_partitioning_type', 'expected'),
@@ -70,31 +66,34 @@ class TestBigQueryWriter:
   def test_init_creates_correct_time_partitioning(
     self, column, time_partitioning_type, expected
   ):
-    writer = bigquery_writer.BigQueryWriter(
+    options = bigquery_writer.BigQueryWriterOptions(
       project='test',
       time_partitioning_column=column,
       time_partitioning_type=time_partitioning_type,
     )
-    assert writer.time_partitioning_type == expected
+    assert options.time_partitioning_type == expected
 
   def test_init_raises_error_incorrect_time_partitioning(self):
     with pytest.raises(
       bigquery_writer.BigQueryWriterError,
-      match='Unsupported time_partitioning type, choose one of: DAY, HOUR, MONTH, YEAR',
+      match=(
+        'Unsupported time_partitioning type, choose one of: '
+        'DAY, HOUR, MONTH, YEAR'
+      ),
     ):
-      bigquery_writer.BigQueryWriter(
+      bigquery_writer.BigQueryWriterOptions(
         project='test',
         time_partitioning_column='column',
         time_partitioning_type='UNKNOWN_TYPE',
       )
 
   def test_init_creates_correct_range_partitioning_range(self):
-    writer = bigquery_writer.BigQueryWriter(
+    options = bigquery_writer.BigQueryWriterOptions(
       project='test',
       range_partitioning_column='column',
       range_partitioning_range='1:100:10',
     )
-    assert writer.range_partitioning_range == {
+    assert options.range_partitioning_range == {
       'start': 1,
       'end': 100,
       'interval': 10,
@@ -108,8 +107,25 @@ class TestBigQueryWriter:
       bigquery_writer.BigQueryWriterError,
       match='Unsupported range_partitioning_range',
     ):
-      bigquery_writer.BigQueryWriter(
+      bigquery_writer.BigQueryWriterOptions(
         project='test',
         range_partitioning_column='column',
         range_partitioning_range=partition_range,
       )
+
+
+class TestBigQueryWriter:
+  @pytest.mark.skipif(
+    not os.environ.get('GOOGLE_CLOUD_PROJECT'),
+    reason='GOOGLE_CLOUD_PROJECT env variable not set.',
+  )
+  def test_write(self):
+    writer = bigquery_writer.BigQueryWriter(array_handling='arrays')
+    report = garf.core.GarfReport(
+      results=[
+        [{'key': ['one', 'two']}, 'three'],
+      ],
+      column_names=['column1', 'column2'],
+    )
+    result = writer.write(report, 'test')
+    assert result

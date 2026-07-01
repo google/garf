@@ -16,7 +16,6 @@
 from __future__ import annotations
 
 import os
-from typing import Literal
 
 try:
   import pandas as pd
@@ -31,6 +30,7 @@ import contextlib
 import logging
 
 import numpy as np
+import pydantic
 from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
@@ -53,8 +53,8 @@ class BigQueryWriterError(exceptions.GarfIoError):
   """BigQueryWriter specific errors."""
 
 
-class BigQueryWriter(abs_writer.AbsWriter):
-  """Writes Garf Report to BigQuery.
+class BigQueryWriterOptions(abs_writer.WriterOptions):
+  """Options for writing report to BigQuery.
 
   Attributes:
     project: Id of Google Cloud Project.
@@ -70,73 +70,43 @@ class BigQueryWriter(abs_writer.AbsWriter):
     clustering_columns: Column(s) to perform clustering of table.
     default_table_expiration_ms:
       Expiration of tables in the dataset in milliseconds.
+    skip_dataset_creation: Whether to proceed without creating dataset.
   """
 
-  def __init__(
-    self,
-    project: str | None = None,
-    dataset: str = 'garf',
-    location: str = 'US',
-    write_disposition: bigquery.WriteDisposition
-    | Literal['append', 'replace', 'fail'] = 'replace',
-    time_partitioning_column: str | None = None,
-    time_partitioning_type: str | None = None,
-    time_partitioning_expiration_ms: int | None = None,
-    range_partitioning_column: str | None = None,
-    range_partitioning_range: str | None = None,  # Should be dict
-    clustering_columns: str | None = None,
-    default_table_expiration_ms: int | None = None,
-    **kwargs,
-  ):
-    """Initializes BigQueryWriter.
+  model_config = pydantic.ConfigDict(
+    extra='allow', arbitrary_types_allowed=True
+  )
 
-    Args:
-      project: Id of Google Cloud Project.
-      dataset: BigQuery dataset to write data to.
-      location: Location of a newly created dataset.
-      write_disposition: Option for overwriting data.
-      time_partitioning_column: Column to partition tables by date.
-      time_partitioning_type:
-        Type of time partitioning (DAY, HOUR, MONTH, YEAR).
-      time_partitioning_expiration_ms:
-        Expiration of time partitioned tables in milliseconds.
-      range_partitioning_column: Column to partition tables into ranges.
-      range_partitioning_range: Range definition in start:end:interval format.
-      clustering_columns: Column(s) to perform clustering of table.
-      kwargs: Optional keywords arguments.
-      default_table_expiration_ms:
-        Expiration of tables in the dataset in milliseconds.
-    """
-    super().__init__(**kwargs)
-    if not project:
-      project = os.getenv('GOOGLE_CLOUD_PROJECT')
-    if not project:
-      raise BigQueryWriterError(
-        'project is required. Either provide it as project parameter '
-        'or GOOGLE_CLOUD_PROJECT env variable.'
-      )
-    self.project = project
-    self.dataset_id = f'{project}.{dataset}'
-    self.location = location
-    if write_disposition in ('replace', 'append', 'fail'):
-      self.write_disposition = write_disposition
-    elif isinstance(write_disposition, bigquery.WriteDisposition):
+  project: str = os.getenv('GOOGLE_CLOUD_PROJECT')
+  dataset: str = 'garf'
+  location: str = 'US'
+  write_disposition: bigquery.WriteDisposition | str = 'replace'
+  time_partitioning_column: str | None = None
+  time_partitioning_type: str | None = None
+  time_partitioning_expiration_ms: int | None = None
+  range_partitioning_column: str | None = None
+  range_partitioning_range: str | None = None
+  clustering_columns: str | list[str] | None = None
+  default_table_expiration_ms: int | None = None
+  skip_dataset_creation: bool = False
+
+  def model_post_init(self, __context) -> None:
+    if isinstance(self.write_disposition, bigquery.WriteDisposition):
       self.write_disposition = _WRITE_DISPOSITION_MAPPING.get(
-        write_disposition.name
+        self.write_disposition.name
       )
-    elif _WRITE_DISPOSITION_MAPPING.get(write_disposition.upper()):
+    elif _WRITE_DISPOSITION_MAPPING.get(self.write_disposition.upper()):
       self.write_disposition = _WRITE_DISPOSITION_MAPPING.get(
-        write_disposition.upper()
+        self.write_disposition.upper()
       )
-    else:
+    elif self.write_disposition not in (_WRITE_DISPOSITION_MAPPING.values()):
       raise BigQueryWriterError(
         'Unsupported writer disposition, choose one of: replace, append, fail'
       )
-    self.time_partitioning_column = time_partitioning_column
-    if time_partitioning_column:
-      if not time_partitioning_type:
+    if self.time_partitioning_column:
+      if not self.time_partitioning_type:
         self.time_partitioning_type = 'DAY'
-      elif time_partitioning_type not in (
+      elif self.time_partitioning_type not in (
         'DAY',
         'HOUR',
         'MONTH',
@@ -146,14 +116,9 @@ class BigQueryWriter(abs_writer.AbsWriter):
           'Unsupported time_partitioning type, '
           'choose one of: DAY, HOUR, MONTH, YEAR'
         )
-      else:
-        self.time_partitioning_type = time_partitioning_type
-    else:
-      self.time_partitioning_type = None
-    self.time_partitioning_expiration_ms = time_partitioning_expiration_ms
-    if range_partitioning_range:
+    if self.range_partitioning_range:
       try:
-        start, end, interval = range_partitioning_range.split(':')
+        start, end, interval = self.range_partitioning_range.split(':')
         self.range_partitioning_range = {
           'start': int(start),
           'end': int(end),
@@ -167,39 +132,55 @@ class BigQueryWriter(abs_writer.AbsWriter):
 
     else:
       self.range_partitioning_range = None
-    self.range_partitioning_column = range_partitioning_column
-    if clustering_columns:
-      self.clustering_columns = clustering_columns.split(',')
+    if self.clustering_columns:
+      self.clustering_columns = self.clustering_columns.split(',')
     else:
       self.clustering_columns = None
-    self.default_table_expiration_ms = default_table_expiration_ms
 
+  @property
+  def dataset_id(self) -> str:
+    return f'{self.project}.{self.dataset}'
+
+
+class BigQueryWriter(abs_writer.AbsWriter):
+  """Writes Garf Report to BigQuery."""
+
+  def __init__(
+    self,
+    options: BigQueryWriterOptions | None = None,
+    **kwargs,
+  ):
+    """Initializes BigQueryWriter."""
+    super().__init__(**kwargs)
+    self.options = options if options else BigQueryWriterOptions(**kwargs)
     self._client = None
 
   def __str__(self) -> str:
-    return f'[BigQuery] - {self.dataset_id} at {self.location} location.'
+    return f'[BigQuery] - {self.options.dataset_id} at {self.options.location} location.'
 
   @property
   def client(self) -> bigquery.Client:
     """Instantiated BigQuery client."""
     if not self._client:
       with tracer.start_as_current_span('bq.create_client'):
-        self._client = bigquery.Client(self.project)
+        self._client = bigquery.Client(self.options.project)
     return self._client
 
   @tracer.start_as_current_span('bq.create_or_get_dataset')
   def create_or_get_dataset(self) -> bigquery.Dataset:
     """Gets existing dataset or create a new one."""
+    if self.options.skip_dataset_creation:
+      return bigquery.Dataset(self.options.dataset_id)
     try:
-      bq_dataset = self.client.get_dataset(self.dataset_id)
+      bq_dataset = self.client.get_dataset(self.options.dataset_id)
     except google_cloud_exceptions.NotFound:
-      bq_dataset = bigquery.Dataset(self.dataset_id)
-      if table_expiration := self.default_table_expiration_ms:
+      bq_dataset = bigquery.Dataset(self.options.dataset_id)
+      if table_expiration := self.options.default_table_expiration_ms:
         bq_dataset.default_table_expiration_ms = int(table_expiration)
-      bq_dataset.location = self.location
+      bq_dataset.location = self.options.location
       with contextlib.suppress(google_cloud_exceptions.Conflict):
         bq_dataset = self.client.create_dataset(bq_dataset, timeout=30)
-        logger.info('Created new dataset %s', self.dataset_id)
+        logger.info('Created new dataset %s', self.options.dataset_id)
     return bq_dataset
 
   @tracer.start_as_current_span('bq.write')
@@ -218,7 +199,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
     destination = formatter.format_extension(
       destination, prefix=self.options.prefix, suffix=self.options.suffix
     )
-    table = f'{self.dataset_id}.{destination}'
+    table = f'{self.options.dataset_id}.{destination}'
     if not report:
       df = pd.DataFrame(
         data=report.results_placeholder, columns=report.column_names
@@ -230,16 +211,16 @@ class BigQueryWriter(abs_writer.AbsWriter):
     logger.debug('Writing %d rows of data to %s', len(df), destination)
     pandas_gbq.to_gbq(
       dataframe=df,
-      project_id=self.project,
+      project_id=self.options.project,
       destination_table=table,
-      if_exists=self.write_disposition,
+      if_exists=self.options.write_disposition,
       progress_bar=False,
-      time_partitioning_column=self.time_partitioning_column,
-      time_partitioning_type=self.time_partitioning_type,
-      time_partitioning_expiration_ms=self.time_partitioning_expiration_ms,
-      range_partitioning_column=self.range_partitioning_column,
-      range_partitioning_range=self.range_partitioning_range,
-      clustering_columns=self.clustering_columns,
+      time_partitioning_column=self.options.time_partitioning_column,
+      time_partitioning_type=self.options.time_partitioning_type,
+      time_partitioning_expiration_ms=self.options.time_partitioning_expiration_ms,
+      range_partitioning_column=self.options.range_partitioning_column,
+      range_partitioning_range=self.options.range_partitioning_range,
+      clustering_columns=self.options.clustering_columns,
     )
     logger.debug('Writing to %s is completed', destination)
-    return f'[BigQuery] - at {self.dataset_id}.{destination}'
+    return f'[BigQuery] - at {self.options.dataset_id}.{destination}'
