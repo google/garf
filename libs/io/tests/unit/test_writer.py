@@ -25,7 +25,7 @@ def test_create_writer_returns_correct_fields_for_bq_option(option):
   bq_writer = writer.create_writer(
     option, project='fake_project', dataset='fake_dataset'
   )
-  assert bq_writer.dataset_id == 'fake_project.fake_dataset'
+  assert bq_writer.options.dataset_id == 'fake_project.fake_dataset'
 
 
 @pytest.mark.parametrize(
