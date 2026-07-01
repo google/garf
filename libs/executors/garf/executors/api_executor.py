@@ -59,12 +59,12 @@ class ApiQueryExecutor(executor.Executor):
       report_simulator: Instantiated simulator.
     """
     self.fetcher = fetcher
-    self.simulator = report_simulator
     self.writers = writers
     super().__init__(
       source=source,
       preprocessors=self.fetcher.preprocessors,
       postprocessors=self.fetcher.postprocessors,
+      report_simulator=report_simulator,
     )
 
   @classmethod
