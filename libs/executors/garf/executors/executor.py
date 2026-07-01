@@ -24,7 +24,7 @@ import operator
 import time
 from typing import Optional
 
-from garf.core import query_editor, report, report_fetcher
+from garf.core import query_editor, report, report_fetcher, simulator
 from garf.executors import (
   exceptions,
   execution_context,
@@ -46,10 +46,12 @@ class Executor:
     source: str,
     preprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
     postprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
+    report_simulator: Optional[simulator.ApiReportSimulator] = None,
   ) -> None:
     self.source = source
     self.preprocessors = preprocessors or {}
     self.postprocessors = postprocessors or {}
+    self.simulator = report_simulator
 
   @tracer.start_as_current_span('executor.execute')
   def execute(
@@ -87,7 +89,7 @@ class Executor:
     logger.info('Executing script: %s', title)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
-    if self.preprocessors:
+    if self.preprocessors and not self.simulator:
       _handle_processors(processors=self.preprocessors, context=context)
     if len(query_parts := query_spec.query_parts) > 1:
       no_writer_context = context.model_copy(update={'writer': 'unset'})
@@ -117,7 +119,7 @@ class Executor:
       telemetry.executor_histogram.record(duration, executor_attributes)
       return write_outputs
     span.set_attribute('execute.num_results', len(results))
-    if self.postprocessors:
+    if self.postprocessors and not self.simulator:
       _handle_processors(processors=self.postprocessors, context=context)
     duration = time.perf_counter() - start_time
     telemetry.executor_histogram.record(duration, executor_attributes)
@@ -156,7 +158,7 @@ class Executor:
     """
     span = trace.get_current_span()
     span.set_attribute('api.parallel_threshold', parallel_threshold)
-    if self.preprocessors:
+    if self.preprocessors and not self.simulator:
       _handle_processors(processors=self.preprocessors, context=context)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
@@ -170,7 +172,7 @@ class Executor:
     else:
       title, text = next(iter(batch.items()))
       results = {title: self.execute(query=text, title=title, context=context)}
-    if self.postprocessors:
+    if self.postprocessors and not self.simulator:
       _handle_processors(processors=self.postprocessors, context=context)
     return results
 
