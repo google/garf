@@ -58,7 +58,10 @@ class TestWorkflow:
       }
     ],
     'name': 'test workflow',
-    'metadata': {'description': 'Test Workflow'},
+    'metadata': {
+      'description': 'Test Workflow',
+      'required_fetchers': {'fake': '0.0.0'},
+    },
   }
 
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
@@ -71,6 +74,7 @@ class TestWorkflow:
       name='test workflow',
       metadata={
         'description': 'Test Workflow',
+        'required_fetchers': {'fake': '0.0.0'},
       },
       prefix=tmp_workflow.parent,
     )
