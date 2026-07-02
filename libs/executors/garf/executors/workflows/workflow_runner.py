@@ -116,10 +116,18 @@ class WorkflowRunner:
         **workflow_attributes,
         'workflow.step.name': step_name,
       }
-      with tracer.start_as_current_span(step_name):
+      with tracer.start_as_current_span(step_name) as step_span:
         logger.info(
           'Running step %d, fetcher: %s, alias: %s', i, step.fetcher, step.alias
         )
+        step_span.set_attributes(
+          {
+            'step.alias': step.alias,
+            'step.fetcher': step.fetcher,
+            'step.writer': step.writer,
+          }
+        )
+
         query_executor = setup.setup_executor(
           source=step.fetcher,
           fetcher_parameters=step.fetcher_parameters,
@@ -152,6 +160,7 @@ class WorkflowRunner:
             batch[query.title] = query.text
         try:
           step_start_time = time.perf_counter()
+          step_span.set_attribute('step.num_queries', len(batch))
           results = query_executor.execute_batch(
             batch,
             step.context,
