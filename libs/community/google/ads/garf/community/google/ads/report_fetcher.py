@@ -14,10 +14,13 @@
 
 """Defines report fetcher for Google Ads API."""
 
+from __future__ import annotations
+
 import asyncio
 import functools
 import operator
 import warnings
+from typing import Literal
 
 import garf.core
 from garf.community.google.ads import (
@@ -60,7 +63,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     if kwargs.get('no_expand_mcc'):
       preprocessors = {}
     elif kwargs.get('expand_mcc') in (None, True):
-      preprocessors = {'account': self.expand_mcc}
+      preprocessors = {'account': self.expand_mcc, 'expand_mcc': lambda: False}
     else:
       preprocessors = {}
     super().__init__(
@@ -78,6 +81,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     args: garf.core.query_editor.GarfQueryParameters | None = None,
     account: str | list[str] | None = None,
     expand_mcc: bool = False,
+    expand_mcc_type: Literal['roots', 'leaves', 'hierarchy'] = 'leaves',
     customer_ids_query: str | None = None,
     **kwargs: str,
   ) -> garf.core.GarfReport:
@@ -88,6 +92,10 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
       args: Optional parameters to fine-tune the query.
       account: Account(s) to get data from.
       expand_mcc: Whether to perform account expansion (MCC to Account).
+      expand_mcc_type:
+        Strategy to expanding MCCs. Can be roots (get only mccs), leaves
+        (get only child accounts) or hierarchy (get both mccs and child
+        accounts).
       customer_ids_query: Query to reduce number of accounts based a condition.
 
     Returns:
@@ -111,7 +119,9 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
       args = {}
     if expand_mcc or customer_ids_query:
       account = self.expand_mcc(
-        account=account, customer_ids_query=customer_ids_query
+        account=account,
+        customer_ids_query=customer_ids_query,
+        expand_mcc_type=expand_mcc_type,
       )
       if not account:
         raise GoogleAdsApiReportFetcherError(
@@ -157,6 +167,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     account: str | list[str],
     customer_ids_query: str | None = None,
     customer_ids: str | list | None = None,
+    expand_mcc_type: Literal['roots', 'leaves', 'hierarchy'] = 'leaves',
   ) -> list[str]:
     """Performs Manager account(s) expansion to child accounts.
 
@@ -164,9 +175,13 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
       account: Manager account(s) to be expanded.
       customer_ids_query: GAQL query used to reduce the number of customer_ids.
       customer_ids: Manager account(s) to be expanded.
+      expand_mcc_type:
+        Strategy to expanding MCCs. Can be roots (get only mccs), leaves
+        (get only child accounts) or hierarchy (get both mccs and child
+        accounts).
 
     Returns:
-      All child accounts under provided customer_ids.
+      All accounts under provided customer_ids.
     """
     span = trace.get_current_span()
     if customer_ids and not account:
@@ -176,18 +191,44 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         stacklevel=2,
       )
       account = customer_ids
-    query = """
-        SELECT customer_client.id FROM customer_client
-        WHERE customer_client.manager = FALSE
-        AND customer_client.status = ENABLED
-        AND customer_client.hidden = FALSE
-        """
+    span.set_attribute('accounts.seed_accounts', account)
+    if expand_mcc_type == 'roots':
+      query = """
+          SELECT customer_client.id FROM customer_client
+          WHERE customer_client.manager = TRUE
+          AND customer_client.status = ENABLED
+          AND customer_client.hidden = FALSE
+       """
+      child_customer_ids = self.fetch(
+        query_specification=query, account=account
+      ).to_list()
+    elif expand_mcc_type == 'leaves':
+      query = """
+          SELECT customer_client.id FROM customer_client
+          WHERE customer_client.manager = FALSE
+          AND customer_client.status = ENABLED
+          AND customer_client.hidden = FALSE
+       """
+      child_customer_ids = self.fetch(
+        query_specification=query, account=account
+      ).to_list()
+    elif expand_mcc_type == 'hierarchy':
+      query = 'SELECT * FROM builtin.account_hierarchy'
+      child_customer_ids = self.fetch(
+        query_specification=query, account=account
+      )
+      child_customer_ids = list(
+        set(
+          child_customer_ids['mcc_id'].to_list()
+          + child_customer_ids['account_id'].to_list()
+        )
+      )
+    else:
+      raise GoogleAdsApiReportFetcherError(
+        f'Unsupported MCC expansion type: {expand_mcc_type}'
+      )
     if isinstance(account, str):
       account = account.split(',')
-    span.set_attribute('accounts.seed_accounts', account)
-    child_customer_ids = self.fetch(
-      query_specification=query, account=account
-    ).to_list()
     if not child_customer_ids:
       raise GoogleAdsApiReportFetcherError(
         f'No ENABLED accounts found under provided seed accounts {account}'
