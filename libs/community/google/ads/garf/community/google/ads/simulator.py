@@ -21,7 +21,7 @@ import logging
 from typing import Any
 
 import garf.core
-from garf.community.google.ads import parsers, query_editor
+from garf.community.google.ads import parsers, query_editor, version
 from garf.community.google.ads.api_clients import GoogleAdsApiClient
 from garf.core import simulator
 
@@ -33,6 +33,10 @@ class GoogleAdsApiSimulatorSpecification(simulator.SimulatorSpecification):
 
 
 class GoogleAdsApiReportSimulator(simulator.ApiReportSimulator):
+  """Simulates response from Google Ads API based on a query."""
+
+  version = version.__version__
+
   def __init__(
     self,
     api_client: GoogleAdsApiClient | None = None,

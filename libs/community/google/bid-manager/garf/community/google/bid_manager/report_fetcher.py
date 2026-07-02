@@ -14,12 +14,19 @@
 
 """Defines report fetcher for Bid Manager API."""
 
-from garf.community.google.bid_manager import BidManagerApiClient, query_editor
+from garf.community.google.bid_manager import (
+  BidManagerApiClient,
+  query_editor,
+  version,
+)
 from garf.core import parsers, report_fetcher
 
 
 class BidManagerApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher."""
+
+  alias = 'bid-manager'
+  version = version.__version__
 
   def __init__(
     self,

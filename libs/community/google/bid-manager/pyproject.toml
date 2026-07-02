@@ -10,6 +10,7 @@ dependencies = [
   "google-api-python-client",
   "google_auth_oauthlib",
   "tenacity",
+  "smart_open",
 ]
 authors = [
   {name = "Andrei Markin", email = "amarkin@google.com"},
@@ -27,7 +28,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.community.google.bid_manager.__version__"}
+version = {attr = "garf.community.google.bid_manager.version.__version__"}
 
 [project.entry-points.garf]
 bid-manager = "garf.community.google.bid_manager.report_fetcher"

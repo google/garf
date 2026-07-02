@@ -26,6 +26,7 @@ from garf.community.google.ads import (
   exceptions,
   parsers,
   query_editor,
+  version,
 )
 from garf.community.google.ads.telemetry import tracer
 from opentelemetry import trace
@@ -39,6 +40,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
   """Defines report fetcher for Google Ads API."""
 
   alias = 'google-ads'
+  version = version.__version__
 
   def __init__(
     self,

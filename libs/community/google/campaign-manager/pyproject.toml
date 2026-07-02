@@ -27,7 +27,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.community.google.campaign_manager.__version__"}
+version = {attr = "garf.community.google.campaign_manager.version.__version__"}
 
 [project.entry-points.garf]
 campaign-manager = "garf.community.google.campaign_manager.report_fetcher"

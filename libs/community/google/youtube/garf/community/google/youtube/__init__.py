@@ -31,5 +31,3 @@ __all__ = [
   'YouTubeAnalyticsApiClient',
   'YouTubeAnalyticsApiReportFetcher',
 ]
-
-__version__ = '1.1.1'

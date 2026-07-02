@@ -19,6 +19,7 @@ from garf.community.google.campaign_manager import (
   api_clients,
   exceptions,
   query_editor,
+  version,
 )
 
 
@@ -32,6 +33,7 @@ class CampaignManager360ApiReportFetcher(garf.core.ApiReportFetcher):
   """Defines report fetcher for Campaign Manager 360 API."""
 
   alias = 'campaign-manager'
+  version = version.__version__
 
   def __init__(
     self,

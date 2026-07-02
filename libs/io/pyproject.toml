@@ -35,7 +35,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.io.__version__"}
+version = {attr = "garf.io.version.__version__"}
 
 [project.optional-dependencies]
 test =  [

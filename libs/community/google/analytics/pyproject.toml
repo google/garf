@@ -24,7 +24,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.community.google.analytics.__version__"}
+version = {attr = "garf.community.google.analytics.version.__version__"}
 
 [project.entry-points.garf]
 google-analytics = "garf.community.google.analytics.report_fetcher"

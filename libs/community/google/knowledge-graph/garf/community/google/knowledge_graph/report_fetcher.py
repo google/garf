@@ -23,6 +23,7 @@ from typing import Any, Final
 from garf.community.google.knowledge_graph import (
   KnowledgeGraphApiClient,
   query_editor,
+  version,
 )
 from garf.core import parsers, report, report_fetcher
 from typing_extensions import override
@@ -45,6 +46,8 @@ def _batched(iterable: Iterable[str], chunk_size: int):
 
 class KnowledgeGraphApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher."""
+
+  version = version.__version__
 
   def __init__(
     self,

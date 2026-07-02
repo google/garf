@@ -13,25 +13,31 @@
 # limitations under the License.
 import re
 
-import garf.executors
 import pytest
+from garf.executors import exceptions, version
 
 
 def test_validate_version_raises_error_on_lower_version():
   test_version = '100000.10.4'
   with pytest.raises(
-    garf.executors.exceptions.GarfExecutorError,
+    exceptions.GarfExecutorError,
     match=re.escape(
-      f'Garf version ({garf.executors.__version__}) is below required '
+      f'Garf version ({version.__version__}) is below required '
       f'by workflow - {test_version}.'
     ),
   ):
-    garf.executors.validate_version(test_version)
+    version.validate_version(test_version)
 
 
 @pytest.mark.parametrize(
   'test_version',
-  [None, '0.0.0', '0.100000.100000', '1.0.0', garf.executors.__version__],
+  [
+    None,
+    '0.0.0',
+    '0.100000.100000',
+    '1.0.0',
+    version.__version__,
+  ],
 )
 def test_validate_version_returns_true(test_version):
-  assert garf.executors.validate_version(test_version)
+  assert version.validate_version(test_version)

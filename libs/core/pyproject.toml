@@ -39,7 +39,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.core.__version__"}
+version = {attr = "garf.core.version.__version__"}
 
 [project.entry-points.garf]
 rest = "garf.core.fetchers.rest"

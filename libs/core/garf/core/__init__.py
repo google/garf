@@ -25,5 +25,3 @@ __all__ = [
   'GarfReport',
   'ApiReportFetcher',
 ]
-
-__version__ = '1.2.2'

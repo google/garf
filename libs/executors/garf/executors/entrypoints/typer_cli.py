@@ -331,7 +331,7 @@ def run(
   garf_logger.addHandler(initialize_logger())
   context = utils.ParamsParser().parse_all(ctx.args)
   runner = _init_runner(file, context, config)
-  garf.executors.validate_version(
+  garf.executors.version.validate_version(
     runner.workflow.metadata.required_garf_version
   )
   runner.run(
@@ -413,7 +413,7 @@ def fetchers() -> set[str]:
 @typer_app.command()
 def version() -> str:
   """Shows version."""
-  typer.echo(garf.executors.__version__)
+  typer.echo(garf.executors.version.__version__)
   raise typer.Exit()
 
 

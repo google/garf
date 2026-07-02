@@ -24,7 +24,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.community.google.knowledge_graph.__version__"}
+version = {attr = "garf.community.google.knowledge_graph.version.__version__"}
 
 [project.entry-points.garf]
 knowledge-graph-api = "garf.community.google.knowledge_graph.report_fetcher"

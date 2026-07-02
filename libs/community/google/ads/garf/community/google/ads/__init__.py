@@ -29,5 +29,3 @@ __all__ = [
   'SearchAds360ApiClient',
   'SearchAds360ApiReportFetcher',
 ]
-
-__version__ = '1.1.9'
