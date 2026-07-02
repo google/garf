@@ -116,6 +116,9 @@ def _init_runner(
   execution_workflow = workflow.Workflow.from_file(
     path=file, context=context, config_file=config
   )
+  garf.executors.version.validate_version(
+    execution_workflow.metadata.required_garf_version
+  )
   return workflow_runner.WorkflowRunner(
     execution_workflow=execution_workflow, wf_parent=wf_parent
   )
@@ -331,9 +334,6 @@ def run(
   garf_logger.addHandler(initialize_logger())
   context = utils.ParamsParser().parse_all(ctx.args)
   runner = _init_runner(file, context, config)
-  garf.executors.version.validate_version(
-    runner.workflow.metadata.required_garf_version
-  )
   runner.run(
     enable_cache=enable_cache,
     cache_ttl_seconds=cache_ttl_seconds,

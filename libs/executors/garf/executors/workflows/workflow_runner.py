@@ -129,6 +129,15 @@ class WorkflowRunner:
           writers=step.writer,
           writer_parameters=step.writer_parameters,
         )
+        if fetcher_version := self.workflow.metadata.required_fetchers.get(
+          step.fetcher
+        ):
+          _validate_fetcher_version(
+            version=fetcher_version,
+            target_version=query_executor.fetcher.version,
+            fetcher_name=step.fetcher,
+          )
+
         batch = {}
         if not (queries := step.queries):
           logger.error('Please provide one or more queries to run')
@@ -192,3 +201,16 @@ class WorkflowRunner:
     with open(path, 'w', encoding='utf-8') as f:
       yaml.dump(cloud_workflow, f, sort_keys=False)
     return f'Workflow is saved to {path}'
+
+
+def _validate_fetcher_version(
+  version: str, target_version: str, fetcher_name: str
+):
+  library_version = tuple(map(int, target_version.split('.')))
+  checked_version = tuple(map(int, version.split('.')))
+  if library_version < checked_version:
+    raise exceptions.GarfExecutorError(
+      f'Garf version for {fetcher_name} ({target_version}) is below required '
+      f'by workflow - {version}.'
+    )
+  return True

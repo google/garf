@@ -189,7 +189,9 @@ class WorkflowMetadata(pydantic.BaseModel):
   description: str | None = None
   version: str | None = None
   required_garf_version: str | None = None
-  required_fetchers: dict[str, str] | None = None
+  required_fetchers: dict[str, str] | None = pydantic.Field(
+    default_factory=dict
+  )
 
 
 class Workflow(pydantic.BaseModel):
