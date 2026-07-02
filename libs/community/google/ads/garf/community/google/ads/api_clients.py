@@ -34,6 +34,7 @@ from garf.core import api_clients
 from google import protobuf
 from google.ads.googleads import client as googleads_client
 from google.api_core import exceptions as google_exceptions
+from opentelemetry import trace
 from typing_extensions import override
 
 GOOGLE_ADS_API_VERSION: Final = googleads_client._DEFAULT_VERSION
@@ -137,9 +138,11 @@ class GoogleAdsApiClient(api_clients.BaseClient):
          When GoogleAdsClient cannot be instantiated due to missing
          credentials.
     """
+    span = trace.get_current_span()
     self.api_version = (
       str(version) if str(version).startswith('v') else f'v{version}'
     )
+    span.set_attribute('google.ads.version', self.api_version)
     self.client = ads_client or self._init_client(
       path=path_to_config, config_dict=config_dict, yaml_str=yaml_str
     )
