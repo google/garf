@@ -13,13 +13,14 @@
 # limitations under the License.
 
 import garf.core
-from garf.community.prometheus import api_clients, query_editor
+from garf.community.prometheus import api_clients, query_editor, version
 
 
 class PrometheusApiReportFetcher(garf.core.ApiReportFetcher):
   """Defines report fetcher for Prometheus API."""
 
   alias = 'prometheus'
+  version = version.__version__
 
   def __init__(
     self,

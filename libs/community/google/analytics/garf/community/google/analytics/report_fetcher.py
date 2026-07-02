@@ -17,12 +17,16 @@
 from garf.community.google.analytics import (
   GoogleAnalyticsApiClient,
   query_editor,
+  version,
 )
 from garf.core import parsers, report_fetcher
 
 
 class GoogleAnalyticsApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher."""
+
+  alias = 'analytics'
+  version = version.__version__
 
   def __init__(
     self,

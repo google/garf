@@ -11,5 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-"""Library for interacting with Prometheus Query API via garf."""
+from garf.executors import exceptions
+
+__version__ = '1.6.0'
+
+
+def validate_version(version: str | None = None):
+  if not version:
+    return True
+  library_version = tuple(map(int, __version__.split('.')))
+  checked_version = tuple(map(int, version.split('.')))
+  if library_version < checked_version:
+    raise exceptions.GarfExecutorError(
+      f'Garf version ({__version__}) is below required by workflow - {version}.'
+    )
+  return True

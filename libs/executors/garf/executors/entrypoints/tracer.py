@@ -18,6 +18,7 @@ import logging
 import os
 from typing import Optional
 
+from garf.executors import version
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
@@ -44,9 +45,10 @@ DEFAULT_SERVICE_NAME = 'garf'
 
 def _init_resource(otel_service_name: Optional[str] = None) -> Resource:
   return Resource.create(
-    {
+    attributes={
       SERVICE_NAME: otel_service_name
-      or os.getenv('OTEL_SERVICE_NAME', DEFAULT_SERVICE_NAME)
+      or os.getenv('OTEL_SERVICE_NAME', DEFAULT_SERVICE_NAME),
+      'garf.executors.version': version.__version__,
     }
   )
 
@@ -59,7 +61,9 @@ def initialize_tracer(otel_service_name: Optional[str] = None):
   if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
     if gcp_project_id := os.getenv('OTEL_EXPORTER_GCP_PROJECT_ID'):
       try:
-        from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+        from opentelemetry.exporter.cloud_trace import (
+          CloudTraceSpanExporter,
+        )
       except ImportError as e:
         raise ImportError(
           'Please install garf-executors with GCP support '

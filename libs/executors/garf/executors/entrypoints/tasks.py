@@ -146,7 +146,7 @@ def execute_workflow(
 ):
   """Executes a batch of queries."""
   runner = workflow_runner.WorkflowRunner(execution_workflow=execution_workflow)
-  garf.executors.validate_version(
+  garf.executors.version.validate_version(
     runner.workflow.metadata.required_garf_version
   )
   telemetry.executor_active_workflows.add(1)

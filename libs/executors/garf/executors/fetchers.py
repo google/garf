@@ -19,6 +19,7 @@ from importlib.metadata import entry_points
 
 from garf.core import report_fetcher, simulator
 from garf.executors.telemetry import tracer
+from opentelemetry import trace
 
 logger = logging.getLogger(name='garf.executors.fetchers')
 
@@ -53,21 +54,29 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
     ApiReportFetcherError: When fetcher cannot be loaded.
     MissingApiReportFetcherError: When fetcher not found.
   """
+  span = trace.get_current_span()
   if source not in find_fetchers():
     raise report_fetcher.MissingApiReportFetcherError(source)
   for fetcher in _get_entrypoints('garf'):
     if fetcher.name == source:
       try:
-        with tracer.start_as_current_span('load_fetcher_module') as span:
+        with tracer.start_as_current_span('load_fetcher_module'):
           fetcher_module = fetcher.load()
-          span.set_attribute('loaded_module', fetcher_module.__name__)
+        span.set_attribute('garf.fetcher.module', fetcher_module.__name__)
         for name, obj in inspect.getmembers(fetcher_module):
           if inspect.isclass(obj) and issubclass(
             obj, report_fetcher.ApiReportFetcher
           ):
+            span.set_attributes(
+              {
+                'garf.fetcher.class': name,
+                'garf.fetcher.version': obj.version,
+              }
+            )
             if not hasattr(obj, 'alias'):
               return getattr(fetcher_module, name)
             if obj.alias == fetcher.name:
+              span.set_attribute('garf.fetcher.alias', obj.alias)
               return getattr(fetcher_module, name)
       except ModuleNotFoundError as e:
         raise report_fetcher.ApiReportFetcherError(
@@ -92,21 +101,29 @@ def get_report_simulator(source: str) -> type[simulator.ApiReportSimulator]:
     GarfApiReportSimulatorError: When simulator cannot be loaded.
     MissingApiReportSimulatorError: When simulator not found.
   """
+  span = trace.get_current_span()
   if source not in find_simulators():
     raise simulator.MissingApiReportSimulatorError(source)
   for sim in _get_entrypoints('garf_simulator'):
     if sim.name == source:
       try:
-        with tracer.start_as_current_span('load_simulator_module') as span:
+        with tracer.start_as_current_span('load_simulator_module'):
           simulator_module = sim.load()
-          span.set_attribute('loaded_module', simulator_module.__name__)
+        span.set_attribute('garf.simulator.module', simulator_module.__name__)
         for name, obj in inspect.getmembers(simulator_module):
           if inspect.isclass(obj) and issubclass(
             obj, simulator.ApiReportSimulator
           ):
+            span.set_attributes(
+              {
+                'garf.simulator.class': name,
+                'garf.simulator.version': obj.version,
+              }
+            )
             if not hasattr(obj, 'alias'):
               return getattr(simulator_module, name)
             if obj.alias == sim.name:
+              span.set_attribute('garf.simulator.alias', obj.alias)
               return getattr(simulator_module, name)
       except ModuleNotFoundError as e:
         raise simulator.GarfApiReportSimulatorError(

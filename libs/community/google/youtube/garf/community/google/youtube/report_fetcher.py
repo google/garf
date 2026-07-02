@@ -27,6 +27,7 @@ from garf.community.google.youtube import (
   exceptions,
   query_editor,
   simulator,
+  version,
 )
 from garf.core import parsers, report, report_fetcher
 from typing_extensions import override
@@ -50,6 +51,7 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher for YouTube Data API."""
 
   alias = 'youtube-data-api'
+  version = version.__version__
 
   def __init__(
     self,

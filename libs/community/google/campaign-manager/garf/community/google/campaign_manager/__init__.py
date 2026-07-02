@@ -25,5 +25,3 @@ __all__ = [
   'CampaignManager360ApiClient',
   'CampaignManager360ApiReportFetcher',
 ]
-
-__version__ = '0.0.2'

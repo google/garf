@@ -50,6 +50,10 @@ class SimulatorSpecification(pydantic.BaseModel):
 
 
 class ApiReportSimulator:
+  """Simulates data from API based on query specification."""
+
+  version = 'Unknown'
+
   def __init__(
     self,
     api_client: api_clients.BaseClient,

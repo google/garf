@@ -97,7 +97,7 @@ def main():
   span = trace.get_current_span()
   span.set_attribute('cli.command', f'garf {command_args}')
   if args.version:
-    print(garf.executors.__version__)
+    print(garf.executors.version.__version__)
     sys.exit()
   logger = utils.init_logging(
     loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
@@ -144,7 +144,7 @@ def main():
     runner = workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow, wf_parent=wf_parent
     )
-    garf.executors.validate_version(
+    garf.executors.version.validate_version(
       runner.workflow.metadata.required_garf_version
     )
     runner.run(

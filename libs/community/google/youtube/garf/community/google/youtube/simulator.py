@@ -19,7 +19,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from garf.community.google.youtube import YouTubeDataApiClient, query_editor
+from garf.community.google.youtube import (
+  YouTubeDataApiClient,
+  query_editor,
+  version,
+)
 from garf.core import parsers, simulator
 
 logger = logging.getLogger(__name__)
@@ -30,6 +34,10 @@ class YouTubeDataApiSimulatorSpecification(simulator.SimulatorSpecification):
 
 
 class YouTubeDataApiReportSimulator(simulator.ApiReportSimulator):
+  """Simulates response from YouTube Data API based on a query."""
+
+  version = version.__version__
+
   def __init__(
     self,
     api_client: YouTubeDataApiClient | None = None,

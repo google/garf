@@ -58,7 +58,7 @@ CeleryInstrumentor().instrument()
 RedisInstrumentor().instrument()
 app = fastapi.FastAPI(
   title='Garf API',
-  version=garf.executors.__version__,
+  version=garf.executors.version.__version__,
   description='Fetches data from APIs and saves it anywhere',
 )
 FastAPIInstrumentor.instrument_app(app)
@@ -102,16 +102,16 @@ async def error_handlier(
 
 @app.get('/api/version')
 async def version() -> str:
-  return garf.executors.__version__
+  return garf.executors.version.__version__
 
 
 @app.get('/api/info')
 async def info() -> dict[str, str]:
   """Returns version of installed core libraries."""
   return {
-    'executors': garf.executors.__version__,
-    'core': garf.core.__version__,
-    'io': garf.io.__version__,
+    'executors': garf.executors.version.__version__,
+    'core': garf.core.version.__version__,
+    'io': garf.io.version.__version__,
   }
 
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Defines simplified imports."""
+"""Library for getting reports from Knowledge Graph API."""
 
 from __future__ import annotations
 
@@ -27,5 +27,3 @@ __all__ = [
   'KnowledgeGraphApiClient',
   'KnowledgeGraphApiReportFetcher',
 ]
-
-__version__ = '1.0.0'

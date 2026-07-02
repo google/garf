@@ -25,7 +25,7 @@ classifiers = [
 dynamic=["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.community.google.youtube.__version__"}
+version = {attr = "garf.community.google.youtube.version.__version__"}
 
 [project.entry-points.garf]
 youtube-data-api = "garf.community.google.youtube.report_fetcher"

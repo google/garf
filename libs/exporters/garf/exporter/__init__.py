@@ -18,5 +18,3 @@ from garf.exporter.exporter import GarfExporter
 __all__ = [
   'GarfExporter',
 ]
-
-__version__ = '1.0.0'

@@ -41,7 +41,7 @@ classifiers = [
 dynamic = ["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.exporter.__version__"}
+version = {attr = "garf.exporter.version.__version__"}
 
 [project.scripts]
 garf-exporter="garf.exporter.entrypoints.cli:typer_app"

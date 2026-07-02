@@ -25,5 +25,3 @@ __all__ = [
   'MerchantApiClient',
   'MerchantApiReportFetcher',
 ]
-
-__version__ = '1.0.0'

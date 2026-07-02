@@ -14,12 +14,18 @@
 
 """Defines report fetcher."""
 
-from garf.community.google.merchant import MerchantApiClient, query_editor
+from garf.community.google.merchant import (
+  MerchantApiClient,
+  query_editor,
+  version,
+)
 from garf.core import parsers, report_fetcher
 
 
 class MerchantApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher."""
+
+  version = version.__version__
 
   def __init__(
     self,

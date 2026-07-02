@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Library for getting reports from Google Analytics Data API."""
+
 from garf.community.google.analytics.api_clients import GoogleAnalyticsApiClient
 from garf.community.google.analytics.report_fetcher import (
   GoogleAnalyticsApiReportFetcher,
@@ -21,5 +23,3 @@ __all__ = [
   'GoogleAnalyticsApiClient',
   'GoogleAnalyticsApiReportFetcher',
 ]
-
-__version__ = '1.0.0'

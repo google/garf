@@ -15,23 +15,8 @@
 
 from __future__ import annotations
 
-from garf.executors import exceptions
 from garf.executors.api_executor import ApiQueryExecutor
 
 __all__ = [
   'ApiQueryExecutor',
 ]
-
-__version__ = '1.6.0'
-
-
-def validate_version(version: str | None = None):
-  if not version:
-    return True
-  library_version = tuple(map(int, __version__.split('.')))
-  checked_version = tuple(map(int, version.split('.')))
-  if library_version < checked_version:
-    raise exceptions.GarfExecutorError(
-      f'Garf version ({__version__}) is below required by workflow - {version}.'
-    )
-  return True

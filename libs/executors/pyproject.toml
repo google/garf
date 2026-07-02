@@ -39,7 +39,7 @@ classifiers = [
 dynamic = ["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "garf.executors.__version__"}
+version = {attr = "garf.executors.version.__version__"}
 
 [project.optional-dependencies]
 bq=[
