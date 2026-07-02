@@ -84,8 +84,15 @@ class WorkflowRunner:
         workflow_attributes.update({'config.version': config_version})
       if config_name := config.name:
         workflow_attributes.update({'config.name': config_name})
-    if workflow_attributes:
-      span.set_attributes(workflow_attributes)
+
+    steps = [step.fetcher for step in self.workflow.steps]
+    workflow_attributes.update(
+      {
+        'workflow.num_steps': len(steps),
+        'workflow.fetchers': list(set(steps)),
+      }
+    )
+    span.set_attributes(workflow_attributes)
     self.workflow.compile()
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
@@ -120,13 +127,14 @@ class WorkflowRunner:
         logger.info(
           'Running step %d, fetcher: %s, alias: %s', i, step.fetcher, step.alias
         )
-        step_span.set_attributes(
-          {
-            'step.alias': step.alias,
-            'step.fetcher': step.fetcher,
-            'step.writer': step.writer,
-          }
-        )
+        step_attributes = {
+          'step.alias': step.alias,
+          'step.fetcher': step.fetcher,
+        }
+        if step.writer:
+          step_attributes.update({'step.writer': step.writer})
+
+        step_span.set_attributes(step_attributes)
 
         query_executor = setup.setup_executor(
           source=step.fetcher,
