@@ -1,0 +1,13 @@
+steps:
+  - alias: test
+    fetcher: fake
+    queries:
+      - query:
+          title: test_query
+          text:  |
+            SELECT
+              dimensions.string AS name,
+              metrics.int AS clicks
+            FROM fake
+    fetcher_parameters:
+      n_rows: 1

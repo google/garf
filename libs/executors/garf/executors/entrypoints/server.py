@@ -184,7 +184,7 @@ def execute_workflow(
   selected_aliases: Optional[list[str]] = None,
   skipped_aliases: Optional[list[str]] = None,
   simulate: bool = False,
-) -> dict[str, Any]:
+) -> dict[str, ApiExecutorResponse]:
   """Runs garf workflow till completion."""
   telemetry.workflow_requested.add(1)
   try:
@@ -194,12 +194,18 @@ def execute_workflow(
   except workflow.GarfWorkflowError as e:
     telemetry.workflow_error_counter.add(1)
     raise fastapi.HTTPException(404, detail=str(e))
-  return tasks.execute_workflow(
+  result = tasks.execute_workflow(
     execution_workflow=execution_workflow.model_dump(),
     selected_aliases=selected_aliases,
     skipped_aliases=skipped_aliases,
     simulate=simulate,
   )
+  return {
+    step: ApiExecutorResponse(
+      results=list(results.keys()), full_results=results
+    )
+    for step, results in result.items()
+  }
 
 
 @app.post(
