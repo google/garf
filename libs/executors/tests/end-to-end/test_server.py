@@ -140,10 +140,23 @@ class TestApiQueryExecutor:
     }
     response = client.post('/api/execute:workflow', params=request)
     assert response.status_code == fastapi.status.HTTP_200_OK
-    expected_response = {
-      '1-fake-test': {
-        'query.sql': '[Console] - query',
-        'test_query': '[Console] - test_query',
-      },
+    expected_results = ['query.sql', 'test_query']
+    step_value = response.json().get('1-fake-test')
+    assert step_value.get('results') == expected_results
+    for query, result in step_value.get('full_results').items():
+      query_title = query.split('.')[0]
+      assert result == f'[Console] - {query_title}'
+
+  def test_workflow_from_file_no_writer(self):
+    workflow_path = _SCRIPT_PATH / 'test_workflow_no_writer.yaml'
+    request = {
+      'workflow_path': str(workflow_path),
     }
-    assert response.json() == expected_response
+    response = client.post('/api/execute:workflow', params=request)
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    expected_results = ['test_query']
+    step_value = response.json().get('1-fake-test')
+    assert step_value.get('results') == expected_results
+    expected_report_columns = ['name', 'clicks']
+    for query, result in step_value.get('full_results').items():
+      assert list(result[0].keys()) == expected_report_columns
