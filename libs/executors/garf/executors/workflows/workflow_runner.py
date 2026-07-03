@@ -86,7 +86,8 @@ class WorkflowRunner:
         workflow_attributes.update({'config.name': config_name})
 
     steps = [step.fetcher for step in self.workflow.steps]
-    workflow_attributes.update(
+    span.set_attributes(workflow_attributes)
+    span.set_attributes(
       {
         'workflow.num_steps': len(steps),
         'workflow.fetchers': list(set(steps)),
