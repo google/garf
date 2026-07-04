@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import pathlib
+from contextlib import asynccontextmanager
 from typing import Any, Optional, Union
 
 import fastapi
@@ -28,7 +29,7 @@ import smart_open
 import typer
 import uvicorn
 import yaml
-from garf.executors import telemetry
+from garf.executors import fetchers, setup, telemetry
 from garf.executors.entrypoints import tasks, utils
 from garf.executors.entrypoints.tracer import (
   initialize_logger,
@@ -56,10 +57,24 @@ logger.addHandler(initialize_logger())
 
 CeleryInstrumentor().instrument()
 RedisInstrumentor().instrument()
+report_fetchers = {}
+executors = ['api']
+
+
+@asynccontextmanager
+async def lifespan(app: fastapi.FastAPI):
+  report_fetchers.update(fetchers.get_all_report_fetchers())
+  executors.extend(setup.available_executors())
+  yield
+  report_fetchers.clear()
+  executors.clear()
+
+
 app = fastapi.FastAPI(
   title='Garf API',
   version=garf.executors.version.__version__,
   description='Fetches data from APIs and saves it anywhere',
+  lifespan=lifespan,
 )
 FastAPIInstrumentor.instrument_app(app)
 typer_app = typer.Typer()
@@ -110,15 +125,21 @@ async def info() -> dict[str, str]:
   """Returns version of installed core libraries."""
   return {
     'executors': garf.executors.version.__version__,
-    'core': garf.core.version.__version__,
-    'io': garf.io.version.__version__,
+    'core': garf.executors.version.core_version,
+    'io': garf.executors.version.io_version,
   }
 
 
 @app.get('/api/fetchers')
-async def get_fetchers() -> list[str]:
+async def get_fetchers() -> dict[str, str]:
   """Shows all available API sources."""
-  return list(garf.executors.setup.find_executors())
+  return {r: f.version for r, f in report_fetchers.items()}
+
+
+@app.get('/api/executors')
+async def get_executors() -> list[str]:
+  """Shows all available API sources & executors."""
+  return executors
 
 
 @app.post('/api/execute')
@@ -307,9 +328,9 @@ def main(
   telemetry.executor_info.set(
     1,
     {
-      'version_executors': garf.executors.__version__,
-      'version_core': garf.core.__version__,
-      'version_io': garf.io.__version__,
+      'version_executors': garf.executors.version.__version__,
+      'version_core': garf.executors.version.core_version,
+      'version_io': garf.executors.version.io_version,
     },
   )
   uvicorn.run(app, host=host, port=port, log_config=None)
