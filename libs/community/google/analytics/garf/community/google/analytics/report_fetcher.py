@@ -25,7 +25,7 @@ from garf.core import parsers, report_fetcher
 class GoogleAnalyticsApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher."""
 
-  alias = 'analytics'
+  alias = 'google-analytics'
   version = version.__version__
 
   def __init__(
