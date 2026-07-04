@@ -83,6 +83,26 @@ def test_execute(grpc_stub):
   assert 'CSV' in result.results[0]
 
 
+def test_execute_batch(grpc_stub):
+  request = pb.ExecuteBatchRequest(
+    source='fake',
+    batch=[
+      pb.QueryDefinition(
+        title='example',
+        text='SELECT metric.int FROM fake',
+      )
+    ],
+    context=pb.ExecutionContext(
+      fetcher_parameters={
+        'n_rows': 1,
+      },
+      writer='csv',
+    ),
+  )
+  result = grpc_stub.ExecuteBatch(request)
+  assert 'example' in result.results[0]
+
+
 def test_fetch(grpc_stub):
   fake_data = _SCRIPT_PATH / 'test.json'
   request = pb.FetchRequest(
@@ -99,3 +119,29 @@ def test_fetch(grpc_stub):
   data = [MessageToDict(r) for r in result.rows]
   assert result.columns == ['resource', 'name', 'clicks']
   assert data == expected_output
+
+
+def test_execute_workflow(grpc_stub):
+  request = pb.ExecuteWorkflowRequest(
+    workflow=pb.Workflow(
+      name='test',
+      steps=[
+        pb.WorkflowStep(
+          fetcher='fake',
+          alias='test',
+          queries=[
+            pb.QueryDefinition(
+              title='example',
+              text='SELECT metric.int FROM fake',
+            )
+          ],
+          fetcher_parameters={
+            'n_rows': 1,
+          },
+          writer='csv',
+        ),
+      ],
+    ),
+  )
+  result = grpc_stub.ExecuteWorkflow(request)
+  assert '1-fake-test' in result.results[0]

@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ngarf.proto\x12\x04garf\x1a\x1cgoogle/protobuf/struct.proto\"a\n\x0c\x46\x65tchRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12#\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x12.garf.FetchContext\"G\n\rFetchResponse\x12\x0f\n\x07\x63olumns\x18\x01 \x03(\t\x12%\n\x04rows\x18\x02 \x03(\x0b\x32\x17.google.protobuf.Struct\"t\n\x0c\x46\x65tchContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"g\n\x0e\x45xecuteRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12\'\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x16.garf.ExecutionContext\"\xbc\x01\n\x10\x45xecutionContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x0e\n\x06writer\x18\x03 \x01(\t\x12\x32\n\x11writer_parameters\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"d\n\x0fQueryParameters\x12&\n\x05macro\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12)\n\x08template\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"\"\n\x0f\x45xecuteResponse\x12\x0f\n\x07results\x18\x01 \x03(\t2{\n\x0bGarfService\x12\x38\n\x07\x45xecute\x12\x14.garf.ExecuteRequest\x1a\x15.garf.ExecuteResponse\"\x00\x12\x32\n\x05\x46\x65tch\x12\x12.garf.FetchRequest\x1a\x13.garf.FetchResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ngarf.proto\x12\x04garf\x1a\x1cgoogle/protobuf/struct.proto\"a\n\x0c\x46\x65tchRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12#\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x12.garf.FetchContext\"G\n\rFetchResponse\x12\x0f\n\x07\x63olumns\x18\x01 \x03(\t\x12%\n\x04rows\x18\x02 \x03(\x0b\x32\x17.google.protobuf.Struct\"t\n\x0c\x46\x65tchContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"g\n\x0e\x45xecuteRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12\'\n\x07\x63ontext\x18\x04 \x01(\x0b\x32\x16.garf.ExecutionContext\"\xbc\x01\n\x10\x45xecutionContext\x12/\n\x10query_parameters\x18\x01 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x0e\n\x06writer\x18\x03 \x01(\t\x12\x32\n\x11writer_parameters\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"d\n\x0fQueryParameters\x12&\n\x05macro\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12)\n\x08template\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"\"\n\x0f\x45xecuteResponse\x12\x0f\n\x07results\x18\x01 \x03(\t\".\n\x0fQueryDefinition\x12\r\n\x05title\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"t\n\x13\x45xecuteBatchRequest\x12\x0e\n\x06source\x18\x01 \x01(\t\x12$\n\x05\x62\x61tch\x18\x02 \x03(\x0b\x32\x15.garf.QueryDefinition\x12\'\n\x07\x63ontext\x18\x03 \x01(\x0b\x32\x16.garf.ExecutionContext\"\'\n\x14\x45xecuteBatchResponse\x12\x0f\n\x07results\x18\x01 \x03(\t\"W\n\x10WorkflowMetadata\x12\x0f\n\x07version\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x1d\n\x15required_garf_version\x18\x03 \x01(\t\"\x80\x02\n\x0cWorkflowStep\x12\x0f\n\x07\x66\x65tcher\x18\x01 \x01(\t\x12\r\n\x05\x61lias\x18\x02 \x01(\t\x12&\n\x07queries\x18\x03 \x03(\x0b\x32\x15.garf.QueryDefinition\x12/\n\x10query_parameters\x18\x04 \x01(\x0b\x32\x15.garf.QueryParameters\x12\x33\n\x12\x66\x65tcher_parameters\x18\x05 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x0e\n\x06writer\x18\x06 \x01(\t\x12\x32\n\x11writer_parameters\x18\x07 \x01(\x0b\x32\x17.google.protobuf.Struct\"6\n\x0e\x43onfigMetadata\x12\x0f\n\x07version\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\"\x9b\x01\n\x06\x43onfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12&\n\x08metadata\x18\x02 \x01(\x0b\x32\x14.garf.ConfigMetadata\x12\x31\n\x11global_parameters\x18\x03 \x01(\x0b\x32\x16.garf.ExecutionContext\x12(\n\x07sources\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"\x83\x01\n\x08Workflow\x12\x0c\n\x04name\x18\x01 \x01(\t\x12!\n\x05steps\x18\x02 \x03(\x0b\x32\x12.garf.WorkflowStep\x12(\n\x08metadata\x18\x03 \x01(\x0b\x32\x16.garf.WorkflowMetadata\x12\x1c\n\x06\x63onfig\x18\x04 \x01(\x0b\x32\x0c.garf.Config\"m\n\x16\x45xecuteWorkflowRequest\x12 \n\x08workflow\x18\x01 \x01(\x0b\x32\x0e.garf.Workflow\x12\x18\n\x10selected_aliases\x18\x02 \x03(\t\x12\x17\n\x0fskipped_aliases\x18\x03 \x03(\t\"*\n\x17\x45xecuteWorkflowResponse\x12\x0f\n\x07results\x18\x01 \x03(\t2\x96\x02\n\x0bGarfService\x12\x38\n\x07\x45xecute\x12\x14.garf.ExecuteRequest\x1a\x15.garf.ExecuteResponse\"\x00\x12G\n\x0c\x45xecuteBatch\x12\x19.garf.ExecuteBatchRequest\x1a\x1a.garf.ExecuteBatchResponse\"\x00\x12P\n\x0f\x45xecuteWorkflow\x12\x1c.garf.ExecuteWorkflowRequest\x1a\x1d.garf.ExecuteWorkflowResponse\"\x00\x12\x32\n\x05\x46\x65tch\x12\x12.garf.FetchRequest\x1a\x13.garf.FetchResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -46,6 +46,26 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_QUERYPARAMETERS']._serialized_end=736
   _globals['_EXECUTERESPONSE']._serialized_start=738
   _globals['_EXECUTERESPONSE']._serialized_end=772
-  _globals['_GARFSERVICE']._serialized_start=774
-  _globals['_GARFSERVICE']._serialized_end=897
+  _globals['_QUERYDEFINITION']._serialized_start=774
+  _globals['_QUERYDEFINITION']._serialized_end=820
+  _globals['_EXECUTEBATCHREQUEST']._serialized_start=822
+  _globals['_EXECUTEBATCHREQUEST']._serialized_end=938
+  _globals['_EXECUTEBATCHRESPONSE']._serialized_start=940
+  _globals['_EXECUTEBATCHRESPONSE']._serialized_end=979
+  _globals['_WORKFLOWMETADATA']._serialized_start=981
+  _globals['_WORKFLOWMETADATA']._serialized_end=1068
+  _globals['_WORKFLOWSTEP']._serialized_start=1071
+  _globals['_WORKFLOWSTEP']._serialized_end=1327
+  _globals['_CONFIGMETADATA']._serialized_start=1329
+  _globals['_CONFIGMETADATA']._serialized_end=1383
+  _globals['_CONFIG']._serialized_start=1386
+  _globals['_CONFIG']._serialized_end=1541
+  _globals['_WORKFLOW']._serialized_start=1544
+  _globals['_WORKFLOW']._serialized_end=1675
+  _globals['_EXECUTEWORKFLOWREQUEST']._serialized_start=1677
+  _globals['_EXECUTEWORKFLOWREQUEST']._serialized_end=1786
+  _globals['_EXECUTEWORKFLOWRESPONSE']._serialized_start=1788
+  _globals['_EXECUTEWORKFLOWRESPONSE']._serialized_end=1830
+  _globals['_GARFSERVICE']._serialized_start=1833
+  _globals['_GARFSERVICE']._serialized_end=2111
 # @@protoc_insertion_point(module_scope)

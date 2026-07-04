@@ -39,6 +39,16 @@ class GarfServiceStub(object):
                 request_serializer=garf__pb2.ExecuteRequest.SerializeToString,
                 response_deserializer=garf__pb2.ExecuteResponse.FromString,
                 _registered_method=True)
+        self.ExecuteBatch = channel.unary_unary(
+                '/garf.GarfService/ExecuteBatch',
+                request_serializer=garf__pb2.ExecuteBatchRequest.SerializeToString,
+                response_deserializer=garf__pb2.ExecuteBatchResponse.FromString,
+                _registered_method=True)
+        self.ExecuteWorkflow = channel.unary_unary(
+                '/garf.GarfService/ExecuteWorkflow',
+                request_serializer=garf__pb2.ExecuteWorkflowRequest.SerializeToString,
+                response_deserializer=garf__pb2.ExecuteWorkflowResponse.FromString,
+                _registered_method=True)
         self.Fetch = channel.unary_unary(
                 '/garf.GarfService/Fetch',
                 request_serializer=garf__pb2.FetchRequest.SerializeToString,
@@ -50,6 +60,18 @@ class GarfServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Execute(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ExecuteBatch(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ExecuteWorkflow(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -68,6 +90,16 @@ def add_GarfServiceServicer_to_server(servicer, server):
                     servicer.Execute,
                     request_deserializer=garf__pb2.ExecuteRequest.FromString,
                     response_serializer=garf__pb2.ExecuteResponse.SerializeToString,
+            ),
+            'ExecuteBatch': grpc.unary_unary_rpc_method_handler(
+                    servicer.ExecuteBatch,
+                    request_deserializer=garf__pb2.ExecuteBatchRequest.FromString,
+                    response_serializer=garf__pb2.ExecuteBatchResponse.SerializeToString,
+            ),
+            'ExecuteWorkflow': grpc.unary_unary_rpc_method_handler(
+                    servicer.ExecuteWorkflow,
+                    request_deserializer=garf__pb2.ExecuteWorkflowRequest.FromString,
+                    response_serializer=garf__pb2.ExecuteWorkflowResponse.SerializeToString,
             ),
             'Fetch': grpc.unary_unary_rpc_method_handler(
                     servicer.Fetch,
@@ -102,6 +134,60 @@ class GarfService(object):
             '/garf.GarfService/Execute',
             garf__pb2.ExecuteRequest.SerializeToString,
             garf__pb2.ExecuteResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ExecuteBatch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/ExecuteBatch',
+            garf__pb2.ExecuteBatchRequest.SerializeToString,
+            garf__pb2.ExecuteBatchResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ExecuteWorkflow(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/ExecuteWorkflow',
+            garf__pb2.ExecuteWorkflowRequest.SerializeToString,
+            garf__pb2.ExecuteWorkflowResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -5,6 +5,8 @@ import "google/protobuf/struct.proto";
 
 service GarfService {
   rpc Execute(ExecuteRequest) returns (ExecuteResponse) {}
+  rpc ExecuteBatch(ExecuteBatchRequest) returns (ExecuteBatchResponse) {}
+  rpc ExecuteWorkflow(ExecuteWorkflowRequest) returns (ExecuteWorkflowResponse) {}
   rpc Fetch(FetchRequest) returns (FetchResponse) {}
 
 }
@@ -34,6 +36,7 @@ message ExecuteRequest {
 }
 
 
+
 message ExecutionContext {
   QueryParameters query_parameters = 1;
   google.protobuf.Struct fetcher_parameters = 2;
@@ -48,5 +51,66 @@ message QueryParameters {
 }
 
 message ExecuteResponse {
+  repeated string results = 1;
+}
+
+// Batch Execution
+message QueryDefinition {
+  string title = 1;
+  string text = 2;
+}
+
+message ExecuteBatchRequest {
+  string source = 1;
+  repeated QueryDefinition batch = 2;
+  ExecutionContext context = 3;
+}
+message ExecuteBatchResponse {
+  repeated string results = 1;
+}
+
+// Workflow
+message WorkflowMetadata {
+  string version = 1;
+  string description = 2;
+  string required_garf_version = 3;
+}
+
+message WorkflowStep {
+  string fetcher = 1;
+  string alias = 2;
+  repeated QueryDefinition queries = 3;
+  QueryParameters query_parameters = 4;
+  google.protobuf.Struct fetcher_parameters = 5;
+  string writer = 6;
+  google.protobuf.Struct writer_parameters = 7;
+}
+
+message ConfigMetadata {
+  string version = 1;
+  string description = 2;
+}
+
+message Config {
+  string name = 1;
+  ConfigMetadata metadata = 2;
+  ExecutionContext global_parameters = 3;
+  google.protobuf.Struct sources = 4;
+}
+
+message Workflow {
+  string name = 1;
+  repeated WorkflowStep steps = 2;
+  WorkflowMetadata metadata = 3;
+  Config config = 4;
+}
+
+message ExecuteWorkflowRequest {
+  Workflow workflow = 1;
+  repeated string selected_aliases = 2;
+  repeated string skipped_aliases = 3;
+}
+
+message ExecuteWorkflowResponse {
   repeated string results = 1;
 }
