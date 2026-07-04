@@ -21,6 +21,7 @@ from concurrent import futures
 import grpc
 from garf.executors import execution_context, garf_pb2, garf_pb2_grpc, setup
 from garf.executors.entrypoints.tracer import initialize_tracer
+from garf.executors.workflows import workflow, workflow_runner
 from google.protobuf.json_format import MessageToDict
 from grpc_reflection.v1alpha import reflection
 
@@ -39,6 +40,19 @@ class GarfService(garf_pb2_grpc.GarfService):
     )
     return garf_pb2.ExecuteResponse(results=[result])
 
+  def ExecuteBatch(self, request, context):
+    query_executor = setup.setup_executor(
+      request.source, request.context.fetcher_parameters
+    )
+    batch = {query.title: query.text for query in request.batch}
+    results = query_executor.execute_batch(
+      batch=batch,
+      context=execution_context.ExecutionContext(
+        **MessageToDict(request.context, preserving_proto_field_name=True)
+      ),
+    )
+    return garf_pb2.ExecuteResponse(results=results)
+
   def Fetch(self, request, context):
     query_executor = setup.setup_executor(
       request.source, request.context.fetcher_parameters
@@ -54,6 +68,16 @@ class GarfService(garf_pb2_grpc.GarfService):
     return garf_pb2.FetchResponse(
       columns=result.column_names, rows=result.to_list(row_type='dict')
     )
+
+  def ExecuteWorkflow(self, request, context):
+    execution_workflow = workflow.Workflow(
+      **MessageToDict(request.workflow, preserving_proto_field_name=True)
+    )
+    runner = workflow_runner.WorkflowRunner(
+      execution_workflow=execution_workflow
+    )
+    results = runner.run()
+    return garf_pb2.ExecuteWorkflowResponse(results=results)
 
 
 if __name__ == '__main__':
