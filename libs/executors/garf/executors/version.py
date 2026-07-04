@@ -13,7 +13,9 @@
 # limitations under the License.
 from __future__ import annotations
 
+from garf.core import version as core_version
 from garf.executors import exceptions
+from garf.io import version as io_version
 
 __version__ = '1.6.1'
 
@@ -28,3 +30,7 @@ def validate_version(version: str | None = None):
       f'Garf version ({__version__}) is below required by workflow - {version}.'
     )
   return True
+
+
+core_version = core_version.__version__
+io_version = io_version.__version__

@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import logging
 from typing import Any
@@ -26,6 +27,38 @@ from garf.io import writer
 from opentelemetry import trace
 
 logger = logging.getLogger('garf.executors.setup')
+
+_EXECUTORS_MODULES: dict[str, str] = {
+  'bq': {
+    'import_path': 'garf.executors.bq_executor',
+    'executor_class': 'BigQueryExecutor',
+  },
+  'sqldb': {
+    'import_path': 'garf.executors.sql_executor',
+    'executor_class': 'SqlAlchemyQueryExecutor',
+  },
+  'duckdb': {
+    'import_path': 'garf.executors.duckdb_executor',
+    'executor_class': 'DuckDBExecutor',
+  },
+  'opensearch': {
+    'import_path': 'garf.executors.opensearch_executor',
+    'executor_class': 'OpenSearchQueryExecutor',
+  },
+  'elasticearch': {
+    'import_path': 'garf.executors.elasticsearch_executor',
+    'executor_class': 'ElasticSearchQueryExecutor',
+  },
+}
+
+
+def available_executors() -> set[str]:
+  executors = []
+  for k, v in _EXECUTORS_MODULES.items():
+    with contextlib.suppress(ImportError):
+      importlib.import_module(v.get('import_path'))
+      executors.append(k)
+  return executors
 
 
 def find_executors() -> set[str]:
@@ -71,29 +104,13 @@ def setup_executor(
     writer_clients = writer.setup_writers(writers, writer_parameters)
   else:
     writer_clients = None
-  if source == 'bq':
-    bq_executor = importlib.import_module('garf.executors.bq_executor')
-    query_executor = bq_executor.BigQueryExecutor(
-      **fetcher_parameters, writers=writer_clients
+  if concrete_executor_module := _EXECUTORS_MODULES.get(source):
+    executor_module = importlib.import_module(
+      concrete_executor_module.get('import_path')
     )
-  elif source == 'sqldb':
-    sql_executor = importlib.import_module('garf.executors.sql_executor')
-    query_executor = (
-      sql_executor.SqlAlchemyQueryExecutor.from_connection_string(
-        connection_string=fetcher_parameters.get('connection_string'),
-        writers=writer_clients,
-      )
-    )
-  elif source == 'duckdb':
-    duckdb_executor = importlib.import_module('garf.executors.duckdb_executor')
-    query_executor = duckdb_executor.DuckDBExecutor(writers=writer_clients)
-  elif source == 'opensearch':
-    opensearch_executor = importlib.import_module(
-      'garf.executors.opensearch_executor'
-    )
-    query_executor = opensearch_executor.OpenSearchQueryExecutor(
-      writers=writer_clients
-    )
+    query_executor = getattr(
+      executor_module, concrete_executor_module.get('executor_class')
+    )(**fetcher_parameters, writers=writer_clients)
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:
