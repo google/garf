@@ -57,7 +57,7 @@ class GoogleAnalyticsApiQuery(query_editor.QuerySpecification):
               'field_name': dimension_name,
               'in_list_filter': {
                 'values': [
-                  re.sub(r'\)|\(|\[|\[', '', _normalize_string(v))
+                  re.sub(r'\)|\(|\[|\[', '', _normalize_string(v)).strip()
                   for v in dimension_value.split(',')
                 ],
               },
