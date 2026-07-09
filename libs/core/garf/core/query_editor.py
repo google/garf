@@ -45,7 +45,9 @@ class GarfQueryParameters(pydantic.BaseModel):
   @property
   def hash(self) -> str:
     hash_fields = self.model_dump(exclude_none=True)
-    return hashlib.md5(json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False).hexdigest()
+    return hashlib.md5(
+      json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False
+    ).hexdigest()
 
   def __eq__(self, other) -> bool:
     return (self.macro, self.template) == (other.macro, other.template)
@@ -121,7 +123,9 @@ class BaseQueryElements(pydantic.BaseModel):
   @property
   def hash(self) -> str:
     hash_fields = self.model_dump(exclude_none=True, exclude={'title', 'text'})
-    return hashlib.md5(json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False).hexdigest()
+    return hashlib.md5(
+      json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False
+    ).hexdigest()
 
 
 class CommonParametersMixin:
@@ -244,12 +248,7 @@ class QuerySpecification(CommonParametersMixin):
     else:
       for key, value in template_params.items():
         if value:
-          if isinstance(value, list):
-            template_params[key] = value
-          elif len(splitted_param := str(value).split(',')) > 1:
-            template_params[key] = splitted_param
-          else:
-            template_params[key] = value
+          template_params[key] = value
         else:
           template_params[key] = ''
       rendered_query = query.render(template_params)

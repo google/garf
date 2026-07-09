@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from garf.executors import exceptions
 
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 
 
 def validate_version(version: str | None = None):
