@@ -99,6 +99,20 @@ class TestParamsParser:
       },
     }
 
+  @pytest.mark.parametrize(
+    'parameters',
+    [
+      (1, 2),
+      (1, 2, 3),
+    ],
+  )
+  def test_parse_all_handlers_duplicated_identifiers_as_list(self, parameters):
+    param_parser = utils.ParamsParser()
+    params = [f'--template.key={p}' for p in parameters]
+    parsed_params = param_parser.parse_all(params)
+    expected_parameters = {'template': {'key': [str(p) for p in parameters]}}
+    assert parsed_params == expected_parameters
+
 
 @pytest.mark.parametrize(
   'logger_type',

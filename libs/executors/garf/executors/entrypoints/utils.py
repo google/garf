@@ -18,7 +18,7 @@ from __future__ import annotations
 import enum
 import logging
 import sys
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import Any
 
 from rich import logging as rich_logging
@@ -26,21 +26,22 @@ from rich import logging as rich_logging
 
 class ParamsParser:
   def __init__(self, identifiers: Sequence[str] | None = None) -> None:
-    self.identifiers = identifiers or []
+    self.identifiers = set(identifiers) if identifiers else set()
 
   def parse(self, params: Sequence) -> dict[str, dict | None]:
-    return {
-      identifier: self._parse_params(identifier, params)
-      for identifier in self.identifiers
-    }
+    results = {}
+    for identifier in self.identifiers:
+      result = self._parse_params(identifier, params)
+      results[identifier] = result
+    return results
 
   def parse_all(self, params: Sequence) -> dict[str, dict | None]:
-    identifiers = []
+    identifiers = set()
     for param in params:
       identifier, *value = param.split('.', maxsplit=1)
       if value:
-        identifiers.append(identifier.replace('--', ''))
-    self.identifiers.extend(identifiers)
+        identifiers.add(identifier.replace('--', ''))
+    self.identifiers |= identifiers
     return self.parse(params)
 
   def _parse_params(self, identifier: str, params: Sequence[Any]) -> dict:
@@ -50,7 +51,16 @@ class ParamsParser:
       for param in raw_params:
         param_pair = self._identify_param_pair(identifier, param)
         if param_pair:
-          parsed_params.update(param_pair)
+          if key := (param_pair.keys() & parsed_params.keys()):
+            key = key.pop()
+            previous_value = parsed_params.get(key)
+            if isinstance(previous_value, MutableSequence):
+              joined_pair = {key: [*previous_value, param_pair.get(key)]}
+            else:
+              joined_pair = {key: [previous_value, param_pair.get(key)]}
+            parsed_params.update(joined_pair)
+          else:
+            parsed_params.update(param_pair)
     return parsed_params
 
   def _identify_param_pair(

@@ -207,10 +207,10 @@ SELECT
 FROM asset_performance
 ```
 
-When this query is executed it's expected to have template `--template.cohort_days=0,1,3,7` is supplied to `garf`.
+When this query is executed it's expected to have template `--template.cohort_days=0 --template.cohort_days=1` is supplied to `garf`.
 
-Please note that all values passed through CLI arguments are strings. But there's a special case - a value containing "," - it's converted to an array.
-It will create 4 columns (named `installs_0_day`, `installs_1_day`, etc).
+Please note that all values passed through CLI arguments are strings.
+It will create 2 columns (named `installs_0_day`, `installs_1_day`).
 
 Learn more about statements [here](https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures).
 
