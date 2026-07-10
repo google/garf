@@ -47,7 +47,7 @@ where:
 ```sql
 SELECT
   media_url,
-  content.tags[].name AS tags
+  content AS tags
 FROM tag
 WHERE
   media_type = 'image'
@@ -118,7 +118,7 @@ Returns floating-point numbers.
 ```sql
 SELECT
   media_url,
-  content.text AS description
+  content.text AS share_of_green
 FROM description
 WHERE
   media_type = 'image'
@@ -136,7 +136,7 @@ Returns integers.
 ```sql
 SELECT
   media_url,
-  content.text AS description
+  content.text AS image_quality
 FROM description
 WHERE
   media_type = 'image'
@@ -154,7 +154,7 @@ Returns True/False
 ```sql
 SELECT
   media_url,
-  content.text AS description
+  content.text AS is_advertising
 FROM description
 WHERE
   media_type = 'image'
@@ -172,7 +172,7 @@ WHERE
 ```sql
 SELECT
   media_url,
-  content.text AS description
+  content.text AS category
 FROM description
 WHERE
   media_type = 'image'
@@ -191,7 +191,8 @@ If built-in schema is not enough you can specify the directly in the query:
 ```sql
 SELECT
   media_url,
-  content.text AS description
+  content.text[0].quality_score AS score,
+  content.text[0].reason AS reason
 FROM description
 WHERE
   media_type = 'image'
