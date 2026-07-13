@@ -28,6 +28,7 @@ from garf.core import (
   parsers,
   query_editor,
   report_fetcher,
+  version,
 )
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,8 @@ logger = logging.getLogger(__name__)
 
 class FakeApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Returns simulated data."""
+
+  version: str = version.__version__
 
   def __init__(
     self,
