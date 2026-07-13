@@ -18,7 +18,7 @@ from __future__ import annotations
 import enum
 import logging
 import sys
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import Any
 
 from rich import logging as rich_logging
@@ -56,6 +56,8 @@ class ParamsParser:
             previous_value = parsed_params.get(key)
             if isinstance(previous_value, MutableSequence):
               joined_pair = {key: [*previous_value, param_pair.get(key)]}
+            elif isinstance(previous_value, Mapping):
+              joined_pair = {key: {**previous_value, **param_pair.get(key)}}
             else:
               joined_pair = {key: [previous_value, param_pair.get(key)]}
             parsed_params.update(joined_pair)
@@ -73,18 +75,13 @@ class ParamsParser:
     if not keys:
       return None
     if len(keys) > 1:
-      raise GarfParamsException(
-        f'{key} is invalid format,'
-        f'`--{identifier}.key=value` or `--{identifier}.key` '
-        'are the correct formats'
-      )
+      key = keys[0].replace('-', '_')
+      return {
+        key: self._identify_param_pair(
+          identifier=keys[0], param=['.'.join(keys), param[1]]
+        )
+      }
     provided_identifier = provided_identifier.replace('--', '')
-    if provided_identifier not in self.identifiers:
-      supported_arguments = ', '.join(self.identifiers)
-      raise GarfParamsException(
-        f'CLI argument {provided_identifier} is not supported'
-        f', supported arguments {supported_arguments}'
-      )
     if provided_identifier != identifier:
       return None
     key = keys[0].replace('-', '_')
