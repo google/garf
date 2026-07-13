@@ -218,11 +218,15 @@ class ApiReportFetcher:
       placeholder_parsed_response = self.parser(query).parse_response(
         api_clients.GarfApiResponse(results=response.results_placeholder)
       )
-      return report.GarfReport(
+      placeholder_report = report.GarfReport(
         query_specification=query,
         results_placeholder=placeholder_parsed_response,
         column_names=[c for c in query.column_names if c != '_'],
       )
+      span.set_attribute('is_placeholder_report', True)
+      if self.enable_cache:
+        self.cache.save(placeholder_report, query, args, kwargs)
+      return placeholder_report
 
     parsed_response = self.parser(query).parse_response(response)
     fetched_report = report.GarfReport(
