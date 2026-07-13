@@ -25,6 +25,7 @@ from garf.core import (
   parsers,
   query_editor,
   report_fetcher,
+  version,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,8 @@ class RestApiReportFetcher(report_fetcher.ApiReportFetcher):
     api_client: Initialized RestApiClient.
     parser: Type of parser to convert API response.
   """
+
+  version: str = version.__version__
 
   def __init__(
     self,

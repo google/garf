@@ -146,6 +146,7 @@ class YouTubeAnalyticsApiReportFetcher(report_fetcher.ApiReportFetcher):
   """Defines report fetcher for YouTube Analytics API."""
 
   alias = 'youtube-analytics'
+  version = version.__version__
 
   def __init__(
     self,
