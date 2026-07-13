@@ -31,7 +31,7 @@ garf <PATH_TO_QUERIES> --source media-tagging \
 where:
 
 * `PATH_TO_QUERIES` - local or remove files containing queries
-* `output` - output supported by [`garf-io` library](https://google.github.io/garf/usage/writers/).
+* `output` - output supported by [`garf-io` library](../usage/writers.md).
 * `SOURCE_PARAMETER=VALUE` - key-value pairs to refine fetching, check [available source parameters](#available-source-parameters).
 
 ###  Available source parameters
@@ -40,7 +40,13 @@ where:
 |----- | ----- | -------- |
 | `endpoint`   | http endpoint when media-tagging API is running |  |
 | `db-uri`   | Optional connection string to DB where tagging results can be found |  |
+| `tagger-type`*  | Type of [tagger](https://google.github.io/filonov/tagging/overview/#supported-taggers) to use | `media-tagging.tagger-type=gemini` |
+| `media-type`* | Type of [media](https://google.github.io/filonov/tagging/media/#supported-media-types) to use |  `media-tagging.media-type=text` |
+| `media-paths`*  | Media to tag | `--media-tagging.media_paths='Some text'`. Can use [`gquery` expansion](../usage/executors.md/#gquery-expansion) to get data from a table |
+| `tagging-options`*  | Key-value pairs  to [fine-tune tagging process](https://google.github.io/filonov/tagging/overview/#usage) | `--media-tagging.tagging-options.custom-prompt='Is this an advertising?`. |
 
+!!! note
+    Source parameters marked with asterix (*) are optional and can be provided in a query filters.
 
 ## Queries for Media Tagging API
 
@@ -52,7 +58,7 @@ FROM tag
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
 ```
 
 ### Resources
@@ -65,7 +71,7 @@ WHERE
 
 * `media_type` - Required, one of: IMAGE, YOUTUBE_VIDEO, WEBPAGE, TEXT, VIDEO.
 * `tagger_type` - Tagger used to identify tags / descriptions.
-* `media_path` - location of media.
+* `media_paths` - location of media.
 * `tagging_options` - optional parameters to fine-tune tagging.
   * `n_tags` - number of tags to return.
   * `tags` - custom tags to find in the media.
@@ -105,7 +111,7 @@ FROM description
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
   AND tagging_options.custom_prompt='What is this image about?'
   AND tagging_options.custom_schema='string'
 ```
@@ -123,7 +129,7 @@ FROM description
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
   AND tagging_options.custom_prompt='What is the share of green in this image?'
   AND tagging_options.custom_schema='number'
 ```
@@ -141,7 +147,7 @@ FROM description
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
   AND tagging_options.custom_prompt='Rate quality of this image from 1 to 5.'
   AND tagging_options.custom_schema='integer'
 ```
@@ -159,7 +165,7 @@ FROM description
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
   AND tagging_options.custom_prompt='Is this image advertising?'
   AND tagging_options.custom_schema='boolean'
 ```
@@ -177,7 +183,7 @@ FROM description
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
   AND tagging_options.custom_prompt='Classify this image into one of the categories.'
   AND tagging_options.custom_schema='enum:Category1,Category2'
 ```
@@ -197,7 +203,7 @@ FROM description
 WHERE
   media_type = 'image'
   AND tagger_type = 'gemini'
-  AND media_path IN ({{media}})
+  AND media_paths IN ({{media}})
   AND tagging_options.custom_prompt='Rate this image quality and explain why.'
   AND tagging_options.custom_schema = {{
     {
