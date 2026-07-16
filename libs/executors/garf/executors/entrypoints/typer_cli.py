@@ -186,11 +186,6 @@ def execute(
     raise exceptions.GarfExecutorError(
       'Please provide one or more queries to run'
     )
-  if not found_queries:
-    garf_logger.error('Please provide one or more queries to run')
-    raise exceptions.GarfExecutorError(
-      'Please provide one or more queries to run'
-    )
   source = source.value
   input = input.value
   output = output.value

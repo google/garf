@@ -84,14 +84,16 @@ class Executor:
     )
     query_text = query_spec.query.text
     title = query_spec.query.title
-    span.set_attribute('query.title', title)
-    span.set_attribute('query.text', query_text)
+    span.set_attribute('executor.query.title', title)
+    span.set_attribute('executor.query.text', query_text)
     logger.info('Executing script: %s', title)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
     if self.preprocessors and not self.simulator:
       _handle_processors(processors=self.preprocessors, context=context)
     if len(query_parts := query_spec.query_parts) > 1:
+      span.set_attribute('executor.multi_query', True)
+      span.set_attribute('executor.multi_query.num_queries', len(query_parts))
       no_writer_context = context.model_copy(update={'writer': 'unset'})
       batch = {f'{title}_{i}': query for i, query in enumerate(query_parts)}
       results = self.execute_batch(batch=batch, context=no_writer_context)
@@ -118,7 +120,6 @@ class Executor:
       duration = time.perf_counter() - start_time
       telemetry.executor_histogram.record(duration, executor_attributes)
       return write_outputs
-    span.set_attribute('execute.num_results', len(results))
     if self.postprocessors and not self.simulator:
       _handle_processors(processors=self.postprocessors, context=context)
     duration = time.perf_counter() - start_time
@@ -157,7 +158,8 @@ class Executor:
       Results of execution.
     """
     span = trace.get_current_span()
-    span.set_attribute('api.parallel_threshold', parallel_threshold)
+    span.set_attribute('executor.parallel_threshold', parallel_threshold)
+    span.set_attribute('executor.batch_size', len(batch))
     if self.preprocessors and not self.simulator:
       _handle_processors(processors=self.preprocessors, context=context)
     if context.has_gquery:
@@ -251,6 +253,19 @@ def write_many(
   results: report.GarfReport,
   title: str,
 ) -> Optional[str]:
+  span = trace.get_current_span()
+  span.set_attributes(
+    {
+      'executor.writers': [
+        writer.__class__.__name__ for writer in writer_clients
+      ],
+      'executor.report.num_rows': len(results),
+      'executor.report.num_column': len(results.column_names),
+    }
+  )
+  if not results:
+    span.set_attribute('executor.report.is_placeholder', True)
+
   writing_results = []
   for writer_client in writer_clients:
     start_time = time.perf_counter()

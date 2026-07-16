@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import json
 import logging
 from typing import Any
 
@@ -81,12 +82,9 @@ def setup_executor(
   span = trace.get_current_span()
   span.set_attribute('executor.source', source)
   if fetcher_parameters:
-    span.set_attributes(
-      {
-        f'executor.source.parameters.{k}': v
-        for k, v in fetcher_parameters.items()
-        if v
-      }
+    span.set_attribute(
+      'executor.source.parameters',
+      json.dumps({k: v for k, v in fetcher_parameters.items() if v}),
     )
   if simulate and enable_cache:
     logger.warning('Simulating API responses. Disabling cache.')
@@ -94,12 +92,9 @@ def setup_executor(
   if writers:
     span.set_attribute('executor.writers', writers)
     if writer_parameters:
-      span.set_attributes(
-        {
-          f'executor.writer.parameters.{k}': v
-          for k, v in writer_parameters.items()
-          if v
-        }
+      span.set_attribute(
+        'executor.writer.parameters',
+        json.dumps({k: v for k, v in writer_parameters.items() if v}),
       )
     writer_clients = writer.setup_writers(writers, writer_parameters)
   else:

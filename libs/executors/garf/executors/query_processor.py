@@ -77,7 +77,7 @@ def _handle_sub_context(
         res = gquery_executor._execute(
           query=query_spec.text, title='gquery', context=no_writer_context
         )
-        span.set_attribute('gquery.text', query_spec.text)
+        span.set_attribute('executor.gquery.text', query_spec.text)
       if (
         not allow_lists
         and len(columns := [c for c in res.column_names if c != '_']) > 1

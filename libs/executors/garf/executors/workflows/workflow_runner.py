@@ -129,8 +129,8 @@ class WorkflowRunner:
           'Running step %d, fetcher: %s, alias: %s', i, step.fetcher, step.alias
         )
         step_attributes = {
-          'step.alias': step.alias,
-          'step.fetcher': step.fetcher,
+          'workflow.step.alias': step.alias,
+          'workflow.step.fetcher': step.fetcher,
         }
         if step.writer:
           step_attributes.update({'step.writer': step.writer})
@@ -169,7 +169,7 @@ class WorkflowRunner:
             batch[query.title] = query.text
         try:
           step_start_time = time.perf_counter()
-          step_span.set_attribute('step.num_queries', len(batch))
+          step_span.set_attribute('workflow.step.num_queries', len(batch))
           results = query_executor.execute_batch(
             batch,
             step.context,
