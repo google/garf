@@ -52,6 +52,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     self,
     engine: sqlalchemy.engine.base.Engine | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
+    connection_string: str | None = None,
     **kwargs: str,
   ) -> None:
     """Initializes executor with a given engine.
@@ -59,7 +60,9 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Args:
         engine: Initialized Engine object to operated on a given database.
     """
-    self.engine = engine or sqlalchemy.create_engine('sqlite://')
+    self.engine = engine or sqlalchemy.create_engine(
+      connection_string or 'sqlite://'
+    )
     self.writers = writers
     super().__init__(source='sqldb')
 
