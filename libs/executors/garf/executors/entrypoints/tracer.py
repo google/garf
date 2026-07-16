@@ -44,13 +44,14 @@ DEFAULT_SERVICE_NAME = 'garf'
 
 
 def _init_resource(otel_service_name: Optional[str] = None) -> Resource:
-  return Resource.create(
-    attributes={
-      SERVICE_NAME: otel_service_name
-      or os.getenv('OTEL_SERVICE_NAME', DEFAULT_SERVICE_NAME),
-      'garf.executors.version': version.__version__,
-    }
-  )
+  attributes = {
+    SERVICE_NAME: otel_service_name
+    or os.getenv('OTEL_SERVICE_NAME', DEFAULT_SERVICE_NAME),
+    'garf.executors.version': version.__version__,
+  }
+  if garf_mode := os.getenv('GARF_MODE'):
+    attributes['garf.mode'] = garf_mode
+  return Resource.create(attributes=attributes)
 
 
 def initialize_tracer(otel_service_name: Optional[str] = None):
