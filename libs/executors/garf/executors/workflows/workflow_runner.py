@@ -74,26 +74,16 @@ class WorkflowRunner:
   ) -> list[str]:
     span = trace.get_current_span()
     start_time = time.perf_counter()
-    workflow_attributes = {}
-    if name := self.workflow.name:
-      workflow_attributes.update({'workflow.name': name})
-    if version := self.workflow.metadata.version:
-      workflow_attributes.update({'workflow.version': version})
-    if config := self.workflow.execution_config:
-      if config_version := config.metadata.version:
-        workflow_attributes.update({'config.version': config_version})
-      if config_name := config.name:
-        workflow_attributes.update({'config.name': config_name})
+    if workflow_attributes := self.workflow.attributes:
+      span.set_attributes(workflow_attributes)
 
     steps = [step.fetcher for step in self.workflow.steps]
-    span.set_attributes(workflow_attributes)
     span.set_attributes(
       {
         'workflow.num_steps': len(steps),
         'workflow.fetchers': list(set(steps)),
       }
     )
-    span.set_attributes(workflow_attributes)
     self.workflow.compile()
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
@@ -170,6 +160,9 @@ class WorkflowRunner:
         try:
           step_start_time = time.perf_counter()
           step_span.set_attribute('workflow.step.num_queries', len(batch))
+          telemetry.executor_requested_counter.add(
+            len(batch), attributes={'executor.source': step.fetcher}
+          )
           results = query_executor.execute_batch(
             batch,
             step.context,
