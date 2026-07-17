@@ -13,18 +13,37 @@
 # limitations under the License.
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
+import contextlib
+import os
+import time
+
+import psutil
 from opentelemetry import metrics, trace
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf.executors',
 )
 meter = metrics.get_meter('garf.executors')
+_SERVER_START_TIME = time.time()
 
-executor_info = meter.create_gauge(
-  'garf_info',
-  unit='',
-  description='Build info of garf executor',
-)
+
+def _get_server_start_time(options):
+  yield metrics.Observation(_SERVER_START_TIME)
+
+
+def _get_memory_consumption(options):
+  with contextlib.suppress(psutil.NoSuchProcess):
+    pid = os.getpid()
+    memory_bytes = psutil.Process(pid).memory_info().rss
+    yield metrics.Observation(value=memory_bytes, attributes={'pid': str(pid)})
+
+
+def _get_virtual_memory_consumption(options):
+  with contextlib.suppress(psutil.NoSuchProcess):
+    pid = os.getpid()
+    memory_bytes = psutil.Process(pid).memory_info().vms
+    yield metrics.Observation(value=memory_bytes, attributes={'pid': str(pid)})
+
 
 executor_started_seconds = meter.create_gauge(
   'garf_executor_started_seconds',
@@ -109,4 +128,25 @@ workflow_step_error_counter = meter.create_counter(
   'garf_workflow_step_run_errors_total',
   unit='1',
   description='Counts number of workflow step failures',
+)
+
+meter.create_observable_gauge(
+  'garf_server_start_time_seconds',
+  unit='s',
+  callbacks=[_get_server_start_time],
+  description='Timestamp when garf server started',
+)
+
+meter.create_observable_gauge(
+  'garf_server_memory_bytes',
+  unit='By',
+  callbacks=[_get_memory_consumption],
+  description='Physical Memory (RSS) consumed by garf server',
+)
+
+meter.create_observable_gauge(
+  'garf_server_virtual_memory_bytes',
+  unit='By',
+  callbacks=[_get_virtual_memory_consumption],
+  description='Virtual memory (VMS) consumed by garf server',
 )
