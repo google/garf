@@ -16,18 +16,77 @@
 
 import argparse
 import logging
+import os
+import subprocess
+import time
 from concurrent import futures
 
+import garf.executors
 import grpc
-from garf.executors import execution_context, garf_pb2, garf_pb2_grpc, setup
-from garf.executors.entrypoints.tracer import initialize_tracer
+from garf.executors import (
+  execution_context,
+  fetchers,
+  garf_pb2,
+  garf_pb2_grpc,
+  setup,
+  telemetry,
+  version,
+)
+from garf.executors.entrypoints import utils
+from garf.executors.entrypoints.tracer import (
+  initialize_logger,
+  initialize_meter,
+  initialize_tracer,
+)
 from garf.executors.workflows import workflow, workflow_runner
 from google.protobuf.json_format import MessageToDict
 from grpc_reflection.v1alpha import reflection
+from opentelemetry import metrics
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
+OTEL_SERVICE_NAME = 'garf'
+LoggingInstrumentor().instrument(set_logging_format=False)
+
+server_start_time = time.time()
+
+
+def _get_server_info(options):
+  if not (commit_sha := os.getenv('GIT_COMMIT_SHA')):
+    try:
+      commit_sha = (
+        subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
+        .decode('ascii')
+        .strip()
+      )
+    except Exception:
+      commit_sha = 'Unknown'
+
+  yield metrics.Observation(
+    value=1,
+    attributes={
+      'version_executors': garf.executors.version.__version__,
+      'version_core': garf.executors.version.core_version,
+      'version_io': garf.executors.version.io_version,
+      'git_commit': commit_sha,
+      'server_type': 'grpc',
+    },
+  )
+
+
+executor_info = telemetry.meter.create_observable_gauge(
+  'garf_info',
+  callbacks=[_get_server_info],
+  unit='',
+  description='Build info of garf executor',
+)
 
 
 class GarfService(garf_pb2_grpc.GarfService):
   def Execute(self, request, context):
+    telemetry.executor_requested_counter.add(
+      1, attributes={'executor.source': request.source}
+    )
     query_executor = setup.setup_executor(
       request.source, request.context.fetcher_parameters
     )
@@ -41,6 +100,10 @@ class GarfService(garf_pb2_grpc.GarfService):
     return garf_pb2.ExecuteResponse(results=[result])
 
   def ExecuteBatch(self, request, context):
+    n_queries = len(request.batch)
+    telemetry.executor_requested_counter.add(
+      n_queries, attributes={'executor.source': request.source}
+    )
     query_executor = setup.setup_executor(
       request.source, request.context.fetcher_parameters
     )
@@ -73,11 +136,35 @@ class GarfService(garf_pb2_grpc.GarfService):
     execution_workflow = workflow.Workflow(
       **MessageToDict(request.workflow, preserving_proto_field_name=True)
     )
+    telemetry.workflow_requested.add(
+      1, attributes=execution_workflow.attributes
+    )
     runner = workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow
     )
     results = runner.run()
     return garf_pb2.ExecuteWorkflowResponse(results=results)
+
+  def GetVersion(self, request, context):
+    return garf_pb2.GarfVersion(version=version.__version__)
+
+  def GetInfo(self, request, context):
+    return garf_pb2.GarfInfo(
+      executors_version=version.__version__,
+      core_version=version.core_version,
+      io_version=version.io_version,
+    )
+
+  def ListFetchers(self, request, context):
+    return garf_pb2.ListFetchersResponse(
+      results=[
+        garf_pb2.FetcherInfo(name=name, version=fetcher.version)
+        for name, fetcher in fetchers.get_all_report_fetchers().items()
+      ]
+    )
+
+  def ListExecutors(self, request, context):
+    return garf_pb2.ListExecutorsResponse(results=setup.available_executors())
 
 
 if __name__ == '__main__':
@@ -88,6 +175,14 @@ if __name__ == '__main__':
   )
   args, _ = parser.parse_known_args()
   initialize_tracer()
+  meter = initialize_meter()
+  logger = utils.init_logging(
+    loglevel='INFO', logger_type='local', name=OTEL_SERVICE_NAME
+  )
+  logger.addHandler(initialize_logger())
+
+  grpc_server_instrumentor = GrpcInstrumentorServer()
+  grpc_server_instrumentor.instrument()
   server = grpc.server(
     futures.ThreadPoolExecutor(max_workers=args.parallel_threshold)
   )

@@ -73,6 +73,7 @@ def _get_server_info(options):
       'version_core': garf.executors.version.core_version,
       'version_io': garf.executors.version.io_version,
       'git_commit': commit_sha,
+      'server_type': 'http',
     },
   )
 

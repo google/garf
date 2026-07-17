@@ -1,6 +1,7 @@
 syntax = "proto3";
 package garf;
 import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
 
 
 service GarfService {
@@ -8,7 +9,10 @@ service GarfService {
   rpc ExecuteBatch(ExecuteBatchRequest) returns (ExecuteBatchResponse) {}
   rpc ExecuteWorkflow(ExecuteWorkflowRequest) returns (ExecuteWorkflowResponse) {}
   rpc Fetch(FetchRequest) returns (FetchResponse) {}
-
+  rpc GetVersion(google.protobuf.Empty) returns (GarfVersion) {}
+  rpc GetInfo(google.protobuf.Empty) returns (GarfInfo) {}
+  rpc ListFetchers(google.protobuf.Empty) returns (ListFetchersResponse) {}
+  rpc ListExecutors(google.protobuf.Empty) returns (ListExecutorsResponse) {}
 }
 
 message FetchRequest {
@@ -113,4 +117,29 @@ message ExecuteWorkflowRequest {
 
 message ExecuteWorkflowResponse {
   repeated string results = 1;
+}
+
+
+// List
+message FetcherInfo {
+  string name = 1;
+  string version = 2;
+}
+message ListFetchersResponse {
+  repeated FetcherInfo results = 1;
+}
+
+message ListExecutorsResponse {
+  repeated string results = 1;
+}
+
+// Info
+message GarfVersion {
+  string version = 1;
+}
+
+message GarfInfo {
+  string executors_version = 1;
+  string core_version = 2;
+  string io_version = 3;
 }

@@ -4,6 +4,7 @@ import grpc
 import warnings
 
 from . import garf_pb2 as garf__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
@@ -54,6 +55,26 @@ class GarfServiceStub(object):
                 request_serializer=garf__pb2.FetchRequest.SerializeToString,
                 response_deserializer=garf__pb2.FetchResponse.FromString,
                 _registered_method=True)
+        self.GetVersion = channel.unary_unary(
+                '/garf.GarfService/GetVersion',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=garf__pb2.GarfVersion.FromString,
+                _registered_method=True)
+        self.GetInfo = channel.unary_unary(
+                '/garf.GarfService/GetInfo',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=garf__pb2.GarfInfo.FromString,
+                _registered_method=True)
+        self.ListFetchers = channel.unary_unary(
+                '/garf.GarfService/ListFetchers',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=garf__pb2.ListFetchersResponse.FromString,
+                _registered_method=True)
+        self.ListExecutors = channel.unary_unary(
+                '/garf.GarfService/ListExecutors',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=garf__pb2.ListExecutorsResponse.FromString,
+                _registered_method=True)
 
 
 class GarfServiceServicer(object):
@@ -83,6 +104,30 @@ class GarfServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetVersion(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetInfo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListFetchers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListExecutors(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_GarfServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -105,6 +150,26 @@ def add_GarfServiceServicer_to_server(servicer, server):
                     servicer.Fetch,
                     request_deserializer=garf__pb2.FetchRequest.FromString,
                     response_serializer=garf__pb2.FetchResponse.SerializeToString,
+            ),
+            'GetVersion': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetVersion,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=garf__pb2.GarfVersion.SerializeToString,
+            ),
+            'GetInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetInfo,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=garf__pb2.GarfInfo.SerializeToString,
+            ),
+            'ListFetchers': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListFetchers,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=garf__pb2.ListFetchersResponse.SerializeToString,
+            ),
+            'ListExecutors': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListExecutors,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=garf__pb2.ListExecutorsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -215,6 +280,114 @@ class GarfService(object):
             '/garf.GarfService/Fetch',
             garf__pb2.FetchRequest.SerializeToString,
             garf__pb2.FetchResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetVersion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/GetVersion',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            garf__pb2.GarfVersion.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/GetInfo',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            garf__pb2.GarfInfo.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListFetchers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/ListFetchers',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            garf__pb2.ListFetchersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListExecutors(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/garf.GarfService/ListExecutors',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            garf__pb2.ListExecutorsResponse.FromString,
             options,
             channel_credentials,
             insecure,
