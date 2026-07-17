@@ -13,9 +13,9 @@
 # limitations under the License.
 from __future__ import annotations
 
-from garf.core import version as core_version
+import garf.core.version as core_version
+import garf.io.version as io_version
 from garf.executors import exceptions
-from garf.io import version as io_version
 
 __version__ = '1.6.1'
 
