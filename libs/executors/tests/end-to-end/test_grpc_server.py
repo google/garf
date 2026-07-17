@@ -14,9 +14,10 @@
 import pathlib
 
 import pytest
+from garf.executors import fetchers, garf_pb2_grpc, setup, version
 from garf.executors import garf_pb2 as pb
-from garf.executors import garf_pb2_grpc
 from garf.executors.entrypoints import grpc_server
+from google.protobuf import empty_pb2
 from google.protobuf.json_format import MessageToDict
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
@@ -145,3 +146,37 @@ def test_execute_workflow(grpc_stub):
   )
   result = grpc_stub.ExecuteWorkflow(request)
   assert '1-fake-test' in result.results[0]
+
+
+def test_garf_version(grpc_stub):
+  result = grpc_stub.GetVersion(empty_pb2.Empty())
+  assert result.version == version.__version__
+
+
+def test_garf_info(grpc_stub):
+  result = grpc_stub.GetInfo(empty_pb2.Empty())
+  expected_response = pb.GarfInfo(
+    executors_version=version.__version__,
+    core_version=version.core_version,
+    io_version=version.io_version,
+  )
+  assert result == expected_response
+
+
+def test_list_fetchers(grpc_stub):
+  result = grpc_stub.ListFetchers(empty_pb2.Empty())
+  expected_response = pb.ListFetchersResponse(
+    results=[
+      pb.FetcherInfo(name=name, version=fetcher.version)
+      for name, fetcher in fetchers.get_all_report_fetchers().items()
+    ]
+  )
+  assert result == expected_response
+
+
+def test_list_executors(grpc_stub):
+  result = grpc_stub.ListExecutors(empty_pb2.Empty())
+  expected_response = pb.ListExecutorsResponse(
+    results=setup.available_executors()
+  )
+  assert result == expected_response

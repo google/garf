@@ -60,6 +60,7 @@ server=[
   "fastapi[standard]",
   "pydantic-settings",
   "opentelemetry-instrumentation-fastapi",
+  "opentelemetry-instrumentation-grpc",
   "typer",
   "grpcio-reflection",
   "celery[redis]",
