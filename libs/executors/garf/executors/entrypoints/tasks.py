@@ -132,8 +132,10 @@ def execute_batch(request: ApiExecutorBatchRequest):
   telemetry.executor_active_executions.add(
     -n_queries, attributes={'executor.source': query_executor.source}
   )
-  if all(isinstance(report, garf.core.GarfReport) for report in results):
-    return [report.to_list('dict') for report in results]
+  if all(
+    isinstance(report, garf.core.GarfReport) for report in results.values()
+  ):
+    return {query: report.to_list('dict') for query, report in results.items()}
   return results
 
 
