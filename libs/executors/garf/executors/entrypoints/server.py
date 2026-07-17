@@ -241,14 +241,13 @@ def execute_workflow(
   simulate: bool = False,
 ) -> dict[str, ApiExecutorResponse]:
   """Runs garf workflow till completion."""
-  telemetry.workflow_requested.add(1)
   try:
     execution_workflow = _init_workflow(
       workflow_file, workflow_path, config_file, config_path
     )
   except workflow.GarfWorkflowError as e:
-    telemetry.workflow_error_counter.add(1)
     raise fastapi.HTTPException(404, detail=str(e))
+  telemetry.workflow_requested.add(1, attributes=execution_workflow.attributes)
   result = tasks.execute_workflow(
     execution_workflow=execution_workflow.model_dump(),
     selected_aliases=selected_aliases,
@@ -276,15 +275,14 @@ async def execute_workflow_task(
   simulate: bool = False,
 ) -> dict[str, str]:
   """Creates a single operation for running garf workflow."""
-  telemetry.workflow_requested.add(1)
   span = trace.get_current_span()
   try:
     execution_workflow = _init_workflow(
       workflow_file, workflow_path, config_file, config_path
     )
   except workflow.GarfWorkflowError as e:
-    telemetry.workflow_error_counter.add(1)
     raise fastapi.HTTPException(404, detail=str(e))
+  telemetry.workflow_requested.add(1, attributes=execution_workflow.attributes)
   task = tasks.execute_workflow.delay(
     execution_workflow=execution_workflow.model_dump(),
     selected_aliases=selected_aliases,
