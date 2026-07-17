@@ -16,7 +16,10 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
+import subprocess
+import time
 from contextlib import asynccontextmanager
 from typing import Any, Optional, Union
 
@@ -37,7 +40,7 @@ from garf.executors.entrypoints.tracer import (
   initialize_tracer,
 )
 from garf.executors.workflows import workflow
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
@@ -49,6 +52,37 @@ LoggingInstrumentor().instrument(set_logging_format=False)
 
 initialize_tracer()
 meter = initialize_meter()
+server_start_time = time.time()
+
+
+def _get_server_info(options):
+  if not (commit_sha := os.getenv('GIT_COMMIT_SHA')):
+    try:
+      commit_sha = (
+        subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
+        .decode('ascii')
+        .strip()
+      )
+    except Exception:
+      commit_sha = 'Unknown'
+
+  yield metrics.Observation(
+    value=1,
+    attributes={
+      'version_executors': garf.executors.version.__version__,
+      'version_core': garf.executors.version.core_version,
+      'version_io': garf.executors.version.io_version,
+      'git_commit': commit_sha,
+    },
+  )
+
+
+executor_info = telemetry.meter.create_observable_gauge(
+  'garf_info',
+  callbacks=[_get_server_info],
+  unit='',
+  description='Build info of garf executor',
+)
 
 logger = utils.init_logging(
   loglevel='INFO', logger_type='local', name=OTEL_SERVICE_NAME
@@ -325,14 +359,6 @@ def main(
     int, typer.Option('--port', '-p', help='Port to start the server')
   ] = 8000,
 ):
-  telemetry.executor_info.set(
-    1,
-    {
-      'version_executors': garf.executors.version.__version__,
-      'version_core': garf.executors.version.core_version,
-      'version_io': garf.executors.version.io_version,
-    },
-  )
   uvicorn.run(app, host=host, port=port, log_config=None)
 
 
