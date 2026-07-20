@@ -40,6 +40,7 @@ from garf.executors.entrypoints.tracer import (
 )
 from garf.executors.workflows import workflow, workflow_runner
 from google.protobuf.json_format import MessageToDict
+from grpc_health.v1 import health_pb2, health_pb2_grpc
 from grpc_reflection.v1alpha import reflection
 from opentelemetry import metrics
 from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
@@ -47,6 +48,9 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
 OTEL_SERVICE_NAME = 'garf'
 LoggingInstrumentor().instrument(set_logging_format=False)
+grpc_server_instrumentor = GrpcInstrumentorServer()
+grpc_server_instrumentor.instrument()
+
 
 server_start_time = time.time()
 
@@ -166,6 +170,16 @@ class GarfService(garf_pb2_grpc.GarfService):
   def ListExecutors(self, request, context):
     return garf_pb2.ListExecutorsResponse(results=setup.available_executors())
 
+  def Check(self, request, context):
+    return health_pb2.HealthCheckResponse(
+      status=health_pb2.HealthCheckResponse.SERVING
+    )
+
+  def Watch(self, request, context):
+    return health_pb2.HealthCheckResponse(
+      status=health_pb2.HealthCheckResponse.UNIMPLEMENTED
+    )
+
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -174,21 +188,23 @@ if __name__ == '__main__':
     '--parallel-threshold', dest='parallel_threshold', default=10, type=int
   )
   args, _ = parser.parse_known_args()
-  initialize_tracer()
-  meter = initialize_meter()
+  otel_service_name = os.getenv('OTEL_SERVICE_NAME', OTEL_SERVICE_NAME)
+  initialize_tracer(otel_service_name)
+  meter = initialize_meter(otel_service_name)
   logger = utils.init_logging(
-    loglevel='INFO', logger_type='local', name=OTEL_SERVICE_NAME
+    loglevel='INFO',
+    logger_type='local',
+    name=otel_service_name,
   )
   logger.addHandler(initialize_logger())
 
-  grpc_server_instrumentor = GrpcInstrumentorServer()
-  grpc_server_instrumentor.instrument()
   server = grpc.server(
-    futures.ThreadPoolExecutor(max_workers=args.parallel_threshold)
+    futures.ThreadPoolExecutor(max_workers=args.parallel_threshold),
   )
 
   service = GarfService()
   garf_pb2_grpc.add_GarfServiceServicer_to_server(service, server)
+  health_pb2_grpc.add_HealthServicer_to_server(service, server)
   SERVICE_NAMES = (
     garf_pb2.DESCRIPTOR.services_by_name['GarfService'].full_name,
     reflection.SERVICE_NAME,
@@ -196,5 +212,5 @@ if __name__ == '__main__':
   reflection.enable_server_reflection(SERVICE_NAMES, server)
   server.add_insecure_port(f'[::]:{args.port}')
   server.start()
-  logging.info('Garf service started, listening on port %d', 50051)
+  logging.info('Garf service started, listening on port %d', args.port)
   server.wait_for_termination()

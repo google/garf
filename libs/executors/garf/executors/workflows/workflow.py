@@ -20,7 +20,7 @@ import pathlib
 import re
 import urllib
 from collections import defaultdict
-from typing import Any
+from typing import Any, Final
 
 import pydantic
 import smart_open
@@ -175,6 +175,10 @@ class ExecutionStep(ExecutionContext):
     )
 
 
+def _ignore_empty_dict(v: Any) -> bool:
+  return isinstance(v, dict) and not v
+
+
 class WorkflowMetadata(pydantic.BaseModel):
   """Contains optional metadata on workflow.
 
@@ -190,7 +194,7 @@ class WorkflowMetadata(pydantic.BaseModel):
   version: str | None = None
   required_garf_version: str | None = None
   required_fetchers: dict[str, str] | None = pydantic.Field(
-    default_factory=dict
+    default_factory=dict, exclude_if=_ignore_empty_dict
   )
 
 
@@ -296,6 +300,8 @@ class Workflow(pydantic.BaseModel):
         else:
           new_queries.append(query.to_query(self.prefix))
       step.queries = new_queries
+    if self.prefix is not None:
+      self.prefix = str(self.prefix)
 
   @property
   def attributes(self) -> dict[str, str]:
