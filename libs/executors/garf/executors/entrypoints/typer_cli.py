@@ -23,6 +23,7 @@ from typing import Optional
 import garf.executors
 import requests
 import typer
+from garf.core import cache
 from garf.executors import exceptions, setup
 from garf.executors.config import Config
 from garf.executors.entrypoints import utils
@@ -56,10 +57,54 @@ typer_app = typer.Typer(
   help='Garf\n\nCall APIs with SQL in your terminal', rich_markup_mode='rich'
 )
 workflow_app = typer.Typer(help='Execute workflow')
+cache_app = typer.Typer(help='Manage garf cache')
 typer_app.add_typer(
   workflow_app,
   name='workflow',
 )
+typer_app.add_typer(
+  cache_app,
+  name='cache',
+)
+
+
+@cache_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
+)
+@tracer.start_as_current_span('garf.cli.cache.size')
+def size():
+  """Shows size of garf cache."""
+  size = cache.GarfCache().size
+  if (size_mbs := size / (1024 * 1024)) < 1024:
+    typer.echo(f'Garf cache size {size_mbs:.2f} MB')
+  else:
+    size_gbs = size_mbs / 1025
+    typer.echo(f'Garf cache size {size_gbs:.2f} GB')
+  raise typer.Exit()
+
+
+@cache_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
+)
+@tracer.start_as_current_span('garf.cli.cache.clean')
+def clean():
+  """Clears all entries from the cache."""
+  garf_cache = cache.GarfCache()
+  typer.echo(f'Cleaned {garf_cache.size}')
+  garf_cache.clean()
+  raise typer.Exit()
+
+
+@cache_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
+)
+@tracer.start_as_current_span('garf.cli.cache.clean')
+def prune(time_days: int):
+  """Removed old entries from the cache."""
+  pruned_size = cache.GarfCache().prune(time_days)
+  typer.echo(f'Pruned {pruned_size}')
+  raise typer.Exit()
+
 
 EnableCache = Annotated[
   bool,

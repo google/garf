@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import pathlib
+import shutil
 from typing import Final
 
 from garf.core import exceptions, query_editor, report
@@ -142,3 +143,36 @@ class GarfCache:
         if not os.path.islink(file_path):
           total_size += os.path.getsize(file_path)
     return total_size
+
+  def clean(self) -> None:
+    """Removes all cached files."""
+    for item in self.location.iterdir():
+      if item.is_dir():
+        shutil.rmtree(item)
+      else:
+        item.unlink()
+
+  def prune(self, ttl: int = 30) -> int:
+    """Removes all files older that a lookback in days.
+
+    Args:
+      ttl: Max cache entry size in days.
+
+    Returns:
+      Number of bytes pruned.
+    """
+    prune_date = datetime.datetime.now(
+      datetime.timezone.utc
+    ) - datetime.timedelta(days=ttl)
+    pruned_file_size = 0
+    for file_path in self.location.rglob('*.json'):
+      if (
+        file_path.is_file()
+        and datetime.datetime.fromtimestamp(
+          file_path.stat().st_mtime, datetime.timezone.utc
+        )
+        < prune_date
+      ):
+        pruned_file_size += os.path.getsize(file_path)
+        file_path.unlink()
+    return pruned_file_size
