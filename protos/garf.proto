@@ -52,6 +52,7 @@ message ExecutionContext {
 message QueryParameters {
   google.protobuf.Struct macro = 1;
   google.protobuf.Struct template = 2;
+  bool macro_expansion = 3;
 }
 
 message ExecuteResponse {
@@ -74,10 +75,16 @@ message ExecuteBatchResponse {
 }
 
 // Workflow
+message FetcherInfo {
+  string name = 1;
+  string version = 2;
+}
+
 message WorkflowMetadata {
   string version = 1;
   string description = 2;
   string required_garf_version = 3;
+  repeated FetcherInfo required_fetchers = 4;
 }
 
 message WorkflowStep {
@@ -88,6 +95,7 @@ message WorkflowStep {
   google.protobuf.Struct fetcher_parameters = 5;
   string writer = 6;
   google.protobuf.Struct writer_parameters = 7;
+  uint32 parallel_threshold = 8;
 }
 
 message ConfigMetadata {
@@ -106,13 +114,15 @@ message Workflow {
   string name = 1;
   repeated WorkflowStep steps = 2;
   WorkflowMetadata metadata = 3;
-  Config config = 4;
+  string prefix = 4;
 }
 
 message ExecuteWorkflowRequest {
   Workflow workflow = 1;
   repeated string selected_aliases = 2;
   repeated string skipped_aliases = 3;
+  Config config = 4;
+  ExecutionContext context = 5;
 }
 
 message ExecuteWorkflowResponse {
@@ -121,10 +131,6 @@ message ExecuteWorkflowResponse {
 
 
 // List
-message FetcherInfo {
-  string name = 1;
-  string version = 2;
-}
 message ListFetchersResponse {
   repeated FetcherInfo results = 1;
 }

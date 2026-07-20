@@ -21,10 +21,12 @@ import sys
 from typing import Optional
 
 import garf.executors
+import garf.executors.garf_pb2 as pb
+import grpc
 import requests
 import typer
 from garf.core import cache
-from garf.executors import exceptions, setup
+from garf.executors import exceptions, garf_pb2_grpc, setup
 from garf.executors.config import Config
 from garf.executors.entrypoints import utils
 from garf.executors.entrypoints.tracer import (
@@ -34,7 +36,9 @@ from garf.executors.entrypoints.tracer import (
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
+from google.protobuf.json_format import ParseDict
 from opentelemetry import trace
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
@@ -44,12 +48,18 @@ from rich.table import Table
 from typing_extensions import Annotated
 
 LoggingInstrumentor().instrument(set_logging_format=False)
+client_instrumentor = GrpcInstrumentorClient()
+client_instrumentor.instrument()
 console = Console()
 
 
 FetcherEnum = enum.Enum(
   'FetcherEnum',
   ((f, f) for f in sorted(setup.find_executors())),
+)
+
+ServerTypeEnum = enum.Enum(
+  'ServerTypeEnum', (('http', 'http'), ('grpc', 'grpc'))
 )
 
 initialize_tracer()
@@ -154,16 +164,21 @@ LogName = Annotated[
 ]
 
 
-def _init_runner(
-  file, context=None, config=None
-) -> workflow_runner.WorkflowRunner:
-  wf_parent = pathlib.Path.cwd() / pathlib.Path(file).parent
+def _init_workflow(file, context=None, config=None) -> workflow.Workflow:
   execution_workflow = workflow.Workflow.from_file(
     path=file, context=context, config_file=config
   )
   garf.executors.version.validate_version(
     execution_workflow.metadata.required_garf_version
   )
+  return execution_workflow
+
+
+def _init_runner(
+  file, context=None, config=None
+) -> workflow_runner.WorkflowRunner:
+  execution_workflow = _init_workflow(file, context, config)
+  wf_parent = pathlib.Path.cwd() / pathlib.Path(file).parent
   return workflow_runner.WorkflowRunner(
     execution_workflow=execution_workflow, wf_parent=wf_parent
   )
@@ -203,6 +218,9 @@ def execute(
   server_url: Annotated[
     str | None, typer.Option(help='Address of garf server in HOST:PORT format')
   ] = None,
+  server_type: Annotated[
+    ServerTypeEnum, typer.Option(help='Type of server')
+  ] = 'http',
   additional_output: Annotated[
     Optional[str],
     typer.Option(
@@ -275,46 +293,10 @@ def execute(
   with tracer.start_as_current_span('read_queries'):
     batch = {query: reader_client.read(query) for query in found_queries}
   if server_url:
-    rest_context = context.model_dump()
-    if rest_context.get('writer') == ['console']:
-      del rest_context['writer']
-    headers = {}
-    TraceContextTextMapPropagator().inject(headers)
-    if parallel_queries and len(batch) > 1:
-      endpoint = f'{server_url}/api/execute:batch'
-      request = {
-        'batch': batch,
-        'source': source,
-        'context': rest_context,
-      }
-      try:
-        response = requests.post(url=endpoint, json=request, headers=headers)
-        response.raise_for_status()
-      except requests.exceptions.HTTPError as e:
-        raise exceptions.GarfExecutorError(
-          f'Server error: {e.response.status_code} - {e.response.json()}'
-        ) from e
-
-      with tracer.start_as_current_span('parse_results batch'):
-        typer.secho(response.json().get('results'))
-    else:
-      endpoint = f'{server_url}/api/execute'
-      for title, text in batch.items():
-        request = {
-          'source': source,
-          'title': title,
-          'query': text,
-          'context': rest_context,
-        }
-        try:
-          response = requests.post(url=endpoint, json=request, headers=headers)
-          response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-          raise exceptions.GarfExecutorError(
-            f'Server error: {e.response.status_code} - {e.response.json()}'
-          ) from e
-      with tracer.start_as_current_span(f'parse_results {title}'):
-        typer.secho(response.json().get('results'))
+    if server_type == ServerTypeEnum.http:
+      _send_http(context, parallel_queries, batch, server_url, source)
+    elif server_type == ServerTypeEnum.grpc:
+      _send_grpc(context, parallel_queries, batch, server_url, source)
   else:
     query_executor = setup.setup_executor(
       source=source,
@@ -363,6 +345,12 @@ def run(
   enable_cache: EnableCache = False,
   cache_ttl_seconds: CacheTTL = 3600,
   simulate: Simulate = False,
+  server_url: Annotated[
+    str | None, typer.Option(help='Address of garf server in HOST:PORT format')
+  ] = None,
+  server_type: Annotated[
+    ServerTypeEnum, typer.Option(help='Type of server')
+  ] = 'http',
 ):
   """Runs workflow from a file."""
   span = trace.get_current_span()
@@ -373,14 +361,21 @@ def run(
   )
   garf_logger.addHandler(initialize_logger())
   context = utils.ParamsParser().parse_all(ctx.args)
-  runner = _init_runner(file, context, config)
-  runner.run(
-    enable_cache=enable_cache,
-    cache_ttl_seconds=cache_ttl_seconds,
-    selected_aliases=include,
-    skipped_aliases=exclude,
-    simulate=simulate,
-  )
+  if server_url:
+    if server_type == ServerTypeEnum.http:
+      _run_worklow_http(server_url, file)
+    elif server_type == ServerTypeEnum.grpc:
+      execution_workflow = _init_workflow(file, context, config)
+      _run_worklow_grpc(server_url, execution_workflow)
+  else:
+    runner = _init_runner(file, context, config)
+    runner.run(
+      enable_cache=enable_cache,
+      cache_ttl_seconds=cache_ttl_seconds,
+      selected_aliases=include,
+      skipped_aliases=exclude,
+      simulate=simulate,
+    )
 
 
 @workflow_app.command(
@@ -455,6 +450,126 @@ def version() -> str:
   """Shows version."""
   typer.echo(garf.executors.version.__version__)
   raise typer.Exit()
+
+
+def _send_grpc(context, parallel_queries, batch, server_url, source):
+  channel = grpc.insecure_channel(server_url)
+  stub = garf_pb2_grpc.GarfServiceStub(channel)
+  rest_context = context.model_dump()
+  if rest_context.get('writer') == ['console']:
+    del rest_context['writer']
+  else:
+    rest_context['writer'] = rest_context['writer'][0]
+  if parallel_queries and len(batch) > 1:
+    batch = [
+      pb.QueryDefinition(title=title, text=text)
+      for title, text in batch.items()
+    ]
+    request = pb.ExecuteBatchRequest(
+      source=source, batch=batch, context=pb.ExecutionContext(**rest_context)
+    )
+    response = stub.ExecuteBatch(request)
+    with tracer.start_as_current_span('parse_results batch'):
+      typer.secho(response.results)
+  else:
+    for title, text in batch.items():
+      request = pb.ExecuteRequest(
+        source=source,
+        title=title,
+        query=text,
+        context=pb.ExecutionContext(**rest_context),
+      )
+      response = stub.Execute(request)
+    with tracer.start_as_current_span('parse_results'):
+      typer.secho(response.results)
+
+
+def _send_http(context, parallel_queries, batch, server_url, source):
+  rest_context = context.model_dump()
+  if rest_context.get('writer') == ['console']:
+    del rest_context['writer']
+  headers = {}
+  TraceContextTextMapPropagator().inject(headers)
+  if parallel_queries and len(batch) > 1:
+    endpoint = f'{server_url}/api/execute:batch'
+    request = {
+      'batch': batch,
+      'source': source,
+      'context': rest_context,
+    }
+    try:
+      response = requests.post(url=endpoint, json=request, headers=headers)
+      response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+      raise exceptions.GarfExecutorError(
+        f'Server error: {e.response.status_code} - {e.response.json()}'
+      ) from e
+
+    with tracer.start_as_current_span('parse_results batch'):
+      typer.secho(response.json().get('results'))
+  else:
+    endpoint = f'{server_url}/api/execute'
+    for title, text in batch.items():
+      request = {
+        'source': source,
+        'title': title,
+        'query': text,
+        'context': rest_context,
+      }
+      try:
+        response = requests.post(url=endpoint, json=request, headers=headers)
+        response.raise_for_status()
+      except requests.exceptions.HTTPError as e:
+        raise exceptions.GarfExecutorError(
+          f'Server error: {e.response.status_code} - {e.response.json()}'
+        ) from e
+    with tracer.start_as_current_span(f'parse_results {title}'):
+      typer.secho(response.json().get('results'))
+
+
+def _run_worklow_grpc(server_url, workflow_data):
+  workflow_data.compile()
+
+  channel = grpc.insecure_channel(server_url)
+  stub = garf_pb2_grpc.GarfServiceStub(channel)
+  workflow_pb = pb.Workflow()
+  workflow_dict = workflow_data.model_dump()
+  config_pb = pb.Config()
+  if config := workflow_dict.pop('execution_config'):
+    ParseDict(config, config_pb)
+  context_pb = pb.ExecutionContext()
+  if context := workflow_dict.pop('context'):
+    ParseDict(context, context_pb)
+  ParseDict(workflow_dict, workflow_pb, ignore_unknown_fields=True)
+  request = pb.ExecuteWorkflowRequest(
+    workflow=workflow_pb,
+    config=config_pb,
+    context=context_pb,
+  )
+  response = stub.ExecuteWorkflow(request)
+  with tracer.start_as_current_span('parse_results workflow'):
+    typer.secho(response.results)
+
+
+def _run_worklow_http(server_url, workflow_file):
+  headers = {}
+  TraceContextTextMapPropagator().inject(headers)
+  endpoint = f'{server_url}/api/execute:workflow'
+  with open(workflow_file, mode='rb') as f:
+    files = {'workflow_file': f}
+    try:
+      response = requests.post(
+        url=endpoint,
+        files=files,
+        headers=headers,
+      )
+      response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+      raise exceptions.GarfExecutorError(
+        f'Server error: {e.response.status_code} - {e.response.json()}'
+      ) from e
+    with tracer.start_as_current_span('parse_results workflow'):
+      typer.secho(response.json().get('results'))
 
 
 @typer_app.callback(
