@@ -21,7 +21,7 @@ from itertools import zip_longest
 
 import garf.core
 import prometheus_client
-from garf.io import formatter
+from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
@@ -55,8 +55,8 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       expose_metrics_with_zero_values: Whether to include metrics with 0 value.
     """
     self.endpoint = endpoint
-    self.namespace = namespace
-    self.job = job
+    self.namespace = namespace.replace('_', '_')
+    self.job = job.replace('_', '_')
     self.expose_metrics_with_zero_values = expose_metrics_with_zero_values
     super().__init__(**kwargs)
 
@@ -69,9 +69,13 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       destination: Grouping key in Pushgateway.
     """
     destination = formatter.format_extension(
-      destination,
-      prefix=self.options.prefix,
-      suffix=self.options.suffix,
+      destination.replace('-', '_'),
+      prefix=self.options.prefix.replace('-', '_')
+      if self.options.prefix
+      else None,
+      suffix=self.options.suffix.replace('-', '_')
+      if self.options.suffix
+      else None,
     )
 
     registry = self.convert_report_to_metrics(report, destination)
@@ -94,6 +98,11 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       report: GarfReport to write.
       destination: Job name.
     """
+    if not (labels := self._define_labels(report.query_specification)):
+      raise exceptions.GarfIoError(
+        'Failed to write the report. Include at least one dimension in the data.'
+      )
+
     registry = prometheus_client.CollectorRegistry()
     report = self.format_for_write(report)
     suffix = destination
@@ -112,7 +121,6 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       suffix=suffix,
       registry=registry,
     )
-    labels = self._define_labels(report.query_specification)
     for row in report:
       label_values = []
       for label in labels:
@@ -166,7 +174,9 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       if not column or not field or column == '_':
         continue
       if 'metric' in field or 'metric' in column:
-        metrics[column] = self._define_gauge(column, suffix, registry, labels)
+        metrics[column] = self._define_gauge(
+          name=column, suffix=suffix, registry=registry, labelnames=labels
+        )
     if virtual_columns := query_specification.virtual_columns:
       for column, field in virtual_columns.items():
         if column != '_' and ('metric' in field.value or 'metric' in column):
@@ -234,6 +244,7 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       gauge_name = f'{self.namespace}_{suffix}_{name}'
     else:
       gauge_name = f'{self.namespace}_{name}'
+    gauge_name = gauge_name.rstrip('_')
     if gauge_name in registry._names_to_collectors:
       return registry._names_to_collectors.get(gauge_name)
     return prometheus_client.Gauge(
