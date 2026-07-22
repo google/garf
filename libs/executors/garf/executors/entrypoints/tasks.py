@@ -30,6 +30,7 @@ from garf.io import reader
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 
+CACHE_ENABLED = os.getenv('GARF_CACHE_LOCATION')
 redis_url = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 
 
@@ -42,6 +43,9 @@ class ApiExecutorRequest(pydantic.BaseModel):
     query: Query to execute.
     query_path: Local or remote path to query.
     context: Execution context.
+    enable_cache: Whether to store report in a cache.
+    cache_ttl_seconds: TTL of cached report.
+    simulate: Whether to simulate response from API.
   """
 
   source: str
@@ -49,6 +53,9 @@ class ApiExecutorRequest(pydantic.BaseModel):
   query: Optional[str] = None
   query_path: Optional[Union[str, list[str]]] = None
   context: garf.executors.execution_context.ExecutionContext
+  enable_cache: bool = False
+  cache_ttl_seconds: int = garf.core.cache.DEFAULT_CACHE_TTL
+  simulate: bool = False
 
   @pydantic.model_validator(mode='after')
   def check_query_specified(self):
@@ -72,11 +79,17 @@ class ApiExecutorBatchRequest(pydantic.BaseModel):
     source: Type of API to interact with.
     batch: Mapping between query_title and its text.
     context: Execution context.
+    enable_cache: Whether to store report in a cache.
+    cache_ttl_seconds: TTL of cached report.
+    simulate: Whether to simulate response from API.
   """
 
   source: str
   batch: dict[str, str]
   context: garf.executors.execution_context.ExecutionContext
+  enable_cache: bool = False
+  cache_ttl_seconds: int = garf.core.cache.DEFAULT_CACHE_TTL
+  simulate: bool = False
 
 
 @celery.signals.worker_process_init.connect(weak=False)
@@ -104,7 +117,11 @@ app = celery.Celery(
 def execute(request: ApiExecutorRequest):
   """Executes a single query."""
   query_executor = setup.setup_executor(
-    request.source, request.context.fetcher_parameters
+    source=request.source,
+    fetcher_parameters=request.context.fetcher_parameters,
+    enable_cache=request.enable_cache if CACHE_ENABLED else False,
+    cache_ttl_seconds=request.cache_ttl_seconds,
+    simulate=request.simulate,
   )
   telemetry.executor_active_executions.add(
     1, attributes={'executor.source': query_executor.source}
@@ -123,7 +140,11 @@ def execute_batch(request: ApiExecutorBatchRequest):
   """Executes a batch of queries."""
   n_queries = len(request.batch)
   query_executor = setup.setup_executor(
-    request.source, request.context.fetcher_parameters
+    source=request.source,
+    fetcher_parameters=request.context.fetcher_parameters,
+    enable_cache=request.enable_cache if CACHE_ENABLED else False,
+    cache_ttl_seconds=request.cache_ttl_seconds,
+    simulate=request.simulate,
   )
   telemetry.executor_active_executions.add(
     n_queries, attributes={'executor.source': query_executor.source}

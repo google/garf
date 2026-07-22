@@ -47,6 +47,7 @@ from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
 OTEL_SERVICE_NAME = 'garf'
+CACHE_ENABLED = os.getenv('GARF_CACHE_LOCATION')
 LoggingInstrumentor().instrument(set_logging_format=False)
 grpc_server_instrumentor = GrpcInstrumentorServer()
 grpc_server_instrumentor.instrument()
@@ -92,7 +93,17 @@ class GarfService(garf_pb2_grpc.GarfService):
       1, attributes={'executor.source': request.source}
     )
     query_executor = setup.setup_executor(
-      request.source, request.context.fetcher_parameters
+      source=request.source,
+      fetcher_parameters=request.context.fetcher_parameters,
+      enable_cache=bool(request.cache_options.enable_cache)
+      if CACHE_ENABLED
+      else False,
+      cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
+      simulate=request.simulate,
+      writers=request.context.writers or request.context.writer,
+      writer_parameters=MessageToDict(
+        request.context.writer_parameters, preserving_proto_field_name=True
+      ),
     )
     result = query_executor.execute(
       query=request.query,
@@ -109,7 +120,17 @@ class GarfService(garf_pb2_grpc.GarfService):
       n_queries, attributes={'executor.source': request.source}
     )
     query_executor = setup.setup_executor(
-      request.source, request.context.fetcher_parameters
+      source=request.source,
+      fetcher_parameters=request.context.fetcher_parameters,
+      enable_cache=bool(request.cache_options.enable_cache)
+      if CACHE_ENABLED
+      else False,
+      cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
+      simulate=request.simulate,
+      writers=request.context.writers or request.context.writer,
+      writer_parameters=MessageToDict(
+        request.context.writer_parameters, preserving_proto_field_name=True
+      ),
     )
     batch = {query.title: query.text for query in request.batch}
     results = query_executor.execute_batch(
@@ -122,7 +143,13 @@ class GarfService(garf_pb2_grpc.GarfService):
 
   def Fetch(self, request, context):
     query_executor = setup.setup_executor(
-      request.source, request.context.fetcher_parameters
+      source=request.source,
+      fetcher_parameters=request.context.fetcher_parameters,
+      enable_cache=bool(request.cache_options.enable_cache)
+      if CACHE_ENABLED
+      else False,
+      cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
+      simulate=request.simulate,
     )
     query_args = execution_context.ExecutionContext(
       **MessageToDict(request.context, preserving_proto_field_name=True)
