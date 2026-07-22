@@ -54,6 +54,8 @@ class ExecutionContext(pydantic.BaseModel):
   def model_post_init(self, __context__) -> None:
     if self.fetcher_parameters is None:
       self.fetcher_parameters = {}
+    if isinstance(self.writer, str):
+      self.writer = [self.writer]
     if self.writer_parameters is None:
       self.writer_parameters = {}
     if not self.query_parameters:

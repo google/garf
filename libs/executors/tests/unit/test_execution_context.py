@@ -81,8 +81,7 @@ class TestExecutionContext:
     context.save(tmp_config)
     with open(tmp_config, 'r', encoding='utf-8') as f:
       config_data = yaml.safe_load(f)
-    # Check that the data is saved correctly without extra fields
-    assert config_data['writer'] == data['writer']
+    assert config_data['writer'] == [data['writer']]
     assert config_data['writer_parameters'] == data['writer_parameters']
 
   def test_multiple_writers_creates_multiple_clients(self, tmp_path):
