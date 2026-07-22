@@ -62,7 +62,7 @@ class GarfCache:
     self.ttl_seconds = int(ttl_seconds)
     if cache_provider:
       self.cache_provider = cache_provider
-    elif str(location).startswith('redis'):
+    elif str(self.location).startswith('redis'):
       self.cache_provider = RedisGarfCache(self.location, self.ttl_seconds)
     else:
       self.cache_provider = FileGarfCache(self.location, self.ttl_seconds)
