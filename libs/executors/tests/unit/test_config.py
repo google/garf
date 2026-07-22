@@ -79,6 +79,7 @@ class TestConfig:
     config.save(tmp_config)
     with open(tmp_config, 'r', encoding='utf-8') as f:
       config_data = yaml.safe_load(f)
+    data['sources']['api']['writer'] = [data['sources']['api']['writer']]
     assert config_data == data
 
   def test_expand(self):

@@ -86,7 +86,9 @@ class TestWorkflow:
     workflow.save(tmp_workflow)
     with open(tmp_workflow, 'r', encoding='utf-8') as f:
       workflow_data = yaml.safe_load(f)
-    assert workflow_data == self.data
+    expected_data = self.data.copy()
+    expected_data['steps'][0]['writer'] = [expected_data['steps'][0]['writer']]
+    assert workflow_data == expected_data
 
   def test_init_with_context(self):
     new_start_date = '2026-01-01'
