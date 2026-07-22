@@ -12,13 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import fakeredis
 import pytest
 from garf.core import cache, query_editor, report
 
 
+@pytest.fixture
+def mock_redis():
+  server = fakeredis.FakeServer()
+  client = fakeredis.FakeRedis(server, decode_responses=True)
+  yield client
+  client.flushall()
+
+
 class TestGarfCache:
-  @pytest.fixture()
-  def test_load_returns_report_from_cache(self, tmp_path):
+  def test_load_returns_report_from_file_cache(self, tmp_path):
     test_cache = cache.GarfCache(location=str(tmp_path))
     test_report = report.GarfReport(results=[[1]], column_names=['test'])
     query = query_editor.QuerySpecification(
@@ -26,11 +34,11 @@ class TestGarfCache:
     ).generate()
 
     test_cache.save(test_report, query)
-    loaded_report = cache.load(query)
+    loaded_report = test_cache.load(query)
 
-    assert loaded_report == test_cache
+    assert loaded_report == test_report
 
-  def test_load_raises_error_on_outdated_cache(self, tmp_path):
+  def test_load_raises_error_on_outdated_file_cache(self, tmp_path):
     test_cache = cache.GarfCache(location=str(tmp_path), ttl_seconds=0)
     test_report = report.GarfReport(results=[[1]], column_names=['test'])
     query = query_editor.QuerySpecification(
@@ -40,3 +48,17 @@ class TestGarfCache:
     test_cache.save(test_report, query)
     with pytest.raises(cache.GarfCacheFileNotFoundError):
       test_cache.load(query)
+
+  def test_load_returns_report_from_redis_cache(self, mock_redis):
+    test_cache = cache.GarfCache(
+      cache_provider=cache.RedisGarfCache(redis_client=mock_redis)
+    )
+    test_report = report.GarfReport(results=[[1]], column_names=['test'])
+    query = query_editor.QuerySpecification(
+      text='SELECT test FROM test'
+    ).generate()
+
+    test_cache.save(test_report, query)
+    loaded_report = test_cache.load(query)
+
+    assert loaded_report == test_report

@@ -113,7 +113,7 @@ class ApiReportFetcher:
     self.query_specification_builder = query_specification_builder
     self.query_args = kwargs
     self.enable_cache = enable_cache
-    self.cache = cache.GarfCache(cache_path, cache_ttl_seconds)
+    self.cache = cache.GarfCache(cache_path, ttl_seconds=cache_ttl_seconds)
     self.builtin_queries = builtin_queries or {}
     self.preprocessors = preprocessors or {}
     self.postprocessors = postprocessors or {}
@@ -209,9 +209,10 @@ class ApiReportFetcher:
       except cache.GarfCacheFileNotFoundError:
         logger.info('Cached version not found, generating')
 
-      cache_size_meter.set(
-        self.cache.size, {'cache.location': str(self.cache.location)}
-      )
+      if cache_size := self.cache.size:
+        cache_size_meter.set(
+          cache_size, {'cache.location': str(self.cache.location)}
+        )
 
     response = self.api_client.call_api(query, **kwargs)
     if not response:

@@ -35,7 +35,7 @@ jobs:
       - name: Test ${{ matrix.library }}
         if: contains(github.event.pull_request.changed_files, 'libs/${{ matrix.library }}/**')
         run: |
-          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/core/.[tests,all]
           uv pip install -e libs/io/.[test,all]
           uv pip install -e libs/executors/.[tests,duckdb,all]
           cd libs/${{ matrix.library }}
@@ -69,7 +69,7 @@ jobs:
           uv pip install pytest coverage
       - name: End-to-end tests executor
         run: |
-          uv pip install -e libs/core/.[all]
+          uv pip install -e libs/core/.[tests,all]
           uv pip install -e libs/io/.[all]
           uv pip install -e libs/executors/.[tests,all]
           cd libs/executors/
