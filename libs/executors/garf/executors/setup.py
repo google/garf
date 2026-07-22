@@ -21,6 +21,7 @@ import json
 import logging
 from typing import Any
 
+import garf.core
 from garf.executors import executor, fetchers
 from garf.executors.api_executor import ApiQueryExecutor
 from garf.executors.telemetry import tracer
@@ -73,7 +74,7 @@ def setup_executor(
   source: str,
   fetcher_parameters: dict[str, str | int | bool],
   enable_cache: bool = False,
-  cache_ttl_seconds: int = 3600,
+  cache_ttl_seconds: int = garf.core.cache.DEFAULT_CACHE_TTL,
   simulate: bool = False,
   writers: str | list[str] | None = None,
   writer_parameters: dict[str, Any] | None = None,
@@ -117,10 +118,24 @@ def setup_executor(
       fetcher=concrete_api_fetcher(
         **fetcher_parameters,
         enable_cache=enable_cache,
-        cache_ttl_seconds=cache_ttl_seconds,
+        cache_ttl_seconds=cache_ttl_seconds
+        or garf.core.cache.DEFAULT_CACHE_TTL,
       ),
       report_simulator=concrete_simulator,
       writers=writer_clients,
       source=source,
+    )
+  if enable_cache:
+    span.set_attributes(
+      {
+        'executor.cache': True,
+        'executor.cache.location': query_executor.fetcher.cache.location,
+        'executor.cache.ttl_seconds': (
+          query_executor.fetcher.cache.ttl_seconds
+        ),
+        'executor.cache.provider': (
+          query_executor.fetcher.cache.cache_provider.__class__.__name__
+        ),
+      }
     )
   return query_executor

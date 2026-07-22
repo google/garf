@@ -294,9 +294,25 @@ def execute(
     batch = {query: reader_client.read(query) for query in found_queries}
   if server_url:
     if server_type == ServerTypeEnum.http:
-      _send_http(context, parallel_queries, batch, server_url, source)
+      _send_http(
+        context,
+        parallel_queries,
+        batch,
+        server_url,
+        source,
+        enable_cache,
+        simulate,
+      )
     elif server_type == ServerTypeEnum.grpc:
-      _send_grpc(context, parallel_queries, batch, server_url, source)
+      _send_grpc(
+        context,
+        parallel_queries,
+        batch,
+        server_url,
+        source,
+        enable_cache,
+        simulate,
+      )
   else:
     query_executor = setup.setup_executor(
       source=source,
@@ -452,7 +468,9 @@ def version() -> str:
   raise typer.Exit()
 
 
-def _send_grpc(context, parallel_queries, batch, server_url, source):
+def _send_grpc(
+  context, parallel_queries, batch, server_url, source, enable_cache, simulate
+):
   channel = grpc.insecure_channel(server_url)
   stub = garf_pb2_grpc.GarfServiceStub(channel)
   rest_context = context.model_dump()
@@ -466,7 +484,11 @@ def _send_grpc(context, parallel_queries, batch, server_url, source):
       for title, text in batch.items()
     ]
     request = pb.ExecuteBatchRequest(
-      source=source, batch=batch, context=pb.ExecutionContext(**rest_context)
+      source=source,
+      batch=batch,
+      context=pb.ExecutionContext(**rest_context),
+      cache_options=pb.GarfCacheOptions(enable_cache=enable_cache),
+      simulate=simulate,
     )
     response = stub.ExecuteBatch(request)
     with tracer.start_as_current_span('parse_results batch'):
@@ -478,13 +500,17 @@ def _send_grpc(context, parallel_queries, batch, server_url, source):
         title=title,
         query=text,
         context=pb.ExecutionContext(**rest_context),
+        cache_options=pb.GarfCacheOptions(enable_cache=enable_cache),
+        simulate=simulate,
       )
       response = stub.Execute(request)
     with tracer.start_as_current_span('parse_results'):
       typer.secho(response.results)
 
 
-def _send_http(context, parallel_queries, batch, server_url, source):
+def _send_http(
+  context, parallel_queries, batch, server_url, source, enable_cache, simulate
+):
   rest_context = context.model_dump()
   if rest_context.get('writer') == ['console']:
     del rest_context['writer']
@@ -496,6 +522,8 @@ def _send_http(context, parallel_queries, batch, server_url, source):
       'batch': batch,
       'source': source,
       'context': rest_context,
+      'enable_cache': enable_cache,
+      'simulate': simulate,
     }
     try:
       response = requests.post(url=endpoint, json=request, headers=headers)
@@ -515,6 +543,8 @@ def _send_http(context, parallel_queries, batch, server_url, source):
         'title': title,
         'query': text,
         'context': rest_context,
+        'enable_cache': enable_cache,
+        'simulate': simulate,
       }
       try:
         response = requests.post(url=endpoint, json=request, headers=headers)

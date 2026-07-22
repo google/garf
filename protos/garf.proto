@@ -20,6 +20,8 @@ message FetchRequest {
   string title = 2;
   string query = 3;
   FetchContext context = 4;
+  GarfCacheOptions cache_options = 5;
+  bool simulate = 6;
 }
 
 message FetchResponse {
@@ -32,11 +34,20 @@ message FetchContext {
   google.protobuf.Struct fetcher_parameters = 2;
 }
 
+
+message GarfCacheOptions {
+  bool enable_cache = 1;
+  uint32 cache_ttl_seconds = 2;
+}
+
 message ExecuteRequest {
   string source = 1;
   string title = 2;
   string query = 3;
   ExecutionContext context = 4;
+  GarfCacheOptions cache_options = 5;
+  bool simulate = 6;
+
 }
 
 
@@ -46,6 +57,7 @@ message ExecutionContext {
   google.protobuf.Struct fetcher_parameters = 2;
   string writer = 3;
   google.protobuf.Struct writer_parameters = 4;
+  repeated string writers = 5;
 }
 
 
@@ -69,7 +81,10 @@ message ExecuteBatchRequest {
   string source = 1;
   repeated QueryDefinition batch = 2;
   ExecutionContext context = 3;
+  GarfCacheOptions cache_options = 4;
+  bool simulate = 5;
 }
+
 message ExecuteBatchResponse {
   repeated string results = 1;
 }
@@ -123,6 +138,8 @@ message ExecuteWorkflowRequest {
   repeated string skipped_aliases = 3;
   Config config = 4;
   ExecutionContext context = 5;
+  GarfCacheOptions cache_options = 6;
+  bool simulate = 7;
 }
 
 message ExecuteWorkflowResponse {
