@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import garf.core
+import pytest
+from garf.io import exceptions
 from garf.io.writers import pushgateway_writer
 
 
@@ -71,3 +73,22 @@ class TestPushgatewayWriter:
     samples = expected_metric.collect()[0].samples
     assert samples[0].value == 1.0
     assert samples[0].labels == {label: 'one', label2: 'two'}
+
+  def test_write_raises_exception_on_incompatible_report(self):
+    query_spec = garf.core.query_editor.QuerySpecification(
+      text='SELECT metric FROM resource'
+    ).generate()
+    test_report = garf.core.GarfReport(
+      results=[[1]],
+      column_names=['metric'],
+      query_specification=query_spec,
+    )
+    writer = pushgateway_writer.PushgatewayWriter()
+    with pytest.raises(
+      exceptions.GarfIoError,
+      match=(
+        'Failed to write the report. '
+        'Include at least one dimension in the data.'
+      ),
+    ):
+      writer.write(test_report, 'test')
