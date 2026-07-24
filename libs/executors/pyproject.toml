@@ -14,6 +14,7 @@ dependencies = [
   "opentelemetry-exporter-otlp",
   "opentelemetry-instrumentation-logging",
   "typer",
+  "psutil",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
