@@ -100,3 +100,16 @@ def test_process_gquery_returns_multi_column_result():
   assert (
     processed_context.fetcher_parameters == expected_context.fetcher_parameters
   )
+
+
+def test_process_gquery_handles_nested_context():
+  context = execution_context.ExecutionContext(
+    fetcher_parameters={'campaign': {'id': 'gquery:sqldb:SELECT 1 AS id'}},
+  )
+  processed_context = query_processor.process_gquery(context)
+  expected_context = execution_context.ExecutionContext(
+    fetcher_parameters={'campaign': {'id': [1]}},
+  )
+  assert (
+    processed_context.fetcher_parameters == expected_context.fetcher_parameters
+  )
