@@ -237,9 +237,10 @@ class Workflow(pydantic.BaseModel):
       if context:
         if fetcher_parameters := context.get(step.fetcher):
           custom_parameters['fetcher_parameters'] = fetcher_parameters
-        for writer in step.writer:
-          if writer_parameters := context.get(writer):
-            custom_parameters['writer_parameters'].update(writer_parameters)
+        if step.writer:
+          for writer in step.writer:
+            if writer_parameters := context.get(writer):
+              custom_parameters['writer_parameters'].update(writer_parameters)
 
       if source_config_parameters := config_parameters.get(step.fetcher):
         res = utils.merge_dicts(

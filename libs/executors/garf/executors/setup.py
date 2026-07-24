@@ -125,7 +125,7 @@ def setup_executor(
       writers=writer_clients,
       source=source,
     )
-  if enable_cache:
+  if enable_cache and hasattr(query_executor, 'fetcher'):
     span.set_attributes(
       {
         'executor.cache': True,
