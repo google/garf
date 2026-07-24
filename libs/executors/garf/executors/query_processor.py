@@ -32,7 +32,11 @@ def _handle_sub_context(
   allow_lists: bool = False,
 ):
   for k, v in sub_context.items():
-    if isinstance(v, str) and v.startswith('gquery'):
+    if isinstance(v, dict):
+      _handle_sub_context(
+        context=context, sub_context=v, allow_lists=allow_lists
+      )
+    elif isinstance(v, str) and v.startswith('gquery'):
       no_writer_context = context.model_copy(update={'writer': None})
       try:
         _, alias, *query = v.split(':', maxsplit=3)
@@ -95,31 +99,14 @@ def process_gquery(
   context: execution_context.ExecutionContext,
 ) -> execution_context.ExecutionContext:
   if fetcher_parameters := context.fetcher_parameters:
-    with tracer.start_as_current_span(
-      'gquery.handle.fetcher_parameters'
-    ) as span:
+    with tracer.start_as_current_span('gquery.handle.fetcher_parameters'):
       _handle_sub_context(context, fetcher_parameters)
-      span.set_attributes(
-        {
-          f'executor.source.parameters.{k}': v
-          for k, v in fetcher_parameters.items()
-          if v
-        }
-      )
   if macros := context.query_parameters.macro:
-    with tracer.start_as_current_span(
-      'gquery.handle.query_parameters.macro'
-    ) as span:
+    with tracer.start_as_current_span('gquery.handle.query_parameters.macro'):
       _handle_sub_context(context, macros)
-      span.set_attributes(
-        {f'executor.query.macros.{k}': v for k, v in macros.items() if v}
-      )
   if templates := context.query_parameters.template:
     with tracer.start_as_current_span(
       'gquery.handle.query_parameters.template'
-    ) as span:
+    ):
       _handle_sub_context(context, templates, allow_lists=True)
-      span.set_attributes(
-        {f'executor.query.templates.{k}': v for k, v in templates.items() if v}
-      )
   return context
