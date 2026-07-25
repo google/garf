@@ -87,13 +87,26 @@ class SearchAds360ApiClient(api_clients.BaseClient):
   def get_response(
     self, request, account: int, **kwargs: str
   ) -> api_clients.GarfApiResponse:
+    """Executes a single API request for a given customer_id and a query."""
     from garf.community.google.ads import search_ads_360_client
 
+    span = trace.get_current_span()
     request = search_ads_360_client.SearchSearchAds360StreamRequest(
       query=request.text, customer_id=account
     )
     response = self.search_ads_360_service.search_stream(request)
-    results = [result for batch in response for result in batch.results]
+    results = []
+    query_resource_consumption = 0
+    for batch in response:
+      query_resource_consumption += batch.query_resource_consumption
+      for result in batch.results:
+        results.append(result)
+    span.set_attributes(
+      {
+        'sa360.query_resource_consumption': query_resource_consumption,
+        'sa360.account': account,
+      }
+    )
     return api_clients.GarfApiResponse(
       results=results,
       results_placeholder=[search_ads_360_client.SearchAds360Row()],
@@ -328,11 +341,23 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     self, request: query_editor.GoogleAdsApiQuery, account: int, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     """Executes a single API request for a given customer_id and GAQL query."""
+    span = trace.get_current_span()
     gaql_query = _create_gaql_query(request)
     response = self.ads_service.search_stream(
       customer_id=account, query=gaql_query
     )
-    results = [result for batch in response for result in batch.results]
+    results = []
+    query_resource_consumption = 0
+    for batch in response:
+      query_resource_consumption += batch.query_resource_consumption
+      for result in batch.results:
+        results.append(result)
+    span.set_attributes(
+      {
+        'google.ads.query_resource_consumption': query_resource_consumption,
+        'google.ads.account': account,
+      }
+    )
     return api_clients.GarfApiResponse(
       results=results, results_placeholder=[self._get_google_ads_row()]
     )
