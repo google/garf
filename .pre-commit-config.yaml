@@ -90,6 +90,12 @@ repos:
     files: ^libs/community/google/analytics/
     language: system
     pass_filenames: false
+  - id: pytest-check-media-tagging
+    name: pytest-check-media-tagging
+    entry: pytest -n auto libs/community/experimental/media-tagging/tests/unit/
+    files: ^libs/community/experimental/media-tagging/
+    language: system
+    pass_filenames: false
   - id: executors-e2e
     stages: [pre-push]
     name: e2e
