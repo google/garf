@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garf-media-tagging"
+dependencies = [
+  "media-tagging[server]",
+]
+authors = [
+  {name = "Andrei Markin", email = "amarkin@google.com"},
+  {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
+]
+license = {text = "Apache 2.0"}
+requires-python = ">=3.9"
+description = "Garf implementation for media tagger"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+dynamic=["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "garf.community.experimental.media_tagging.version.__version__"}
+
+[project.entry-points.garf]
+media-tagging = "garf.community.experimental.media_tagging.report_fetcher"
+
+[project.optional-dependencies]
+test =  [
+  "pytest",
+  "pytest-cov",
+  "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include=["garf.*"]
