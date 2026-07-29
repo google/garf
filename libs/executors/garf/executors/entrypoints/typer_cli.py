@@ -38,7 +38,6 @@ from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
 from google.protobuf.json_format import ParseDict
 from opentelemetry import trace
-from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
@@ -48,8 +47,6 @@ from rich.table import Table
 from typing_extensions import Annotated
 
 LoggingInstrumentor().instrument(set_logging_format=False)
-client_instrumentor = GrpcInstrumentorClient()
-client_instrumentor.instrument()
 console = Console()
 
 
