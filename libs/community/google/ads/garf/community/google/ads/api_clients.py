@@ -35,6 +35,7 @@ from google import protobuf
 from google.ads.googleads import client as googleads_client
 from google.api_core import exceptions as google_exceptions
 from opentelemetry import trace
+from opentelemetry.context import attach, detach, set_value
 from typing_extensions import override
 
 GOOGLE_ADS_API_VERSION: Final = googleads_client._DEFAULT_VERSION
@@ -94,13 +95,17 @@ class SearchAds360ApiClient(api_clients.BaseClient):
     request = search_ads_360_client.SearchSearchAds360StreamRequest(
       query=request.text, customer_id=account
     )
-    response = self.search_ads_360_service.search_stream(request)
-    results = []
-    query_resource_consumption = 0
-    for batch in response:
-      query_resource_consumption += batch.query_resource_consumption
-      for result in batch.results:
-        results.append(result)
+    suppress_token = attach(set_value('suppress_instrumentation', True))
+    try:
+      response = self.search_ads_360_service.search_stream(request)
+      results = []
+      query_resource_consumption = 0
+      for batch in response:
+        query_resource_consumption += batch.query_resource_consumption
+        for result in batch.results:
+          results.append(result)
+    finally:
+      detach(suppress_token)
     span.set_attributes(
       {
         'sa360.query_resource_consumption': query_resource_consumption,
@@ -343,15 +348,20 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     """Executes a single API request for a given customer_id and GAQL query."""
     span = trace.get_current_span()
     gaql_query = _create_gaql_query(request)
-    response = self.ads_service.search_stream(
-      customer_id=account, query=gaql_query
-    )
-    results = []
-    query_resource_consumption = 0
-    for batch in response:
-      query_resource_consumption += batch.query_resource_consumption
-      for result in batch.results:
-        results.append(result)
+    suppress_token = attach(set_value('suppress_instrumentation', True))
+    try:
+      response = self.ads_service.search_stream(
+        customer_id=account, query=gaql_query
+      )
+      results = []
+      query_resource_consumption = 0
+      for batch in response:
+        query_resource_consumption += batch.query_resource_consumption
+        for result in batch.results:
+          results.append(result)
+    finally:
+      detach(suppress_token)
+
     span.set_attributes(
       {
         'google.ads.query_resource_consumption': query_resource_consumption,
