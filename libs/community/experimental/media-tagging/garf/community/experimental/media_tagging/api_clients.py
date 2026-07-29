@@ -120,9 +120,6 @@ class MediaTaggingApiClient(api_clients.RestApiClient):
       span.set_attribute(
         'media_tagging.tagger_type', tagging_request.tagger_type
       )
-      span.set_attribute(
-        'media_tagging.backend', 'remote' if self.endpoint else 'local'
-      )
     if self.endpoint:
       if self.endpoint.startswith('http'):
         span.set_attribute('media_tagging.backend', 'http')
