@@ -43,15 +43,9 @@ from google.protobuf.json_format import MessageToDict
 from grpc_health.v1 import health_pb2, health_pb2_grpc
 from grpc_reflection.v1alpha import reflection
 from opentelemetry import metrics
-from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
 OTEL_SERVICE_NAME = 'garf'
 CACHE_ENABLED = os.getenv('GARF_CACHE_LOCATION')
-LoggingInstrumentor().instrument(set_logging_format=False)
-grpc_server_instrumentor = GrpcInstrumentorServer()
-grpc_server_instrumentor.instrument()
-
 
 server_start_time = time.time()
 

@@ -40,19 +40,18 @@ from garf.executors.entrypoints.tracer import (
   initialize_tracer,
 )
 from garf.executors.workflows import workflow
-from opentelemetry import metrics, trace
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry import _logs, metrics, trace
 from typing_extensions import Annotated
 
 OTEL_SERVICE_NAME = 'garf'
-LoggingInstrumentor().instrument(set_logging_format=False)
 
-initialize_tracer()
-meter = initialize_meter()
 server_start_time = time.time()
+tracer = initialize_tracer()
+meter = initialize_meter()
+telemetry_logger = initialize_logger()
+trace.set_tracer_provider(tracer)
+metrics.set_meter_provider(meter)
+_logs.set_logger_provider(telemetry_logger)
 
 
 def _get_server_info(options):
@@ -88,10 +87,8 @@ executor_info = telemetry.meter.create_observable_gauge(
 logger = utils.init_logging(
   loglevel='INFO', logger_type='local', name=OTEL_SERVICE_NAME
 )
-logger.addHandler(initialize_logger())
+logger.addHandler(telemetry_logger)
 
-CeleryInstrumentor().instrument()
-RedisInstrumentor().instrument()
 report_fetchers = {}
 executors = ['api']
 
@@ -111,7 +108,6 @@ app = fastapi.FastAPI(
   description='Fetches data from APIs and saves it anywhere',
   lifespan=lifespan,
 )
-FastAPIInstrumentor.instrument_app(app)
 typer_app = typer.Typer()
 
 

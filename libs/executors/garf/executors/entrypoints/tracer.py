@@ -18,9 +18,6 @@ import logging
 import os
 from typing import Optional
 
-from garf.executors import version
-from opentelemetry import metrics, trace
-from opentelemetry._logs import set_logger_provider
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
   OTLPLogExporter,
 )
@@ -44,14 +41,15 @@ DEFAULT_SERVICE_NAME = 'garf'
 
 
 def _init_resource(otel_service_name: Optional[str] = None) -> Resource:
+  env_resource = Resource.create()
   attributes = {
     SERVICE_NAME: otel_service_name
     or os.getenv('OTEL_SERVICE_NAME', DEFAULT_SERVICE_NAME),
-    'garf.executors.version': version.__version__,
   }
   if garf_mode := os.getenv('GARF_MODE'):
     attributes['garf.mode'] = garf_mode
-  return Resource.create(attributes=attributes)
+  library_resource = Resource(attributes=attributes)
+  return env_resource.merge(library_resource)
 
 
 def initialize_tracer(otel_service_name: Optional[str] = None):
@@ -80,8 +78,7 @@ def initialize_tracer(otel_service_name: Optional[str] = None):
         OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
       )
       tracer_provider.add_span_processor(otlp_processor)
-
-  trace.set_tracer_provider(tracer_provider)
+  return tracer_provider
 
 
 def initialize_meter(otel_service_name: Optional[str] = None):
@@ -113,14 +110,12 @@ def initialize_meter(otel_service_name: Optional[str] = None):
     )
   else:
     meter_provider = MeterProvider(resource=resource)
-  metrics.set_meter_provider(meter_provider)
   return meter_provider
 
 
 def initialize_logger(otel_service_name: Optional[str] = None):
   resource = _init_resource(otel_service_name)
   logger_provider = LoggerProvider(resource=resource)
-  set_logger_provider(logger_provider)
   if otel_endpoint := os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
     log_exporter = OTLPLogExporter(endpoint=otel_endpoint, insecure=True)
     logger_provider.add_log_record_processor(

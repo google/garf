@@ -12,7 +12,6 @@ dependencies = [
   "opentelemetry-api",
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp",
-  "opentelemetry-instrumentation-logging",
   "typer",
   "psutil",
 ]
@@ -60,13 +59,8 @@ gcp= [
 server=[
   "fastapi[standard]",
   "pydantic-settings",
-  "opentelemetry-instrumentation-fastapi",
-  "opentelemetry-instrumentation-grpc",
-  "typer",
   "grpcio-reflection",
   "celery[redis]",
-  "opentelemetry-instrumentation-celery",
-  "opentelemetry-instrumentation-redis",
   "grpcio-health-checking",
 
 ]

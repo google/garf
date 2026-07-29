@@ -18,6 +18,7 @@ import celery
 import garf.core
 import garf.executors
 import pydantic
+from celery.signals import worker_process_init
 from garf.executors import exceptions, setup, telemetry
 from garf.executors.entrypoints import utils as garf_utils
 from garf.executors.entrypoints.tracer import (
@@ -27,8 +28,6 @@ from garf.executors.entrypoints.tracer import (
 )
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
 
 CACHE_ENABLED = os.getenv('GARF_CACHE_LOCATION')
 redis_url = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
@@ -92,7 +91,7 @@ class ApiExecutorBatchRequest(pydantic.BaseModel):
   simulate: bool = False
 
 
-@celery.signals.worker_process_init.connect(weak=False)
+@worker_process_init.connect(weak=False)
 def init_celery_telemetry(*args, **kwargs):
   otel_service_name = 'garf-celery'
   initialize_tracer(otel_service_name)
@@ -102,8 +101,6 @@ def init_celery_telemetry(*args, **kwargs):
     loglevel='INFO', logger_type='local', name=otel_service_name
   )
   logger.addHandler(initialize_logger(otel_service_name))
-  RedisInstrumentor().instrument()
-  CeleryInstrumentor().instrument()
 
 
 app = celery.Celery(
