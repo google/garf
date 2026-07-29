@@ -18,10 +18,12 @@ import os
 import time
 
 import psutil
+from garf.executors import version
 from opentelemetry import metrics, trace
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf.executors',
+  instrumenting_library_version=version.__version__,
 )
 meter = metrics.get_meter('garf.executors')
 _SERVER_START_TIME = time.time()

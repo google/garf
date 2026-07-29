@@ -38,7 +38,7 @@ from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
 from google.protobuf.json_format import ParseDict
 from opentelemetry import trace
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.instrumentation.auto_instrumentation import initialize
 from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
 )
@@ -46,7 +46,6 @@ from rich.console import Console
 from rich.table import Table
 from typing_extensions import Annotated
 
-LoggingInstrumentor().instrument(set_logging_format=False)
 console = Console()
 
 
@@ -59,7 +58,10 @@ ServerTypeEnum = enum.Enum(
   'ServerTypeEnum', (('http', 'http'), ('grpc', 'grpc'))
 )
 
-initialize_tracer()
+initialize()
+telemetry_tracer = initialize_tracer()
+telemetry_logger = initialize_logger()
+trace.set_tracer_provider(telemetry_tracer)
 typer_app = typer.Typer(
   help='Garf\n\nCall APIs with SQL in your terminal', rich_markup_mode='rich'
 )
@@ -232,7 +234,6 @@ def execute(
   garf_logger = utils.init_logging(
     loglevel=loglevel.upper(), logger_type=logger, name=log_name
   )
-  garf_logger.addHandler(initialize_logger())
 
   found_queries = []
   parameters = []

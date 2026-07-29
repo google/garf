@@ -35,11 +35,12 @@ from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
 from opentelemetry import trace
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.instrumentation.auto_instrumentation import initialize
 
-LoggingInstrumentor().instrument(set_logging_format=False)
-
-initialize_tracer()
+initialize()
+telemetry_tracer = initialize_tracer()
+telemetry_logger = initialize_logger()
+trace.set_tracer_provider(telemetry_tracer)
 
 
 @tracer.start_as_current_span('garf.entrypoints.cli')
