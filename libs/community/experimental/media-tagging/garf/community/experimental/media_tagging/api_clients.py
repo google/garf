@@ -18,22 +18,30 @@ import logging
 import urllib.parse
 
 import garf.executors
+import grpc
 import requests
 from garf.community.experimental.media_tagging import query_editor
 from garf.core import api_clients
+from google.protobuf.json_format import MessageToDict, ParseDict
 from opentelemetry import trace
 from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
 )
 
-from media_tagging import MediaTaggingRequest, MediaTaggingService, repositories
+from media_tagging import (
+  MediaTaggingRequest,
+  MediaTaggingService,
+  repositories,
+  tagging_pb2_grpc,
+)
+from media_tagging import tagging_pb2 as pb
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf.community.experimental.media_tagging',
 )
 
 
-logger = logging.getLogger('media-tagger')
+logger = logging.getLogger('media-tagging')
 logger.setLevel(logging.WARNING)
 
 
@@ -43,7 +51,7 @@ class MediaTaggingApiClient(api_clients.RestApiClient):
   MediaTaggingApiClient work work local and remote instances of MediaTagging.
 
   Attributes:
-    endpoint: HTTP endpoint when media tagger is running.
+    endpoint: HTTP or gRPC endpoint when media tagger is running.
     db_uri: Connection string to DB where media tagger stores tagging results.
   """
 
@@ -106,28 +114,58 @@ class MediaTaggingApiClient(api_clients.RestApiClient):
     tagging_request = MediaTaggingRequest(**tagging_parameters)
     with tracer.start_as_current_span('request') as span:
       span.set_attribute(
-        'media_tagger.num_media_to_process', len(tagging_request.media_paths)
+        'media_tagging.num_media_to_process', len(tagging_request.media_paths)
       )
-      span.set_attribute('media_tagger.media_type', tagging_request.media_type)
+      span.set_attribute('media_tagging.media_type', tagging_request.media_type)
       span.set_attribute(
-        'media_tagger.tagger_type', tagging_request.tagger_type
+        'media_tagging.tagger_type', tagging_request.tagger_type
       )
       span.set_attribute(
-        'media_tagger.backend', 'remote' if self.endpoint else 'local'
+        'media_tagging.backend', 'remote' if self.endpoint else 'local'
       )
     if self.endpoint:
-      headers = {}
-      TraceContextTextMapPropagator().inject(headers)
-      resource = 'describe' if request.resource_name == 'description' else 'tag'
-      url = urllib.parse.urljoin(self.endpoint, f'/{resource}')
-      response = requests.post(
-        url=url,
-        json=tagging_request.model_dump(exclude_none=True),
-        headers=headers,
+      if self.endpoint.startswith('http'):
+        span.set_attribute('media_tagging.backend', 'http')
+        headers = {}
+        TraceContextTextMapPropagator().inject(headers)
+        resource = (
+          'describe' if request.resource_name == 'description' else 'tag'
+        )
+        url = urllib.parse.urljoin(self.endpoint, f'/{resource}')
+        response = requests.post(
+          url=url,
+          json=tagging_request.model_dump(exclude_none=True),
+          headers=headers,
+        )
+        response.raise_for_status()
+        results = response.json().get('results')
+        return api_clients.GarfApiResponse(
+          results=results, full_results=results
+        )
+      span.set_attribute('media_tagging.backend', 'grpc')
+      channel = grpc.insecure_channel(self.endpoint)
+      stub = tagging_pb2_grpc.MediaTaggingServiceStub(channel)
+      if request.resource_name == 'description':
+        grpc_request = pb.DescribeRequest()
+        ParseDict(
+          tagging_request.model_dump(exclude_none=True),
+          grpc_request,
+          ignore_unknown_fields=True,
+        )
+        response = stub.Describe(grpc_request)
+      else:
+        grpc_request = pb.TagRequest(request)
+        ParseDict(
+          tagging_request.model_dump(exclude_none=True),
+          grpc_request,
+          ignore_unknown_fields=True,
+        )
+        response = stub.Tag(grpc_request)
+      results = MessageToDict(response, preserving_proto_field_name=True).get(
+        'results'
       )
-      response.raise_for_status()
-      results = response.json().get('results')
       return api_clients.GarfApiResponse(results=results, full_results=results)
+    span.set_attribute('media_tagging.backend', 'local')
     service = MediaTaggingService(
       repositories.SqlAlchemyTaggingResultsRepository(self.db_uri)
     )
