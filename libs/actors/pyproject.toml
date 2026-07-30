@@ -55,6 +55,12 @@ all = [
 [project.entry-points.garf_actors]
 fake = "garf.actors.actors.fake.actor"
 
+[project.entry-points.garf_actor_workflows]
+fake = "garf.actors.actors.fake.workflows"
+
+[tool.setuptools.package-data]
+"*"= ["actors/fake/workflows/*.yaml"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include=["garf.*"]

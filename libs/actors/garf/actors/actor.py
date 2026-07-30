@@ -13,8 +13,11 @@
 # limitations under the License.
 from __future__ import annotations
 
+import contextlib
 import datetime
+import importlib
 import inspect
+from collections import defaultdict
 from importlib.metadata import entry_points
 from typing import Any
 
@@ -22,6 +25,7 @@ import garf.core
 import pydantic
 from garf.actors import exceptions
 from garf.actors.telemetry import tracer
+from garf.executors.workflows import workflow
 
 
 class ActionPlan(pydantic.BaseModel):
@@ -92,6 +96,32 @@ def load_actor(
   )
 
 
+def load_workflows():
+  available_workflows = defaultdict(dict)
+  actors = entry_points(group='garf_actor_workflows')
+  for actor in actors:
+    package_path_str = actor.value
+    package_container = importlib.resources.files(package_path_str)
+    for file_item in package_container.iterdir():
+      if file_item.is_file() and file_item.name.endswith(('.yaml', '.yml')):
+        workflow_info = {file_item.stem: workflow.Workflow.from_file(file_item)}
+        available_workflows[actor.name].update(workflow_info)
+  return available_workflows
+
+
+def load_actors():
+  available_actors = defaultdict(list)
+  actors = entry_points(group='garf_actors')
+  for actor in actors:
+    with contextlib.suppress(ModuleNotFoundError):
+      actor_module = actor.load()
+      for name, obj in inspect.getmembers(actor_module):
+        if inspect.isclass(obj) and issubclass(obj, Actor) and name != 'Actor':
+          res = getattr(actor_module, name)
+          available_actors[actor.name].append(res)
+  return available_actors
+
+
 def list_actors() -> list[str]:
-  """Finds all available Bach actors."""
+  """Finds all available actors."""
   return [actor.name for actor in entry_points(group='garf_actors')]
