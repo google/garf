@@ -1,0 +1,97 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from __future__ import annotations
+
+import datetime
+import inspect
+from importlib.metadata import entry_points
+from typing import Any
+
+import garf.core
+import pydantic
+from garf.actors import exceptions
+from garf.actors.telemetry import tracer
+
+
+class ActionPlan(pydantic.BaseModel):
+  actions: list[Any]
+
+
+class ActionResult(pydantic.BaseModel):
+  num_actions: int = 0
+  processed_at: datetime.datetime = pydantic.Field(
+    description='When the media was processed',
+    default_factory=datetime.datetime.utcnow,
+  )
+
+
+class Actor:
+  def __init__(self, alias: str | None = None) -> None:
+    """Initializes Actor."""
+    self.alias = alias
+
+  def act(self, report: garf.core.GarfReport, **kwargs) -> ActionResult:
+    """Performs mutate action."""
+    return ActionResult()
+
+  def plan(self, report: garf.core.GarfReport, **kwargs) -> ActionPlan:
+    return ActionPlan()
+
+  @classmethod
+  def from_alias(cls, actor_alias: str) -> Actor:
+    return cls(alias=actor_alias)
+
+
+class ActorWrapper:
+  def __init__(self, actor: type[Actor]) -> None:
+    self.actor = actor
+
+  @tracer.start_as_current_span('act')
+  def act(self, report: garf.core.GarfReport, **kwargs) -> ActionResult:
+    """Performs mutate action."""
+    return self.actor().act(report, **kwargs)
+
+
+def load_actor(
+  source: str,
+  actor_name: str,
+) -> ActorWrapper:
+  """Locates actor with a specified name.
+
+  Args:
+    source: Location of actor.
+    actor_name: Name of an actor to load.
+
+  Returns:
+    Initialized class.
+
+  Raises:
+    GarfActorError: If actor not found or cannot be loaded.
+  """
+  actors = entry_points(group='garf_actors')
+  for actor in actors:
+    if actor.name != source:
+      continue
+    actor_module = actor.load()
+    for name, obj in inspect.getmembers(actor_module):
+      if inspect.isclass(obj) and issubclass(obj, Actor) and name == actor_name:
+        return ActorWrapper(actor=getattr(actor_module, name))
+  raise exceptions.GarfActorError(
+    f'Unsupported actor <{actor_name}>, select one of available:'
+  )
+
+
+def list_actors() -> list[str]:
+  """Finds all available Bach actors."""
+  return [actor.name for actor in entry_points(group='garf_actors')]

@@ -66,6 +66,12 @@ repos:
     language: system
     pass_filenames: false
     files: ^libs/(core/.*|io/.*|executors/.*|exporter/.*)\.py$
+  - id: pytest-check-actors
+    name: pytest-check-actors
+    entry: pytest -n auto libs/actors/tests/unit/
+    language: system
+    pass_filenames: false
+    files: ^libs/(core/.*|io/.*|executors/.*|actors/.*)\.py$
   - id: pytest-check-youtube
     name: pytest-check-youtube
     entry: pytest -n auto libs/community/google/youtube/tests/unit/
