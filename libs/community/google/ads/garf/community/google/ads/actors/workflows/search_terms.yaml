@@ -1,0 +1,53 @@
+name: search-terms
+metadata:
+  version: '0.0.0'
+  description: |
+    Gets ad group level search term performance.
+steps:
+  - fetcher: google-ads
+    alias: task
+    writer:
+      - sqldb
+    queries:
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            ad_group.id AS ad_group_id,
+            search_term_view.search_term AS search_term,
+            {% for metric in metrics %}
+            {% if metric == "cost" %}
+              metrics.cost_micros / 1e6 AS cost,
+            {% else %}
+              metrics.{{ metric }} AS {{ metric }},
+            {% endif %}
+            {% endfor %}
+          FROM search_term_view
+          WHERE
+            campaign.advertising_channel_type = SEARCH
+            AND campaign.status = ENABLED
+            AND ad_group.status = ENABLED
+            AND segments.date >= "{{start_date}}"
+            AND segments.date <= "{{end_date}}"
+        title: search_term_performance
+    query_parameters:
+      template:
+        start_date: :YYYYMMDD-30
+        end_date: :YYYYMMDD-1
+        metrics:
+          - clicks
+          - impressions
+          - cost
+          - conversions
+
+  - alias: evaluation
+    fetcher: sqldb
+    queries:
+      - text: |
+          SELECT *
+          FROM search_term_performance
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"

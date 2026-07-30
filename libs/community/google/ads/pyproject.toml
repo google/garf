@@ -35,6 +35,13 @@ search-ads-360 = "garf.community.google.ads.report_fetcher"
 [project.entry-points.garf_simulator]
 google-ads = "garf.community.google.ads.simulator"
 
+
+[project.entry-points.garf_actors]
+google-ads = "garf.community.google.ads.actor"
+
+[project.entry-points.garf_actor_workflows]
+google-ads = "garf.community.google.ads.actors.workflows"
+
 [project.optional-dependencies]
 test =  [
   "pytest",
@@ -45,6 +52,9 @@ test =  [
 search-ads-360 = [
   "google-api-python-client",
 ]
+
+[tool.setuptools.package-data]
+"*"= ["actors/workflows/*.yaml"]
 
 [tool.setuptools.packages.find]
 where = ["."]
