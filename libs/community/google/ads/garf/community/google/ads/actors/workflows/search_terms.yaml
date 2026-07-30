@@ -1,0 +1,32 @@
+name: search-terms
+metadata:
+  version: '0.0.0'
+  description: |
+    Gets ad group level search term performance.
+steps:
+  - fetcher: google-ads
+    alias: task
+    writer:
+      - sqldb
+    queries:
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            ad_group.id AS ad_group_id,
+            search_term_view.search_term AS search_term,
+            metrics.clicks AS clicks
+          FROM search_term_view
+        title: search_term_performance
+
+  - alias: evaluation
+    fetcher: sqldb
+    queries:
+      - text: |
+          SELECT *
+          FROM search_term_performance
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"

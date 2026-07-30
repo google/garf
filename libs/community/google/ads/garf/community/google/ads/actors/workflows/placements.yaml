@@ -1,0 +1,36 @@
+name: placements
+metadata:
+  version: '0.0.0'
+  description: |
+    Gets ad group level placement performance from group_placement_view resource.
+steps:
+  - fetcher: google-ads
+    alias: task
+    writer:
+      - sqldb
+    queries:
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            ad_group.id AS ad_group_id,
+            group_placement_view.placement AS placement,
+            group_placement_view.placement_type AS placement_type,
+            group_placement_view.display_name AS name,
+            metrics.clicks AS clicks
+          FROM group_placement_view
+          WHERE
+            group_placement_view.target_url NOT IN ('youtube.com', 'mail.google.com', 'adsenseformobileapps.com')
+        title: placement_performance
+
+  - alias: evaluation
+    fetcher: sqldb
+    queries:
+      - text: |
+          SELECT *
+          FROM placement_performance
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"
