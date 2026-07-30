@@ -1,0 +1,35 @@
+name: test
+metadata:
+  version: '0.0.0'
+  description: |
+    Test workflow with fake parameters
+steps:
+  - alias: task
+    fetcher: fake
+    fetcher_parameters:
+      n_rows: 10
+    writer:
+      - sqldb
+    writer_parameters:
+      connection_string: sqlite:////tmp/garf-actors.db
+    queries:
+      - text: |
+          SELECT
+            dimension.string AS field,
+            metric.int AS value
+          FROM fake
+        title: fake
+  - alias: evaluation
+    fetcher: sqldb
+    fetcher_parameters:
+      connection_string: sqlite:////tmp/garf-actors.db
+    queries:
+      - text: |
+          SELECT *
+          FROM fake
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"
