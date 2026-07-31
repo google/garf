@@ -15,7 +15,6 @@
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
 
 
-from collections import defaultdict
 from contextlib import asynccontextmanager
 
 import fastapi
@@ -89,7 +88,10 @@ def workflow_info(source: str, name: str) -> workflow.Workflow | None:
 @app.post('/api/', response_model=actor.ActionResult)
 def interact(request: runner.GarfActorRequest) -> str:
   """Interacts with garf actors."""
-  return request.play()
+  actor_workflow = available_workflows.get(request.source, {}).get(
+    request.workflow_name
+  )
+  return request.play(actor_workflow)
 
 
 @typer_app.command()
