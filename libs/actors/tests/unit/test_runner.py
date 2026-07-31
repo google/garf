@@ -25,7 +25,7 @@ class TestRunner:
   def test_play(self, test_runner):
     result = test_runner.play()
     expected_result = actor.ActionResult(
-      num_actions=10, processed_at=result.processed_at
+      results=None, processed_at=result.processed_at
     )
 
     assert result == expected_result

@@ -33,7 +33,7 @@ class ActionPlan(pydantic.BaseModel):
 
 
 class ActionResult(pydantic.BaseModel):
-  num_actions: int = 0
+  results: Any | None = None
   processed_at: datetime.datetime = pydantic.Field(
     description='When the media was processed',
     default_factory=datetime.datetime.utcnow,
@@ -64,7 +64,8 @@ class ActorWrapper:
   @tracer.start_as_current_span('act')
   def act(self, report: garf.core.GarfReport, **kwargs) -> ActionResult:
     """Performs mutate action."""
-    return self.actor().act(report, **kwargs)
+    results = self.actor().act(report, **kwargs)
+    return ActionResult(results=results)
 
 
 def load_actor(
@@ -89,7 +90,7 @@ def load_actor(
       continue
     actor_module = actor.load()
     for name, obj in inspect.getmembers(actor_module):
-      if inspect.isclass(obj) and issubclass(obj, Actor) and name == actor_name:
+      if inspect.isclass(obj) and hasattr(obj, 'act') and name == actor_name:
         return ActorWrapper(actor=getattr(actor_module, name))
   raise exceptions.GarfActorError(
     f'Unsupported actor <{actor_name}>, select one of available:'
@@ -116,7 +117,11 @@ def load_actors():
     with contextlib.suppress(ModuleNotFoundError):
       actor_module = actor.load()
       for name, obj in inspect.getmembers(actor_module):
-        if inspect.isclass(obj) and issubclass(obj, Actor) and name != 'Actor':
+        if (
+          inspect.isclass(obj)
+          and hasattr(obj, 'act')
+          and obj.__module__ != 'garf.actors.actor'
+        ):
           res = getattr(actor_module, name)
           available_actors[actor.name].append(res)
   return available_actors

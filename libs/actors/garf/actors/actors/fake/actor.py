@@ -14,13 +14,9 @@
 
 """Fake actor that does nothing."""
 
-from garf.actors.actor import ActionResult, Actor
-from typing_extensions import override
 
-
-class Faker(Actor):
+class Faker:
   """Fake actor that does nothing."""
 
-  @override
   def act(self, report, **kwargs: str):
-    return ActionResult(num_actions=len(report))
+    return None
