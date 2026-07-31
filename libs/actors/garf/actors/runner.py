@@ -47,17 +47,22 @@ class GarfActorRequest(pydantic.BaseModel):
   actor: str | None = None
 
   @tracer.start_as_current_span('fetch')
-  def fetch(self):
+  def fetch(self, workflow_obj=None):
     context = {'template': {'filters': self.rule}}
     if self.source_parameters:
       context.update(self.source_parameters)
-    actor_workflow = workflow.Workflow.from_file(
-      path=(
-        _SCRIPT_PATH
-        / f'actors/{self.source}/workflows/{self.workflow_name}.yaml'
-      ),
-      context=context,
-    )
+    if not workflow_obj:
+      actor_workflow = workflow.Workflow.from_file(
+        path=(
+          _SCRIPT_PATH
+          / f'actors/{self.source}/workflows/{self.workflow_name}.yaml'
+        ),
+        context=context,
+      )
+    else:
+      workflow_data = workflow_obj.model_dump()
+      workflow_data.update({'context': context})
+      actor_workflow = workflow.Workflow(**workflow_data)
     validate(actor_workflow)
 
     results = workflow_runner.WorkflowRunner(actor_workflow).run(
@@ -75,12 +80,12 @@ class GarfActorRequest(pydantic.BaseModel):
   #   notification_channel.send(report)
 
   @tracer.start_as_current_span('play')
-  def play(self):
+  def play(self, workflow=None):
     span = trace.get_current_span()
     if self.actor:
       actor_client = actor.load_actor(source=self.source, actor_name=self.actor)
       span.set_attribute('garf.actor.class', actor_client.actor.__name__)
-    report = self.fetch()
+    report = self.fetch(workflow)
     if self.actor:
       action_result = actor_client.act(report, workflow_name=self.workflow_name)
     return action_result
