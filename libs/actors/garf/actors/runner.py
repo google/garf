@@ -83,6 +83,5 @@ class GarfActorRequest(pydantic.BaseModel):
     report = self.fetch()
     if self.actor:
       action_result = actor_client.act(report, workflow_name=self.workflow_name)
-      span.set_attribute('garf.actor.num_actions', action_result.num_actions)
     return action_result
     # self.notify(report, notification_channel=notifications_channel.Console())

@@ -52,11 +52,11 @@ def actors_version():
 
 
 @app.get('/api/{source}/actors')
-async def get_actors(source: str) -> list[str]:
+async def get_actors(source: str) -> dict[str, str]:
   """Shows all available API actors for a source."""
   if available_source := available_actors.get(source):
-    return [actor.__name__ for actor in available_source]
-  return []
+    return {actor.__name__: actor.__doc__ for actor in available_source}
+  return {}
 
 
 @app.get('/api/sources')
@@ -66,10 +66,15 @@ async def get_sources() -> list[str]:
 
 
 @app.get('/api/{source}/workflows')
-def source_workflows(source: str) -> list[str]:
+def source_workflows(source: str) -> dict[str, str]:
   """Shows all available workflows for a particular source."""
   if source_workflows := available_workflows.get(source):
-    return source_workflows.keys()
+    return {
+      name: workflow.metadata.description.strip()
+      if workflow.metadata.description
+      else ''
+      for name, workflow in source_workflows.items()
+    }
   return {}
 
 

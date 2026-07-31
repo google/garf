@@ -26,5 +26,4 @@ class TestActor:
   def test_act(self, test_actor):
     report = garf.core.GarfReport(results=[[1]], column_names=['test'])
     result = test_actor.act(report)
-    expected_result = actor.ActionResult(num_actions=len(report))
-    assert result.num_actions == expected_result.num_actions
+    assert result.results is None
