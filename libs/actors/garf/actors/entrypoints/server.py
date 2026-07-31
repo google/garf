@@ -51,43 +51,38 @@ def actors_version():
   return version.__version__
 
 
-@app.get('/api/actors')
-async def get_actors() -> dict[str, list[str]]:
-  """Shows all available API actors."""
-  return {
-    actor_source: [actor.__name__ for actor in actors]
-    for actor_source, actors in available_actors.items()
-  }
+@app.get('/api/{source}/actors')
+async def get_actors(source: str) -> list[str]:
+  """Shows all available API actors for a source."""
+  if available_source := available_actors.get(source):
+    return [actor.__name__ for actor in available_source]
+  return []
 
 
-@app.get('/api/workflows')
-async def get_workflows() -> dict[str, dict[str, workflow.Workflow]]:
-  """Shows all available actor workflows."""
-  converted_workflows = defaultdict(dict)
-  for workflow_source, workflows in available_workflows.items():
-    for workflow_key, workflow_data in workflows.items():
-      converted_workflows.update({workflow_key: workflow_data})
-  return available_workflows
+@app.get('/api/sources')
+async def get_sources() -> list[str]:
+  """Shows all available actor sources."""
+  return available_actors.keys()
 
 
-@app.get('/api/workflow/{source}')
-def source_workflows(source: str) -> dict[str, workflow.Workflow]:
+@app.get('/api/{source}/workflows')
+def source_workflows(source: str) -> list[str]:
   """Shows all available workflows for a particular source."""
   if source_workflows := available_workflows.get(source):
-    return source_workflows
+    return source_workflows.keys()
   return {}
 
 
-@app.get('/api/workflow/{source}/{name}')
-def workflow_info(source: str, name: str) -> workflow.Workflow:
+@app.get('/api/{source}/workflows/{name}')
+def workflow_info(source: str, name: str) -> workflow.Workflow | None:
   """Shows a particular workflow."""
   if actor_workflow := available_workflows.get(source, {}).get(name):
     return actor_workflow
-  return {}
+  return None
 
 
 @app.post('/api/', response_model=actor.ActionResult)
-def play(request: runner.GarfActorRequest) -> str:
+def interact(request: runner.GarfActorRequest) -> str:
   """Interacts with garf actors."""
   return request.play()
 
