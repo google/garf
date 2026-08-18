@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from garf.community.google.ads.actors import excluder
+from garf.community.google.ads.actors import adder, excluder
 
 Excluder = excluder.Excluder
-Adder = excluder.Adder
+Adder = adder.Adder
