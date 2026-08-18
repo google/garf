@@ -13,6 +13,18 @@ steps:
           SELECT
             customer.id AS customer_id,
             ad_group.id AS ad_group_id,
+            ad_group_criterion.keyword.text AS search_term
+          FROM ad_group_criterion
+          WHERE
+            campaign.advertising_channel_type = SEARCH
+            AND campaign.status = ENABLED
+            AND ad_group.status = ENABLED
+            AND ad_group_criterion.negative = TRUE
+        title: ad_group_negative_search_terms
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            ad_group.id AS ad_group_id,
             search_term_view.search_term AS search_term,
             {% for metric in metrics %}
             {% if metric == "cost" %}
@@ -43,9 +55,13 @@ steps:
     fetcher: sqldb
     queries:
       - text: |
-          SELECT *
-          FROM search_term_performance
+          SELECT
+            S.*
+          FROM search_term_performance AS S
+          LEFT JOIN ad_group_negative_search_terms AS N
+            USING (customer_id, ad_group_id, search_term)
           WHERE {{filters}}
+            AND S.search_term != N.search_term
         title: evaluation
     query_parameters:
       macro_expansion: False

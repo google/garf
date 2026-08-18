@@ -30,7 +30,6 @@ class AdGroupCriterionService(CriterionService):
       operation = criterion.to_operation(
         self.client, 'AdGroupCriterionOperation'
       )
-      # FIXME: Build not hardcode
       resource_name = f'customers/{customer_id}/adGroups/{ad_group_id}'
       operation.create.ad_group = resource_name
       operations.append(operation)
@@ -56,6 +55,32 @@ class CampaignCriterionService(CriterionService):
         self.client, 'CampaignCriterionOperation'
       )
       resource_name = f'customers/{customer_id}/campaigns/{campaign_id}'
+      operation.create.campaign = resource_name
+      operations.append(operation)
+    return operations
+
+  @override
+  def apply_operations(self, customer_id, operations):
+    service = self.client.get_service('CampaignCriterionService')
+    response = service.mutate_campaign_criteria(
+      customer_id=str(customer_id),
+      operations=operations,
+    )
+    return [result.resource_name for result in response.results]
+
+
+class CustomerNegativeCriterionService(CriterionService):
+  """Sets negative criteria on account level."""
+
+  def add(self, customer_id: int, criteria: list[Criterion]):
+    operations = []
+    for criterion in criteria:
+      if not criterion.negative:
+        continue
+      operation = criterion.to_operation(
+        self.client, 'CustomerNegativeCriterionOperation'
+      )
+      resource_name = f'customers/{customer_id}'
       operation.create.campaign = resource_name
       operations.append(operation)
     return operations

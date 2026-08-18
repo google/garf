@@ -18,10 +18,10 @@ from garf.community.google.ads.actors.models.criterion import Keyword, Placement
 from garf.community.google.ads.actors.services import criterion as cr
 
 
-class Excluder:
-  """Add negative criteria to Google Ads."""
+class Adder:
+  """Add criteria to Google Ads."""
 
-  exlusion_mapping: dict[str, type[cr.CriterionService]] = {
+  adder_mapping: dict[str, type[cr.CriterionService]] = {
     'ad_group_id': cr.AdGroupCriterionService,
     'campaign_id': cr.CampaignCriterionService,
   }
@@ -33,14 +33,8 @@ class Excluder:
       criterion_service = cr.CampaignCriterionService()
     operations = defaultdict(list)
     for row in report:
-      if workflow_name in ('keywords', 'search_terms'):
-        criterion = Keyword(
-          text=row.search_term, match_type='EXACT', negative=True
-        )
-      elif workflow_name == 'placements':
-        criterion = Placement(
-          type=row.placement_type, placement=row.placement, negative=True
-        )
+      if workflow_name == 'search_terms':
+        criterion = Keyword(text=row.search_term, match_type='EXACT')
       operation = criterion_service.add(
         customer_id=row.customer_id,
         ad_group_id=row.ad_group_id,
