@@ -24,6 +24,7 @@ class CriterionError(Exception):
 class Criterion(pydantic.BaseModel):
   """Criterion."""
 
+  criterion_id: int | None = None
   negative: bool = False
 
   def to_operation(self, client: GoogleAdsClient, operation_name: str):

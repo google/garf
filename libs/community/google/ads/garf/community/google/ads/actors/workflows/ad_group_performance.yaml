@@ -1,0 +1,67 @@
+name: ad_group_performance
+metadata:
+  version: '0.0.0'
+  description: |
+    Gets ad_group level performance.
+steps:
+  - fetcher: google-ads
+    alias: task
+    writer:
+      - sqldb
+    queries:
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            campaign.name AS campaign_name,
+            campaign.advertising_channel_type AS campaign_type,
+            ad_group.id AS ad_group_id,
+            ad_group.name AS ad_group_name,
+            {% for metric in metrics %}
+            {% if metric == "cost" %}
+              metrics.cost_micros / 1e6 AS cost,
+            {% else %}
+              metrics.{{ metric }} AS {{ metric }},
+            {% endif %}
+            {% endfor %}
+          FROM ad_group
+          WHERE
+            segments.date >= "{{start_date}}"
+            AND segments.date <= "{{end_date}}"
+            AND campaign.advertising_channel_type IN (
+              {% for campaign_type in campaign_types -%}
+                {{ campaign_type | upper }}{% if not loop.last %}, {% endif %}
+              {%- endfor %}
+            )
+        title: performance
+    query_parameters:
+      template:
+        start_date: :YYYYMMDD-30
+        end_date: :YYYYMMDD-1
+        budget_change: 0.0
+        max_delta:  0.0
+        metrics:
+          - clicks
+          - impressions
+          - cost
+          - conversions
+        campaign_types:
+          - DISPLAY
+          - DEMAND_GEN
+          - SEARCH
+          - PERFORMANCE_MAX
+          - MULTI_CHANNEL
+
+  - alias: evaluation
+    fetcher: sqldb
+    queries:
+      - text: |
+          SELECT
+            *,
+            '{{ status | upper }}' AS status
+          FROM performance
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"

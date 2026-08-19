@@ -1,0 +1,60 @@
+name: keywords
+metadata:
+  version: '0.0.0'
+  description: |
+    Gets keyword performance.
+steps:
+  - fetcher: google-ads
+    alias: task
+    writer:
+      - sqldb
+    queries:
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            campaign.name AS campaign_name,
+            campaign.advertising_channel_type AS _,
+            ad_group.id AS ad_group_id,
+            ad_group.name AS ad_group_name,
+            ad_group_criterion.criterion_id AS criterion_id,
+            ad_group_criterion.keyword.text AS keyword,
+            {% for metric in metrics %}
+            {% if metric == "cost" %}
+              metrics.cost_micros / 1e6 AS cost,
+            {% else %}
+              metrics.{{ metric }} AS {{ metric }},
+            {% endif %}
+            {% endfor %}
+          FROM keyword_view
+          WHERE
+            segments.date >= "{{start_date}}"
+            AND segments.date <= "{{end_date}}"
+            AND ad_group_criterion.negative = FALSE
+            AND ad_group_criterion.type = KEYWORD
+            AND ad_group_criterion.status = ENABLED
+            AND campaign.advertising_channel_type = SEARCH
+        title: keywords
+    query_parameters:
+      template:
+        start_date: :YYYYMMDD-30
+        end_date: :YYYYMMDD-1
+        metrics:
+          - clicks
+          - impressions
+          - cost
+          - conversions
+
+  - alias: evaluation
+    fetcher: sqldb
+    queries:
+      - text: |
+          SELECT
+            *,
+            '{{ status | upper }}' AS status
+          FROM keywords
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"

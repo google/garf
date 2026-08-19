@@ -12,14 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from garf.community.google.ads.actors import (
-  adder,
-  budget_changer,
-  excluder,
-  status_changer,
-)
+import pytest
+from google.ads.googleads.client import GoogleAdsClient
 
-Excluder = excluder.Excluder
-Adder = adder.Adder
-BudgetChanger = budget_changer.BudgetChanger
-StatusChanger = status_changer.StatusChanger
+
+@pytest.fixture
+def test_client(mocker):
+  mocker.patch('google.ads.googleads.client.oauth2', return_value=[])
+  dummy_config = {
+    'developer_token': 'abcd123efg',
+    'client_id': 'dummy_id',
+    'client_secret': 'dummy_secret',
+    'refresh_token': 'dummy_refresh',
+    'use_proto_plus': True,
+  }
+
+  return GoogleAdsClient.load_from_dict(dummy_config)
