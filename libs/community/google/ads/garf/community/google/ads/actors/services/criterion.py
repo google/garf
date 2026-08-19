@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Literal
+
 from garf.community.google.ads.actors.models.criterion import Criterion
 from garf.community.google.ads.actors.services import base_service
+from google.api_core import protobuf_helpers
 from typing_extensions import override
 
 
@@ -32,6 +35,51 @@ class AdGroupCriterionService(CriterionService):
       )
       resource_name = f'customers/{customer_id}/adGroups/{ad_group_id}'
       operation.create.ad_group = resource_name
+      operations.append(operation)
+    return operations
+
+  def enable(
+    self, customer_id: int, ad_group_id: int, criteria: list[Criterion]
+  ):
+    return self._change_status(
+      customer_id, ad_group_id, criteria, status='ENABLED'
+    )
+
+  def pause(
+    self, customer_id: int, ad_group_id: int, criteria: list[Criterion]
+  ):
+    return self._change_status(
+      customer_id, ad_group_id, criteria, status='PAUSED'
+    )
+
+  def delete(
+    self, customer_id: int, ad_group_id: int, criteria: list[Criterion]
+  ):
+    return self._change_status(
+      customer_id, ad_group_id, criteria, status='REMOVED'
+    )
+
+  def _change_status(
+    self,
+    customer_id: int,
+    ad_group_id: int,
+    criteria: list[Criterion],
+    status: Literal['PAUSED', 'ENABLED', 'REMOVED'],
+  ):
+    operations = []
+    for criterion in criteria:
+      operation = self.client.get_type('AdGroupCriterionOperation')
+      updated_criterion = operation.update
+      resource_name = (
+        f'customers/{customer_id}/adGroupCriteria/'
+        f'{ad_group_id}~{criterion.criterion_id}'
+      )
+      updated_criterion.resource_name = resource_name
+      updated_criterion.status = getattr(
+        self.client.enums.AdGroupCriterionStatusEnum, status
+      )
+      field_mask = protobuf_helpers.field_mask(None, updated_criterion._pb)
+      self.client.copy_from(operation.update_mask, field_mask)
       operations.append(operation)
     return operations
 

@@ -13,20 +13,14 @@
 # limitations under the License.
 
 
-import pytest
-from garf.community.google.ads.actors.models.criterion import Placement
+from garf.community.google.ads.actors.models.criterion import Keyword, Placement
 from garf.community.google.ads.actors.services.criterion import (
+  AdGroupCriterionService,
   CampaignCriterionService,
 )
-from google.ads.googleads.client import GoogleAdsClient
 
 
 class TestCampaignCriterionService:
-  @pytest.fixture
-  def test_client(self, mocker):
-    mocker.patch('google.ads.googleads.client.oauth2', return_value=[])
-    return GoogleAdsClient(credentials=None, developer_token='')
-
   def test_add(self, test_client):
     placements = [
       Placement(type='YOUTUBE_VIDEO', placement='12345678900', negative=True),
@@ -35,3 +29,19 @@ class TestCampaignCriterionService:
     service = CampaignCriterionService(client=test_client)
     operation = service.add(customer_id=1, campaign_id=1, criteria=placements)
     assert len(operation) == len(placements)
+
+  def test_update(self, test_client):
+    keywords = [
+      Keyword(criterion_id=1, text='test'),
+    ]
+    service = AdGroupCriterionService(client=test_client)
+    operations = service.pause(customer_id=1, ad_group_id=1, criteria=keywords)
+    assert operations[0].update.status.name == 'PAUSED'
+
+  def test_delete(self, test_client):
+    keywords = [
+      Keyword(criterion_id=1, text='test'),
+    ]
+    service = AdGroupCriterionService(client=test_client)
+    operations = service.delete(customer_id=1, ad_group_id=1, criteria=keywords)
+    assert operations[0].update.status.name == 'REMOVED'
