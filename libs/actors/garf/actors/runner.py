@@ -19,6 +19,7 @@ from typing import Any
 import pydantic
 from garf.actors import actor, exceptions
 from garf.actors.telemetry import tracer
+from garf.executors import utils
 from garf.executors.workflows import workflow, workflow_runner
 from opentelemetry import trace
 
@@ -50,7 +51,7 @@ class GarfActorRequest(pydantic.BaseModel):
   def fetch(self, workflow_obj=None):
     context = {'template': {'filters': self.rule}}
     if self.source_parameters:
-      context.update(self.source_parameters)
+      context = utils.merge_dicts(context, self.source_parameters)
     if not workflow_obj:
       actor_workflow = workflow.Workflow.from_file(
         path=(
