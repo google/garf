@@ -50,7 +50,8 @@ steps:
       - text: |
           SELECT
             *,
-            '{{ status | upper }}' AS status
+            '{{ status | upper }}' AS status,
+            '{{ new_labels | join(", ") }}' AS new_labels
           FROM keywords
           WHERE {{filters}}
         title: evaluation

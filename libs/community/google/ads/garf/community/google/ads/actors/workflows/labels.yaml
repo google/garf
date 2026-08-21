@@ -1,0 +1,36 @@
+name: labels
+metadata:
+  version: '0.0.0'
+  description: |
+    Gets labels.
+steps:
+  - fetcher: google-ads
+    alias: task
+    writer:
+      - sqldb
+    queries:
+      - text: |
+          SELECT
+            customer.id AS customer_id,
+            label.id AS id,
+            label.name AS name,
+            label.text_label.description AS description,
+            label.text_label.background_color AS color,
+          FROM label
+          WHERE
+            label.status = ENABLED
+        title: labels
+  - alias: evaluation
+    fetcher: sqldb
+    queries:
+      - text: |
+          SELECT
+            *,
+            "{{ new_labels | join(', ')}}" AS new_labels
+          FROM labels
+          WHERE {{filters}}
+        title: evaluation
+    query_parameters:
+      macro_expansion: False
+      template:
+        filters: "TRUE"
