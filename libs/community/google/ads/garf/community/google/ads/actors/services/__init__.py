@@ -11,18 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import garf.core
-from garf.community.google.ads import report_fetcher
-from google.ads.googleads.client import GoogleAdsClient
-
-
-class BaseActor:
-  """Base class for all actors."""
-
-  def __init__(self, api_client: GoogleAdsClient | None = None) -> None:
-    """Initializes BaseActors with optional GoogleAdsClient."""
-    self.client = api_client
-
-  def fetch(self, query: str, account: list[str]) -> garf.core.GarfReport:
-    fetcher = report_fetcher.GoogleAdsApiReportFetcher(api_client=self.client)
-    return fetcher.fetch(query_specification=query, account=account)
