@@ -22,7 +22,7 @@ from typing_extensions import override
 class AssetService(base_service.BaseService):
   """Handles working with assets in Google Ads."""
 
-  def add(self, *assets: Asset) -> list:
+  def add(self, assets: list[Asset]) -> list:
     """Create operations for adding assets."""
     return [asset.to_operation(self.client) for asset in assets]
 

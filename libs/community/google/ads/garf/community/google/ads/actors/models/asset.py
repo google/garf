@@ -21,7 +21,7 @@ from typing_extensions import override
 class Asset(pydantic.BaseModel):
   """Base class for Asset."""
 
-  url: pydantic.HttpUrl = pydantic.Field(exclude=True)
+  url: pydantic.HttpUrl | None = pydantic.Field(default=None, exclude=True)
 
   def to_operation(self, client: GoogleAdsClient):
     """Converts models to a corresponding mutate operation."""
@@ -90,10 +90,6 @@ class Video(Asset):
     asset.type_ = client.enums.AssetTypeEnum.YOUTUBE_VIDEO
     asset.youtube_video_asset.youtube_video_id = self.video_id
     asset.youtube_video_asset.youtube_video_title = self.title
-    if self.name:
-      asset.name = self.name
-    if self.url:
-      asset.image_asset.full_size.url = str(self.url)
     return asset_operation
 
 
@@ -122,6 +118,7 @@ class Sitelink(Asset):
   def to_operation(self, client):
     asset_operation = client.get_type('AssetOperation')
     asset = asset_operation.create
+    asset.type_ = client.enums.AssetTypeEnum.SITELINK
     asset.final_urls.append(str(self.url))
     if self.description1:
       asset.sitelink_asset.description1 = self.description1
