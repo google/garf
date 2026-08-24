@@ -14,34 +14,59 @@
 
 from collections import defaultdict
 
+from garf.community.google.ads.actors import base
+from garf.community.google.ads.actors.models.asset import (
+  Sitelink,
+  Text,
+  Video,
+)
 from garf.community.google.ads.actors.models.criterion import Keyword
-from garf.community.google.ads.actors.services import criterion as cr
+from garf.community.google.ads.actors.services import asset as asset_service
+from garf.community.google.ads.actors.services import (
+  criterion as criterion_service,
+)
 
 
-class Adder:
+class Adder(base.BaseActor):
   """Add criteria to Google Ads."""
-
-  adder_mapping: dict[str, type[cr.CriterionService]] = {
-    'ad_group_id': cr.AdGroupCriterionService,
-    'campaign_id': cr.CampaignCriterionService,
-  }
 
   def plan(self, report, workflow_name: str, **kwargs: str):
     if 'ad_group_id' in report.column_names:
-      criterion_service = cr.AdGroupCriterionService()
+      service = criterion_service.AdGroupCriterionService(client=self.client)
     elif 'campaign_id' in report.column_names:
-      criterion_service = cr.CampaignCriterionService()
+      service = criterion_service.CampaignCriterionService(client=self.client)
+    else:
+      service = asset_service.AssetService(client=self.client)
     operations = defaultdict(list)
     for row in report:
-      if workflow_name == 'search_terms':
-        criterion = Keyword(text=row.search_term, match_type='EXACT')
-      operation = criterion_service.add(
-        customer_id=row.customer_id,
-        ad_group_id=row.ad_group_id,
-        criteria=[criterion],
-      )
+      if workflow_name in ('search_terms', 'keywords'):
+        criterion = Keyword(text=row.search_term, match_type=row.match_type)
+        identifiers = {
+          'customer_id': row.customer_id,
+          'ad_group_id': row.ad_group_id,
+          'criteria': [criterion],
+        }
+      elif workflow_name == 'sitelinks':
+        sitelink = Sitelink(
+          link_text=row.sitelink,
+          url=row.url,
+          description1=row.description1,
+          description2=row.description2,
+        )
+        identifiers = {
+          'assets': [sitelink],
+        }
+      elif workflow_name == 'texts':
+        identifiers = {
+          'assets': [Text(text=row.text)],
+        }
+      elif workflow_name == 'videos':
+        identifiers = {
+          'assets': [Video(video_id=row.video_id, title=row.title)],
+        }
+      operation = service.add(**identifiers)
       operations[row.customer_id].extend(operation)
-    return operations, criterion_service
+    return operations, service
 
   def act(self, report, workflow_name: str, **kwargs: str):
     operations, service = self.plan(report, workflow_name, **kwargs)
