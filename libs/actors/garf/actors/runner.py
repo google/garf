@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import pathlib
-from typing import Any
+from typing import Any, Literal
 
 import pydantic
 from garf.actors import actor, exceptions
@@ -40,30 +40,84 @@ def validate(actor_workflow: workflow.Workflow):
     )
 
 
-class GarfActorRequest(pydantic.BaseModel):
-  rule: str
-  workflow_name: str = 'fake'
+class ActorInput(pydantic.BaseModel):
+  name: str = 'fake'
   source: str = 'fake'
-  source_parameters: dict[str, Any] = pydantic.Field(default_factory=dict)
+  type: Literal['query', 'workflow', 'workflow_name', 'workflow_file'] = (
+    'workflow_name'
+  )
+  data: Any = pydantic.Field(default_factory=dict)
+  context: Any = pydantic.Field(default_factory=dict)
+
+
+class GarfActorRequest(pydantic.BaseModel):
+  input: ActorInput
+  rule: str | None = None
   actor: str | None = None
+  actor_parameters: dict[str, Any] = pydantic.Field(default_factory=dict)
 
   @tracer.start_as_current_span('fetch')
   def fetch(self, workflow_obj=None):
     context = {'template': {'filters': self.rule}}
-    if self.source_parameters:
-      context = utils.merge_dicts(context, self.source_parameters)
-    if not workflow_obj:
+    if self.input.context:
+      context = utils.merge_dicts(context, self.input.context)
+    if self.actor_parameters:
+      context = utils.merge_dicts(context, {'template': self.actor_parameters})
+
+    if self.input.type == 'workflow_name':
       actor_workflow = workflow.Workflow.from_file(
         path=(
           _SCRIPT_PATH
-          / f'actors/{self.source}/workflows/{self.workflow_name}.yaml'
+          / f'actors/{self.input.source}/workflows/{self.input.name}.yaml'
         ),
         context=context,
       )
-    else:
+    elif self.input.type == 'workflow_file':
+      actor_workflow = workflow.Workflow.from_file(
+        path=self.input.data,
+        context=context,
+      )
+    elif self.input.type == 'workflow':
+      workflow_data = self.input.data
+      workflow_data.update({'context': context})
+      actor_workflow = workflow.Workflow(**workflow_data)
+    elif workflow_obj:
       workflow_data = workflow_obj.model_dump()
       workflow_data.update({'context': context})
       actor_workflow = workflow.Workflow(**workflow_data)
+    elif self.input.type == 'query':
+      workflow_data = {
+        'steps': [
+          {
+            'fetcher': self.input.source,
+            'alias': 'task',
+            'writer': [
+              'sqldb',
+            ],
+            'queries': [
+              {'text': self.input.data, 'title': 'task'},
+            ],
+          },
+          {
+            'fetcher': 'sqldb',
+            'alias': 'evaluation',
+            'queries': [
+              {
+                'text': 'SELECT * FROM task WHERE {{ filters }}',
+                'title': 'evaluation',
+              },
+            ],
+            'query_parameters': {
+              'template': {
+                'filters': 'TRUE',
+              }
+            },
+          },
+        ]
+      }
+      workflow_data.update({'context': context})
+      actor_workflow = workflow.Workflow(**workflow_data)
+
     validate(actor_workflow)
 
     results = workflow_runner.WorkflowRunner(actor_workflow).run(
@@ -84,10 +138,12 @@ class GarfActorRequest(pydantic.BaseModel):
   def play(self, workflow=None):
     span = trace.get_current_span()
     if self.actor:
-      actor_client = actor.load_actor(source=self.source, actor_name=self.actor)
+      actor_client = actor.load_actor(
+        source=self.input.source, actor_name=self.actor
+      )
       span.set_attribute('garf.actor.class', actor_client.actor.__name__)
     report = self.fetch(workflow)
     if self.actor:
-      action_result = actor_client.act(report, workflow_name=self.workflow_name)
+      action_result = actor_client.act(report, workflow_name=self.input.name)
     return action_result
     # self.notify(report, notification_channel=notifications_channel.Console())

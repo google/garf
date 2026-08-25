@@ -82,8 +82,10 @@ Now perform an action
 curl -X POST http://localhost:8000/api/ \
   -d '{
     "rule": "value > 10",
-    "source": "fake",
-    "workflow_name": "fake",
+    "input" {
+      "source": "fake",
+      "workflow_name": "fake"
+    },
     "actor": "Faker"
   }'
 ```
