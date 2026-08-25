@@ -88,8 +88,8 @@ def workflow_info(source: str, name: str) -> workflow.Workflow | None:
 @app.post('/api/', response_model=actor.ActionResult)
 def interact(request: runner.GarfActorRequest) -> str:
   """Interacts with garf actors."""
-  actor_workflow = available_workflows.get(request.source, {}).get(
-    request.workflow_name
+  actor_workflow = available_workflows.get(request.input.source, {}).get(
+    request.input.name
   )
   return request.play(actor_workflow)
 

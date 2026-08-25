@@ -58,13 +58,19 @@ class GarfActorRequest(pydantic.BaseModel):
 
   @tracer.start_as_current_span('fetch')
   def fetch(self, workflow_obj=None):
-    context = {'template': {'filters': self.rule}}
+    context = {}
+    if self.rule:
+      context = {'template': {'filters': self.rule}}
     if self.input.context:
       context = utils.merge_dicts(context, self.input.context)
     if self.actor_parameters:
       context = utils.merge_dicts(context, {'template': self.actor_parameters})
 
-    if self.input.type == 'workflow_name':
+    if workflow_obj:
+      workflow_data = workflow_obj.model_dump()
+      workflow_data.update({'context': context})
+      actor_workflow = workflow.Workflow(**workflow_data)
+    elif self.input.type == 'workflow_name':
       actor_workflow = workflow.Workflow.from_file(
         path=(
           _SCRIPT_PATH
@@ -79,10 +85,6 @@ class GarfActorRequest(pydantic.BaseModel):
       )
     elif self.input.type == 'workflow':
       workflow_data = self.input.data
-      workflow_data.update({'context': context})
-      actor_workflow = workflow.Workflow(**workflow_data)
-    elif workflow_obj:
-      workflow_data = workflow_obj.model_dump()
       workflow_data.update({'context': context})
       actor_workflow = workflow.Workflow(**workflow_data)
     elif self.input.type == 'query':
