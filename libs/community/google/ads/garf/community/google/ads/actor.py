@@ -16,6 +16,7 @@ from garf.community.google.ads.actors import (
   adder,
   budget_changer,
   excluder,
+  labeler,
   status_changer,
 )
 
@@ -23,3 +24,4 @@ Excluder = excluder.Excluder
 Adder = adder.Adder
 BudgetChanger = budget_changer.BudgetChanger
 StatusChanger = status_changer.StatusChanger
+Labeler = labeler.Labeler

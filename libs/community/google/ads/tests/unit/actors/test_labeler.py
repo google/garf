@@ -17,7 +17,7 @@ from garf.community.google.ads.actors import labeler
 
 
 class TestLabeler:
-  def test_plan(self, test_client):
+  def test_plan_adds_new_labels(self, test_client):
     actor = labeler.Labeler(test_client)
 
     test_report = garf.core.GarfReport(
@@ -27,34 +27,46 @@ class TestLabeler:
         [1, 'label3', 'label3, label4'],
         [2, 'label4', 'label3, label4'],
       ],
-      column_names=['customer_id', 'label', 'new_labels'],
+      column_names=['customer_id', 'name', 'new_labels'],
     )
     operations, _ = actor.plan(report=test_report, workflow_name='labels')
     assert operations.get(1)[0].create.name == 'label4'
     assert operations.get(2)[0].create.name == 'label3'
+
+  def test_add_labels(self, test_client):
+    actor = labeler.Labeler(test_client)
+
+    labels = ['test1', 'test2']
+    existing_labels = {'test1': 1}
+    operations = actor.add_labels(
+      customer_id=1, labels=labels, existing_labels=existing_labels
+    )
+    operations = operations.get(1)
+    assert operations[0].create.name == 'test2'
 
   def test_label_campaigns_existing_labels(self, test_client):
     actor = labeler.Labeler(test_client)
     campaign_ids = [1, 2]
     labels = ['test1', 'test2']
 
-    operations, _ = actor.label_campaigns(
+    operations = actor.label_campaigns(
       customer_id=1,
       campaign_ids=campaign_ids,
       labels=labels,
       existing_labels={'test1': 1, 'test2': 2},
     )
+    operations = operations.get(1)
     assert len(operations) == len(campaign_ids) * len(labels)
     label = operations[0].create
-    assert label.campaign == 'customer/1/campaigns/1'
-    assert label.label == 'customer/1/labels/1'
+    assert label.campaign == 'customers/1/campaigns/1'
+    assert label.label == 'customers/1/labels/1'
 
   def test_label_campaigns_new_labels(self, test_client):
     actor = labeler.Labeler(test_client)
     campaign_ids = [1, 2]
     labels = ['test1', 'new_label']
 
-    operations, _ = actor.label_campaigns(
+    operations = actor.label_campaigns(
       customer_id=1,
       campaign_ids=campaign_ids,
       labels=labels,
@@ -67,9 +79,9 @@ class TestLabeler:
     assert label_creation.name == 'new_label'
 
     existing_label = operations[1].create
-    assert existing_label.campaign == 'customer/1/campaigns/1'
-    assert existing_label.label == 'customer/1/labels/1'
+    assert existing_label.campaign == 'customers/1/campaigns/1'
+    assert existing_label.label == 'customers/1/labels/1'
 
     temp_label = operations[-1].create
-    assert temp_label.campaign == 'customer/1/campaigns/2'
-    assert temp_label.label == 'customer/1/labels/-1'
+    assert temp_label.campaign == 'customers/1/campaigns/2'
+    assert temp_label.label == 'customers/1/labels/-1'

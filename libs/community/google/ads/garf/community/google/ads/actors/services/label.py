@@ -27,7 +27,7 @@ class LabelService(base_service.BaseService):
     """Adds labels to account."""
     service = self.client.get_service('LabelService')
     response = service.mutate_labels(
-      customer_id=customer_id,
+      customer_id=str(customer_id),
       operations=operations,
     )
     return [result.resource_name for result in response.results]
@@ -40,8 +40,8 @@ class CustomerLabelService(base_service.BaseService):
     """Add existing labels to account."""
     operation = self.client.get_type('CustomerLabelOperation')
     customer_label = operation.create
-    customer_resource_name = f'customer/{customer_id}'
-    label_resource_name = f'customer/{customer_id}/labels/{label.label_id}'
+    customer_resource_name = f'customers/{customer_id}'
+    label_resource_name = f'customers/{customer_id}/labels/{label.label_id}'
     customer_label.customer = customer_resource_name
     customer_label.label = label_resource_name
     return operation
@@ -50,7 +50,7 @@ class CustomerLabelService(base_service.BaseService):
     """Adds labels to account."""
     service = self.client.get_service('CustomerLabelService')
     response = service.mutate_customer_labels(
-      customer_id=customer_id,
+      customer_id=str(customer_id),
       operations=operations,
     )
     return [result.resource_name for result in response.results]
@@ -63,8 +63,8 @@ class CampaignLabelService(base_service.BaseService):
     """Add existing labels to campaign."""
     operation = self.client.get_type('CampaignLabelOperation')
     campaign_label = operation.create
-    campaign_resource_name = f'customer/{customer_id}/campaigns/{campaign_id}'
-    label_resource_name = f'customer/{customer_id}/labels/{label.label_id}'
+    campaign_resource_name = f'customers/{customer_id}/campaigns/{campaign_id}'
+    label_resource_name = f'customers/{customer_id}/labels/{label.label_id}'
     campaign_label.campaign = campaign_resource_name
     campaign_label.label = label_resource_name
     return operation
@@ -73,7 +73,7 @@ class CampaignLabelService(base_service.BaseService):
     """Adds labels to campaign."""
     service = self.client.get_service('CampaignLabelService')
     response = service.mutate_campaign_labels(
-      customer_id=customer_id,
+      customer_id=str(customer_id),
       operations=operations,
     )
     return [result.resource_name for result in response.results]
@@ -87,9 +87,9 @@ class AdGroupAdLabelService(base_service.BaseService):
     operation = self.client.get_type('AdGroupAdLabelOperation')
     ad_group_ad_label = operation.create
     ad_group_ad_resource_name = (
-      f'customer/{customer_id}/adGroupAds/{ad_group_id}~{ad_id}'
+      f'customers/{customer_id}/adGroupAds/{ad_group_id}~{ad_id}'
     )
-    label_resource_name = f'customer/{customer_id}/labels/{label.label_id}'
+    label_resource_name = f'customers/{customer_id}/labels/{label.label_id}'
     ad_group_ad_label.ad_group_ad = ad_group_ad_resource_name
     ad_group_ad_label.label = label_resource_name
     return operation
@@ -98,7 +98,7 @@ class AdGroupAdLabelService(base_service.BaseService):
     """Adds labels to campaign."""
     service = self.client.get_service('AdGroupAdLabelService')
     response = service.mutate_ad_group_ad_labels(
-      customer_id=customer_id,
+      customer_id=str(customer_id),
       operations=operations,
     )
     return [result.resource_name for result in response.results]
@@ -113,8 +113,8 @@ class AdGroupLabelService(base_service.BaseService):
     """Add existing labels to ad_group."""
     operation = self.client.get_type('AdGroupLabelOperation')
     ad_group_label = operation.create
-    ad_group_resource_name = f'customer/{customer_id}/adGroups/{ad_group_id}'
-    label_resource_name = f'customer/{customer_id}/labels/{label.label_id}'
+    ad_group_resource_name = f'customers/{customer_id}/adGroups/{ad_group_id}'
+    label_resource_name = f'customers/{customer_id}/labels/{label.label_id}'
     ad_group_label.ad_group = ad_group_resource_name
     ad_group_label.label = label_resource_name
     return operation
@@ -123,7 +123,7 @@ class AdGroupLabelService(base_service.BaseService):
     """Adds labels to campaign."""
     service = self.client.get_service('AdGroupLabelService')
     response = service.mutate_ad_group_labels(
-      customer_id=customer_id,
+      customer_id=str(customer_id),
       operations=operations,
     )
     return [result.resource_name for result in response.results]
@@ -139,9 +139,9 @@ class AdGroupCriterionLabelService(base_service.BaseService):
     operation = self.client.get_type('AdGroupCriterionLabelOperation')
     ad_group_criterion_label = operation.create
     ad_group_criterion_resource_name = (
-      f'customer/{customer_id}/adGroupCriteria/{ad_group_id}~{criterion_id}'
+      f'customers/{customer_id}/adGroupCriteria/{ad_group_id}~{criterion_id}'
     )
-    label_resource_name = f'customer/{customer_id}/labels/{label.label_id}'
+    label_resource_name = f'customers/{customer_id}/labels/{label.label_id}'
     ad_group_criterion_label.ad_group_criterion = (
       ad_group_criterion_resource_name
     )
@@ -152,7 +152,7 @@ class AdGroupCriterionLabelService(base_service.BaseService):
     """Adds labels to ad group ad criteria."""
     service = self.client.get_service('AdGroupCriterionLabelService')
     response = service.mutate_ad_group_criterion_labels(
-      customer_id=customer_id,
+      customer_id=str(customer_id),
       operations=operations,
     )
     return [result.resource_name for result in response.results]

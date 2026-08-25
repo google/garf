@@ -47,19 +47,25 @@ class Labeler(base.BaseActor):
       operations = self._add_new_labels(report)
       return operations, self.labeling_service
     accounts = {r.customer_id for r in report}
-    existing_labels = self.fetch(query=LABELS_QUERY, accounts=list(accounts))
-    label_creation_operations = self._add_new_labels(existing_labels)
+    existing_labels = self.fetch(query=LABELS_QUERY, account=list(accounts))
+    existing_labels_mapping = defaultdict(dict)
+    for row in existing_labels:
+      existing_labels_mapping[row.customer_id].update({row.name: row.id})
+    operations = defaultdict(list)
     if workflow_name == 'campaign_performance':
       service = label_service.CampaignLabelService(client=self.client)
       for row in report:
-        labeling_operations = self.labels_campaigns(
+        labeling_operations = self.label_campaigns(
           customer_id=row.customer_id,
           campaign_ids=[row.campaign_id],
-          labels=row.labels,
+          labels=row.new_labels,
           service=service,
-          existing_labels=existing_labels,
+          existing_labels=existing_labels_mapping.get(row.customer_id),
         )
-      return label_creation_operations + labeling_operations, service
+        operations[row.customer_id].extend(
+          labeling_operations.get(row.customer_id)
+        )
+      return operations, service
 
     if workflow_name == 'ad_group_performance':
       service = label_service.AdGroupLabelService(client=self.client)
@@ -77,9 +83,11 @@ class Labeler(base.BaseActor):
   ):
     """Adds labels to campaigns."""
     existing_labels = existing_labels or self.fetch(
-      query=LABELS_QUERY, accounts=customer_id
+      query=LABELS_QUERY, account=customer_id
     ).to_dict('label', 'id', value_column_output='scalar')
     service = service or label_service.CampaignLabelService(client=self.client)
+    if isinstance(labels, str):
+      labels = [label.strip() for label in labels.split(',')]
     labels_to_create = [
       label for label in labels if label not in existing_labels
     ]
@@ -90,26 +98,54 @@ class Labeler(base.BaseActor):
         label_id = temporarily_label_id
         temporarily_label_id -= 1
       for campaign_id in campaign_ids:
-        operations.append(
-          service.add(
-            customer_id=customer_id,
-            campaign_id=campaign_id,
-            label=Label(name=label, label_id=label_id),
-          )
+        op = service.add(
+          customer_id=customer_id,
+          campaign_id=campaign_id,
+          label=Label(name=label, label_id=label_id),
         )
+        operations.append(op)
     if labels_to_create:
       label_creation_operations = self.labeling_service.add(
         labels=[Label(name=label) for label in labels_to_create]
       )
-      return {customer_id: label_creation_operations + operations}, service
-    return operations, service
+      return {customer_id: label_creation_operations + operations}
+    return {customer_id: operations}
+
+  def add_labels(
+    self,
+    customer_id: str,
+    labels: list[str],
+    existing_labels: dict[str, str] | None = None,
+  ):
+    """Adds new labels to account.
+
+    Args:
+      customer_id: Account number to add labels to.
+      labels: Labels to add.
+      existing_labels: Optional mapping between label text and its id.
+
+
+    Returns:
+      Operation for adding labels to account.
+    """
+    existing_labels = existing_labels or self.fetch(
+      query=LABELS_QUERY, accounts=customer_id
+    ).to_dict('label', 'id', value_column_output='scalar')
+    labels_to_create = [
+      label for label in labels if label not in existing_labels
+    ]
+    return {
+      customer_id: self.labeling_service.add(
+        labels=[Label(name=label) for label in labels_to_create]
+      )
+    }
 
   def _add_new_labels(self, report):
     operations = defaultdict(list)
     new_labels = {label.strip() for label in report[0].new_labels.split(', ')}
     for customer_id, existing_labels in report.to_dict(
       key_column='customer_id',
-      value_column='label',
+      value_column='name',
       value_column_output='list',
     ).items():
       if labels_to_add := new_labels.difference(existing_labels):
