@@ -94,6 +94,166 @@ curl -X POST http://localhost:8000/api/ \
 This command will look for `Faker` actor in `fake` namespace and then call
 `fake` workflow while providing a custom filter `value > 10`.
 
+## Customizing
+
+While running actor with a built-in workflow might be sufficient for some case
+the true power comes from providing custom queries and workflow.
+
+### Input & parameters
+
+Apart from built-in `workflow_name` other types of input can be provided.
+
+#### query
+
+Represents a single query executed via `garf`. Can be a call to an API or DB.
+
+To issue a query specify `"type": "query"` and provide query text in `data` attribute of the request.
+
+```bash
+curl -X POST http://localhost:8000/api/ \
+  -d '{
+    "rule": "value > 10",
+    "input" {
+      "source": "fake",
+      "type": "query",
+      "data": "SELECT metric.int AS value FROM fake"
+    },
+    "actor": "Faker"
+  }'
+```
+
+#### workflow
+
+When a single query not enough you can use the power of [workflows](#evaluateion-workflow).
+
+To issue a query specify `"type": "workflow"` and provide full workflow definition in `data` attribute of the request.
+
+```bash
+curl -X POST http://localhost:8000/api/ \
+  -d '{
+    "rule": "value > 10",
+    "input" {
+      "source": "fake",
+      "type": "workflow",
+      "data":  {
+        "steps": [
+          {
+            "fetcher": "fake",
+            "alias": "task",
+            "writer": [
+              "sqldb",
+            ],
+            "queries": [
+              {
+                "text": SELECT metric.int AS value FROM fake,
+                 "title": "task"
+              },
+            ],
+          },
+          {
+            "fetcher": "sqldb",
+            "alias": "evaluation",
+            "queries": [
+              {
+                "text": "SELECT * FROM task WHERE {{ filters }}",
+                "title": "evaluation",
+              },
+            ],
+            "query_parameters": {
+              "template": {
+                "filters": "TRUE",
+              }
+            },
+          },
+        ]
+    },
+    "actor": "Faker"
+  }'
+```
+
+#### workflow_file
+
+If workflow becomes to big to be injected into the request you can use `workflow_file` instead.
+To issue a query specify `"type": "workflow_file"` and provide fully qualified path to workflow in `data` attribute of the request.
+
+!!! important
+    Workflow file should be accessible to the `garf-actors` server running.
+    Alternatively you can provide a remote file (http, gcs, s3, azure, etc.)
+
+```bash
+curl -X POST http://localhost:8000/api/ \
+  -d '{
+    "rule": "value > 10",
+    "input" {
+      "source": "fake",
+      "type": "workflow_file",
+      "data": "workflow.yaml"
+    },
+    "actor": "Faker"
+  }'
+```
+
+#### context
+
+While queries and workflows specified what need to be fetched, `context` focuses on specifics (which database to use, from which accounts to get data, etc.)
+
+`context` consists of a set of nested dictionaries each one specifies parameters for a particular writer or fetcher.
+
+```bash
+curl -X POST http://localhost:8000/api/ \
+  -d '{
+    "rule": "value > 10",
+    "input" {
+      "source": "fake",
+      "type": "query",
+      "data": "SELECT metric.int AS value FROM fake"
+      "context": {
+        "fake": {
+          "n_rows": 20
+        },
+        "sqldb": {
+          "connection_string": "sqlite:////tmp/garf-actors.db"
+        }
+      }
+    },
+    "actor": "Faker"
+  }'
+```
+
+### Rule
+
+`rule` represents a specific kind of filter that applied at the evaluation step before the data is sent to the actor.
+
+Rule is injected as `WHERE` statement and thus can use all the available SQL syntax to perform the filtering.
+
+!!! important
+    Elements appearing in `rule` should be found in the query at evaluation
+    step.
+
+
+### Actor & parameters
+
+After all the data has been gathered and filtered `Actor` performs necessary action (adding or removing criteria, sending notification, applying labels). Actor depends on a on a source provided in `input`.
+
+You can customize actor by providing key-value pairs in  `actor_parameters` attribute.
+
+```bash
+curl -X POST http://localhost:8000/api/ \
+  -d '{
+    "rule": "value > 10",
+    "input" {
+      "source": "fake",
+      "type": "query",
+      "data": "SELECT metric.int AS value FROM fake"
+    },
+    "actor": "Faker",
+    "actor_parameters": {
+      "key": "value"
+    }
+  }'
+```
+
+
 ## Creating your actors & workflows
 
 But the true power comes from creating your own actors and evaluation workflows.
