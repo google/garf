@@ -109,3 +109,6 @@ nav:
     - Google Ads: fetchers/google-ads.md
     - Media Tagging: fetchers/media-tagging.md
     - Prometheus: fetchers/prometheus.md
+  - Actors:
+    - actors/overview.md
+    - Google Ads: actors/google-ads.md
