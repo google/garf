@@ -15,14 +15,59 @@
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
 
 
+import time
 from contextlib import asynccontextmanager
 
 import fastapi
+import garf.executors
 import typer
 import uvicorn
-from garf.actors import actor, runner, version
+from garf.actors import actor, runner, telemetry, version
+from garf.executors.entrypoints import utils
+from garf.executors.entrypoints.tracer import (
+  initialize_logger,
+  initialize_meter,
+  initialize_tracer,
+)
 from garf.executors.workflows import workflow
+from opentelemetry import _logs, metrics, trace
 from typing_extensions import Annotated
+
+OTEL_SERVICE_NAME = 'garf-actors'
+
+server_start_time = time.time()
+tracer = initialize_tracer()
+meter = initialize_meter()
+telemetry_logger = initialize_logger()
+trace.set_tracer_provider(tracer)
+metrics.set_meter_provider(meter)
+_logs.set_logger_provider(telemetry_logger)
+
+
+def _get_server_info(options):
+  yield metrics.Observation(
+    value=1,
+    attributes={
+      'version_actors': version.__version__,
+      'version_executors': garf.executors.version.__version__,
+      'version_core': garf.executors.version.core_version,
+      'version_io': garf.executors.version.io_version,
+      'server_type': 'http',
+    },
+  )
+
+
+actor_info = telemetry.meter.create_observable_gauge(
+  'garf_actor_info',
+  callbacks=[_get_server_info],
+  unit='',
+  description='Build info of garf actor',
+)
+
+logger = utils.init_logging(
+  loglevel='INFO', logger_type='local', name=OTEL_SERVICE_NAME
+)
+logger.addHandler(telemetry_logger)
 
 available_actors = {}
 available_workflows = {}
