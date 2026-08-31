@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import re
 import time
 
 import yaml
@@ -28,6 +29,12 @@ from opentelemetry import trace
 logger = logging.getLogger(__name__)
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
+
+_REGEX_SPECIAL_CHARS = set(r'.^$*+?{}[]\|()')
+
+
+def _is_regex(pattern: str) -> bool:
+  return any(c in _REGEX_SPECIAL_CHARS for c in pattern)
 
 
 class WorkflowRunner:
@@ -91,10 +98,24 @@ class WorkflowRunner:
     logger.info('Starting Garf Workflow...')
     for i, step in enumerate(self.workflow.steps, 1):
       step_name = f'{i}-{step.fetcher}'
-
+      skip_step = False
       if step.alias:
         step_name = f'{step_name}-{step.alias}'
-      if step.alias in skipped_aliases:
+      if skipped_aliases:
+        for alias in skipped_aliases:
+          if (
+            _is_regex(alias) and re.match(alias, step.alias)
+          ) or step.alias == alias:
+            skip_step = True
+
+      if selected_aliases:
+        for alias in selected_aliases:
+          if _is_regex(alias) and re.match(alias, step.alias):
+            break
+          if alias == step.alias:
+            break
+          skip_step = True
+      if skip_step:
         logger.warning(
           'Skipping step %d, fetcher: %s, alias: %s',
           i,
@@ -102,14 +123,7 @@ class WorkflowRunner:
           step.alias,
         )
         continue
-      if selected_aliases and step.alias not in selected_aliases:
-        logger.warning(
-          'Skipping step %d, fetcher: %s, alias: %s',
-          i,
-          step.fetcher,
-          step.alias,
-        )
-        continue
+
       workflow_step_attributes = {
         **workflow_attributes,
         'workflow.step.name': step_name,

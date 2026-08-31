@@ -28,6 +28,30 @@ class TestWorkflowRunner:
     results = runner.run()
     assert '1-fake-test' in results
 
+  def test_run_includes_aliases(self):
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
+    results = runner.run(selected_aliases=['test'])
+    assert list(results.keys()) == ['1-fake-test']
+
+  def test_run_includes_aliases_regexp(self):
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
+    results = runner.run(selected_aliases=['test*', 'non-existing*'])
+    assert list(results.keys()) == ['1-fake-test', '2-fake-test2']
+
+  def test_run_excludes_aliases(self):
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
+    results = runner.run(skipped_aliases=['test2', 'not-existing'])
+    assert list(results.keys()) == ['1-fake-test']
+
+  def test_run_excludes_aliases_regexp(self):
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
+    results = runner.run(skipped_aliases=['test*', 'not-existing*'])
+    assert not results
+
   def test_compile_saves_file(self, tmp_path):
     tmp_workflow_path = tmp_path / 'workflow.yaml'
     workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)

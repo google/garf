@@ -212,6 +212,10 @@ curl -X 'POST' \
 ```
 ///
 
+!!!note
+    Regular expressions are supported both for selected and skipped aliases
+    (i.e. `common_alias*`).
+
 ### Embed queries
 
 You can embed all necessary queries as texts into you workflow.
