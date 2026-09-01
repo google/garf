@@ -70,6 +70,7 @@ logger = utils.init_logging(
 logger.addHandler(telemetry_logger)
 
 available_actors = {}
+available_actor_classes = {}
 available_workflows = {}
 
 
@@ -77,9 +78,13 @@ available_workflows = {}
 async def lifespan(app: fastapi.FastAPI):
   available_workflows.update(actor.load_workflows())
   available_actors.update(actor.load_actors())
+  for actors in available_actors.values():
+    for actor_class in actors:
+      available_actor_classes[actor_class.__name__] = actor_class
   yield
   available_actors.clear()
   available_workflows.clear()
+  available_actor_classes.clear()
 
 
 typer_app = typer.Typer()
@@ -99,7 +104,7 @@ def actors_version():
 async def get_actors(source: str) -> dict[str, str]:
   """Shows all available API actors for a source."""
   if available_source := available_actors.get(source):
-    return {actor.__name__: actor.__doc__ for actor in available_source}
+    return {actor.__name__: actor.__doc__ or '' for actor in available_source}
   return {}
 
 
@@ -136,7 +141,11 @@ def interact(request: runner.GarfActorRequest) -> str:
   actor_workflow = available_workflows.get(request.input.source, {}).get(
     request.input.name
   )
-  return request.play(actor_workflow)
+  concrete_actor = available_actor_classes.get(request.actor)
+
+  return request.play(
+    workflow=actor_workflow, actor=concrete_actor() if concrete_actor else None
+  )
 
 
 @typer_app.command()
