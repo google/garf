@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "garf-actors"
 dependencies = [
   "garf-executors",
+  "slack_sdk",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
@@ -54,6 +55,7 @@ all = [
 
 [project.entry-points.garf_actors]
 fake = "garf.actors.actors.fake.actor"
+notifier = "garf.actors.actors.notifier.notifier"
 
 [project.entry-points.garf_actor_workflows]
 fake = "garf.actors.actors.fake.workflows"

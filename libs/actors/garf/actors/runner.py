@@ -137,15 +137,16 @@ class GarfActorRequest(pydantic.BaseModel):
   #   notification_channel.send(report)
 
   @tracer.start_as_current_span('play')
-  def play(self, workflow=None):
+  def play(self, workflow=None, actor_client=None):
     span = trace.get_current_span()
-    if self.actor:
-      actor_client = actor.load_actor(
-        source=self.input.source, actor_name=self.actor
-      )
-      span.set_attribute('garf.actor.class', actor_client.actor.__name__)
+    actor_client = (
+      actor_client
+      or actor.load_actor(source=self.input.source, actor_name=self.actor).actor
+    )
+    span.set_attribute('garf.actor.class', actor_client.__class__.__name__)
+
     report = self.fetch(workflow)
-    if self.actor:
-      action_result = actor_client.act(report, workflow_name=self.input.name)
-    return action_result
-    # self.notify(report, notification_channel=notifications_channel.Console())
+    results = actor_client.act(
+      report, workflow_name=self.input.name, **self.actor_parameters
+    )
+    return actor.ActionResult(results=results)

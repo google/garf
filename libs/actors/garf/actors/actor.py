@@ -59,12 +59,16 @@ class Actor:
 
 class ActorWrapper:
   def __init__(self, actor: type[Actor]) -> None:
-    self.actor = actor
+    self._actor = actor
+
+  @property
+  def actor(self):
+    return self._actor()
 
   @tracer.start_as_current_span('act')
   def act(self, report: garf.core.GarfReport, **kwargs) -> ActionResult:
     """Performs mutate action."""
-    results = self.actor().act(report, **kwargs)
+    results = self.actor.act(report, **kwargs)
     return ActionResult(results=results)
 
 
