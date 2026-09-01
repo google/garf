@@ -14,7 +14,7 @@
 import pathlib
 
 from garf.executors.workflows import workflow_runner
-from garf.executors.workflows.workflow import Workflow
+from garf.executors.workflows.workflow import Workflow, WorkflowEdge
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
@@ -26,7 +26,7 @@ class TestWorkflowRunner:
     workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
     runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
     results = runner.run()
-    assert '1-fake-test' in results
+    assert list(results.keys()) == ['1-fake-test', '2-fake-test2']
 
   def test_run_includes_aliases(self):
     workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
@@ -64,3 +64,10 @@ class TestWorkflowRunner:
     runner = workflow_runner.WorkflowRunner.from_file(_TEST_WORKFLOW_PATH)
     result = runner.deploy(tmp_workflow_path)
     assert result == f'Workflow is saved to {tmp_workflow_path}'
+
+  def test_run_with_edges(self):
+    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
+    workflow.edges = [WorkflowEdge(from_step='test2', to_step='test')]
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
+    results = runner.run()
+    assert list(results.keys()) == ['1-fake-test2', '2-fake-test']

@@ -22,6 +22,7 @@ import urllib
 from collections import defaultdict
 from typing import Any, Final
 
+import networkx
 import pydantic
 import smart_open
 import yaml
@@ -198,6 +199,11 @@ class WorkflowMetadata(pydantic.BaseModel):
   )
 
 
+class WorkflowEdge(pydantic.BaseModel):
+  from_step: str = '(start)'
+  to_step: str = '(end)'
+
+
 class Workflow(pydantic.BaseModel):
   """Orchestrates execution of queries for multiple fetchers.
 
@@ -218,6 +224,7 @@ class Workflow(pydantic.BaseModel):
   )
   name: str | None = None
   metadata: WorkflowMetadata = WorkflowMetadata()
+  edges: list[WorkflowEdge] = pydantic.Field(default_factory=list)
 
   def model_post_init(self, __context__) -> None:
     if self.execution_config:
@@ -252,6 +259,27 @@ class Workflow(pydantic.BaseModel):
       res = utils.merge_dicts(res, custom_parameters)
 
       steps[i] = ExecutionStep(**res)
+
+  @property
+  def execution_plan(self) -> list[list[ExecutionStep]]:
+    graph = networkx.DiGraph()
+    for step in self.steps:
+      graph.add_node(step.alias, step=step)
+    if self.edges:
+      for edge in self.edges:
+        graph.add_edge(edge.from_step, edge.to_step)
+    else:
+      step_aliases = [step.alias for step in self.steps]
+      for u, v in zip(step_aliases[:-1], step_aliases[1:]):
+        graph.add_edge(u, v)
+    plan = []
+    for stage in networkx.topological_generations(graph):
+      stage_data = []
+      for alias in stage:
+        step = graph.nodes[alias].get('step')
+        stage_data.append(step)
+      plan.append(stage_data)
+    return plan
 
   @classmethod
   def from_file(

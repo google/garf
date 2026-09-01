@@ -14,6 +14,7 @@
 
 import pathlib
 
+import networkx
 import yaml
 from garf.executors import config
 from garf.executors.workflows.workflow import (
@@ -33,6 +34,7 @@ class TestWorkflow:
     'steps': [
       {
         'fetcher': 'api',
+        'alias': 'test',
         'queries': [
           {'folder': 'queries'},
           {'path': 'example.sql'},
@@ -62,6 +64,12 @@ class TestWorkflow:
       'description': 'Test Workflow',
       'required_fetchers': {'fake': '0.0.0'},
     },
+    'edges': [
+      {
+        'from_step': '(start)',
+        'to_step': '(end)',
+      }
+    ],
   }
 
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
@@ -200,3 +208,11 @@ class TestWorkflow:
     )
 
     assert workflow == expected_workflow
+
+  def test_workflow_execution_plan(self, tmp_path):
+    tmp_workflow = tmp_path / 'workflow.yaml'
+    with open(tmp_workflow, 'w', encoding='utf-8') as f:
+      yaml.dump(self.data, f, encoding='utf-8')
+    workflow = Workflow.from_file(tmp_workflow)
+    plan = workflow.execution_plan
+    assert len(plan) == len(workflow.steps)
