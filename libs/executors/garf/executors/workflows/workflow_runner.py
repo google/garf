@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import collections
 import logging
 import pathlib
 import re
@@ -94,9 +95,11 @@ class WorkflowRunner:
     self.workflow.compile()
     skipped_aliases = skipped_aliases or []
     selected_aliases = selected_aliases or []
-    execution_results = {}
+    execution_results = collections.OrderedDict()
     logger.info('Starting Garf Workflow...')
-    for i, step in enumerate(self.workflow.steps, 1):
+    execution_plan = self.workflow.execution_plan
+    for i, steps in enumerate(execution_plan, 1):
+      step = steps[0]
       step_name = f'{i}-{step.fetcher}'
       skip_step = False
       if step.alias:
