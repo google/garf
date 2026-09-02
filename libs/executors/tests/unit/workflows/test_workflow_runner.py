@@ -13,6 +13,7 @@
 # limitations under the License.
 import pathlib
 
+import yaml
 from garf.executors.workflows import workflow_runner
 from garf.executors.workflows.workflow import Workflow, WorkflowEdge
 
@@ -65,9 +66,45 @@ class TestWorkflowRunner:
     result = runner.deploy(tmp_workflow_path)
     assert result == f'Workflow is saved to {tmp_workflow_path}'
 
-  def test_run_with_edges(self):
-    workflow = Workflow.from_file(_TEST_WORKFLOW_PATH)
-    workflow.edges = [WorkflowEdge(from_step='test2', to_step='test')]
+  def test_run_with_parallel_steps(self, tmp_path):
+    data = {
+      'steps': [
+        {
+          'fetcher': 'sqldb',
+          'alias': 'sequential',
+          'queries': [
+            {'query': {'text': 'SELECT 1', 'title': 'example2'}},
+          ],
+        },
+        {
+          'parallel': [
+            {
+              'fetcher': 'sqldb',
+              'alias': 'parallel_1',
+              'queries': [
+                {'query': {'text': 'SELECT 1', 'title': 'example2'}},
+              ],
+            },
+            {
+              'fetcher': 'sqldb',
+              'alias': 'parallel_2',
+              'queries': [
+                {'query': {'text': 'SELECT 1', 'title': 'example2'}},
+              ],
+            },
+          ]
+        },
+      ],
+      'name': 'test workflow',
+    }
+    tmp_workflow = tmp_path / 'workflow.yaml'
+    with open(tmp_workflow, 'w', encoding='utf-8') as f:
+      yaml.dump(data, f, encoding='utf-8')
+    workflow = Workflow.from_file(tmp_workflow)
     runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
     results = runner.run()
-    assert list(results.keys()) == ['1-fake-test2', '2-fake-test']
+    assert set(results.keys()) == {
+      '1-sqldb-sequential',
+      '2-sqldb-parallel_1',
+      '2-sqldb-parallel_2',
+    }

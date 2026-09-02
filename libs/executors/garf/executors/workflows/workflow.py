@@ -22,7 +22,6 @@ import urllib
 from collections import defaultdict
 from typing import Any, Final
 
-import networkx
 import pydantic
 import smart_open
 import yaml
@@ -175,6 +174,27 @@ class ExecutionStep(ExecutionContext):
       fetcher_parameters=self.fetcher_parameters,
     )
 
+  def expand_queries(self, prefix: str | None = None):
+    """Converts all queries to texts."""
+    new_queries = []
+    for query in self.queries:
+      if isinstance(query, QueryFolder):
+        for q in query.queries:
+          new_queries.append(q.to_query(prefix))
+      else:
+        new_queries.append(query.to_query(prefix))
+    self.queries = new_queries
+
+
+class ParallelStep(pydantic.BaseModel):
+  parallel: list[ExecutionStep]
+  alias: str | None = pydantic.Field(default=None, pattern=r'^[a-zA-Z0-9_]+$')
+  parallel_threshold: int | None = None
+
+  @property
+  def fetchers(self):
+    return [s.fetcher for s in self.parallel]
+
 
 def _ignore_empty_dict(v: Any) -> bool:
   return isinstance(v, dict) and not v
@@ -216,7 +236,7 @@ class Workflow(pydantic.BaseModel):
     metadata: Optional metadata.
   """
 
-  steps: list[ExecutionStep]
+  steps: list[ExecutionStep | ParallelStep]
   context: dict[str, dict[str, Any]] | None = None
   execution_config: config.Config | None = None
   prefix: str | pathlib.Path | None = pydantic.Field(
@@ -241,45 +261,27 @@ class Workflow(pydantic.BaseModel):
 
     steps = self.steps
     for i, step in enumerate(steps):
-      if context:
-        if fetcher_parameters := context.get(step.fetcher):
-          custom_parameters['fetcher_parameters'] = fetcher_parameters
-        if step.writer:
-          for writer in step.writer:
-            if writer_parameters := context.get(writer):
-              custom_parameters['writer_parameters'].update(writer_parameters)
-
-      if source_config_parameters := config_parameters.get(step.fetcher):
-        res = utils.merge_dicts(
-          step.model_dump(exclude_none=True),
-          source_config_parameters.model_dump(exclude_none=True),
-        )
+      if isinstance(step, ParallelStep):
+        for j, parallel_step in enumerate(step.parallel):
+          res = _update_context(
+            context, parallel_step, custom_parameters, config_parameters
+          )
+          step.parallel[j] = ExecutionStep(**res)
       else:
-        res = step.model_dump(exclude_none=True)
-      res = utils.merge_dicts(res, custom_parameters)
-
-      steps[i] = ExecutionStep(**res)
+        res = _update_context(
+          context, step, custom_parameters, config_parameters
+        )
+        steps[i] = ExecutionStep(**res)
 
   @property
-  def execution_plan(self) -> list[list[ExecutionStep]]:
-    graph = networkx.DiGraph()
+  def fetchers(self) -> set[str]:
+    fetchers = set()
     for step in self.steps:
-      graph.add_node(step.alias, step=step)
-    if self.edges:
-      for edge in self.edges:
-        graph.add_edge(edge.from_step, edge.to_step)
-    else:
-      step_aliases = [step.alias for step in self.steps]
-      for u, v in zip(step_aliases[:-1], step_aliases[1:]):
-        graph.add_edge(u, v)
-    plan = []
-    for stage in networkx.topological_generations(graph):
-      stage_data = []
-      for alias in stage:
-        step = graph.nodes[alias].get('step')
-        stage_data.append(step)
-      plan.append(stage_data)
-    return plan
+      if isinstance(step, ParallelStep):
+        fetchers.update(step.fetchers)
+      else:
+        fetchers.add(step.fetcher)
+    return fetchers
 
   @classmethod
   def from_file(
@@ -321,14 +323,11 @@ class Workflow(pydantic.BaseModel):
 
   def compile(self) -> None:
     for step in self.steps:
-      new_queries = []
-      for query in step.queries:
-        if isinstance(query, QueryFolder):
-          for q in query.queries:
-            new_queries.append(q.to_query(self.prefix))
-        else:
-          new_queries.append(query.to_query(self.prefix))
-      step.queries = new_queries
+      if isinstance(step, ParallelStep):
+        for parallel_step in step.parallel:
+          parallel_step.expand_queries(prefix=self.prefix)
+      else:
+        step.expand_queries(prefix=self.prefix)
     if self.prefix is not None:
       self.prefix = str(self.prefix)
 
@@ -345,3 +344,22 @@ class Workflow(pydantic.BaseModel):
       if config_name := config.name:
         workflow_attributes.update({'config.name': config_name})
     return workflow_attributes
+
+
+def _update_context(context, step, custom_parameters, config_parameters):
+  if context:
+    if fetcher_parameters := context.get(step.fetcher):
+      custom_parameters['fetcher_parameters'] = fetcher_parameters
+    if step.writer:
+      for writer in step.writer:
+        if writer_parameters := context.get(writer):
+          custom_parameters['writer_parameters'].update(writer_parameters)
+
+  if source_config_parameters := config_parameters.get(step.fetcher):
+    res = utils.merge_dicts(
+      step.model_dump(exclude_none=True),
+      source_config_parameters.model_dump(exclude_none=True),
+    )
+  else:
+    res = step.model_dump(exclude_none=True)
+  return utils.merge_dicts(res, custom_parameters)
