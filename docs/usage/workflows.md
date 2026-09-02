@@ -53,17 +53,18 @@ steps:
       * **version**: Version of the workflow.
       * **required_garf_version**: Minimal required version of garf-executors library.
       * **required_fetchers**: Required fetchers and their version.
-*   **fetcher**: The source of data. Check [available fetchers](../fetchers/overview.md).
-*   **fetcher_parameters**: Key value pairs used to fine-tune fetching process.
-*   **alias**: A unique identifier for the step. Useful for logging and [selective execution](#selective-execution).
-*   **writer**: Where the data should be saved. Check [available writers](writers.md).
-*   **writer_parameters**: Key value pairs used to fine-tune writing process.
-*   **query_parameters**: (Optional) Parameters for dynamically changing query text.
-*   **queries**: A list of queries to execute in this step. Can be:
-    *   `folder`: Recursively finds all `.sql` files in the directory.
-    *   `path`: Path to a specific query file.
-    *   `query`: Inline query definition with `text` and `title`.
-*   **parallel_threshold**: Custom threshold of parallel query execution for a given step.
+* **steps**: Can be sequential or parallel steps (later is specified with `parallel`)
+  *   **fetcher**: The source of data. Check [available fetchers](../fetchers/overview.md).
+  *   **fetcher_parameters**: Key value pairs used to fine-tune fetching process.
+  *   **alias**: A unique identifier for the step. Useful for logging and [selective execution](#selective-execution).
+  *   **writer**: Where the data should be saved. Check [available writers](writers.md).
+  *   **writer_parameters**: Key value pairs used to fine-tune writing process.
+  *   **query_parameters**: (Optional) Parameters for dynamically changing query text.
+  *   **queries**: A list of queries to execute in this step. Can be:
+      *   `folder`: Recursively finds all `.sql` files in the directory.
+      *   `path`: Path to a specific query file.
+      *   `query`: Inline query definition with `text` and `title`.
+  *   **parallel_threshold**: Custom threshold of parallel query execution for a given step.
 
 
 ### Common Parameters
@@ -80,15 +81,21 @@ default_bq: &bq_defaults
     dataset: my_dataset
 
 steps:
-  - alias: step_1
+  - alias: sequential_step_1
     fetcher: google-ads
     <<: *bq_defaults
     queries: ...
 
-  - alias: step_2
-    fetcher: google-ads
-    <<: *bq_defaults
-    queries: ...
+  - parallel:
+    - alias: parallel_step_1
+      fetcher: google-ads
+      <<: *bq_defaults
+      queries: ...
+
+    - alias: parallel_step_2
+      fetcher: google-ads
+      <<: *bq_defaults
+      queries: ...
 ```
 
 ## Usage

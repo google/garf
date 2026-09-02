@@ -14,11 +14,11 @@
 
 import pathlib
 
-import networkx
 import yaml
 from garf.executors import config
 from garf.executors.workflows.workflow import (
   ExecutionStep,
+  ParallelStep,
   Query,
   QueryDefinition,
   QueryFolder,
@@ -209,10 +209,40 @@ class TestWorkflow:
 
     assert workflow == expected_workflow
 
-  def test_workflow_execution_plan(self, tmp_path):
+  def test_workflow_parallel_steps(self, tmp_path):
+    data = {
+      'steps': [
+        {
+          'fetcher': 'api',
+          'alias': 'sequential',
+          'queries': [
+            {'query': {'text': 'SELECT 1', 'title': 'example2'}},
+          ],
+        },
+        {
+          'parallel': [
+            {
+              'fetcher': 'api',
+              'alias': 'parallel_1',
+              'queries': [
+                {'query': {'text': 'SELECT 1', 'title': 'example2'}},
+              ],
+            },
+            {
+              'fetcher': 'api',
+              'alias': 'parallel_2',
+              'queries': [
+                {'query': {'text': 'SELECT 1', 'title': 'example2'}},
+              ],
+            },
+          ]
+        },
+      ],
+      'name': 'test workflow',
+    }
     tmp_workflow = tmp_path / 'workflow.yaml'
     with open(tmp_workflow, 'w', encoding='utf-8') as f:
-      yaml.dump(self.data, f, encoding='utf-8')
+      yaml.dump(data, f, encoding='utf-8')
     workflow = Workflow.from_file(tmp_workflow)
-    plan = workflow.execution_plan
-    assert len(plan) == len(workflow.steps)
+    assert isinstance(workflow.steps[1], ParallelStep)
+    assert len(workflow.steps[1].parallel) == len(data['steps'][1]['parallel'])

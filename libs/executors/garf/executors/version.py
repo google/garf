@@ -17,7 +17,7 @@ import garf.core.version as core_version
 import garf.io.version as io_version
 from garf.executors import exceptions
 
-__version__ = '1.6.1'
+__version__ = '1.7.0'
 
 
 def validate_version(version: str | None = None):
