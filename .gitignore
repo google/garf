@@ -18,3 +18,4 @@ tags
 dist
 build
 uv.lock
+.otelc-build

@@ -1,7 +1,11 @@
 syntax = "proto3";
 package garf;
+
+option go_package = "github.com/google/garf/sdk/garf";
+
 import "google/protobuf/struct.proto";
 import "google/protobuf/empty.proto";
+
 
 
 service GarfService {
