@@ -1,0 +1,27 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]] # Bin to run the gRPC server
+name = "grpc-client"
+path = "src/main.rs"
+bench = false
+
+[dependencies]
+prost = "0.14.4"
+prost-types = "0.14.4"
+tokio = { version = "1.53.1", features = ["full"] }
+tonic = "0.14.6"
+tonic-prost = "0.14.6"
+opentelemetry = { version = "0.28", features = ["metrics"] }
+opentelemetry-appender-tracing = "0.28.0"
+opentelemetry-otlp = { version = "0.28.0", features = ["grpc-tonic"] }
+opentelemetry_sdk = { version = "0.28", features = ["metrics", "trace", "logs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
+anyhow = "1.0.104"
+
+[build-dependencies]
+prost-build = "0.14.4"
+tonic-prost-build = "0.14.6"
