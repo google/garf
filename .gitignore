@@ -19,3 +19,4 @@ dist
 build
 uv.lock
 .otelc-build
+target
