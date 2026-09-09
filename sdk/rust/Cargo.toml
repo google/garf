@@ -17,7 +17,7 @@ tonic-prost = "0.14.6"
 opentelemetry = { version = "0.28", features = ["metrics"] }
 opentelemetry-appender-tracing = "0.28.0"
 opentelemetry-otlp = { version = "0.28.0", features = ["grpc-tonic"] }
-opentelemetry_sdk = { version = "0.28", features = ["metrics", "trace", "logs"] }
+opentelemetry_sdk = { version = "0.32", features = ["metrics", "trace", "logs"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
 anyhow = "1.0.104"
