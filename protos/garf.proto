@@ -94,6 +94,18 @@ message ExecuteBatchResponse {
 }
 
 // Workflow
+message QueryEntry {
+  QueryDefinition query = 1;
+}
+
+message QueryPath {
+  string path = 1;
+}
+
+message QueryFolder {
+  string folder = 1;
+}
+
 message FetcherInfo {
   string name = 1;
   string version = 2;
@@ -109,7 +121,7 @@ message WorkflowMetadata {
 message WorkflowStep {
   string fetcher = 1;
   string alias = 2;
-  repeated QueryDefinition queries = 3;
+  repeated QueryEntry queries = 3;
   QueryParameters query_parameters = 4;
   google.protobuf.Struct fetcher_parameters = 5;
   string writer = 6;
