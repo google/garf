@@ -7,14 +7,13 @@
 package garf
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -702,6 +701,138 @@ func (x *ExecuteBatchResponse) GetResults() []string {
 }
 
 // Workflow
+type QueryEntry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         *QueryDefinition       `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryEntry) Reset() {
+	*x = QueryEntry{}
+	mi := &file_garf_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryEntry) ProtoMessage() {}
+
+func (x *QueryEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_garf_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryEntry.ProtoReflect.Descriptor instead.
+func (*QueryEntry) Descriptor() ([]byte, []int) {
+	return file_garf_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *QueryEntry) GetQuery() *QueryDefinition {
+	if x != nil {
+		return x.Query
+	}
+	return nil
+}
+
+type QueryPath struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryPath) Reset() {
+	*x = QueryPath{}
+	mi := &file_garf_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryPath) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryPath) ProtoMessage() {}
+
+func (x *QueryPath) ProtoReflect() protoreflect.Message {
+	mi := &file_garf_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryPath.ProtoReflect.Descriptor instead.
+func (*QueryPath) Descriptor() ([]byte, []int) {
+	return file_garf_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *QueryPath) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+type QueryFolder struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Folder        string                 `protobuf:"bytes,1,opt,name=folder,proto3" json:"folder,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryFolder) Reset() {
+	*x = QueryFolder{}
+	mi := &file_garf_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryFolder) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryFolder) ProtoMessage() {}
+
+func (x *QueryFolder) ProtoReflect() protoreflect.Message {
+	mi := &file_garf_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryFolder.ProtoReflect.Descriptor instead.
+func (*QueryFolder) Descriptor() ([]byte, []int) {
+	return file_garf_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *QueryFolder) GetFolder() string {
+	if x != nil {
+		return x.Folder
+	}
+	return ""
+}
+
 type FetcherInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -712,7 +843,7 @@ type FetcherInfo struct {
 
 func (x *FetcherInfo) Reset() {
 	*x = FetcherInfo{}
-	mi := &file_garf_proto_msgTypes[11]
+	mi := &file_garf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -724,7 +855,7 @@ func (x *FetcherInfo) String() string {
 func (*FetcherInfo) ProtoMessage() {}
 
 func (x *FetcherInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[11]
+	mi := &file_garf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -737,7 +868,7 @@ func (x *FetcherInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FetcherInfo.ProtoReflect.Descriptor instead.
 func (*FetcherInfo) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{11}
+	return file_garf_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *FetcherInfo) GetName() string {
@@ -766,7 +897,7 @@ type WorkflowMetadata struct {
 
 func (x *WorkflowMetadata) Reset() {
 	*x = WorkflowMetadata{}
-	mi := &file_garf_proto_msgTypes[12]
+	mi := &file_garf_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -778,7 +909,7 @@ func (x *WorkflowMetadata) String() string {
 func (*WorkflowMetadata) ProtoMessage() {}
 
 func (x *WorkflowMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[12]
+	mi := &file_garf_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -791,7 +922,7 @@ func (x *WorkflowMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkflowMetadata.ProtoReflect.Descriptor instead.
 func (*WorkflowMetadata) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{12}
+	return file_garf_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *WorkflowMetadata) GetVersion() string {
@@ -826,7 +957,7 @@ type WorkflowStep struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Fetcher           string                 `protobuf:"bytes,1,opt,name=fetcher,proto3" json:"fetcher,omitempty"`
 	Alias             string                 `protobuf:"bytes,2,opt,name=alias,proto3" json:"alias,omitempty"`
-	Queries           []*QueryDefinition     `protobuf:"bytes,3,rep,name=queries,proto3" json:"queries,omitempty"`
+	Queries           []*QueryEntry          `protobuf:"bytes,3,rep,name=queries,proto3" json:"queries,omitempty"`
 	QueryParameters   *QueryParameters       `protobuf:"bytes,4,opt,name=query_parameters,json=queryParameters,proto3" json:"query_parameters,omitempty"`
 	FetcherParameters *structpb.Struct       `protobuf:"bytes,5,opt,name=fetcher_parameters,json=fetcherParameters,proto3" json:"fetcher_parameters,omitempty"`
 	Writer            string                 `protobuf:"bytes,6,opt,name=writer,proto3" json:"writer,omitempty"`
@@ -838,7 +969,7 @@ type WorkflowStep struct {
 
 func (x *WorkflowStep) Reset() {
 	*x = WorkflowStep{}
-	mi := &file_garf_proto_msgTypes[13]
+	mi := &file_garf_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -850,7 +981,7 @@ func (x *WorkflowStep) String() string {
 func (*WorkflowStep) ProtoMessage() {}
 
 func (x *WorkflowStep) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[13]
+	mi := &file_garf_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +994,7 @@ func (x *WorkflowStep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkflowStep.ProtoReflect.Descriptor instead.
 func (*WorkflowStep) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{13}
+	return file_garf_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *WorkflowStep) GetFetcher() string {
@@ -880,7 +1011,7 @@ func (x *WorkflowStep) GetAlias() string {
 	return ""
 }
 
-func (x *WorkflowStep) GetQueries() []*QueryDefinition {
+func (x *WorkflowStep) GetQueries() []*QueryEntry {
 	if x != nil {
 		return x.Queries
 	}
@@ -932,7 +1063,7 @@ type ConfigMetadata struct {
 
 func (x *ConfigMetadata) Reset() {
 	*x = ConfigMetadata{}
-	mi := &file_garf_proto_msgTypes[14]
+	mi := &file_garf_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -944,7 +1075,7 @@ func (x *ConfigMetadata) String() string {
 func (*ConfigMetadata) ProtoMessage() {}
 
 func (x *ConfigMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[14]
+	mi := &file_garf_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -957,7 +1088,7 @@ func (x *ConfigMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigMetadata.ProtoReflect.Descriptor instead.
 func (*ConfigMetadata) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{14}
+	return file_garf_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ConfigMetadata) GetVersion() string {
@@ -986,7 +1117,7 @@ type Config struct {
 
 func (x *Config) Reset() {
 	*x = Config{}
-	mi := &file_garf_proto_msgTypes[15]
+	mi := &file_garf_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -998,7 +1129,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[15]
+	mi := &file_garf_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1011,7 +1142,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{15}
+	return file_garf_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Config) GetName() string {
@@ -1054,7 +1185,7 @@ type Workflow struct {
 
 func (x *Workflow) Reset() {
 	*x = Workflow{}
-	mi := &file_garf_proto_msgTypes[16]
+	mi := &file_garf_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1066,7 +1197,7 @@ func (x *Workflow) String() string {
 func (*Workflow) ProtoMessage() {}
 
 func (x *Workflow) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[16]
+	mi := &file_garf_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1079,7 +1210,7 @@ func (x *Workflow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Workflow.ProtoReflect.Descriptor instead.
 func (*Workflow) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{16}
+	return file_garf_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Workflow) GetName() string {
@@ -1125,7 +1256,7 @@ type ExecuteWorkflowRequest struct {
 
 func (x *ExecuteWorkflowRequest) Reset() {
 	*x = ExecuteWorkflowRequest{}
-	mi := &file_garf_proto_msgTypes[17]
+	mi := &file_garf_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1137,7 +1268,7 @@ func (x *ExecuteWorkflowRequest) String() string {
 func (*ExecuteWorkflowRequest) ProtoMessage() {}
 
 func (x *ExecuteWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[17]
+	mi := &file_garf_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1150,7 +1281,7 @@ func (x *ExecuteWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{17}
+	return file_garf_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ExecuteWorkflowRequest) GetWorkflow() *Workflow {
@@ -1211,7 +1342,7 @@ type ExecuteWorkflowResponse struct {
 
 func (x *ExecuteWorkflowResponse) Reset() {
 	*x = ExecuteWorkflowResponse{}
-	mi := &file_garf_proto_msgTypes[18]
+	mi := &file_garf_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1223,7 +1354,7 @@ func (x *ExecuteWorkflowResponse) String() string {
 func (*ExecuteWorkflowResponse) ProtoMessage() {}
 
 func (x *ExecuteWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[18]
+	mi := &file_garf_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1236,7 +1367,7 @@ func (x *ExecuteWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{18}
+	return file_garf_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ExecuteWorkflowResponse) GetResults() []string {
@@ -1256,7 +1387,7 @@ type ListFetchersResponse struct {
 
 func (x *ListFetchersResponse) Reset() {
 	*x = ListFetchersResponse{}
-	mi := &file_garf_proto_msgTypes[19]
+	mi := &file_garf_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1268,7 +1399,7 @@ func (x *ListFetchersResponse) String() string {
 func (*ListFetchersResponse) ProtoMessage() {}
 
 func (x *ListFetchersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[19]
+	mi := &file_garf_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1281,7 +1412,7 @@ func (x *ListFetchersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFetchersResponse.ProtoReflect.Descriptor instead.
 func (*ListFetchersResponse) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{19}
+	return file_garf_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListFetchersResponse) GetResults() []*FetcherInfo {
@@ -1300,7 +1431,7 @@ type ListExecutorsResponse struct {
 
 func (x *ListExecutorsResponse) Reset() {
 	*x = ListExecutorsResponse{}
-	mi := &file_garf_proto_msgTypes[20]
+	mi := &file_garf_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1312,7 +1443,7 @@ func (x *ListExecutorsResponse) String() string {
 func (*ListExecutorsResponse) ProtoMessage() {}
 
 func (x *ListExecutorsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[20]
+	mi := &file_garf_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1325,7 +1456,7 @@ func (x *ListExecutorsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExecutorsResponse.ProtoReflect.Descriptor instead.
 func (*ListExecutorsResponse) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{20}
+	return file_garf_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListExecutorsResponse) GetResults() []string {
@@ -1345,7 +1476,7 @@ type GarfVersion struct {
 
 func (x *GarfVersion) Reset() {
 	*x = GarfVersion{}
-	mi := &file_garf_proto_msgTypes[21]
+	mi := &file_garf_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1357,7 +1488,7 @@ func (x *GarfVersion) String() string {
 func (*GarfVersion) ProtoMessage() {}
 
 func (x *GarfVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[21]
+	mi := &file_garf_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1370,7 +1501,7 @@ func (x *GarfVersion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GarfVersion.ProtoReflect.Descriptor instead.
 func (*GarfVersion) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{21}
+	return file_garf_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GarfVersion) GetVersion() string {
@@ -1391,7 +1522,7 @@ type GarfInfo struct {
 
 func (x *GarfInfo) Reset() {
 	*x = GarfInfo{}
-	mi := &file_garf_proto_msgTypes[22]
+	mi := &file_garf_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1403,7 +1534,7 @@ func (x *GarfInfo) String() string {
 func (*GarfInfo) ProtoMessage() {}
 
 func (x *GarfInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_garf_proto_msgTypes[22]
+	mi := &file_garf_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1416,7 +1547,7 @@ func (x *GarfInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GarfInfo.ProtoReflect.Descriptor instead.
 func (*GarfInfo) Descriptor() ([]byte, []int) {
-	return file_garf_proto_rawDescGZIP(), []int{22}
+	return file_garf_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GarfInfo) GetExecutorsVersion() string {
@@ -1491,7 +1622,14 @@ const file_garf_proto_rawDesc = "" +
 	"\rcache_options\x18\x04 \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
 	"\bsimulate\x18\x05 \x01(\bR\bsimulate\"0\n" +
 	"\x14ExecuteBatchResponse\x12\x18\n" +
-	"\aresults\x18\x01 \x03(\tR\aresults\";\n" +
+	"\aresults\x18\x01 \x03(\tR\aresults\"9\n" +
+	"\n" +
+	"QueryEntry\x12+\n" +
+	"\x05query\x18\x01 \x01(\v2\x15.garf.QueryDefinitionR\x05query\"\x1f\n" +
+	"\tQueryPath\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"%\n" +
+	"\vQueryFolder\x12\x16\n" +
+	"\x06folder\x18\x01 \x01(\tR\x06folder\";\n" +
 	"\vFetcherInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\"\xc2\x01\n" +
@@ -1499,11 +1637,11 @@ const file_garf_proto_rawDesc = "" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x122\n" +
 	"\x15required_garf_version\x18\x03 \x01(\tR\x13requiredGarfVersion\x12>\n" +
-	"\x11required_fetchers\x18\x04 \x03(\v2\x11.garf.FetcherInfoR\x10requiredFetchers\"\x86\x03\n" +
+	"\x11required_fetchers\x18\x04 \x03(\v2\x11.garf.FetcherInfoR\x10requiredFetchers\"\x81\x03\n" +
 	"\fWorkflowStep\x12\x18\n" +
 	"\afetcher\x18\x01 \x01(\tR\afetcher\x12\x14\n" +
-	"\x05alias\x18\x02 \x01(\tR\x05alias\x12/\n" +
-	"\aqueries\x18\x03 \x03(\v2\x15.garf.QueryDefinitionR\aqueries\x12@\n" +
+	"\x05alias\x18\x02 \x01(\tR\x05alias\x12*\n" +
+	"\aqueries\x18\x03 \x03(\v2\x10.garf.QueryEntryR\aqueries\x12@\n" +
 	"\x10query_parameters\x18\x04 \x01(\v2\x15.garf.QueryParametersR\x0fqueryParameters\x12F\n" +
 	"\x12fetcher_parameters\x18\x05 \x01(\v2\x17.google.protobuf.StructR\x11fetcherParameters\x12\x16\n" +
 	"\x06writer\x18\x06 \x01(\tR\x06writer\x12D\n" +
@@ -1566,7 +1704,7 @@ func file_garf_proto_rawDescGZIP() []byte {
 	return file_garf_proto_rawDescData
 }
 
-var file_garf_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_garf_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_garf_proto_goTypes = []any{
 	(*FetchRequest)(nil),            // 0: garf.FetchRequest
 	(*FetchResponse)(nil),           // 1: garf.FetchResponse
@@ -1579,73 +1717,77 @@ var file_garf_proto_goTypes = []any{
 	(*QueryDefinition)(nil),         // 8: garf.QueryDefinition
 	(*ExecuteBatchRequest)(nil),     // 9: garf.ExecuteBatchRequest
 	(*ExecuteBatchResponse)(nil),    // 10: garf.ExecuteBatchResponse
-	(*FetcherInfo)(nil),             // 11: garf.FetcherInfo
-	(*WorkflowMetadata)(nil),        // 12: garf.WorkflowMetadata
-	(*WorkflowStep)(nil),            // 13: garf.WorkflowStep
-	(*ConfigMetadata)(nil),          // 14: garf.ConfigMetadata
-	(*Config)(nil),                  // 15: garf.Config
-	(*Workflow)(nil),                // 16: garf.Workflow
-	(*ExecuteWorkflowRequest)(nil),  // 17: garf.ExecuteWorkflowRequest
-	(*ExecuteWorkflowResponse)(nil), // 18: garf.ExecuteWorkflowResponse
-	(*ListFetchersResponse)(nil),    // 19: garf.ListFetchersResponse
-	(*ListExecutorsResponse)(nil),   // 20: garf.ListExecutorsResponse
-	(*GarfVersion)(nil),             // 21: garf.GarfVersion
-	(*GarfInfo)(nil),                // 22: garf.GarfInfo
-	(*structpb.Struct)(nil),         // 23: google.protobuf.Struct
-	(*emptypb.Empty)(nil),           // 24: google.protobuf.Empty
+	(*QueryEntry)(nil),              // 11: garf.QueryEntry
+	(*QueryPath)(nil),               // 12: garf.QueryPath
+	(*QueryFolder)(nil),             // 13: garf.QueryFolder
+	(*FetcherInfo)(nil),             // 14: garf.FetcherInfo
+	(*WorkflowMetadata)(nil),        // 15: garf.WorkflowMetadata
+	(*WorkflowStep)(nil),            // 16: garf.WorkflowStep
+	(*ConfigMetadata)(nil),          // 17: garf.ConfigMetadata
+	(*Config)(nil),                  // 18: garf.Config
+	(*Workflow)(nil),                // 19: garf.Workflow
+	(*ExecuteWorkflowRequest)(nil),  // 20: garf.ExecuteWorkflowRequest
+	(*ExecuteWorkflowResponse)(nil), // 21: garf.ExecuteWorkflowResponse
+	(*ListFetchersResponse)(nil),    // 22: garf.ListFetchersResponse
+	(*ListExecutorsResponse)(nil),   // 23: garf.ListExecutorsResponse
+	(*GarfVersion)(nil),             // 24: garf.GarfVersion
+	(*GarfInfo)(nil),                // 25: garf.GarfInfo
+	(*structpb.Struct)(nil),         // 26: google.protobuf.Struct
+	(*emptypb.Empty)(nil),           // 27: google.protobuf.Empty
 }
 var file_garf_proto_depIdxs = []int32{
 	2,  // 0: garf.FetchRequest.context:type_name -> garf.FetchContext
 	3,  // 1: garf.FetchRequest.cache_options:type_name -> garf.GarfCacheOptions
-	23, // 2: garf.FetchResponse.rows:type_name -> google.protobuf.Struct
+	26, // 2: garf.FetchResponse.rows:type_name -> google.protobuf.Struct
 	6,  // 3: garf.FetchContext.query_parameters:type_name -> garf.QueryParameters
-	23, // 4: garf.FetchContext.fetcher_parameters:type_name -> google.protobuf.Struct
+	26, // 4: garf.FetchContext.fetcher_parameters:type_name -> google.protobuf.Struct
 	5,  // 5: garf.ExecuteRequest.context:type_name -> garf.ExecutionContext
 	3,  // 6: garf.ExecuteRequest.cache_options:type_name -> garf.GarfCacheOptions
 	6,  // 7: garf.ExecutionContext.query_parameters:type_name -> garf.QueryParameters
-	23, // 8: garf.ExecutionContext.fetcher_parameters:type_name -> google.protobuf.Struct
-	23, // 9: garf.ExecutionContext.writer_parameters:type_name -> google.protobuf.Struct
-	23, // 10: garf.QueryParameters.macro:type_name -> google.protobuf.Struct
-	23, // 11: garf.QueryParameters.template:type_name -> google.protobuf.Struct
+	26, // 8: garf.ExecutionContext.fetcher_parameters:type_name -> google.protobuf.Struct
+	26, // 9: garf.ExecutionContext.writer_parameters:type_name -> google.protobuf.Struct
+	26, // 10: garf.QueryParameters.macro:type_name -> google.protobuf.Struct
+	26, // 11: garf.QueryParameters.template:type_name -> google.protobuf.Struct
 	8,  // 12: garf.ExecuteBatchRequest.batch:type_name -> garf.QueryDefinition
 	5,  // 13: garf.ExecuteBatchRequest.context:type_name -> garf.ExecutionContext
 	3,  // 14: garf.ExecuteBatchRequest.cache_options:type_name -> garf.GarfCacheOptions
-	11, // 15: garf.WorkflowMetadata.required_fetchers:type_name -> garf.FetcherInfo
-	8,  // 16: garf.WorkflowStep.queries:type_name -> garf.QueryDefinition
-	6,  // 17: garf.WorkflowStep.query_parameters:type_name -> garf.QueryParameters
-	23, // 18: garf.WorkflowStep.fetcher_parameters:type_name -> google.protobuf.Struct
-	23, // 19: garf.WorkflowStep.writer_parameters:type_name -> google.protobuf.Struct
-	14, // 20: garf.Config.metadata:type_name -> garf.ConfigMetadata
-	5,  // 21: garf.Config.global_parameters:type_name -> garf.ExecutionContext
-	23, // 22: garf.Config.sources:type_name -> google.protobuf.Struct
-	13, // 23: garf.Workflow.steps:type_name -> garf.WorkflowStep
-	12, // 24: garf.Workflow.metadata:type_name -> garf.WorkflowMetadata
-	16, // 25: garf.ExecuteWorkflowRequest.workflow:type_name -> garf.Workflow
-	15, // 26: garf.ExecuteWorkflowRequest.config:type_name -> garf.Config
-	5,  // 27: garf.ExecuteWorkflowRequest.context:type_name -> garf.ExecutionContext
-	3,  // 28: garf.ExecuteWorkflowRequest.cache_options:type_name -> garf.GarfCacheOptions
-	11, // 29: garf.ListFetchersResponse.results:type_name -> garf.FetcherInfo
-	4,  // 30: garf.GarfService.Execute:input_type -> garf.ExecuteRequest
-	9,  // 31: garf.GarfService.ExecuteBatch:input_type -> garf.ExecuteBatchRequest
-	17, // 32: garf.GarfService.ExecuteWorkflow:input_type -> garf.ExecuteWorkflowRequest
-	0,  // 33: garf.GarfService.Fetch:input_type -> garf.FetchRequest
-	24, // 34: garf.GarfService.GetVersion:input_type -> google.protobuf.Empty
-	24, // 35: garf.GarfService.GetInfo:input_type -> google.protobuf.Empty
-	24, // 36: garf.GarfService.ListFetchers:input_type -> google.protobuf.Empty
-	24, // 37: garf.GarfService.ListExecutors:input_type -> google.protobuf.Empty
-	7,  // 38: garf.GarfService.Execute:output_type -> garf.ExecuteResponse
-	10, // 39: garf.GarfService.ExecuteBatch:output_type -> garf.ExecuteBatchResponse
-	18, // 40: garf.GarfService.ExecuteWorkflow:output_type -> garf.ExecuteWorkflowResponse
-	1,  // 41: garf.GarfService.Fetch:output_type -> garf.FetchResponse
-	21, // 42: garf.GarfService.GetVersion:output_type -> garf.GarfVersion
-	22, // 43: garf.GarfService.GetInfo:output_type -> garf.GarfInfo
-	19, // 44: garf.GarfService.ListFetchers:output_type -> garf.ListFetchersResponse
-	20, // 45: garf.GarfService.ListExecutors:output_type -> garf.ListExecutorsResponse
-	38, // [38:46] is the sub-list for method output_type
-	30, // [30:38] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	8,  // 15: garf.QueryEntry.query:type_name -> garf.QueryDefinition
+	14, // 16: garf.WorkflowMetadata.required_fetchers:type_name -> garf.FetcherInfo
+	11, // 17: garf.WorkflowStep.queries:type_name -> garf.QueryEntry
+	6,  // 18: garf.WorkflowStep.query_parameters:type_name -> garf.QueryParameters
+	26, // 19: garf.WorkflowStep.fetcher_parameters:type_name -> google.protobuf.Struct
+	26, // 20: garf.WorkflowStep.writer_parameters:type_name -> google.protobuf.Struct
+	17, // 21: garf.Config.metadata:type_name -> garf.ConfigMetadata
+	5,  // 22: garf.Config.global_parameters:type_name -> garf.ExecutionContext
+	26, // 23: garf.Config.sources:type_name -> google.protobuf.Struct
+	16, // 24: garf.Workflow.steps:type_name -> garf.WorkflowStep
+	15, // 25: garf.Workflow.metadata:type_name -> garf.WorkflowMetadata
+	19, // 26: garf.ExecuteWorkflowRequest.workflow:type_name -> garf.Workflow
+	18, // 27: garf.ExecuteWorkflowRequest.config:type_name -> garf.Config
+	5,  // 28: garf.ExecuteWorkflowRequest.context:type_name -> garf.ExecutionContext
+	3,  // 29: garf.ExecuteWorkflowRequest.cache_options:type_name -> garf.GarfCacheOptions
+	14, // 30: garf.ListFetchersResponse.results:type_name -> garf.FetcherInfo
+	4,  // 31: garf.GarfService.Execute:input_type -> garf.ExecuteRequest
+	9,  // 32: garf.GarfService.ExecuteBatch:input_type -> garf.ExecuteBatchRequest
+	20, // 33: garf.GarfService.ExecuteWorkflow:input_type -> garf.ExecuteWorkflowRequest
+	0,  // 34: garf.GarfService.Fetch:input_type -> garf.FetchRequest
+	27, // 35: garf.GarfService.GetVersion:input_type -> google.protobuf.Empty
+	27, // 36: garf.GarfService.GetInfo:input_type -> google.protobuf.Empty
+	27, // 37: garf.GarfService.ListFetchers:input_type -> google.protobuf.Empty
+	27, // 38: garf.GarfService.ListExecutors:input_type -> google.protobuf.Empty
+	7,  // 39: garf.GarfService.Execute:output_type -> garf.ExecuteResponse
+	10, // 40: garf.GarfService.ExecuteBatch:output_type -> garf.ExecuteBatchResponse
+	21, // 41: garf.GarfService.ExecuteWorkflow:output_type -> garf.ExecuteWorkflowResponse
+	1,  // 42: garf.GarfService.Fetch:output_type -> garf.FetchResponse
+	24, // 43: garf.GarfService.GetVersion:output_type -> garf.GarfVersion
+	25, // 44: garf.GarfService.GetInfo:output_type -> garf.GarfInfo
+	22, // 45: garf.GarfService.ListFetchers:output_type -> garf.ListFetchersResponse
+	23, // 46: garf.GarfService.ListExecutors:output_type -> garf.ListExecutorsResponse
+	39, // [39:47] is the sub-list for method output_type
+	31, // [31:39] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_garf_proto_init() }
@@ -1659,7 +1801,7 @@ func file_garf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_garf_proto_rawDesc), len(file_garf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
