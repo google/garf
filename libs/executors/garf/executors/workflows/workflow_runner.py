@@ -177,9 +177,24 @@ class WorkflowRunner:
         'workflow.fetchers': self.workflow.fetchers,
       }
     )
+    if self.workflow.execution_config:
+      span.set_attributes({'workflow.config': True})
+    if self.workflow.context:
+      span.set_attributes({'workflow.context': True})
+    if skipped_aliases := skipped_aliases or []:
+      span.set_attributes({'workflow.skipped_aliases': skipped_aliases})
+    if selected_aliases := selected_aliases or []:
+      span.set_attributes({'workflow.selected_aliases': selected_aliases})
+    if simulate:
+      span.set_attributes({'workflow.simulate': simulate})
+    if enable_cache:
+      span.set_attributes(
+        {
+          'workflow.enable_cache': enable_cache,
+          'workflow.cache_ttl_seconds': cache_ttl_seconds,
+        }
+      )
     self.workflow.compile()
-    skipped_aliases = skipped_aliases or []
-    selected_aliases = selected_aliases or []
     execution_results = collections.OrderedDict()
     logger.info('Starting Garf Workflow...')
     for i, step in enumerate(self.workflow.steps, 1):

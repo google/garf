@@ -238,7 +238,7 @@ class Workflow(pydantic.BaseModel):
 
   steps: list[ExecutionStep | ParallelStep]
   context: dict[str, dict[str, Any]] | None = None
-  execution_config: config.Config | None = None
+  execution_config: config.Config | dict[str, Any] | None = None
   prefix: str | pathlib.Path | None = pydantic.Field(
     default=None, excluded=True
   )

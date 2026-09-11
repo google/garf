@@ -159,7 +159,11 @@ class GarfService(garf_pb2_grpc.GarfService):
 
   def ExecuteWorkflow(self, request, context):
     execution_workflow = workflow.Workflow(
-      **MessageToDict(request.workflow, preserving_proto_field_name=True)
+      **MessageToDict(request.workflow, preserving_proto_field_name=True),
+      context=MessageToDict(request.context, preserving_proto_field_name=True),
+      execution_config=MessageToDict(
+        request.config, preserving_proto_field_name=True
+      ),
     )
     telemetry.workflow_requested.add(
       1, attributes=execution_workflow.attributes
@@ -167,7 +171,13 @@ class GarfService(garf_pb2_grpc.GarfService):
     runner = workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow
     )
-    results = runner.run()
+    results = runner.run(
+      selected_aliases=request.selected_aliases,
+      skipped_aliases=request.skipped_aliases,
+      simulate=request.simulate,
+      enable_cache=request.cache_options.enable_cache,
+      cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
+    )
     return garf_pb2.ExecuteWorkflowResponse(results=results)
 
   def GetVersion(self, request, context):
@@ -231,7 +241,7 @@ if __name__ == '__main__':
     reflection.SERVICE_NAME,
   )
   reflection.enable_server_reflection(SERVICE_NAMES, server)
-  server.add_insecure_port(f'[::]:{args.port}')
+  server.add_insecure_port(f'127.0.0.1:{args.port}')
   server.start()
   logging.info('Garf service started, listening on port %d', args.port)
   server.wait_for_termination()
