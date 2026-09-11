@@ -131,9 +131,11 @@ def test_execute_workflow(grpc_stub):
           fetcher='fake',
           alias='test',
           queries=[
-            pb.QueryDefinition(
-              title='example',
-              text='SELECT metric.int FROM fake',
+            pb.QueryEntry(
+              query=pb.QueryDefinition(
+                title='example',
+                text='SELECT metric.int FROM fake',
+              )
             )
           ],
           fetcher_parameters={

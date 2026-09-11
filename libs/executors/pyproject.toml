@@ -61,6 +61,7 @@ server=[
   "pydantic-settings",
   "grpcio-reflection",
   "celery[redis]",
+  "grpcio>=1.83.0",
   "grpcio-health-checking",
 
 ]
