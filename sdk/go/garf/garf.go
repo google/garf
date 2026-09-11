@@ -232,3 +232,30 @@ func (g *Garf) ExecuteBatch(batch map[string]string, writer string) []string {
 	logger.InfoContext(ctx, "Executed batch", "batch", queries, "result", result)
 	return result
 }
+
+func (g *Garf) ExecuteWorkflow(workflow *Workflow, config *Config, executionContext *ExecutionContext) []string {
+	ctx, span := tracer.Start(context.Background(), "execute-workflow")
+	defer span.End()
+
+	c, conn := g.init(ctx)
+	defer conn.Close()
+
+	request := ExecuteWorkflowRequest{
+		Workflow:        workflow,
+		SelectedAliases: []string{},
+		SkippedAliases:  []string{},
+		Config:          config,
+		Context:         executionContext,
+		CacheOptions:    &GarfCacheOptions{},
+		Simulate:        false,
+	}
+	r, err := c.ExecuteWorkflow(ctx, &request)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed workflow")
+	}
+	result := r.Results
+	versionAttr := attribute.StringSlice("garf.results", result)
+	span.SetAttributes(versionAttr)
+	logger.InfoContext(ctx, "Executed workflow", "workflow", result)
+	return result
+}
