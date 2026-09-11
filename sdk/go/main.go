@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/garf/sdk/go/garf"
 	"github.com/google/garf/sdk/go/telemetry"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 func run() (error error) {
@@ -62,6 +63,56 @@ func run() (error error) {
 	}
 	resultsBatch := g.ExecuteBatch(batch, "json")
 	fmt.Println(resultsBatch)
+
+	fetcherParameters := map[string]any{
+		"n_rows": 10,
+	}
+	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+
+	globalFetcherParameters := map[string]any{
+		"n_rows": 5,
+	}
+	globalFetcherParametersStruct, err := structpb.NewStruct(globalFetcherParameters)
+	sourcesParameters := map[string]any{
+		"fake": map[string]any{
+			"fetcher_parameters": map[string]any{"n_rows": 1},
+		},
+	}
+	sourcesStruct, err := structpb.NewStruct(sourcesParameters)
+
+	workflow := garf.Workflow{
+		Name: "test",
+		Steps: []*garf.WorkflowStep{
+			{
+				Fetcher: "fake",
+				Alias:   "test",
+				Writer:  "json",
+				Queries: []*garf.QueryDefinition{
+					{
+						Title: "test_workflow",
+						Text:  "SELECT metric.int AS field FROM fake",
+					},
+				},
+				FetcherParameters: fetcherParameterStruct,
+			},
+		},
+	}
+	config := garf.Config{
+		Name: "test-config",
+		GlobalParameters: &garf.ExecutionContext{
+			FetcherParameters: globalFetcherParametersStruct,
+		},
+		Sources: sourcesStruct,
+	}
+	contextStruct, err := structpb.NewStruct(map[string]any{
+		"n_rows": 20,
+	})
+
+	executionContext := garf.ExecutionContext{
+		FetcherParameters: contextStruct,
+	}
+	resultsWorkflow := g.ExecuteWorkflow(&workflow, &config, &executionContext)
+	fmt.Println(resultsWorkflow)
 
 	return nil
 }
