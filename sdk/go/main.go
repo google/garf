@@ -20,6 +20,7 @@ import (
 	"log"
 	"os"
 
+	"buf.build/go/protoyaml"
 	"github.com/google/garf/sdk/go/garf"
 	"github.com/google/garf/sdk/go/telemetry"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -41,6 +42,17 @@ func run() (error error) {
 	}
 	g := garf.New(garfEndpoint)
 
+	runHelperFunctions(g)
+	executeQueryInline(g)
+	executeQueryFromFile(g)
+	executeQueryBatchInline(g)
+	runInlineWorkflow(g)
+	runWorkflowFromFile(g)
+
+	return nil
+}
+
+func runHelperFunctions(g garf.Garf) {
 	version := g.GetVersion()
 	fmt.Println(version)
 
@@ -52,10 +64,22 @@ func run() (error error) {
 
 	executors := g.ListExecutors()
 	fmt.Println(executors)
+}
 
+func executeQueryInline(g garf.Garf) error {
 	results := g.Execute("test", "SELECT metric.int AS field FROM fake", "json")
 	fmt.Println(results)
+	return nil
+}
 
+func executeQueryFromFile(g garf.Garf) error {
+	queryData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_query.sql")
+	results := g.Execute("test", string(queryData), "json")
+	fmt.Println(results)
+	return err
+}
+
+func executeQueryBatchInline(g garf.Garf) error {
 	batch := map[string]string{
 		"test":  "SELECT metric.int AS field FROM fake",
 		"test2": "SELECT metric.int AS field FROM fake",
@@ -63,22 +87,42 @@ func run() (error error) {
 	}
 	resultsBatch := g.ExecuteBatch(batch, "json")
 	fmt.Println(resultsBatch)
+	return nil
+}
 
+func runWorkflowFromFile(g garf.Garf) error {
+	workflowData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_workflow.yaml")
+	var workflowFile garf.Workflow
+	options := protoyaml.UnmarshalOptions{
+		AllowPartial: true,
+		DiscardUnknown: true,
+
+	}
+	if err := options.Unmarshal(workflowData, &workflowFile); err != nil {
+		log.Fatalf("Failed to parse workflow: %v", err)
+	}
+
+	resultsFileWorkflow := g.ExecuteWorkflow(&workflowFile, &garf.Config{}, &garf.ExecutionContext{})
+	fmt.Println(resultsFileWorkflow)
+	return err
+
+}
+func runInlineWorkflow(g garf.Garf) error {
 	fetcherParameters := map[string]any{
 		"n_rows": 10,
 	}
-	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	fetcherParameterStruct, _ := structpb.NewStruct(fetcherParameters)
 
 	globalFetcherParameters := map[string]any{
 		"n_rows": 5,
 	}
-	globalFetcherParametersStruct, err := structpb.NewStruct(globalFetcherParameters)
+	globalFetcherParametersStruct, _ := structpb.NewStruct(globalFetcherParameters)
 	sourcesParameters := map[string]any{
 		"fake": map[string]any{
 			"fetcher_parameters": map[string]any{"n_rows": 1},
 		},
 	}
-	sourcesStruct, err := structpb.NewStruct(sourcesParameters)
+	sourcesStruct, _ := structpb.NewStruct(sourcesParameters)
 
 	workflow := garf.Workflow{
 		Name: "test",
@@ -87,10 +131,12 @@ func run() (error error) {
 				Fetcher: "fake",
 				Alias:   "test",
 				Writer:  "json",
-				Queries: []*garf.QueryDefinition{
+				Queries: []*garf.QueryEntry{
 					{
-						Title: "test_workflow",
-						Text:  "SELECT metric.int AS field FROM fake",
+						Query: &garf.QueryDefinition{
+							Title: "test_workflow",
+							Text:  "SELECT metric.int AS field FROM fake",
+						},
 					},
 				},
 				FetcherParameters: fetcherParameterStruct,
@@ -104,7 +150,7 @@ func run() (error error) {
 		},
 		Sources: sourcesStruct,
 	}
-	contextStruct, err := structpb.NewStruct(map[string]any{
+	contextStruct, _ := structpb.NewStruct(map[string]any{
 		"n_rows": 20,
 	})
 
@@ -113,7 +159,6 @@ func run() (error error) {
 	}
 	resultsWorkflow := g.ExecuteWorkflow(&workflow, &config, &executionContext)
 	fmt.Println(resultsWorkflow)
-
 	return nil
 }
 
