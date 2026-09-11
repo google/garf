@@ -1,20 +1,10 @@
-writer_section: &writer_defaults
-  writer: console
-  writer_parameters:
-    format: json
-common_context: &empty_context
-  context:
-    query_parameters:
-      macro: {}
-      template: {}
-
 name: test_workflow
 metadata:
   description: Test Workflow
   version: 0.0.0
   required_garf_version: 0.0.0
-  required_fetchers:
-    google-ads: 0.0.0
+  # required_fetchers:
+  #   google-ads: 0.0.0
 
 steps:
   - alias: test
@@ -28,7 +18,9 @@ steps:
               dimensions.name AS name,
               metrics.clicks AS clicks
             FROM resource
-    <<: [*empty_context, *writer_defaults]
+    writer: console
+    writer_parameters:
+      format: json
     fetcher_parameters:
       data:
         - resource: Campaign A
@@ -71,7 +63,9 @@ steps:
               dimensions.name AS name,
               metrics.clicks AS clicks
             FROM resource
-    <<: [*empty_context, *writer_defaults]
+    writer: console
+    writer_parameters:
+      format: json
     fetcher_parameters:
       data:
         - resource: Campaign A

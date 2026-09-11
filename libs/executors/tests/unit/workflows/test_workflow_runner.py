@@ -15,7 +15,7 @@ import pathlib
 
 import yaml
 from garf.executors.workflows import workflow_runner
-from garf.executors.workflows.workflow import Workflow, WorkflowEdge
+from garf.executors.workflows.workflow import Workflow
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
