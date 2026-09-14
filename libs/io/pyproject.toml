@@ -84,8 +84,11 @@ firestore = [
 pushgateway = [
   "prometheus-client",
 ]
+duckdb = [
+  "duckdb",
+]
 all = [
-  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway]"
+  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb]"
 ]
 
 [project.entry-points.garf_writer]
@@ -105,6 +108,7 @@ kafka = "garf.io.writers.kafka_writer"
 mongo = "garf.io.writers.mongodb_writer"
 firestore = "garf.io.writers.firestore_writer"
 pushgateway = "garf.io.writers.pushgateway_writer"
+duckdb = "garf.io.writers.duckdb_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]

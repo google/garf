@@ -1,5 +1,5 @@
 !!! important
-    To save data to Google Sheets install `garf-io` with SqlAlchemy support
+    To save data to Sqlalchemy supported DBs install `garf-io` with SqlAlchemy support
 
     ```bash
     pip install garf-io[sqlalchemy]
