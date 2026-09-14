@@ -47,7 +47,7 @@ _EXECUTORS_MODULES: dict[str, str] = {
     'import_path': 'garf.executors.opensearch_executor',
     'executor_class': 'OpenSearchQueryExecutor',
   },
-  'elasticearch': {
+  'elasticsearch': {
     'import_path': 'garf.executors.elasticsearch_executor',
     'executor_class': 'ElasticSearchQueryExecutor',
   },
@@ -106,7 +106,12 @@ def setup_executor(
     )
     query_executor = getattr(
       executor_module, concrete_executor_module.get('executor_class')
-    )(**fetcher_parameters, writers=writer_clients)
+    )(
+      **fetcher_parameters,
+      writers=writer_clients,
+      enable_cache=enable_cache,
+      cache_ttl_seconds=cache_ttl_seconds,
+    )
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:

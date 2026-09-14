@@ -28,11 +28,10 @@ import re
 import uuid
 
 import pandas as pd
-from garf.core import report
+from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +52,8 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     engine: sqlalchemy.engine.base.Engine | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     connection_string: str | None = None,
+    enable_cache: bool = False,
+    cache_ttl_seconds: int = cache.DEFAULT_CACHE_TTL,
     **kwargs: str,
   ) -> None:
     """Initializes executor with a given engine.
@@ -60,11 +61,15 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Args:
         engine: Initialized Engine object to operated on a given database.
     """
-    self.engine = engine or sqlalchemy.create_engine(
+    self.api_client = engine or sqlalchemy.create_engine(
       connection_string or 'sqlite://'
     )
     self.writers = writers
-    super().__init__(source='sqldb')
+    super().__init__(
+      source='sqldb',
+      enable_cache=enable_cache,
+      cache_ttl_seconds=cache_ttl_seconds,
+    )
 
   @classmethod
   def from_connection_string(
@@ -75,7 +80,6 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     https://docs.sqlalchemy.org/en/20/core/engines.html
     """
     engine = sqlalchemy.create_engine(connection_string or 'sqlite://')
-    SQLAlchemyInstrumentor().instrument(engine=engine)
     return cls(engine=engine, writers=writers)
 
   @tracer.start_as_current_span('sql.execute')
@@ -95,7 +99,7 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    with self.engine.begin() as conn:
+    with self.api_client.begin() as conn:
       if re.findall(r'(create|update) ', query.lower()):
         try:
           if conn.engine.dialect.name == 'sqlite':

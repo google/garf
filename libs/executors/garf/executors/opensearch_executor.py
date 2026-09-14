@@ -26,7 +26,7 @@ except ImportError as e:
 
 import logging
 
-from garf.core import report
+from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
@@ -50,6 +50,8 @@ class OpenSearchQueryExecutor(executor.Executor):
     client: OpenSearch | None = None,
     hosts: str | list[str] | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
+    enable_cache: bool = False,
+    cache_ttl_seconds: int = cache.DEFAULT_CACHE_TTL,
     **kwargs: str,
   ) -> None:
     """Initializes executor with a given OpenSearch client.
@@ -63,9 +65,13 @@ class OpenSearchQueryExecutor(executor.Executor):
       hosts = _normalize_hosts(hosts)
     else:
       hosts = [{'host': 'localhost', 'port': 9200}]
-    self.client = client or OpenSearch(hosts=hosts)
+    self.api_client = client or OpenSearch(hosts=hosts)
     self.writers = writers
-    super().__init__(source='opensearch')
+    super().__init__(
+      source='opensearch',
+      enable_cache=enable_cache,
+      cache_ttl_seconds=cache_ttl_seconds,
+    )
 
   @tracer.start_as_current_span('opensearch.execute')
   def _execute(
@@ -81,7 +87,7 @@ class OpenSearchQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    response = self.client.transport.perform_request(
+    response = self.api_client.transport.perform_request(
       'POST', '/_plugins/_sql', body={'query': query}
     )
     if 'datarows' in response and 'schema' in response:

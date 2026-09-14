@@ -148,11 +148,18 @@ class GarfService(garf_pb2_grpc.GarfService):
     query_args = execution_context.ExecutionContext(
       **MessageToDict(request.context, preserving_proto_field_name=True)
     ).query_parameters
-    result = query_executor.fetcher.fetch(
-      query_specification=request.query,
-      title=request.title,
-      args=query_args,
-    )
+    if hasattr(query_executor, 'fetcher'):
+      result = query_executor.fetcher.fetch(
+        query_specification=request.query,
+        title=request.title,
+        args=query_args,
+      )
+    else:
+      result = query_executor.fetch(
+        query_specification=request.query,
+        title=request.title,
+        args=query_args,
+      )
     return garf_pb2.FetchResponse(
       columns=result.column_names, rows=result.to_list(row_type='dict')
     )
