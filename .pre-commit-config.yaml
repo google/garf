@@ -109,3 +109,19 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+
+  # Go
+  - id: go-format
+    exclude: ^sdk/go/garf/.*\.pb\.go$
+    name: go-format
+    entry: gofmt -w ./sdk/go/
+    language: system
+    pass_filenames: false
+    files: ^sdk/go/.*\.go$
+  - id: go-imports
+    exclude: ^sdk/go/garf/.*\.pb\.go$
+    name: go-imports
+    entry: goimports -w ./sdk/go/
+    language: system
+    pass_filenames: false
+    files: ^sdk/go/.*\.go$

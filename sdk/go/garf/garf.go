@@ -148,6 +148,45 @@ func (g *Garf) ListExecutors() []string {
 	return executors
 }
 
+func (g *Garf) Fetch(title, query string) *FetchResponse {
+	ctx, span := tracer.Start(context.Background(), "fetch")
+	defer span.End()
+
+	c, conn := g.init(ctx)
+	defer conn.Close()
+
+	fetcherParameters := map[string]any{
+		"n_rows": 10,
+	}
+	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	if err != nil {
+		log.Fatalf("Failed to create fetcher parameters: %v", err)
+	}
+
+	request := FetchRequest{
+		Source: "fake",
+		Title:  title,
+		Query:  query,
+		Context: &FetchContext{
+			FetcherParameters: fetcherParameterStruct,
+		},
+	}
+
+	r, err := c.Fetch(ctx, &request)
+	span.SetAttributes(
+		attribute.String("query.title", request.Title),
+		attribute.String("query.text", request.Query),
+		attribute.String("query.source", request.Source),
+	)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed execution", "title", title)
+	}
+	versionAttr := attribute.Int("garf.results", len(r.Rows))
+	span.SetAttributes(versionAttr)
+	logger.InfoContext(ctx, "Executed query", "title", request.Title, "result", r)
+	return r
+
+}
 func (g *Garf) Execute(title, query, writer string) []string {
 	ctx, span := tracer.Start(context.Background(), "execute")
 	defer span.End()

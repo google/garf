@@ -20,6 +20,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/jedib0t/go-pretty/v6/table"
+
 	"buf.build/go/protoyaml"
 	"github.com/google/garf/sdk/go/garf"
 	"github.com/google/garf/sdk/go/telemetry"
@@ -43,6 +45,7 @@ func run() (error error) {
 	g := garf.New(garfEndpoint)
 
 	runHelperFunctions(g)
+	fetchQueryInline(g)
 	executeQueryInline(g)
 	executeQueryFromFile(g)
 	executeQueryBatchInline(g)
@@ -64,6 +67,30 @@ func runHelperFunctions(g garf.Garf) {
 
 	executors := g.ListExecutors()
 	fmt.Println(executors)
+}
+
+func fetchQueryInline(g garf.Garf) error {
+	results := g.Fetch("test",
+		"SELECT metric.int AS field, metric.float AS field2 FROM fake",
+	)
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	columns := results.Columns
+	headerRow := make(table.Row, len(columns))
+	for i, c := range columns {
+		headerRow[i] = c
+	}
+	t.AppendHeader(headerRow)
+	for _, v := range results.Rows {
+		row := make(table.Row, len(v.Fields))
+		rowMap := v.AsMap()
+		for i, c := range columns {
+			row[i] = rowMap[c]
+		}
+		t.AppendRow(row)
+	}
+	t.Render()
+	return nil
 }
 
 func executeQueryInline(g garf.Garf) error {
@@ -94,9 +121,8 @@ func runWorkflowFromFile(g garf.Garf) error {
 	workflowData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_workflow.yaml")
 	var workflowFile garf.Workflow
 	options := protoyaml.UnmarshalOptions{
-		AllowPartial: true,
+		AllowPartial:   true,
 		DiscardUnknown: true,
-
 	}
 	if err := options.Unmarshal(workflowData, &workflowFile); err != nil {
 		log.Fatalf("Failed to parse workflow: %v", err)
@@ -160,6 +186,7 @@ func runInlineWorkflow(g garf.Garf) error {
 	resultsWorkflow := g.ExecuteWorkflow(&workflow, &config, &executionContext)
 	fmt.Println(resultsWorkflow)
 	return nil
+
 }
 
 func main() {
