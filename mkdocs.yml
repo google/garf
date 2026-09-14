@@ -68,6 +68,7 @@ nav:
       - Json: usage/writers/json-writer.md
       - BigQuery: usage/writers/bq-writer.md
       - SQL: usage/writers/sql-writer.md
+      - DuckDB: usage/writers/duckdb-writer.md
       - Google Sheets: usage/writers/sheets-writer.md
       - Excel: usage/writers/excel-writer.md
       - Google PubSub: usage/writers/pubsub-writer.md
