@@ -18,7 +18,9 @@ package garf
 import (
 	"context"
 	"log"
+	"os"
 
+	"buf.build/go/protoyaml"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -187,7 +189,7 @@ func (g *Garf) Fetch(title, query string) *FetchResponse {
 	return r
 
 }
-func (g *Garf) Execute(title, query, writer string) []string {
+func (g *Garf) Execute(source, title, query, writer string) []string {
 	ctx, span := tracer.Start(context.Background(), "execute")
 	defer span.End()
 
@@ -202,7 +204,7 @@ func (g *Garf) Execute(title, query, writer string) []string {
 		log.Fatalf("Failed to create fetcher parameters: %v", err)
 	}
 	request := ExecuteRequest{
-		Source: "fake",
+		Source: source,
 		Title:  title,
 		Query:  query,
 		Context: &ExecutionContext{
@@ -297,4 +299,33 @@ func (g *Garf) ExecuteWorkflow(workflow *Workflow, config *Config, executionCont
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed workflow", "workflow", result)
 	return result
+}
+
+func ReadWorkflowFromFile(file string) (*Workflow, error) {
+	workflowData, _ := os.ReadFile(file)
+	var workflowFile Workflow
+	options := protoyaml.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+	if err := options.Unmarshal(workflowData, &workflowFile); err != nil {
+		log.Fatalf("Failed to parse workflow: %v", err)
+		return nil, err
+	}
+	return &workflowFile, nil
+}
+
+func ReadConfigFromFile(file string) (*Config, error) {
+	workflowData, _ := os.ReadFile(file)
+	var configFile Config
+	options := protoyaml.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+	if err := options.Unmarshal(workflowData, &configFile); err != nil {
+		log.Fatalf("Failed to parse config: %v", err)
+		return nil, err
+	}
+	return &configFile, nil
+
 }

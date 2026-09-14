@@ -22,7 +22,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
-	"buf.build/go/protoyaml"
+	"github.com/google/garf/sdk/go/cmd"
 	"github.com/google/garf/sdk/go/garf"
 	"github.com/google/garf/sdk/go/telemetry"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -94,14 +94,14 @@ func fetchQueryInline(g garf.Garf) error {
 }
 
 func executeQueryInline(g garf.Garf) error {
-	results := g.Execute("test", "SELECT metric.int AS field FROM fake", "json")
+	results := g.Execute("fake", "test", "SELECT metric.int AS field FROM fake", "json")
 	fmt.Println(results)
 	return nil
 }
 
 func executeQueryFromFile(g garf.Garf) error {
 	queryData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_query.sql")
-	results := g.Execute("test", string(queryData), "json")
+	results := g.Execute("fake", "test", string(queryData), "json")
 	fmt.Println(results)
 	return err
 }
@@ -118,17 +118,12 @@ func executeQueryBatchInline(g garf.Garf) error {
 }
 
 func runWorkflowFromFile(g garf.Garf) error {
-	workflowData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_workflow.yaml")
-	var workflowFile garf.Workflow
-	options := protoyaml.UnmarshalOptions{
-		AllowPartial:   true,
-		DiscardUnknown: true,
-	}
-	if err := options.Unmarshal(workflowData, &workflowFile); err != nil {
+	workflow, err := garf.ReadWorkflowFromFile("../../libs/executors/tests/unit/workflows/test_workflow.yaml")
+	if err != nil {
 		log.Fatalf("Failed to parse workflow: %v", err)
 	}
 
-	resultsFileWorkflow := g.ExecuteWorkflow(&workflowFile, &garf.Config{}, &garf.ExecutionContext{})
+	resultsFileWorkflow := g.ExecuteWorkflow(workflow, &garf.Config{}, &garf.ExecutionContext{})
 	fmt.Println(resultsFileWorkflow)
 	return err
 
@@ -190,7 +185,8 @@ func runInlineWorkflow(g garf.Garf) error {
 }
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatalln(err)
-	}
+	// if err := run(); err != nil {
+	// 	log.Fatalln(err)
+	// }
+	cmd.Execute()
 }
