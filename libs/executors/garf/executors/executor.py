@@ -21,10 +21,11 @@ import functools
 import inspect
 import logging
 import operator
+import pathlib
 import time
 from typing import Optional
 
-from garf.core import query_editor, report, report_fetcher, simulator
+from garf.core import cache, query_editor, report, report_fetcher, simulator
 from garf.executors import (
   exceptions,
   execution_context,
@@ -47,11 +48,16 @@ class Executor:
     preprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
     postprocessors: Optional[dict[str, report_fetcher.Processor]] = None,
     report_simulator: Optional[simulator.ApiReportSimulator] = None,
+    enable_cache: bool = False,
+    cache_path: str | pathlib.Path | None = None,
+    cache_ttl_seconds: int = 3600,
   ) -> None:
     self.source = source
     self.preprocessors = preprocessors or {}
     self.postprocessors = postprocessors or {}
     self.simulator = report_simulator
+    self.enable_cache = enable_cache
+    self.cache = cache.GarfCache(cache_path, ttl_seconds=cache_ttl_seconds)
 
   @tracer.start_as_current_span('executor.execute')
   def execute(
@@ -91,6 +97,28 @@ class Executor:
       context = query_processor.process_gquery(context)
     if self.preprocessors and not self.simulator:
       _handle_processors(processors=self.preprocessors, context=context)
+    if self.enable_cache:
+      try:
+        results = self.cache.load(
+          query_spec.query,
+          args=context.query_parameters,
+          kwargs=context.fetcher_parameters,
+        )
+        logger.warning('Cached version of report is loaded')
+        span.set_attribute('is_cached_report', True)
+        if (
+          (results or results.results_placeholder)
+          and context.writer != 'unset'
+          and (self.writers or context.writer)
+        ):
+          writer_clients = self.writers or context.writer_clients
+          write_outputs = write_many(writer_clients, results, title)
+          duration = time.perf_counter() - start_time
+          telemetry.executor_histogram.record(duration, executor_attributes)
+          return write_outputs
+      except cache.GarfCacheFileNotFoundError:
+        logger.info('Cached version not found, generating')
+
     if len(query_parts := query_spec.query_parts) > 1:
       span.set_attribute('executor.multi_query', True)
       span.set_attribute('executor.multi_query.num_queries', len(query_parts))
@@ -101,6 +129,13 @@ class Executor:
     else:
       try:
         results = self._execute(query=query_text, title=title, context=context)
+        if self.enable_cache:
+          self.cache.save(
+            results,
+            query_spec.query,
+            args=context.query_parameters,
+            kwargs=context.fetcher_parameters,
+          )
       except exceptions.GarfExecutorError as e:
         telemetry.executor_error_counter.add(1, executor_attributes)
         raise e
@@ -219,6 +254,19 @@ class Executor:
     }
     return await asyncio.gather(
       *(run_with_semaphore(title, task) for title, task in tasks.items())
+    )
+
+  def fetch(
+    self,
+    query_specification: str,
+    args: query_editor.GarfQueryParameters | None = None,
+    title: str | None = None,
+    **kwargs: str,
+  ) -> report.GarfReport:
+    return self.execute(
+      query=query_specification,
+      title=title,
+      context=execution_context.ExecutionContext(query_parameters=args),
     )
 
 

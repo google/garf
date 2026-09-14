@@ -30,7 +30,7 @@ except ImportError as e:
 
 import logging
 
-from garf.core import report
+from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
@@ -58,6 +58,8 @@ class BigQueryExecutor(executor.Executor):
     location: str | None = None,
     default_table_expiration_ms: int | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
+    enable_cache: bool = False,
+    cache_ttl_seconds: int = cache.DEFAULT_CACHE_TTL,
     **kwargs: str,
   ) -> None:
     """Initializes BigQueryExecutor.
@@ -90,10 +92,12 @@ class BigQueryExecutor(executor.Executor):
     super().__init__(
       source='bq',
       preprocessors={'init': self.create_datasets},
+      enable_cache=enable_cache,
+      cache_ttl_seconds=cache_ttl_seconds,
     )
 
   @property
-  def client(self) -> bigquery.Client:
+  def api_client(self) -> bigquery.Client:
     """Instantiated BigQuery client."""
     if not self._client:
       with tracer.start_as_current_span('bq.create_client'):
@@ -128,7 +132,7 @@ class BigQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    job = self.client.query(query)
+    job = self.api_client.query(query)
     try:
       result = job.result()
     except google_cloud_exceptions.GoogleCloudError as e:
@@ -154,14 +158,14 @@ class BigQueryExecutor(executor.Executor):
       for dataset in datasets:
         dataset_id = f'{self.project}.{dataset}'
         try:
-          self.client.get_dataset(dataset_id)
+          self.api_client.get_dataset(dataset_id)
         except google_cloud_exceptions.NotFound:
           bq_dataset = bigquery.Dataset(dataset_id)
           if table_expiration := self.default_table_expiration_ms:
             bq_dataset.default_table_expiration_ms = int(table_expiration)
           bq_dataset.location = self.location
           with contextlib.suppress(google_cloud_exceptions.Conflict):
-            self.client.create_dataset(bq_dataset, timeout=30)
+            self.api_client.create_dataset(bq_dataset, timeout=30)
             logger.info('Created new dataset %s', dataset_id)
 
 
