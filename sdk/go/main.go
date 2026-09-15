@@ -16,178 +16,25 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/jedib0t/go-pretty/v6/table"
-
-	// "github.com/google/garf/sdk/go/cmd"
-	"github.com/google/garf/sdk/go/garf"
+	"github.com/google/garf/sdk/go/cmd"
 	"github.com/google/garf/sdk/go/telemetry"
-	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
-func run() (error error) {
-	ctx := context.Background()
-	otelShutdown, err := telemetry.SetupOtelSdk(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		err = errors.Join(err, otelShutdown(context.Background()))
-	}()
-	garfEndpoint := os.Getenv("GARF_ENDPOINT")
-	if garfEndpoint == "" {
-		garfEndpoint = "127.0.0.1:50051"
-	}
-	g := garf.New(context.Background(), garfEndpoint)
-	defer g.Close()
-
-	runHelperFunctions(g)
-	fetchQueryInline(g)
-	executeQueryInline(g)
-	executeQueryFromFile(g)
-	executeQueryBatchInline(g)
-	runInlineWorkflow(g)
-	runWorkflowFromFile(g)
-
-	return nil
-}
-
-func runHelperFunctions(g *garf.Garf) {
-	version := g.GetVersion()
-	fmt.Println(version)
-
-	info := g.GetInfo()
-	fmt.Println(info)
-
-	fetchers := g.ListFetchers()
-	fmt.Println(fetchers)
-
-	executors := g.ListExecutors()
-	fmt.Println(executors)
-}
-
-func fetchQueryInline(g *garf.Garf) error {
-	results := g.Fetch("test",
-		"SELECT metric.int AS field, metric.float AS field2 FROM fake",
-	)
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
-	columns := results.Columns
-	headerRow := make(table.Row, len(columns))
-	for i, c := range columns {
-		headerRow[i] = c
-	}
-	t.AppendHeader(headerRow)
-	for _, v := range results.Rows {
-		row := make(table.Row, len(v.Fields))
-		rowMap := v.AsMap()
-		for i, c := range columns {
-			row[i] = rowMap[c]
-		}
-		t.AppendRow(row)
-	}
-	t.Render()
-	return nil
-}
-
-func executeQueryInline(g *garf.Garf) error {
-	results := g.Execute("fake", "test", "SELECT metric.int AS field FROM fake", "json")
-	fmt.Println(results)
-	return nil
-}
-
-func executeQueryFromFile(g *garf.Garf) error {
-	queryData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_query.sql")
-	results := g.Execute("fake", "test", string(queryData), "json")
-	fmt.Println(results)
-	return err
-}
-
-func executeQueryBatchInline(g *garf.Garf) error {
-	batch := map[string]string{
-		"test":  "SELECT metric.int AS field FROM fake",
-		"test2": "SELECT metric.int AS field FROM fake",
-		"test3": "SELECT metric.int AS field FROM fake",
-	}
-	resultsBatch := g.ExecuteBatch(batch, "json")
-	fmt.Println(resultsBatch)
-	return nil
-}
-
-func runWorkflowFromFile(g *garf.Garf) error {
-	workflow, err := garf.ReadWorkflowFromFile("../../libs/executors/tests/unit/workflows/test_workflow.yaml")
-	if err != nil {
-		log.Fatalf("Failed to parse workflow: %v", err)
-	}
-
-	resultsFileWorkflow := g.ExecuteWorkflow(workflow, &garf.Config{}, &garf.ExecutionContext{})
-	fmt.Println(resultsFileWorkflow)
-	return err
-
-}
-func runInlineWorkflow(g *garf.Garf) error {
-	fetcherParameters := map[string]any{
-		"n_rows": 10,
-	}
-	fetcherParameterStruct, _ := structpb.NewStruct(fetcherParameters)
-
-	globalFetcherParameters := map[string]any{
-		"n_rows": 5,
-	}
-	globalFetcherParametersStruct, _ := structpb.NewStruct(globalFetcherParameters)
-	sourcesParameters := map[string]any{
-		"fake": map[string]any{
-			"fetcher_parameters": map[string]any{"n_rows": 1},
-		},
-	}
-	sourcesStruct, _ := structpb.NewStruct(sourcesParameters)
-
-	workflow := garf.Workflow{
-		Name: "test",
-		Steps: []*garf.WorkflowStep{
-			{
-				Fetcher: "fake",
-				Alias:   "test",
-				Writer:  "json",
-				Queries: []*garf.QueryEntry{
-					{
-						Query: &garf.QueryDefinition{
-							Title: "test_workflow",
-							Text:  "SELECT metric.int AS field FROM fake",
-						},
-					},
-				},
-				FetcherParameters: fetcherParameterStruct,
-			},
-		},
-	}
-	config := garf.Config{
-		Name: "test-config",
-		GlobalParameters: &garf.ExecutionContext{
-			FetcherParameters: globalFetcherParametersStruct,
-		},
-		Sources: sourcesStruct,
-	}
-	contextStruct, _ := structpb.NewStruct(map[string]any{
-		"n_rows": 20,
-	})
-
-	executionContext := garf.ExecutionContext{
-		FetcherParameters: contextStruct,
-	}
-	resultsWorkflow := g.ExecuteWorkflow(&workflow, &config, &executionContext)
-	fmt.Println(resultsWorkflow)
-	return nil
-
-}
-
 func main() {
-	if err := run(); err != nil {
-		log.Fatalln(err)
+	if otelEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"); otelEndpoint != "" {
+		ctx := context.Background()
+		otelShutdown, err := telemetry.SetupOtelSdk(ctx)
+		log.Print("Otel is setup!")
+		if err != nil {
+			log.Fatalf("Failed to setup telemetry: %v", err)
+		}
+
+		defer func() {
+			err = errors.Join(err, otelShutdown(ctx))
+		}()
 	}
-	// cmd.Execute()
+	cmd.Execute()
 }
