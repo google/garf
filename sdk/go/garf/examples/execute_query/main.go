@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/google/garf/sdk/go/garf"
+	"github.com/google/garf/sdk/go/garf/garf"
 )
 
 func main() {

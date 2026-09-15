@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/google/garf/sdk/go/garf"
+	"github.com/google/garf/sdk/go/garf/garf"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 

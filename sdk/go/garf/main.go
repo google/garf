@@ -19,8 +19,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/google/garf/sdk/go/cmd"
-	"github.com/google/garf/sdk/go/telemetry"
+	"github.com/google/garf/sdk/go/garf/cmd"
+	"github.com/google/garf/sdk/go/garf/telemetry"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/google/garf/sdk/go
+module github.com/google/garf/sdk/go/garf
 
 go 1.25.0
 

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/garf/sdk/go/internal/testenv"
+	"github.com/google/garf/sdk/go/garf/internal/testenv"
 )
 
 func TestMain(m *testing.M) {
