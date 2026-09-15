@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/garf/sdk/go/internal/testenv"
+	"github.com/google/garf/sdk/go/garf/internal/testenv"
 )
 
 var (

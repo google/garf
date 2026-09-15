@@ -6,7 +6,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
-	"github.com/google/garf/sdk/go/garf"
+	"github.com/google/garf/sdk/go/garf/garf"
 )
 
 func main() {

@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/garf/sdk/go/garf"
+	"github.com/google/garf/sdk/go/garf/garf"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
