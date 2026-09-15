@@ -19,6 +19,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"sync"
 
 	"buf.build/go/protoyaml"
 	"google.golang.org/grpc"
@@ -39,42 +40,48 @@ const name = "github.com/google/garf/sdk/go/garf"
 var (
 	tracer = otel.Tracer(name)
 	logger = otelslog.NewLogger(name)
+	garf   *Garf
+	once   sync.Once
 )
 
 // Garf represents gRPC client to garf server.
 type Garf struct {
 	Endpoint string
+	client   GarfServiceClient
+	conn     *grpc.ClientConn
 }
 
 // New creates new Garf instance.
-func New(endpoint string) Garf {
-	return Garf{Endpoint: endpoint}
-}
-
-func (g *Garf) init(ctx context.Context) (GarfServiceClient, *grpc.ClientConn) {
+func New(ctx context.Context, endpoint string) *Garf {
 	ctx, span := tracer.Start(ctx, "init")
 	defer span.End()
-	conn, err := grpc.NewClient(
-		g.Endpoint,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-	)
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+	once.Do(func() {
+		conn, err := grpc.NewClient(
+			endpoint,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		)
+		if err != nil {
+			log.Fatalf("did not connect: %v", err)
+		}
+		c := NewGarfServiceClient(conn)
+		garf = &Garf{Endpoint: endpoint, client: c, conn: conn}
+	})
+	return garf
+}
+
+func (g *Garf) Close() error {
+	if g.conn != nil {
+		return g.conn.Close()
 	}
-	c := NewGarfServiceClient(conn)
-	return c, conn
+	return nil
 }
 
 // GetVersion returns garf server version.
 func (g *Garf) GetVersion() string {
 	ctx, span := tracer.Start(context.Background(), "version")
 	defer span.End()
-
-	c, conn := g.init(ctx)
-	defer conn.Close()
-
-	r, err := c.GetVersion(ctx, &emptypb.Empty{})
+	r, err := g.client.GetVersion(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get version: %v", err)
 	}
@@ -90,10 +97,7 @@ func (g *Garf) GetInfo() string {
 	ctx, span := tracer.Start(context.Background(), "info")
 	defer span.End()
 
-	c, conn := g.init(ctx)
-	defer conn.Close()
-
-	r, err := c.GetInfo(ctx, &emptypb.Empty{})
+	r, err := g.client.GetInfo(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get version: %v", err)
 	}
@@ -112,10 +116,7 @@ func (g *Garf) ListFetchers() []string {
 	ctx, span := tracer.Start(context.Background(), "list-fetchers")
 	defer span.End()
 
-	c, conn := g.init(ctx)
-	defer conn.Close()
-
-	r, err := c.ListFetchers(ctx, &emptypb.Empty{})
+	r, err := g.client.ListFetchers(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get fetchers: %v", err)
 	}
@@ -135,10 +136,7 @@ func (g *Garf) ListExecutors() []string {
 	ctx, span := tracer.Start(context.Background(), "list-executors")
 	defer span.End()
 
-	c, conn := g.init(ctx)
-	defer conn.Close()
-
-	r, err := c.ListExecutors(ctx, &emptypb.Empty{})
+	r, err := g.client.ListExecutors(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get executors: %v", err)
 	}
@@ -153,9 +151,6 @@ func (g *Garf) ListExecutors() []string {
 func (g *Garf) Fetch(title, query string) *FetchResponse {
 	ctx, span := tracer.Start(context.Background(), "fetch")
 	defer span.End()
-
-	c, conn := g.init(ctx)
-	defer conn.Close()
 
 	fetcherParameters := map[string]any{
 		"n_rows": 10,
@@ -174,7 +169,7 @@ func (g *Garf) Fetch(title, query string) *FetchResponse {
 		},
 	}
 
-	r, err := c.Fetch(ctx, &request)
+	r, err := g.client.Fetch(ctx, &request)
 	span.SetAttributes(
 		attribute.String("query.title", request.Title),
 		attribute.String("query.text", request.Query),
@@ -192,9 +187,6 @@ func (g *Garf) Fetch(title, query string) *FetchResponse {
 func (g *Garf) Execute(source, title, query, writer string) []string {
 	ctx, span := tracer.Start(context.Background(), "execute")
 	defer span.End()
-
-	c, conn := g.init(ctx)
-	defer conn.Close()
 
 	fetcherParameters := map[string]any{
 		"n_rows": 10,
@@ -218,7 +210,7 @@ func (g *Garf) Execute(source, title, query, writer string) []string {
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
-	r, err := c.Execute(ctx, &request)
+	r, err := g.client.Execute(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed query", "title", request.Title)
 		log.Fatalf("cannot execute query: %v", err)
@@ -233,9 +225,6 @@ func (g *Garf) Execute(source, title, query, writer string) []string {
 func (g *Garf) ExecuteBatch(batch map[string]string, writer string) []string {
 	ctx, span := tracer.Start(context.Background(), "execute-batch")
 	defer span.End()
-
-	c, conn := g.init(ctx)
-	defer conn.Close()
 
 	fetcherParameters := map[string]any{
 		"n_rows": 10,
@@ -262,7 +251,7 @@ func (g *Garf) ExecuteBatch(batch map[string]string, writer string) []string {
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
-	r, err := c.ExecuteBatch(ctx, &request)
+	r, err := g.client.ExecuteBatch(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed batch", "batch", queries)
 		log.Fatalf("cannot execute batch: %v", queries)
@@ -278,9 +267,6 @@ func (g *Garf) ExecuteWorkflow(workflow *Workflow, config *Config, executionCont
 	ctx, span := tracer.Start(context.Background(), "execute-workflow")
 	defer span.End()
 
-	c, conn := g.init(ctx)
-	defer conn.Close()
-
 	request := ExecuteWorkflowRequest{
 		Workflow:        workflow,
 		SelectedAliases: []string{},
@@ -290,7 +276,7 @@ func (g *Garf) ExecuteWorkflow(workflow *Workflow, config *Config, executionCont
 		CacheOptions:    &GarfCacheOptions{},
 		Simulate:        false,
 	}
-	r, err := c.ExecuteWorkflow(ctx, &request)
+	r, err := g.client.ExecuteWorkflow(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed workflow")
 	}
@@ -327,5 +313,4 @@ func ReadConfigFromFile(file string) (*Config, error) {
 		return nil, err
 	}
 	return &configFile, nil
-
 }

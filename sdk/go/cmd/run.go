@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -28,7 +29,8 @@ var runCmd = &cobra.Command{
 	Short: "Runs workflow from a file",
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(garfEndpoint)
+		g := garf.New(context.Background(), garfEndpoint)
+		defer g.Close()
 		var err error
 		workflowPath, _ := cmd.Flags().GetString("file")
 		configPath, _ := cmd.Flags().GetString("config")

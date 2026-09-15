@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -32,7 +33,8 @@ var executeCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(garfEndpoint)
+		g := garf.New(context.Background(), garfEndpoint)
+		defer g.Close()
 		p := filepath.Clean(args[0])
 		queryData, err := os.ReadFile(args[0])
 		if err != nil {

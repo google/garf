@@ -22,7 +22,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
-	"github.com/google/garf/sdk/go/cmd"
+	// "github.com/google/garf/sdk/go/cmd"
 	"github.com/google/garf/sdk/go/garf"
 	"github.com/google/garf/sdk/go/telemetry"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -42,7 +42,8 @@ func run() (error error) {
 	if garfEndpoint == "" {
 		garfEndpoint = "127.0.0.1:50051"
 	}
-	g := garf.New(garfEndpoint)
+	g := garf.New(context.Background(), garfEndpoint)
+	defer g.Close()
 
 	runHelperFunctions(g)
 	fetchQueryInline(g)
@@ -55,7 +56,7 @@ func run() (error error) {
 	return nil
 }
 
-func runHelperFunctions(g garf.Garf) {
+func runHelperFunctions(g *garf.Garf) {
 	version := g.GetVersion()
 	fmt.Println(version)
 
@@ -69,7 +70,7 @@ func runHelperFunctions(g garf.Garf) {
 	fmt.Println(executors)
 }
 
-func fetchQueryInline(g garf.Garf) error {
+func fetchQueryInline(g *garf.Garf) error {
 	results := g.Fetch("test",
 		"SELECT metric.int AS field, metric.float AS field2 FROM fake",
 	)
@@ -93,20 +94,20 @@ func fetchQueryInline(g garf.Garf) error {
 	return nil
 }
 
-func executeQueryInline(g garf.Garf) error {
+func executeQueryInline(g *garf.Garf) error {
 	results := g.Execute("fake", "test", "SELECT metric.int AS field FROM fake", "json")
 	fmt.Println(results)
 	return nil
 }
 
-func executeQueryFromFile(g garf.Garf) error {
+func executeQueryFromFile(g *garf.Garf) error {
 	queryData, err := os.ReadFile("../../libs/executors/tests/unit/workflows/test_query.sql")
 	results := g.Execute("fake", "test", string(queryData), "json")
 	fmt.Println(results)
 	return err
 }
 
-func executeQueryBatchInline(g garf.Garf) error {
+func executeQueryBatchInline(g *garf.Garf) error {
 	batch := map[string]string{
 		"test":  "SELECT metric.int AS field FROM fake",
 		"test2": "SELECT metric.int AS field FROM fake",
@@ -117,7 +118,7 @@ func executeQueryBatchInline(g garf.Garf) error {
 	return nil
 }
 
-func runWorkflowFromFile(g garf.Garf) error {
+func runWorkflowFromFile(g *garf.Garf) error {
 	workflow, err := garf.ReadWorkflowFromFile("../../libs/executors/tests/unit/workflows/test_workflow.yaml")
 	if err != nil {
 		log.Fatalf("Failed to parse workflow: %v", err)
@@ -128,7 +129,7 @@ func runWorkflowFromFile(g garf.Garf) error {
 	return err
 
 }
-func runInlineWorkflow(g garf.Garf) error {
+func runInlineWorkflow(g *garf.Garf) error {
 	fetcherParameters := map[string]any{
 		"n_rows": 10,
 	}
@@ -185,8 +186,8 @@ func runInlineWorkflow(g garf.Garf) error {
 }
 
 func main() {
-	// if err := run(); err != nil {
-	// 	log.Fatalln(err)
-	// }
-	cmd.Execute()
+	if err := run(); err != nil {
+		log.Fatalln(err)
+	}
+	// cmd.Execute()
 }
