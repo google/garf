@@ -125,3 +125,11 @@ repos:
     language: system
     pass_filenames: false
     files: ^sdk/go/.*\.go$
+
+  # Rust
+  - id: rust-format
+    name: rust-format
+    entry: cargo fmt --manifest-path sdk/rust/Cargo.toml
+    language: system
+    pass_filenames: false
+    files: ^sdk/rust/.*\.rs$

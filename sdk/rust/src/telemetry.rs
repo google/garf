@@ -15,7 +15,9 @@ struct MetadataMap<'a>(&'a mut tonic::metadata::MetadataMap);
 impl Injector for MetadataMap<'_> {
     /// Set a key and value in the MetadataMap.  Does nothing if the key or value are not valid inputs
     fn set(&mut self, key: &str, value: String) {
-        if let Ok(key) = tonic::metadata::MetadataKey::from_bytes(key.as_bytes()) {
+        if let Ok(key) =
+            tonic::metadata::MetadataKey::from_bytes(key.as_bytes())
+        {
             if let Ok(val) = tonic::metadata::MetadataValue::try_from(&value) {
                 self.0.insert(key, val);
             }
@@ -61,7 +63,9 @@ pub fn init_tracer_provider() -> SdkTracerProvider {
         .expect("Failed to create span exporter");
 
     let provider = SdkTracerProvider::builder()
-        .with_resource(Resource::builder().with_service_name("garf-rust").build())
+        .with_resource(
+            Resource::builder().with_service_name("garf-rust").build(),
+        )
         .with_batch_exporter(exporter)
         .build();
     global::set_text_map_propagator(TraceContextPropagator::new());
@@ -76,7 +80,9 @@ pub fn init_meter_provider() -> SdkMeterProvider {
         .expect("Failed to initialize metric exporter");
 
     let provider = SdkMeterProvider::builder()
-        .with_resource(Resource::builder().with_service_name("garf-rust").build())
+        .with_resource(
+            Resource::builder().with_service_name("garf-rust").build(),
+        )
         .with_periodic_exporter(exporter)
         .build();
     global::set_meter_provider(provider.clone());
@@ -90,7 +96,9 @@ pub fn init_logger_provider() -> SdkLoggerProvider {
         .expect("Failed to initialize logger");
 
     SdkLoggerProvider::builder()
-        .with_resource(Resource::builder().with_service_name("garf-rust").build())
+        .with_resource(
+            Resource::builder().with_service_name("garf-rust").build(),
+        )
         .with_batch_exporter(exporter)
         .build()
 }
@@ -104,7 +112,10 @@ pub fn create_span(tracer: &'static str, span: &'static str) -> Context {
     Context::current_with_span(span)
 }
 
-pub fn create_propagated_request<T>(cx: &Context, message: T) -> tonic::Request<T> {
+pub fn create_propagated_request<T>(
+    cx: &Context,
+    message: T,
+) -> tonic::Request<T> {
     let mut req = tonic::Request::new(message);
     global::get_text_map_propagator(|propagator| {
         propagator.inject_context(&cx, &mut MetadataMap(req.metadata_mut()))
