@@ -5,9 +5,9 @@ use crate::grf::garf::{
     WorkflowStep,
 };
 use grf::Garf;
-use prost_types::{Struct, Value, value::Kind};
+use pbjson_types::{Struct, Value, value::Kind};
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     batches.insert("test3", "SELECT metric.int AS field FROM fake");
     g.execute_batch(batches).await?;
 
-    let mut fields = BTreeMap::new();
+    let mut fields = HashMap::new();
     fields.insert(
         "n_rows".to_string(),
         Value {
@@ -61,6 +61,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     let config = Config::default();
     let context = ExecutionContext::default();
     g.execute_workflow(workflow, config, context).await?;
+
+    let _ = match grf::read_from_file::<Workflow>("examples/test_workflow.yaml")
+    {
+        Ok(file) => {
+            g.execute_workflow(
+                file,
+                Config::default(),
+                ExecutionContext::default(),
+            )
+            .await?;
+        }
+        Err(err) => {
+            eprintln!("Error: {}", err);
+        }
+    };
 
     otel_guard.shutdown();
     Ok(())

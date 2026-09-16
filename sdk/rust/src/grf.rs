@@ -2,15 +2,19 @@ pub mod garf {
     tonic::include_proto!("garf");
 }
 use crate::telemetry;
+use anyhow::Result;
 use garf::garf_service_client::GarfServiceClient;
 use garf::{Config, ExecutionContext, Workflow};
 use opentelemetry::{KeyValue, trace::TraceContextExt};
-use prost_types::{Struct, Value, value::Kind};
+use pbjson_types::{Struct, Value, value::Kind};
+use serde;
 use serde_json;
-use std::collections::{BTreeMap, HashMap};
+use serde_yaml_bw;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fs::File;
 
-type GarfResult =
-    Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+type GarfResult = Result<(), Box<dyn Error + Send + Sync + 'static>>;
 
 pub struct Garf {
     pub endpoint: String,
@@ -155,7 +159,7 @@ impl Garf {
     ) -> GarfResult {
         let cx = telemetry::create_span("garf-rust", "execute");
         let mut client = self.connect_client().await?;
-        let mut fields = BTreeMap::new();
+        let mut fields = HashMap::new();
         fields.insert(
             "n_rows".to_string(),
             Value {
@@ -203,7 +207,7 @@ impl Garf {
     ) -> GarfResult {
         let cx = telemetry::create_span("garf-rust", "execute-batch");
         let mut client = self.connect_client().await?;
-        let mut fields = BTreeMap::new();
+        let mut fields = HashMap::new();
         fields.insert(
             "n_rows".to_string(),
             Value {
@@ -259,13 +263,6 @@ impl Garf {
     ) -> GarfResult {
         let cx = telemetry::create_span("garf-rust", "execute-workflow");
         let mut client = self.connect_client().await?;
-        let mut fields = BTreeMap::new();
-        fields.insert(
-            "n_rows".to_string(),
-            Value {
-                kind: Some(Kind::NumberValue(10f64)),
-            },
-        );
         let payload = garf::ExecuteWorkflowRequest {
             workflow: Some(workflow),
             config: Some(config),
@@ -294,4 +291,16 @@ impl Garf {
         };
         Ok(())
     }
+}
+
+pub fn read_from_file<T: serde::de::DeserializeOwned>(
+    file: &'static str,
+) -> Result<T> {
+    let file_path = File::open(file)?;
+    let yaml_data: serde_yaml_bw::Value =
+        serde_yaml_bw::from_reader(file_path)?;
+    let json_value: serde_json::Value = serde_json::to_value(yaml_data)?;
+
+    let data: T = serde_json::from_value(json_value)?;
+    Ok(data)
 }
