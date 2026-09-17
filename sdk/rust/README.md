@@ -26,6 +26,7 @@ in your projects:
 * Run query from text (`execute_query`)
 * Run workflow from inline definition (`execute_workflow_inline`) and file (`execute_workflow_file`)
 * Run batch of queries (`execute_batch`)
+* Get results back to rust for printing to console (`fetch`)
 * Calling helper functions (i.e. get available fetchers) (`helpers`)
 
 ```bash
