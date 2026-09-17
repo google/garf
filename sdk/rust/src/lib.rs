@@ -97,7 +97,7 @@ impl Garf {
                     "garf.executors.version",
                     info.executors_version.clone(),
                 ));
-                println!("Info: {:?}", info);
+                println!("Info: {:#?}", info);
             }
             Err(status) => {
                 let status_code = status.code();
@@ -125,7 +125,7 @@ impl Garf {
                         fetcher_str,
                     ));
                 }
-                println!("Fetchers: {:?}", &fetchers);
+                println!("Fetchers: {:#?}", &fetchers);
             }
             Err(status) => {
                 let status_code = status.code();
@@ -168,8 +168,8 @@ impl Garf {
 
     pub async fn execute(
         &self,
-        query: &'static str,
-        title: &'static str,
+        query: impl Into<String>,
+        title: impl Into<String>,
     ) -> GarfResult {
         let cx = telemetry::create_span("garf-rust", "execute");
         let mut client = self.connect_client().await?;
@@ -182,8 +182,8 @@ impl Garf {
         );
         let payload = garf::ExecuteRequest {
             source: "fake".to_string(),
-            query: query.to_string(),
-            title: title.to_string(),
+            query: query.into(),
+            title: title.into(),
             simulate: false,
             context: Some(garf::ExecutionContext {
                 writers: vec!["json".to_string()],

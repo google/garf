@@ -1,13 +1,18 @@
 [package]
 name = "garf"
-version = "0.1.0"
+version = "0.0.1"
+description = "Rust SDK and CLI for garf"
+license = "Apache-2.0"
+repository = "https://github.com/google/garf/sdk/rust"
+authors = ["Andrei Markin"]
+readme = "README.md"
 edition = "2024"
 
 [lib]
-path = "src/grf.rs"
+path = "src/lib.rs"
 
-[[bin]] # Bin to run the gRPC server
-name = "grpc-client"
+[[bin]]
+name = "garf"
 path = "src/main.rs"
 bench = false
 
@@ -29,6 +34,7 @@ serde_json = "1.0.151"
 serde_yaml_bw = "2.5.8"
 pbjson-types = "0.9.0"
 pbjson = "0.9.0"
+clap = { version = "4.6.7", features = ["derive"] }
 
 [build-dependencies]
 prost-build = "0.14.4"
