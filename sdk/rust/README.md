@@ -1,5 +1,23 @@
 # Rust SDK for garf server
 
+## CLI
+
+* Execute query
+
+```bash
+cargo run --bin grf execute path/to/query.sql
+```
+* Execute workflow
+
+```bash
+cargo run --bin grf workflow run path/to/workflow.yaml
+```
+* Get server info
+
+```bash
+cargo run --bin grf server info
+```
+
 ## Examples
 
 [examples](examples/) folder contains several examples of using garf Rust SDK
