@@ -336,6 +336,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "garf"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "opentelemetry",
+ "opentelemetry-appender-tracing",
+ "opentelemetry-otlp",
+ "opentelemetry_sdk",
+ "pbjson",
+ "pbjson-build",
+ "pbjson-types",
+ "prost 0.14.4",
+ "prost-build",
+ "prost-types",
+ "serde",
+ "serde_json",
+ "serde_yaml_bw",
+ "tokio",
+ "tonic 0.14.6",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1234,32 +1260,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
-]
-
-[[package]]
-name = "rust"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "opentelemetry",
- "opentelemetry-appender-tracing",
- "opentelemetry-otlp",
- "opentelemetry_sdk",
- "pbjson",
- "pbjson-build",
- "pbjson-types",
- "prost 0.14.4",
- "prost-build",
- "prost-types",
- "serde",
- "serde_json",
- "serde_yaml_bw",
- "tokio",
- "tonic 0.14.6",
- "tonic-prost",
- "tonic-prost-build",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

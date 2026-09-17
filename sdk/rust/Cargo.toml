@@ -1,7 +1,10 @@
 [package]
-name = "rust"
+name = "garf"
 version = "0.1.0"
 edition = "2024"
+
+[lib]
+path = "src/grf.rs"
 
 [[bin]] # Bin to run the gRPC server
 name = "grpc-client"

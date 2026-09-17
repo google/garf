@@ -12,6 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub fn main() {
-    println!("garf is working");
+use garf::Garf;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
+{
+    let g = Garf::new("http://127.0.0.1:50051");
+    let mut batches = HashMap::new();
+    batches.insert("test1", "SELECT metric.int AS field FROM fake");
+    batches.insert("test2", "SELECT metric.int AS field FROM fake");
+    batches.insert("test3", "SELECT metric.int AS field FROM fake");
+    g.execute_batch(batches).await?;
+    Ok(())
 }
