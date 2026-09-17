@@ -27,6 +27,7 @@ use serde_yaml_bw;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
+use tabled;
 
 type GarfResult = Result<(), Box<dyn Error + Send + Sync + 'static>>;
 
@@ -166,6 +167,72 @@ impl Garf {
         Ok(())
     }
 
+    pub async fn fetch(
+        &self,
+        query: impl Into<String>,
+        title: impl Into<String>,
+    ) -> GarfResult {
+        let cx = telemetry::create_span("garf-rust", "fetch");
+        let mut client = self.connect_client().await?;
+        let mut fields = HashMap::new();
+        fields.insert(
+            "n_rows".to_string(),
+            Value {
+                kind: Some(Kind::NumberValue(10f64)),
+            },
+        );
+        let payload = garf::FetchRequest {
+            source: "fake".to_string(),
+            query: query.into(),
+            title: title.into(),
+            simulate: false,
+            context: Some(garf::FetchContext {
+                fetcher_parameters: Some(Struct { fields }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let req = telemetry::create_propagated_request(&cx, payload.clone());
+        let response = client.fetch(req).await;
+        let span = cx.span();
+        let _ = match response {
+            Ok(res) => {
+                let results = &res.get_ref();
+                let headers = results.columns.clone();
+                let mut builder = tabled::builder::Builder::new();
+                builder.push_record(headers);
+                for row in &results.rows {
+                    let mut row_strings: Vec<String> = Vec::new();
+                    let fields = &row.fields;
+                    for col in &results.columns {
+                        let cell_value = match fields.get(col) {
+                            Some(Value { kind: Some(kind) }) => match kind {
+                                Kind::NullValue(_) => "".to_string(),
+                                Kind::NumberValue(n) => n.to_string(),
+                                Kind::StringValue(s) => s.clone(),
+                                Kind::BoolValue(b) => b.to_string(),
+                                Kind::StructValue(_) => "[Object]".to_string(),
+                                Kind::ListValue(_) => "[Array]".to_string(),
+                            },
+                            _ => "".to_string(),
+                        };
+                        row_strings.push(cell_value);
+                    }
+                    builder.push_record(row_strings);
+                }
+                let table = builder.build();
+                println!("Fetch results:\n {}", table);
+            }
+            Err(status) => {
+                let status_code = status.code();
+                span.set_attribute(KeyValue::new(
+                    "garf.error",
+                    status_code.description(),
+                ));
+            }
+        };
+        Ok(())
+    }
     pub async fn execute(
         &self,
         query: impl Into<String>,
