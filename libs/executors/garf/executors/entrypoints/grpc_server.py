@@ -50,6 +50,32 @@ CACHE_ENABLED = os.getenv('GARF_CACHE_LOCATION')
 server_start_time = time.time()
 
 
+class GarfGrpcServerError(Exception):
+  """Failure to find credentials."""
+
+
+class TokenAuthInterceptor(grpc.ServerInterceptor):
+  def __init__(self, expected_token: str, header_key: str = 'authorization'):
+    self._expected_token = expected_token
+    self._header_key = header_key
+
+  def intercept_service(self, continuation, handler_call_details):
+    metadata = dict(handler_call_details.invocation_metadata)
+    auth_header = metadata.get(self._header_key)
+
+    if auth_header != f'Bearer {self._expected_token}':
+
+      def abort(ignored_request, context):
+        context.abort(
+          grpc.StatusCode.UNAUTHENTICATED,
+          'Invalid or missing authentication token',
+        )
+
+      return grpc.unary_unary_rpc_method_handler(abort)
+
+    return continuation(handler_call_details)
+
+
 def _get_server_info(options):
   if not (commit_sha := os.getenv('GIT_COMMIT_SHA')):
     try:
@@ -219,6 +245,81 @@ class GarfService(garf_pb2_grpc.GarfService):
     )
 
 
+def create_insecure_server(
+  port: int = 50051,
+  enable_reflection: bool = True,
+  max_workers: int = 1,
+) -> grpc.Server:
+  server = grpc.server(
+    futures.ThreadPoolExecutor(max_workers=max_workers),
+  )
+
+  server = grpc.server(
+    futures.ThreadPoolExecutor(max_workers=args.parallel_threshold),
+  )
+  service = GarfService()
+  garf_pb2_grpc.add_GarfServiceServicer_to_server(service, server)
+  health_pb2_grpc.add_HealthServicer_to_server(service, server)
+  if enable_reflection:
+    service_names = (
+      garf_pb2.DESCRIPTOR.services_by_name['GarfService'].full_name,
+      reflection.SERVICE_NAME,
+    )
+    reflection.enable_server_reflection(service_names, server)
+  server.add_insecure_port(f'127.0.0.1:{port}')
+  return server
+
+
+def create_secure_server(
+  server_cert: bytes,
+  server_key: bytes,
+  auth_token: str | None = None,
+  root_cert: bytes | None = None,
+  port: int = 50051,
+  enable_reflection: bool = True,
+  max_workers: int = 1,
+) -> grpc.Server:
+  interceptors = []
+  if auth_token:
+    interceptors.append(TokenAuthInterceptor(expected_token=auth_token))
+  server = grpc.server(
+    futures.ThreadPoolExecutor(max_workers=max_workers),
+    interceptors=interceptors,
+  )
+
+  service = GarfService()
+  garf_pb2_grpc.add_GarfServiceServicer_to_server(service, server)
+  health_pb2_grpc.add_HealthServicer_to_server(service, server)
+  if enable_reflection:
+    service_names = (
+      garf_pb2.DESCRIPTOR.services_by_name['GarfService'].full_name,
+      reflection.SERVICE_NAME,
+    )
+    reflection.enable_server_reflection(service_names, server)
+  server_credentials = grpc.ssl_server_credentials(
+    private_key_certificate_chain_pairs=[(server_key, server_cert)],
+    root_certificates=root_cert,
+    require_client_auth=root_cert is not None,
+  )
+  server.add_secure_port(f'127.0.0.1:{port}', server_credentials)
+  return server
+
+
+def read_files():
+  cert_path = os.getenv('GRPC_SERVER_CERT_PATH', '/certs/server.crt')
+  key_path = os.getenv('GRPC_SERVER_KEY_PATH', '/certs/server.key')
+  if cert_path and key_path:
+    try:
+      with open(cert_path, 'rb') as f:
+        cert_bytes = f.read()
+      with open(key_path, 'rb') as f:
+        key_bytes = f.read()
+      return (cert_bytes, key_bytes)
+    except FileNotFoundError as e:
+      raise GarfGrpcServerError from e
+  raise GarfGrpcServerError
+
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--port', dest='port', default=50051, type=int)
@@ -236,19 +337,23 @@ if __name__ == '__main__':
   )
   logger.addHandler(initialize_logger())
 
-  server = grpc.server(
-    futures.ThreadPoolExecutor(max_workers=args.parallel_threshold),
-  )
-
-  service = GarfService()
-  garf_pb2_grpc.add_GarfServiceServicer_to_server(service, server)
-  health_pb2_grpc.add_HealthServicer_to_server(service, server)
-  SERVICE_NAMES = (
-    garf_pb2.DESCRIPTOR.services_by_name['GarfService'].full_name,
-    reflection.SERVICE_NAME,
-  )
-  reflection.enable_server_reflection(SERVICE_NAMES, server)
-  server.add_insecure_port(f'127.0.0.1:{args.port}')
+  try:
+    cert_bytes, key_bytes = read_files()
+    server = create_secure_server(
+      server_cert=cert_bytes,
+      server_key=key_bytes,
+      auth_token=os.getenv('GRPC_AUTH_TOKEN'),
+      max_workers=args.parallel_threshold,
+    )
+    logging.info(
+      'Garf server started with token auth enabled, listening on port %d',
+      args.port,
+    )
+  except GarfGrpcServerError:
+    server = create_insecure_server(max_workers=args.parallel_threshold)
+    logging.info(
+      'Garf server started without authentication, listening on port %d',
+      args.port,
+    )
   server.start()
-  logging.info('Garf service started, listening on port %d', args.port)
   server.wait_for_termination()

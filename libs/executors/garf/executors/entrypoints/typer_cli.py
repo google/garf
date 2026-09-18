@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import enum
+import os
 import pathlib
 import sys
 from typing import Optional
@@ -466,10 +467,37 @@ def version() -> str:
   raise typer.Exit()
 
 
+def _setup_grpc_channel(
+  server_url,
+  root_crt_path: str | None = os.getenv('GARF_GRPC_ROOT_CERT_KEY'),
+):
+  if root_crt_path:
+    try:
+      with open(root_crt_path, 'rb') as f:
+        root_cert = f.read()
+    except FileNotFoundError:
+      return grpc.insecure_channel(server_url)
+    channel_credentials = grpc.ssl_channel_credentials(
+      root_certificates=root_cert
+    )
+    token = os.getenv('GARF_GRPC_AUTH_TOKEN')
+
+    def auth_token_plugin(context, callback):
+      callback([('authorization', f'Bearer {token}')], None)
+
+    call_credentials = grpc.metadata_call_credentials(auth_token_plugin)
+    credentials = grpc.composite_channel_credentials(
+      channel_credentials, call_credentials
+    )
+
+    return grpc.secure_channel(server_url, credentials)
+  return grpc.insecure_channel(server_url)
+
+
 def _send_grpc(
   context, parallel_queries, batch, server_url, source, enable_cache, simulate
 ):
-  channel = grpc.insecure_channel(server_url)
+  channel = _setup_grpc_channel(server_url)
   stub = garf_pb2_grpc.GarfServiceStub(channel)
   rest_context = context.model_dump()
   if rest_context.get('writer') == ['console']:
