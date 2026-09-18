@@ -1,0 +1,8 @@
+apiVersion: v2
+name: garf
+type: application
+description: Install garf server
+version: 0.1.0
+appVersion: "1.7.0"
+maintainers:
+   - name: Andrei Markin
