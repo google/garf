@@ -14,15 +14,20 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use garf::{self, Garf};
-use std::fs;
+use std::{env, fs};
 
 #[derive(Parser, Debug)]
 #[command(name = "garf", version = "0.0.1")]
 struct Cli {
-    #[arg(long, default_value = "http://127.0.0.1:50051")]
+    #[arg(
+        long,
+        env = "GARF_ENDPOINT",
+        default_value = "http://127.0.0.1:50051",
+        global = true
+    )]
     endpoint: String,
 
-    #[arg(long, action = clap::ArgAction::SetTrue)]
+    #[arg(long, action = clap::ArgAction::SetTrue, global=true)]
     enable_cache: bool,
 
     #[command(subcommand)]
@@ -59,6 +64,16 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
 {
+    let mut otel_guard = None;
+    if env::var("OTEL_EXPORTER_OTLP_ENDPOINT").is_ok() {
+        match garf::telemetry::setup_otel() {
+            Ok(guard) => otel_guard = Some(guard),
+            Err(err) => {
+                panic!("Couldn't start Otel: {0}", err);
+            }
+        }
+    }
+    let _ = garf::telemetry::create_span("garf-rust", "run");
     let cli = Cli::parse();
     let g = Garf::new(&cli.endpoint);
     match cli.command {
@@ -103,6 +118,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
         _ => {
             eprintln!("Unknown command");
         }
+    }
+    if let Some(guard) = otel_guard {
+        guard.shutdown();
     }
     Ok(())
 }
