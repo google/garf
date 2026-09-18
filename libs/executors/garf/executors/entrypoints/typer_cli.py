@@ -16,13 +16,16 @@
 from __future__ import annotations
 
 import enum
+import os
 import pathlib
 import sys
+import time
 from typing import Optional
 
 import garf.executors
 import garf.executors.garf_pb2 as pb
 import grpc
+import jwt
 import requests
 import typer
 from garf.core import cache
@@ -75,6 +78,23 @@ typer_app.add_typer(
   cache_app,
   name='cache',
 )
+
+
+def _generate_jwt() -> str:
+  with open(os.getenv('GARF_JWT_PRIVATE_KEY'), 'r') as f:
+    jwt_private_key = f.read()
+
+  now = int(time.time())
+  payload = {
+    'iss': os.getenv('JWT_ISSUER', 'urn:garf:local:issuer'),
+    'aud': os.getenv('JWT_AUDIENCE', 'garf-service'),
+    'sub': 'garf-python-cli',
+    'iat': now,
+    'exp': now + 3600,
+    'role': 'admin',
+  }
+
+  return jwt.encode(payload, jwt_private_key, algorithm='RS256')
 
 
 @cache_app.command(
@@ -466,10 +486,52 @@ def version() -> str:
   raise typer.Exit()
 
 
+def _setup_grpc_channel(
+  server_url,
+  root_crt_path: str | None = os.getenv('GARF_GRPC_ROOT_CERT_KEY'),
+  jwt_private_key: str | None = os.getenv('GARF_JWT_PRIVATE_KEY'),
+  auth_token: str | None = os.getenv('GARF_GRPC_AUTH_TOKEN'),
+):
+  root_cert = None
+  if root_crt_path:
+    try:
+      with open(root_crt_path, 'rb') as f:
+        root_cert = f.read()
+        channel_credentials = grpc.ssl_channel_credentials(
+          root_certificates=root_cert
+        )
+    except FileNotFoundError:
+      channel_credentials = None
+
+    def jwt_auth_plugin(context, callback):
+      token = _generate_jwt()
+      callback([('authorization', f'Bearer {token}')], None)
+
+    def auth_token_plugin(context, callback):
+      callback([('authorization', f'Bearer {auth_token}')], None)
+
+    if auth_token:
+      call_credentials = grpc.metadata_call_credentials(auth_token_plugin)
+    elif jwt_private_key:
+      call_credentials = grpc.metadata_call_credentials(jwt_auth_plugin)
+    else:
+      call_credentials = None
+    if channel_credentials and call_credentials:
+      credentials = grpc.composite_channel_credentials(
+        channel_credentials, call_credentials
+      )
+      return grpc.secure_channel(server_url, credentials)
+    if channel_credentials:
+      return grpc.secure_channel(server_url, channel_credentials)
+    if call_credentials:
+      return grpc.secure_channel(server_url, call_credentials)
+  return grpc.insecure_channel(server_url)
+
+
 def _send_grpc(
   context, parallel_queries, batch, server_url, source, enable_cache, simulate
 ):
-  channel = grpc.insecure_channel(server_url)
+  channel = _setup_grpc_channel(server_url)
   stub = garf_pb2_grpc.GarfServiceStub(channel)
   rest_context = context.model_dump()
   if rest_context.get('writer') == ['console']:
