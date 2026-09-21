@@ -3,6 +3,11 @@
 # Declare variables to be passed into your templates.
 
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+garf:
+  worker:
+    enabled: true
+    replicaCount: 1
+
 replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
@@ -54,7 +59,7 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 50051
+  port: 8000
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -64,14 +69,14 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
+    - host: garf.local
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls: []
-    # - secretName: chart-example-tls
+    # - secretName: garf-tls
     #   hosts:
-    #     - chart-example.local
+    #     - garf.local
 
 # -- Expose the service via gateway-api HTTPRoute
 # Requires Gateway API resources and suitable controller installed within the cluster
@@ -88,7 +93,7 @@ httpRoute:
     # namespace: default
   # Hostnames matching HTTP header.
   hostnames:
-  - chart-example.local
+  - garf.local
   # List of rules and filters applied.
   rules:
   - matches:
@@ -126,11 +131,13 @@ resources: {}
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
   httpGet:
-    path: /
+    path: /api/version
     port: http
+  periodSeconds: 60
+  failureThreshold: 5
 readinessProbe:
   httpGet:
-    path: /
+    path: /api/version
     port: http
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
@@ -159,3 +166,17 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+env: {}
+
+redis:
+  enabled: true
+
+  auth:
+    enabled: true
+    password: "redisadmin123"
+  architecture: "standalone"
+  master:
+    persistence:
+      enabled: true
+      size: "1Gi"
