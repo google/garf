@@ -2,7 +2,12 @@ apiVersion: v2
 name: garf
 type: application
 description: Install garf server
-version: 0.1.0
+version: 0.1.1
 appVersion: "1.7.0"
 maintainers:
    - name: Andrei Markin
+dependencies:
+   - name: redis
+     condition: redis.enabled
+     version: "23.x.x"
+     repository: oci://registry-1.docker.io/bitnamicharts
