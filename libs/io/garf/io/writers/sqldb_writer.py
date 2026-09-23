@@ -30,7 +30,6 @@ from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 logger = logging.getLogger(__name__)
 
@@ -102,5 +101,4 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
   def engine(self) -> sqlalchemy.engine.Engine:
     """Creates engine based on connection string."""
     engine = sqlalchemy.create_engine(self.connection_string)
-    SQLAlchemyInstrumentor().instrument(engine=engine)
     return engine
