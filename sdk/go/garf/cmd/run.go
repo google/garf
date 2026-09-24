@@ -15,22 +15,18 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
 	"github.com/google/garf/sdk/go/garf/garf"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Runs workflow from a file",
 	Run: func(cmd *cobra.Command, args []string) {
-		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
-		defer g.Close()
+		ctx := cmd.Context()
 		var err error
 		workflowPath, _ := cmd.Flags().GetString("file")
 		configPath, _ := cmd.Flags().GetString("config")
@@ -46,7 +42,7 @@ var runCmd = &cobra.Command{
 			log.Fatalf("Problem reading workflow: %v", err)
 		}
 
-		resultsFileWorkflow := g.ExecuteWorkflow(workflow, config, &garf.ExecutionContext{})
+		resultsFileWorkflow := GarfClient.ExecuteWorkflow(ctx, workflow, config, &garf.ExecutionContext{})
 		fmt.Println(resultsFileWorkflow)
 	},
 }

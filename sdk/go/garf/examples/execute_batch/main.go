@@ -20,12 +20,13 @@ func main() {
 }
 
 func executeQueryBatchInline(g *garf.Garf) error {
+	ctx := context.Background()
 	batch := map[string]string{
 		"test":  "SELECT metric.int AS field FROM fake",
 		"test2": "SELECT metric.int AS field FROM fake",
 		"test3": "SELECT metric.int AS field FROM fake",
 	}
-	resultsBatch := g.ExecuteBatch(batch, "json")
+	resultsBatch := g.ExecuteBatch(ctx, batch, "json")
 	fmt.Println(resultsBatch)
 	return nil
 }

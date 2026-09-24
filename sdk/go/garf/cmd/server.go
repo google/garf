@@ -28,9 +28,10 @@ var serverCmd = &cobra.Command{
 	Short: "Show server info",
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
+		ctx := context.Background()
+		g := garf.New(ctx, garfEndpoint)
 		defer g.Close()
-		info := g.GetInfo()
+		info := g.GetInfo(ctx)
 		fmt.Println(info)
 	},
 }
@@ -40,9 +41,10 @@ var versionCmd = &cobra.Command{
 	Short: "Show server version",
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
+		ctx := context.Background()
+		g := garf.New(ctx, garfEndpoint)
 		defer g.Close()
-		version := g.GetVersion()
+		version := g.GetVersion(ctx)
 		fmt.Println(version)
 	},
 }
@@ -52,9 +54,10 @@ var infoCmd = &cobra.Command{
 	Short: "Show server info",
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
+		ctx := context.Background()
+		g := garf.New(ctx, garfEndpoint)
 		defer g.Close()
-		info := g.GetInfo()
+		info := g.GetInfo(ctx)
 		fmt.Println(info)
 	},
 }
@@ -64,9 +67,10 @@ var fetchersCmd = &cobra.Command{
 	Short: "Show available fetchers",
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
+		ctx := context.Background()
+		g := garf.New(ctx, garfEndpoint)
 		defer g.Close()
-		fetchers := g.ListFetchers()
+		fetchers := g.ListFetchers(ctx)
 		fmt.Println(fetchers)
 	},
 }
@@ -76,9 +80,10 @@ var executorsCmd = &cobra.Command{
 	Short: "Show available executors",
 	Run: func(cmd *cobra.Command, args []string) {
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
+		ctx := context.Background()
+		g := garf.New(ctx, garfEndpoint)
 		defer g.Close()
-		executors := g.ListExecutors()
+		executors := g.ListExecutors(ctx)
 		fmt.Println(executors)
 	},
 }
