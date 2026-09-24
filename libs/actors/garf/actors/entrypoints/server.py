@@ -144,7 +144,8 @@ def interact(request: runner.GarfActorRequest) -> str:
   concrete_actor = available_actor_classes.get(request.actor)
 
   return request.play(
-    workflow=actor_workflow, actor=concrete_actor() if concrete_actor else None
+    workflow=actor_workflow,
+    actor_client=concrete_actor() if concrete_actor else None,
   )
 
 

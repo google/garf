@@ -18,7 +18,44 @@ import io
 import os
 
 import garf.core
+import requests
 import slack_sdk
+
+
+class TelegramNotifier:
+  """Sends report to Telegram chat."""
+
+  def __init__(
+    self, token: str | None = os.getenv('TELEGRAM_BOT_TOKEN')
+  ) -> None:
+    self._base_url = f'https://api.telegram.org/bot{token}'
+
+  def act(
+    self,
+    report: garf.core.GarfReport,
+    chat_id: str,
+    title: str = 'garf-actors.csv',
+    **kwargs: str,
+  ):
+    if not report:
+      payload = {
+        'chat_id': chat_id,
+        'text': 'No results',
+      }
+      response = requests.post(f'{self._base_url}/sendMessage', json=payload)
+    else:
+      payload = {
+        'chat_id': chat_id,
+        'caption': title,
+      }
+      file_buffer = io.StringIO()
+      report.to_pandas().to_csv(file_buffer, index=False)
+      file_buffer.seek(0)
+      files = {'document': (title, file_buffer.getvalue())}
+      response = requests.post(
+        f'{self._base_url}/sendDocument', data=payload, files=files
+      )
+    response.raise_for_status()
 
 
 class SlackNotifier:
@@ -31,13 +68,13 @@ class SlackNotifier:
     self,
     report: garf.core.GarfReport,
     channel: str,
-    title: str = 'garf-actors',
+    title: str = 'garf-actor-results.csv',
     **kwargs: str,
   ):
     if not report:
       self.client.chat_postMessage(
         channel=channel,
-        text=title,
+        text='No results',
       )
     else:
       csv_buffer = io.BytesIO()
@@ -45,7 +82,7 @@ class SlackNotifier:
       csv_buffer.seek(0)
       self.client.files_upload_v2(
         channel=channel,
-        filename='garf-actor-results.csv',
+        filename=title,
         file=csv_buffer.getvalue(),
         title=title,
       )
