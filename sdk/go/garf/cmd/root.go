@@ -15,22 +15,50 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"strings"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/google/garf/sdk/go/garf/garf"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+const name = "github.com/google/garf/sdk/go/garf"
+
 var (
+	tracer       = otel.Tracer(name)
 	EnableCache  bool
 	GarfEndpoint string
+	GarfClient   *garf.Garf
 )
 
 var rootCmd = &cobra.Command{
 	Use:     "garf",
 	Short:   "Interact with garf",
 	Version: "0.0.1",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		ctx, span := tracer.Start(ctx, "cli")
+		cmd.SetContext(ctx)
+		defer span.End()
+		garfEndpoint := viper.GetString("endpoint")
+		g := garf.New(ctx, garfEndpoint)
+		GarfClient = g
+		return nil
+	},
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		if GarfClient != nil {
+			GarfClient.Close()
+		}
+		if span := trace.SpanFromContext(cmd.Context()); span != nil {
+			span.End()
+		}
+		return nil
+	},
 }
 
 func Execute() {

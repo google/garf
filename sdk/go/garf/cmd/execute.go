@@ -15,16 +15,13 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/google/garf/sdk/go/garf/garf"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var executeCmd = &cobra.Command{
@@ -32,9 +29,7 @@ var executeCmd = &cobra.Command{
 	Short: "Executes queries",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(context.Background(), garfEndpoint)
-		defer g.Close()
+		ctx := cmd.Context()
 		p := filepath.Clean(args[0])
 		queryData, err := os.ReadFile(args[0])
 		if err != nil {
@@ -44,7 +39,7 @@ var executeCmd = &cobra.Command{
 		title := strings.TrimSuffix(filepath.Base(p), ext)
 		writer, _ := cmd.Flags().GetString("writer")
 		source, _ := cmd.Flags().GetString("source")
-		results := g.Execute(source, title, string(queryData), writer)
+		results := GarfClient.Execute(ctx, source, title, string(queryData), writer)
 		fmt.Println(results)
 	},
 }

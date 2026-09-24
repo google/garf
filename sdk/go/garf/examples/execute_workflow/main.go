@@ -23,17 +23,19 @@ func main() {
 }
 
 func runWorkflowFromFile(g *garf.Garf) error {
+	ctx := context.Background()
 	workflow, err := garf.ReadWorkflowFromFile("test_workflow.yaml")
 	if err != nil {
 		log.Fatalf("Failed to parse workflow: %v", err)
 	}
 
-	resultsFileWorkflow := g.ExecuteWorkflow(workflow, &garf.Config{}, &garf.ExecutionContext{})
+	resultsFileWorkflow := g.ExecuteWorkflow(ctx, workflow, &garf.Config{}, &garf.ExecutionContext{})
 	fmt.Println(resultsFileWorkflow)
 	return err
 
 }
 func runInlineWorkflow(g *garf.Garf) error {
+	ctx := context.Background()
 	fetcherParameters := map[string]any{
 		"n_rows": 10,
 	}
@@ -83,7 +85,7 @@ func runInlineWorkflow(g *garf.Garf) error {
 	executionContext := garf.ExecutionContext{
 		FetcherParameters: contextStruct,
 	}
-	resultsWorkflow := g.ExecuteWorkflow(&workflow, &config, &executionContext)
+	resultsWorkflow := g.ExecuteWorkflow(ctx, &workflow, &config, &executionContext)
 	fmt.Println(resultsWorkflow)
 	return nil
 

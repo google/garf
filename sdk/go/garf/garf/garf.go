@@ -78,8 +78,8 @@ func (g *Garf) Close() error {
 }
 
 // GetVersion returns garf server version.
-func (g *Garf) GetVersion() string {
-	ctx, span := tracer.Start(context.Background(), "version")
+func (g *Garf) GetVersion(ctx context.Context) string {
+	ctx, span := tracer.Start(ctx, "version")
 	defer span.End()
 	r, err := g.client.GetVersion(ctx, &emptypb.Empty{})
 	if err != nil {
@@ -93,8 +93,8 @@ func (g *Garf) GetVersion() string {
 	return r.Version
 }
 
-func (g *Garf) GetInfo() string {
-	ctx, span := tracer.Start(context.Background(), "info")
+func (g *Garf) GetInfo(ctx context.Context) string {
+	ctx, span := tracer.Start(ctx, "info")
 	defer span.End()
 
 	r, err := g.client.GetInfo(ctx, &emptypb.Empty{})
@@ -112,8 +112,8 @@ func (g *Garf) GetInfo() string {
 	return version
 }
 
-func (g *Garf) ListFetchers() []string {
-	ctx, span := tracer.Start(context.Background(), "list-fetchers")
+func (g *Garf) ListFetchers(ctx context.Context) []string {
+	ctx, span := tracer.Start(ctx, "list-fetchers")
 	defer span.End()
 
 	r, err := g.client.ListFetchers(ctx, &emptypb.Empty{})
@@ -132,8 +132,8 @@ func (g *Garf) ListFetchers() []string {
 	return fetcherNames
 }
 
-func (g *Garf) ListExecutors() []string {
-	ctx, span := tracer.Start(context.Background(), "list-executors")
+func (g *Garf) ListExecutors(ctx context.Context) []string {
+	ctx, span := tracer.Start(ctx, "list-executors")
 	defer span.End()
 
 	r, err := g.client.ListExecutors(ctx, &emptypb.Empty{})
@@ -148,8 +148,8 @@ func (g *Garf) ListExecutors() []string {
 	return executors
 }
 
-func (g *Garf) Fetch(title, query string) *FetchResponse {
-	ctx, span := tracer.Start(context.Background(), "fetch")
+func (g *Garf) Fetch(ctx context.Context, title, query string) *FetchResponse {
+	ctx, span := tracer.Start(ctx, "fetch")
 	defer span.End()
 
 	fetcherParameters := map[string]any{
@@ -184,8 +184,8 @@ func (g *Garf) Fetch(title, query string) *FetchResponse {
 	return r
 
 }
-func (g *Garf) Execute(source, title, query, writer string) []string {
-	ctx, span := tracer.Start(context.Background(), "execute")
+func (g *Garf) Execute(ctx context.Context, source, title, query, writer string) []string {
+	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
 	fetcherParameters := map[string]any{
@@ -222,8 +222,8 @@ func (g *Garf) Execute(source, title, query, writer string) []string {
 	return result
 }
 
-func (g *Garf) ExecuteBatch(batch map[string]string, writer string) []string {
-	ctx, span := tracer.Start(context.Background(), "execute-batch")
+func (g *Garf) ExecuteBatch(ctx context.Context, batch map[string]string, writer string) []string {
+	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
 	fetcherParameters := map[string]any{
@@ -263,8 +263,8 @@ func (g *Garf) ExecuteBatch(batch map[string]string, writer string) []string {
 	return result
 }
 
-func (g *Garf) ExecuteWorkflow(workflow *Workflow, config *Config, executionContext *ExecutionContext) []string {
-	ctx, span := tracer.Start(context.Background(), "execute-workflow")
+func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow, config *Config, executionContext *ExecutionContext) []string {
+	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
 	request := ExecuteWorkflowRequest{

@@ -14,21 +14,24 @@ func main() {
 	if garfEndpoint == "" {
 		garfEndpoint = "127.0.0.1:50051"
 	}
-	g := garf.New(context.Background(), garfEndpoint)
+	ctx := context.Background()
+	g := garf.New(ctx, garfEndpoint)
 	defer g.Close()
 	executeQueryInline(g)
 	executeQueryFromFile(g)
 }
 
 func executeQueryInline(g *garf.Garf) error {
-	results := g.Execute("fake", "test", "SELECT metric.int AS field FROM fake", "json")
+	ctx := context.Background()
+	results := g.Execute(ctx, "fake", "test", "SELECT metric.int AS field FROM fake", "json")
 	fmt.Println(results)
 	return nil
 }
 
 func executeQueryFromFile(g *garf.Garf) error {
+	ctx := context.Background()
 	queryData, err := os.ReadFile("test_query.sql")
-	results := g.Execute("fake", "test", string(queryData), "json")
+	results := g.Execute(ctx, "fake", "test", string(queryData), "json")
 	fmt.Println(results)
 	return err
 }
