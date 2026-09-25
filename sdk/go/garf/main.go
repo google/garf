@@ -27,7 +27,6 @@ func main() {
 	if otelEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"); otelEndpoint != "" {
 		ctx := context.Background()
 		otelShutdown, err := telemetry.SetupOtelSdk(ctx)
-		log.Print("Otel is setup!")
 		if err != nil {
 			log.Fatalf("Failed to setup telemetry: %v", err)
 		}

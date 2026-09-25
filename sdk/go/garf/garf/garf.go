@@ -197,28 +197,70 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string)
 	}
 	request := ExecuteRequest{
 		Source: source,
-		Title:  title,
-		Query:  query,
+		Query: &ExecuteRequest_QueryDefinition{
+			QueryDefinition: &QueryDefinition{
+				Title: title,
+				Text:  query,
+			},
+		},
 		Context: &ExecutionContext{
 			FetcherParameters: fetcherParameterStruct,
 			Writer:            writer,
 		},
 	}
 	span.SetAttributes(
-		attribute.String("query.title", request.Title),
-		attribute.String("query.text", request.Query),
+		attribute.String("query.title", title),
+		attribute.String("query.text", query),
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
 	r, err := g.client.Execute(ctx, &request)
 	if err != nil {
-		logger.ErrorContext(ctx, "Failed query", "title", request.Title)
+		logger.ErrorContext(ctx, "Failed query", "title", title)
 		log.Fatalf("cannot execute query: %v", err)
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
-	logger.InfoContext(ctx, "Executed query", "title", request.Title, "result", result)
+	logger.InfoContext(ctx, "Executed query", "title", title, "result", result)
+	return result
+}
+
+func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string) []string {
+	ctx, span := tracer.Start(ctx, "execute")
+	defer span.End()
+
+	fetcherParameters := map[string]any{
+		"n_rows": 10,
+	}
+	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	if err != nil {
+		log.Fatalf("Failed to create fetcher parameters: %v", err)
+	}
+	request := ExecuteRequest{
+		Source: source,
+		Query: &ExecuteRequest_QueryPath{
+			QueryPath: queryPath,
+		},
+		Context: &ExecutionContext{
+			FetcherParameters: fetcherParameterStruct,
+			Writer:            writer,
+		},
+	}
+	span.SetAttributes(
+		attribute.String("query.query_path", queryPath),
+		attribute.String("query.source", request.Source),
+		attribute.String("query.context.writer", request.Context.Writer),
+	)
+	r, err := g.client.Execute(ctx, &request)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed query", "query_path", queryPath)
+		log.Fatalf("cannot execute query: %v", err)
+	}
+	result := r.Results
+	versionAttr := attribute.StringSlice("garf.results", result)
+	span.SetAttributes(versionAttr)
+	logger.InfoContext(ctx, "Executed query", "query_path", queryPath, "result", result)
 	return result
 }
 
