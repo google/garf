@@ -38,6 +38,7 @@ from garf.executors.entrypoints.tracer import (
   initialize_tracer,
 )
 from garf.executors.workflows import workflow, workflow_runner
+from garf.io import formatter, reader
 from google.protobuf.json_format import MessageToDict
 from grpc_health.v1 import health_pb2
 from grpc_reflection.v1alpha import reflection
@@ -102,9 +103,18 @@ class GarfService(garf_pb2_grpc.GarfService):
         request.context.writer_parameters, preserving_proto_field_name=True
       ),
     )
+    if query := request.query_path:
+      title = formatter.format_extension(query)
+      text = reader.FileReader().read(query)
+    else:
+      title, text = (
+        request.query_definition.title,
+        request.query_definition.text,
+      )
+
     result = query_executor.execute(
-      query=request.query,
-      title=request.title,
+      query=text,
+      title=title,
       context=execution_context.ExecutionContext(
         **MessageToDict(request.context, preserving_proto_field_name=True)
       ),
