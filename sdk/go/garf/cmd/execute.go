@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -27,27 +28,58 @@ import (
 var executeCmd = &cobra.Command{
 	Use:   "execute",
 	Short: "Executes queries",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		writer, _ := cmd.Flags().GetString("writer")
 		source, _ := cmd.Flags().GetString("source")
 		queryAsFile, _ := cmd.Flags().GetBool("as-file")
 		var results []string
-		if queryAsFile {
-			results = GarfClient.ExecuteFromFile(ctx, source, args[0], writer)
+		if len(args) > 1 {
+			results = runQueryBatch(ctx, source, args, writer, queryAsFile)
 		} else {
-			p := filepath.Clean(args[0])
-			queryData, err := os.ReadFile(args[0])
+			results = runQuery(ctx, source, args[0], writer, queryAsFile)
+		}
+		fmt.Println(results)
+	},
+}
+
+func runQueryBatch(ctx context.Context, source string, batch []string, writer string, queryAsFile bool) []string {
+	var results []string
+	if queryAsFile {
+		results = GarfClient.ExecuteBatchFromFiles(ctx, source, batch, writer)
+	} else {
+		batchQueries := make(map[string]string)
+		for _, query := range batch {
+			p := filepath.Clean(query)
+			queryData, err := os.ReadFile(query)
 			if err != nil {
 				log.Fatal("File not found")
 			}
 			ext := filepath.Ext(p)
 			title := strings.TrimSuffix(filepath.Base(p), ext)
-			results = GarfClient.Execute(ctx, source, title, string(queryData), writer)
+			batchQueries[title] = string(queryData)
+			results = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer)
 		}
-		fmt.Println(results)
-	},
+	}
+	return results
+}
+
+func runQuery(ctx context.Context, source, query, writer string, queryAsFile bool) []string {
+	var results []string
+	if queryAsFile {
+		results = GarfClient.ExecuteFromFile(ctx, source, query, writer)
+	} else {
+		p := filepath.Clean(query)
+		queryData, err := os.ReadFile(query)
+		if err != nil {
+			log.Fatal("File not found")
+		}
+		ext := filepath.Ext(p)
+		title := strings.TrimSuffix(filepath.Base(p), ext)
+		results = GarfClient.Execute(ctx, source, title, string(queryData), writer)
+	}
+	return results
 }
 
 func init() {

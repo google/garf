@@ -264,7 +264,7 @@ func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer st
 	return result
 }
 
-func (g *Garf) ExecuteBatch(ctx context.Context, batch map[string]string, writer string) []string {
+func (g *Garf) ExecuteBatch(ctx context.Context, source string, batch map[string]string, writer string) []string {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
@@ -281,8 +281,54 @@ func (g *Garf) ExecuteBatch(ctx context.Context, batch map[string]string, writer
 		queries = append(queries, &QueryDefinition{Title: title, Text: query})
 	}
 	request := ExecuteBatchRequest{
-		Source: "fake",
-		Batch:  queries,
+		Source: source,
+		Batch: &ExecuteBatchRequest_BatchQueryDefinitions{
+			BatchQueryDefinitions: &BatchQueryDefinitions{
+				Queries: queries,
+			},
+		},
+		Context: &ExecutionContext{
+			FetcherParameters: fetcherParameterStruct,
+			Writer:            writer,
+		},
+	}
+	span.SetAttributes(
+		attribute.Int("query.batch_size", len(batch)),
+		attribute.String("query.source", request.Source),
+		attribute.String("query.context.writer", request.Context.Writer),
+	)
+	r, err := g.client.ExecuteBatch(ctx, &request)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed batch", "batch", queries)
+		log.Fatalf("cannot execute batch: %v", queries)
+	}
+	result := r.Results
+	versionAttr := attribute.StringSlice("garf.results", result)
+	span.SetAttributes(versionAttr)
+	logger.InfoContext(ctx, "Executed batch", "batch", queries, "result", result)
+	return result
+}
+
+func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string, batch []string, writer string) []string {
+	ctx, span := tracer.Start(ctx, "execute-batch")
+	defer span.End()
+
+	fetcherParameters := map[string]any{
+		"n_rows": 10,
+	}
+	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	if err != nil {
+		log.Fatalf("Failed to create fetcher parameters: %v", err)
+	}
+	var queries []*QueryDefinition
+
+	request := ExecuteBatchRequest{
+		Source: source,
+		Batch: &ExecuteBatchRequest_BatchQueryPaths{
+			BatchQueryPaths: &BatchQueryPaths{
+				QueryPaths: batch,
+			},
+		},
 		Context: &ExecutionContext{
 			FetcherParameters: fetcherParameterStruct,
 			Writer:            writer,
