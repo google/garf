@@ -30,16 +30,22 @@ var executeCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		p := filepath.Clean(args[0])
-		queryData, err := os.ReadFile(args[0])
-		if err != nil {
-			log.Fatal("File not found")
-		}
-		ext := filepath.Ext(p)
-		title := strings.TrimSuffix(filepath.Base(p), ext)
 		writer, _ := cmd.Flags().GetString("writer")
 		source, _ := cmd.Flags().GetString("source")
-		results := GarfClient.Execute(ctx, source, title, string(queryData), writer)
+		queryAsFile, _ := cmd.Flags().GetBool("as-file")
+		var results []string
+		if queryAsFile {
+			results = GarfClient.ExecuteFromFile(ctx, source, args[0], writer)
+		} else {
+			p := filepath.Clean(args[0])
+			queryData, err := os.ReadFile(args[0])
+			if err != nil {
+				log.Fatal("File not found")
+			}
+			ext := filepath.Ext(p)
+			title := strings.TrimSuffix(filepath.Base(p), ext)
+			results = GarfClient.Execute(ctx, source, title, string(queryData), writer)
+		}
 		fmt.Println(results)
 	},
 }
@@ -48,4 +54,5 @@ func init() {
 	rootCmd.AddCommand(executeCmd)
 	executeCmd.Flags().StringP("source", "s", "fake", "Type of API source")
 	executeCmd.Flags().StringP("writer", "w", "json", "Name of writer")
+	executeCmd.Flags().Bool("as-file", false, "Whether to pass query as a file path")
 }

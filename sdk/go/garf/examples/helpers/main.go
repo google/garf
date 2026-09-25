@@ -10,25 +10,26 @@ import (
 
 func main() {
 
+	ctx := context.Background()
 	garfEndpoint := os.Getenv("GARF_ENDPOINT")
 	if garfEndpoint == "" {
 		garfEndpoint = "127.0.0.1:50051"
 	}
-	g := garf.New(context.Background(), garfEndpoint)
+	g := garf.New(ctx, garfEndpoint)
 	defer g.Close()
-	runHelperFunctions(g)
+	runHelperFunctions(ctx, g)
 }
 
-func runHelperFunctions(g *garf.Garf) {
-	version := g.GetVersion()
+func runHelperFunctions(ctx context.Context, g *garf.Garf) {
+	version := g.GetVersion(ctx)
 	fmt.Println(version)
 
-	info := g.GetInfo()
+	info := g.GetInfo(ctx)
 	fmt.Println(info)
 
-	fetchers := g.ListFetchers()
+	fetchers := g.ListFetchers(ctx)
 	fmt.Println(fetchers)
 
-	executors := g.ListExecutors()
+	executors := g.ListExecutors(ctx)
 	fmt.Println(executors)
 }

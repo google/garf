@@ -11,17 +11,18 @@ import (
 
 func main() {
 
+	ctx := context.Background()
 	garfEndpoint := os.Getenv("GARF_ENDPOINT")
 	if garfEndpoint == "" {
 		garfEndpoint = "127.0.0.1:50051"
 	}
-	g := garf.New(context.Background(), garfEndpoint)
+	g := garf.New(ctx, garfEndpoint)
 	defer g.Close()
-	fetchQueryInline(g)
+	fetchQueryInline(ctx, g)
 }
 
-func fetchQueryInline(g *garf.Garf) error {
-	results := g.Fetch("test",
+func fetchQueryInline(ctx context.Context, g *garf.Garf) error {
+	results := g.Fetch(ctx, "test",
 		"SELECT metric.int AS field, metric.float AS field2 FROM fake",
 	)
 	t := table.NewWriter()
