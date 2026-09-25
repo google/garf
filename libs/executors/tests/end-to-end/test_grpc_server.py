@@ -106,12 +106,14 @@ def test_execute_from_file(grpc_stub):
 def test_execute_batch(grpc_stub):
   request = pb.ExecuteBatchRequest(
     source='fake',
-    batch=[
-      pb.QueryDefinition(
-        title='example',
-        text='SELECT metric.int FROM fake',
-      )
-    ],
+    batch_query_definitions=pb.BatchQueryDefinitions(
+      queries=[
+        pb.QueryDefinition(
+          title='example',
+          text='SELECT metric.int FROM fake',
+        )
+      ],
+    ),
     context=pb.ExecutionContext(
       fetcher_parameters={
         'n_rows': 1,
@@ -121,6 +123,23 @@ def test_execute_batch(grpc_stub):
   )
   result = grpc_stub.ExecuteBatch(request)
   assert 'example' in result.results[0]
+
+
+def test_execute_batch_from_file(grpc_stub):
+  fake_data = _SCRIPT_PATH / 'test.json'
+  query_path = _SCRIPT_PATH / 'query.sql'
+  request = pb.ExecuteBatchRequest(
+    source='fake',
+    batch_query_paths=pb.BatchQueryPaths(query_paths=[str(query_path)]),
+    context=pb.ExecutionContext(
+      fetcher_parameters={
+        'data_location': str(fake_data),
+      },
+      writer='csv',
+    ),
+  )
+  result = grpc_stub.ExecuteBatch(request)
+  assert 'query' in result.results[0]
 
 
 def test_fetch(grpc_stub):

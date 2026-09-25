@@ -122,7 +122,10 @@ class GarfService(garf_pb2_grpc.GarfService):
     return garf_pb2.ExecuteResponse(results=[result])
 
   def ExecuteBatch(self, request, context):
-    n_queries = len(request.batch)
+    n_queries = len(
+      request.batch_query_definitions.queries
+      or request.batch_query_paths.query_paths
+    )
     telemetry.executor_requested_counter.add(
       n_queries, attributes={'executor.source': request.source}
     )
@@ -139,7 +142,17 @@ class GarfService(garf_pb2_grpc.GarfService):
         request.context.writer_parameters, preserving_proto_field_name=True
       ),
     )
-    batch = {query.title: query.text for query in request.batch}
+    if query_batch := request.batch_query_paths.query_paths:
+      file_reader = reader.FileReader()
+      batch = {
+        formatter.format_extension(query): file_reader.read(query)
+        for query in query_batch
+      }
+    else:
+      batch = {
+        query.title: query.text
+        for query in request.batch_query_definitions.queries
+      }
     results = query_executor.execute_batch(
       batch=batch,
       context=execution_context.ExecutionContext(
