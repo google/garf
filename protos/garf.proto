@@ -83,12 +83,23 @@ message QueryDefinition {
   string text = 2;
 }
 
+message BatchQueryDefinitions {
+  repeated QueryDefinition queries = 1;
+}
+
+message BatchQueryPaths {
+  repeated string query_paths = 1;
+}
+
 message ExecuteBatchRequest {
   string source = 1;
-  repeated QueryDefinition batch = 2;
-  ExecutionContext context = 3;
-  GarfCacheOptions cache_options = 4;
-  bool simulate = 5;
+  oneof batch {
+    BatchQueryDefinitions batch_query_definitions = 2;
+    BatchQueryPaths batch_query_paths = 3;
+  }
+  ExecutionContext context = 4;
+  GarfCacheOptions cache_options = 5;
+  bool simulate = 6;
 }
 
 message ExecuteBatchResponse {
