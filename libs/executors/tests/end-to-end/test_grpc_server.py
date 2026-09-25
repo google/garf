@@ -67,12 +67,31 @@ def grpc_stub_cls(grpc_channel):
   return garf_pb2_grpc.GarfServiceStub
 
 
-def test_execute(grpc_stub):
+def test_execute_inline(grpc_stub):
   fake_data = _SCRIPT_PATH / 'test.json'
   request = pb.ExecuteRequest(
     source='fake',
-    title='example',
-    query=_QUERY,
+    query_definition=pb.QueryDefinition(
+      title='text',
+      text=_QUERY,
+    ),
+    context=pb.ExecutionContext(
+      fetcher_parameters={
+        'data_location': str(fake_data),
+      },
+      writer='csv',
+    ),
+  )
+  result = grpc_stub.Execute(request)
+  assert 'CSV' in result.results[0]
+
+
+def test_execute_from_file(grpc_stub):
+  fake_data = _SCRIPT_PATH / 'test.json'
+  query_path = _SCRIPT_PATH / 'query.sql'
+  request = pb.ExecuteRequest(
+    source='fake',
+    query_path=str(query_path),
     context=pb.ExecutionContext(
       fetcher_parameters={
         'data_location': str(fake_data),

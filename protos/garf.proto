@@ -46,8 +46,10 @@ message GarfCacheOptions {
 
 message ExecuteRequest {
   string source = 1;
-  string title = 2;
-  string query = 3;
+  oneof query {
+    QueryDefinition query_definition = 2;
+    string query_path = 3;
+  }
   ExecutionContext context = 4;
   GarfCacheOptions cache_options = 5;
   bool simulate = 6;
