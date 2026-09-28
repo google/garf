@@ -33,6 +33,8 @@ from garf.io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_SQLITE_INMEMORY_DB = sqlalchemy.create_engine('sqlite://')
+
 
 class SqlAlchemyWriter(abs_writer.AbsWriter):
   """Handles writing GarfReports data to databases supported by SqlAlchemy.
@@ -46,7 +48,10 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
   """
 
   def __init__(
-    self, connection_string: str, if_exists: str = 'replace', **kwargs
+    self,
+    connection_string: str | None = None,
+    if_exists: str = 'replace',
+    **kwargs,
   ):
     """Initializes SqlAlchemyWriter based on connection_string.
 
@@ -100,5 +105,8 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
   @property
   def engine(self) -> sqlalchemy.engine.Engine:
     """Creates engine based on connection string."""
-    engine = sqlalchemy.create_engine(self.connection_string)
-    return engine
+    return (
+      sqlalchemy.create_engine(self.connection_string)
+      if self.connection_string
+      else DEFAULT_SQLITE_INMEMORY_DB
+    )

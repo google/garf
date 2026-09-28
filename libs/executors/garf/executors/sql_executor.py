@@ -31,7 +31,7 @@ import pandas as pd
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
-from garf.io.writers import abs_writer
+from garf.io.writers import abs_writer, sqldb_writer
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +61,12 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Args:
         engine: Initialized Engine object to operated on a given database.
     """
-    self.api_client = engine or sqlalchemy.create_engine(
-      connection_string or 'sqlite://'
-    )
+    if not engine and not connection_string:
+      self.api_client = sqldb_writer.DEFAULT_SQLITE_INMEMORY_DB
+    elif connection_string:
+      self.api_client = sqlalchemy.create_engine(connection_string)
+    else:
+      self.api_client = engine
     self.writers = writers
     super().__init__(
       source='sqldb',

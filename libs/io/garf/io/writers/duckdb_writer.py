@@ -33,6 +33,8 @@ from garf.io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_DUCKDB_INMEMORY_DB = duckdb.connect(database=':memory:')
+
 
 class DuckDBWriterError(exceptions.GarfIoError):
   """DuckDBWriterError specific errors."""
@@ -47,8 +49,8 @@ class DuckDBWriter(abs_writer.AbsWriter):
 
   def __init__(
     self,
-    db: str,
-    if_exists: str = Literal['replace', 'append', 'create'],
+    db: str | None = None,
+    if_exists: Literal['replace', 'append', 'create'] = 'replace',
     **kwargs,
   ):
     """Initializes DuckDBWriter based on db file.
@@ -60,7 +62,9 @@ class DuckDBWriter(abs_writer.AbsWriter):
     super().__init__(**kwargs)
     self.db = db
     self.if_exists = if_exists
-    self.api_client = duckdb.connect(database=db)
+    self.api_client = (
+      duckdb.connect(database=db) if db else DEFAULT_DUCKDB_INMEMORY_DB
+    )
 
   @tracer.start_as_current_span('duckdb.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> None:
@@ -96,7 +100,7 @@ class DuckDBWriter(abs_writer.AbsWriter):
         f'CREATE TABLE IF NOT EXISTS {destination} AS SELECT * FROM df'
       )
     else:
-      raise DuckDBExecutorError(
+      raise DuckDBWriterError(
         f'Unsupported overwrite strategy: {self.if_exists}'
       )
     logger.debug('Writing to %s is completed', destination)

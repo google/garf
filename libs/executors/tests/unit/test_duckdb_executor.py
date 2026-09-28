@@ -50,3 +50,18 @@ class TestDuckDBExecutor:
     )
 
     assert result == expected_report
+
+  def test_execute_works_with_default_in_memory_db(self):
+    executor1 = duckdb_executor.DuckDBExecutor()
+    executor2 = duckdb_executor.DuckDBExecutor()
+    executor1.execute(
+      title='test',
+      query='CREATE TABLE test_executor_1 AS SELECT 1 AS one;',
+    )
+
+    result = executor2.execute(
+      title='test_executor_2',
+      query='SELECT * FROM test_executor_1;',
+    )
+    expected_result = report.GarfReport(results=[[1]], column_names=['one'])
+    assert result == expected_result
