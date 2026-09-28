@@ -160,3 +160,18 @@ class TestSqlAlchemyQueryExecutor:
       result = connection.execute(sqlalchemy.text('select one from test'))
       for row in result:
         assert row.one == '1'
+
+  def test_execute_works_with_default_in_memory_db(self):
+    executor1 = sql_executor.SqlAlchemyQueryExecutor()
+    executor2 = sql_executor.SqlAlchemyQueryExecutor()
+    executor1.execute(
+      title='test',
+      query='CREATE TABLE test_executor_1 AS SELECT 1 AS one;',
+    )
+
+    result = executor2.execute(
+      title='test_executor_2',
+      query='SELECT * FROM test_executor_1;',
+    )
+    expected_result = report.GarfReport(results=[[1]], column_names=['one'])
+    assert result == expected_result

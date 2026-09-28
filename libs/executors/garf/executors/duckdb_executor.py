@@ -30,7 +30,7 @@ import pathlib
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
-from garf.io.writers import abs_writer
+from garf.io.writers import abs_writer, duckdb_writer
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class DuckDBExecutor(executor.Executor):
 
   def __init__(
     self,
-    db: str | pathlib.Path = ':memory:',
+    db: str | pathlib.Path | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     enable_cache: bool = False,
     cache_ttl_seconds: int = cache.DEFAULT_CACHE_TTL,
@@ -61,7 +61,11 @@ class DuckDBExecutor(executor.Executor):
       enable_cache=enable_cache,
       cache_ttl_seconds=cache_ttl_seconds,
     )
-    self.api_client = duckdb.connect(database=db)
+    self.api_client = (
+      duckdb.connect(database=db)
+      if db
+      else duckdb_writer.DEFAULT_DUCKDB_INMEMORY_DB
+    )
 
   @tracer.start_as_current_span('duckdb.execute')
   def _execute(
@@ -80,7 +84,7 @@ class DuckDBExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    execution_result = duckdb.sql(
-      query=query, connection=self.api_client
-    ).to_df()
-    return report.GarfReport.from_pandas(execution_result)
+    execution_result = duckdb.sql(query=query, connection=self.api_client)
+    if execution_result:
+      return report.GarfReport.from_pandas(execution_result.to_df())
+    return report.GarfReport()
