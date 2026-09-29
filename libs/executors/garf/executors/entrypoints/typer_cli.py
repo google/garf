@@ -221,6 +221,12 @@ def execute(
     typer.Option(help='Where to get queries from'),
   ] = 'file',
   output: Output = 'console',
+  title: Annotated[
+    Optional[str],
+    typer.Option(
+      help='Level of logging',
+    ),
+  ] = None,
   parallel_threshold: ParallelThreshold = 10,
   loglevel: LogLevel = 'INFO',
   logger: Logger = 'rich',
@@ -344,11 +350,15 @@ def execute(
     if parallel_queries and len(batch) > 1:
       garf_logger.info('Running queries in parallel')
       query_executor.execute_batch(batch, context, parallel_threshold)
+    elif len(batch) > 1:
+      garf_logger.info('Running queries sequentially')
+      for query_title, text in batch.items():
+        query_executor.execute(query=text, title=query_title, context=context)
     else:
-      if len(batch) > 1:
-        garf_logger.info('Running queries sequentially')
-      for title, text in batch.items():
-        query_executor.execute(query=text, title=title, context=context)
+      for query_title, text in batch.items():
+        query_executor.execute(
+          query=text, title=title or query_title, context=context
+        )
 
 
 @workflow_app.command(

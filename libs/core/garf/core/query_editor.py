@@ -492,7 +492,7 @@ class FakeQuerySpecification(QuerySpecification):
     super().extract_filters()
     filters = {}
     for field in self.query.filters:
-      if match := re.match('^(failure_rate|delay).?=*?(.+)', field):
+      if match := re.match(r'^(failure_rate|delay)\s*=\s*(.+)', field):
         filters[match.group(1).strip()] = float(match.group(2).strip())
     self.query.filters = filters
     return self
