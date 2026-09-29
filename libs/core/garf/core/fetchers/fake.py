@@ -44,7 +44,7 @@ class FakeApiReportFetcher(report_fetcher.ApiReportFetcher):
     api_client: api_clients.FakeApiClient | None = None,
     parser: parsers.BaseParser = parsers.DictParser,
     query_specification_builder: query_editor.QuerySpecification = (
-      query_editor.QuerySpecification
+      query_editor.FakeQuerySpecification
     ),
     data: Sequence[dict[str, Any]] | None = None,
     data_location: str | os.PathLike[str] | None = None,

@@ -20,6 +20,7 @@ import pytest
 from garf.core import (
   api_clients,
   parsers,
+  query_editor,
   report,
   report_fetcher,
 )
@@ -36,7 +37,9 @@ class TestApiReportFetcher:
       ]
     )
     return report_fetcher.ApiReportFetcher(
-      api_client=test_api_client, parser=parsers.DictParser
+      api_client=test_api_client,
+      parser=parsers.DictParser,
+      query_specification_builder=query_editor.FakeQuerySpecification,
     )
 
   def test_fetch_returns_correct_report_for_dict_parser(
@@ -74,6 +77,7 @@ class TestApiReportFetcher:
     test_fetcher = report_fetcher.ApiReportFetcher(
       api_client=test_api_client,
       parser=parsers.DictParser,
+      query_specification_builder=query_editor.FakeQuerySpecification,
       enable_cache=True,
       cache_path=tmp_path,
     )
@@ -158,7 +162,9 @@ class TestApiReportFetcher:
       ],
     )
     test_fetcher = report_fetcher.ApiReportFetcher(
-      api_client=test_api_client, parser=parsers.DictParser
+      api_client=test_api_client,
+      parser=parsers.DictParser,
+      query_specification_builder=query_editor.FakeQuerySpecification,
     )
 
     query = """

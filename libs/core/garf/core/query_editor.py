@@ -182,7 +182,7 @@ class QuerySpecification(CommonParametersMixin):
       self.args = args
     else:
       self.args = GarfQueryParameters(**args)
-    self.query = BaseQueryElements(title=title, text=text)
+    self.query = BaseQueryElements(title=title, text=text.strip())
     self.unsafe_macro = unsafe_macro
 
   @property
@@ -483,3 +483,16 @@ def convert_date(date_string: str) -> str:
   if '-' in date_string:
     return (new_date - delta).strftime('%Y-%m-%d')
   return (new_date + delta).strftime('%Y-%m-%d')
+
+
+class FakeQuerySpecification(QuerySpecification):
+  """Builds fake query."""
+
+  def extract_filters(self) -> Self:
+    super().extract_filters()
+    filters = {}
+    for field in self.query.filters:
+      if match := re.match('^(failure_rate|delay).?=*?(.+)', field):
+        filters[match.group(1).strip()] = float(match.group(2).strip())
+    self.query.filters = filters
+    return self

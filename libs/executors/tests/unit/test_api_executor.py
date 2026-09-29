@@ -18,7 +18,7 @@ import pathlib
 
 import garf.core
 import pytest
-from garf.core import api_clients, parsers, report_fetcher
+from garf.core import api_clients, parsers, query_editor, report_fetcher
 from garf.core.fetchers import fake as fake_fetcher
 from garf.executors import api_executor, execution_context
 from garf.io.writers import json_writer
@@ -43,7 +43,9 @@ class TestApiQueryExecutor:
       ]
     )
     test_fetcher = report_fetcher.ApiReportFetcher(
-      api_client=test_api_client, parser=parsers.DictParser
+      api_client=test_api_client,
+      parser=parsers.DictParser,
+      query_specification_builder=query_editor.FakeQuerySpecification,
     )
     return api_executor.ApiQueryExecutor(test_fetcher)
 

@@ -202,29 +202,39 @@ class FakeApiClient(BaseClient):
     self.options = (
       FakeApiClientOptions(**options) if isinstance(options, dict) else options
     )
-    if (
-      not self.results
-      and not self.options.n_rows
-      and not self.results_placeholder
-    ):
-      raise GarfApiError('Missing data for FakeApiClient')
 
   @override
   def get_response(
     self, request: query_editor.BaseQueryElements | None = None, **kwargs: str
   ) -> GarfApiResponse:
-    if n_rows := self.options.n_rows:
+    base_options = self.options.model_dump()
+    if request:
+      request_options = {
+        'n_rows': request.limit or 0,
+        'delay_seconds': float(request.filters.get('delay', 0.0)),
+        'failure_rate': float(request.filters.get('failure_rate', 0.0)),
+      }
+      base_options.update({k: v for k, v in request_options.items() if v})
+      options = FakeApiClientOptions(**base_options)
+    else:
+      options = self.options
+    if n_rows := options.n_rows:
       results = []
       for row in range(n_rows):
         results.append(self._convert_request(request))
-    else:
+    elif self.results:
       results = self.results
+    elif not self.results and not self.results_placeholder:
+      raise GarfApiError('Missing data for FakeApiClient')
+    else:
+      results = []
+
     results_placeholder = self.results_placeholder or results
     if (
-      failure_rate := self.options.failure_rate
+      failure_rate := options.failure_rate
     ) and random.random() < failure_rate:
       raise GarfApiError(f'Failed with failure_rate {failure_rate}')
-    if delay := self.options.delay_seconds:
+    if delay := options.delay_seconds:
       time.sleep(delay)
     return GarfApiResponse(
       results=results, results_placeholder=results_placeholder
