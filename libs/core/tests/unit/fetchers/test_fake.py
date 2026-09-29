@@ -26,7 +26,7 @@ class TestFakeQuerySpecification:
       SELECT
         metric.int AS field
       FROM fake
-      WHERE failure_rate=1.0 AND delay=10
+      WHERE failure_rate=1.0 AND delay = 10
     """
 
     spec = query_editor.FakeQuerySpecification(text=query)
