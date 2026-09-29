@@ -16,8 +16,22 @@ import csv
 import json
 import pathlib
 
-from garf.core import report
+from garf.core import query_editor, report
 from garf.core.fetchers import FakeApiReportFetcher
+
+
+class TestFakeQuerySpecification:
+  def test_extract_filters(self):
+    query = """
+      SELECT
+        metric.int AS field
+      FROM fake
+      WHERE failure_rate=1.0 AND delay=10
+    """
+
+    spec = query_editor.FakeQuerySpecification(text=query)
+    spec.extract_filters()
+    assert spec.query.filters == {'failure_rate': 1.0, 'delay': 10}
 
 
 class TestFakeApiReportFetcher:

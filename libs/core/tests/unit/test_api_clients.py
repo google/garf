@@ -35,7 +35,7 @@ class TestFakeApiClient:
       dimension.bool AS bool
     FROM fake
     """
-    request = query_editor.QuerySpecification(text=test_query).generate()
+    request = query_editor.FakeQuerySpecification(text=test_query).generate()
     response = api_client.get_response(request)
     assert len(response.results) == n_rows
 
