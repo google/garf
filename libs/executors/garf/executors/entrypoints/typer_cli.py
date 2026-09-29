@@ -68,8 +68,8 @@ trace.set_tracer_provider(telemetry_tracer)
 typer_app = typer.Typer(
   help='Garf\n\nCall APIs with SQL in your terminal', rich_markup_mode='rich'
 )
-workflow_app = typer.Typer(help='Execute workflow')
-cache_app = typer.Typer(help='Manage garf cache')
+workflow_app = typer.Typer(help='Executes workflow')
+cache_app = typer.Typer(help='Manages garf cache.')
 typer_app.add_typer(
   workflow_app,
   name='workflow',
@@ -481,11 +481,48 @@ def deploy(
 
 
 @typer_app.command()
-def fetchers() -> set[str]:
+def executors():
+  """Displays all available executors."""
+  table = Table('Executor')
+  for executor in setup.available_executors():
+    table.add_row(executor)
+  console.print(table)
+
+
+@typer_app.command()
+def fetchers(
+  show_versions: Annotated[
+    bool,
+    typer.Option(
+      help='Whether show fetcher version',
+    ),
+  ] = False,
+  include_executors: Annotated[
+    bool,
+    typer.Option(
+      help='Whether to display executors',
+    ),
+  ] = False,
+) -> set[str]:
   """Displays all available fetchers."""
-  table = Table('Fetcher')
-  for fetcher in setup.find_executors():
-    table.add_row(fetcher)
+  if show_versions:
+    table = Table('Fetcher', 'version')
+    for (
+      fetcher,
+      module,
+    ) in garf.executors.fetchers.get_all_report_fetchers().items():
+      table.add_row(fetcher, module.version)
+    if include_executors:
+      for executor in setup.available_executors():
+        table.add_row(executor, garf.executors.version.__version__)
+  else:
+    table = Table('Fetcher')
+    for fetcher in (
+      setup.find_executors()
+      if include_executors
+      else garf.executors.fetchers.find_fetchers()
+    ):
+      table.add_row(fetcher)
   console.print(table)
 
 
