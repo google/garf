@@ -14,7 +14,6 @@
 
 """Opentelemetry initialization functions."""
 
-import logging
 import os
 from typing import Optional
 
@@ -27,7 +26,7 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
   OTLPSpanExporter,
 )
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
@@ -121,4 +120,4 @@ def initialize_logger(otel_service_name: Optional[str] = None):
     logger_provider.add_log_record_processor(
       BatchLogRecordProcessor(log_exporter)
     )
-  return LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
+  return logger_provider

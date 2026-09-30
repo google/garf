@@ -87,7 +87,6 @@ executor_info = telemetry.meter.create_observable_gauge(
 logger = utils.init_logging(
   loglevel='INFO', logger_type='local', name=OTEL_SERVICE_NAME
 )
-logger.addHandler(telemetry_logger)
 
 report_fetchers = {}
 executors = ['api']
