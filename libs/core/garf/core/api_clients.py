@@ -76,7 +76,7 @@ _SSRF_BLOCKED_RANGES: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = [
 ]
 
 
-def _validate_endpoint_url(url: str) -> None:
+def _validate_endpoint_url(url: str) -> str:
   """Validates an endpoint URL to prevent SSRF attacks.
 
   Ensures the URL uses an allowed scheme (http or https) and does not
@@ -85,6 +85,9 @@ def _validate_endpoint_url(url: str) -> None:
 
   Args:
     url: The endpoint URL to validate.
+
+  Returns:
+    Endpoint if valid.
 
   Raises:
     GarfApiError: If the URL scheme is not http/https, or if the host is
@@ -99,15 +102,21 @@ def _validate_endpoint_url(url: str) -> None:
       f'Endpoint must use http or https scheme, got: {parsed.scheme!r}'
     )
   if parsed.hostname:
-    try:
+    with contextlib.suppress(ValueError):
       addr = ipaddress.ip_address(parsed.hostname)
       for net in _SSRF_BLOCKED_RANGES:
         if addr in net:
           raise GarfApiError(
             f'Endpoint resolves to a blocked address range: {addr}'
           )
-    except ValueError:
-      pass  # hostname string rather than a bare IP — allowed through
+      if (
+        addr.is_private
+        or addr.is_loopback
+        or addr.is_link_local
+        or addr.is_reserved
+      ):
+        raise GarfApiError('Url resolved to a non-public address')
+  return url
 
 
 class BaseClient(abc.ABC):
@@ -143,12 +152,15 @@ class RestApiClient(BaseClient):
   OK = 200
 
   def __init__(
-    self, endpoint: str, allow_unsafe_endpoint: bool = False, **kwargs: str
+    self,
+    endpoint: str,
+    timeout: int | None = None,
+    **kwargs: str,
   ) -> None:
     """Initializes RestApiClient."""
-    if not allow_unsafe_endpoint:
-      _validate_endpoint_url(endpoint)
+    _validate_endpoint_url(endpoint)
     self.endpoint = endpoint
+    self.timeout = timeout
     self.query_args = kwargs
 
   @override
@@ -161,7 +173,14 @@ class RestApiClient(BaseClient):
       key, value = param.split('=')
       params[key.strip()] = value.strip()
     headers = {k: v for k, v in kwargs.items() if not isinstance(v, bool)}
-    response = requests.get(url, params=params, headers=headers)
+    request_options = {
+      'params': params,
+      'headers': headers,
+      'allow_redirects': False,
+    }
+    if self.timeout:
+      request_options['timeout'] = self.timeout
+    response = requests.get(url, **request_options)
     if response.status_code == self.OK:
       results = response.json()
       if not isinstance(results, list):
