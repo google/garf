@@ -33,7 +33,8 @@ from garf.io.writers import abs_writer
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DUCKDB_INMEMORY_DB = duckdb.connect(database=':memory:')
+DEFAULT_DB = ':memory:garf'
+DEFAULT_DUCKDB_INMEMORY_DB = duckdb.connect(database=DEFAULT_DB)
 
 
 class DuckDBWriterError(exceptions.GarfIoError):
@@ -62,9 +63,7 @@ class DuckDBWriter(abs_writer.AbsWriter):
     super().__init__(**kwargs)
     self.db = db
     self.if_exists = if_exists
-    self.api_client = (
-      duckdb.connect(database=db) if db else DEFAULT_DUCKDB_INMEMORY_DB
-    )
+    self.api_client = duckdb.connect(database=db or DEFAULT_DB)
 
   @tracer.start_as_current_span('duckdb.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> None:

@@ -61,11 +61,7 @@ class DuckDBExecutor(executor.Executor):
       enable_cache=enable_cache,
       cache_ttl_seconds=cache_ttl_seconds,
     )
-    self.api_client = (
-      duckdb.connect(database=db)
-      if db
-      else duckdb_writer.DEFAULT_DUCKDB_INMEMORY_DB
-    )
+    self.db = db or duckdb_writer.DEFAULT_DB
 
   @tracer.start_as_current_span('duckdb.execute')
   def _execute(
@@ -84,7 +80,8 @@ class DuckDBExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    execution_result = duckdb.sql(query=query, connection=self.api_client)
+    conn = duckdb.connect(self.db)
+    execution_result = conn.sql(query=query)
     if execution_result:
       return report.GarfReport.from_pandas(execution_result.to_df())
     return report.GarfReport()
