@@ -100,7 +100,6 @@ def init_celery_telemetry(*args, **kwargs):
   logger = garf_utils.init_logging(
     loglevel='INFO', logger_type='local', name=otel_service_name
   )
-  logger.addHandler(initialize_logger(otel_service_name))
 
 
 app = celery.Celery(

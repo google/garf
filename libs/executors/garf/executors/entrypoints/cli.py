@@ -35,9 +35,7 @@ from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
 from opentelemetry import trace
-from opentelemetry.instrumentation.auto_instrumentation import initialize
 
-initialize()
 telemetry_tracer = initialize_tracer()
 telemetry_logger = initialize_logger()
 trace.set_tracer_provider(telemetry_tracer)
@@ -100,10 +98,9 @@ def main():
   if args.version:
     print(garf.executors.version.__version__)
     sys.exit()
-  logger = utils.init_logging(
+  utils.init_logging(
     loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
   )
-  logger.addHandler(initialize_logger())
   reader_client = reader.create_reader(args.input)
   param_types = ['source', 'macro', 'template']
   outputs = args.output.split(',')

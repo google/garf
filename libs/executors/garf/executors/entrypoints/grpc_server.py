@@ -316,7 +316,6 @@ if __name__ == '__main__':
     logger_type='local',
     name=otel_service_name,
   )
-  logger.addHandler(initialize_logger())
 
   server = init_server(
     max_workers=args.parallel_threshold,

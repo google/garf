@@ -41,7 +41,6 @@ from garf.executors.workflows import workflow, workflow_runner
 from garf.io import reader, writer
 from google.protobuf.json_format import ParseDict
 from opentelemetry import trace
-from opentelemetry.instrumentation.auto_instrumentation import initialize
 from opentelemetry.trace.propagation.tracecontext import (
   TraceContextTextMapPropagator,
 )
@@ -61,7 +60,6 @@ ServerTypeEnum = enum.Enum(
   'ServerTypeEnum', (('http', 'http'), ('grpc', 'grpc'))
 )
 
-initialize()
 telemetry_tracer = initialize_tracer()
 telemetry_logger = initialize_logger()
 trace.set_tracer_provider(telemetry_tracer)
@@ -400,10 +398,9 @@ def run(
   span = trace.get_current_span()
   command_args = ' '.join(sys.argv[1:])
   span.set_attribute('cli.command', f'grf {command_args}')
-  garf_logger = utils.init_logging(
+  utils.init_logging(
     loglevel=loglevel.upper(), logger_type=logger, name=log_name
   )
-  garf_logger.addHandler(initialize_logger())
   context = utils.ParamsParser().parse_all(ctx.args)
   if server_url:
     if server_type == ServerTypeEnum.http:
@@ -416,8 +413,8 @@ def run(
     runner.run(
       enable_cache=enable_cache,
       cache_ttl_seconds=cache_ttl_seconds,
-      selected_aliases=include,
-      skipped_aliases=exclude,
+      selected_aliases=include.split() if include else None,
+      skipped_aliases=exclude.split() if exclude else None,
       simulate=simulate,
     )
 
