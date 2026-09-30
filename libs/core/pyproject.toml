@@ -15,6 +15,7 @@ dependencies = [
     "eval_type_backport",
     "opentelemetry-api",
     "redis",
+    "protobuf>=7.35",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
