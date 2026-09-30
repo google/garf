@@ -440,7 +440,7 @@ curl -X 'POST' \
 
 ### Setting up executor for gquery
 
-Depending on setup you might need to configure `bq` or `sqldb` executor.
+Depending on setup you might need to configure `bq`,`sqldb` or `duckdb` executor.
 
 ```bash hl_lines="6"
 echo 'SELECT {key} AS value FROM resource WHERE id IN ({ids})' > query.sql

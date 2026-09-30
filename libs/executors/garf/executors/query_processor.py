@@ -62,6 +62,12 @@ def _handle_sub_context(
         gquery_executor = bq_executor.BigQueryExecutor(
           **context.fetcher_parameters
         )
+      elif alias == 'duckdb':
+        from garf.executors import duckdb_executor
+
+        gquery_executor = duckdb_executor.DuckDBExecutor(
+          **context.fetcher_parameters
+        )
       else:
         raise GqueryError(f'Unsupported alias {alias} for gquery: {v}')
       with contextlib.suppress(
