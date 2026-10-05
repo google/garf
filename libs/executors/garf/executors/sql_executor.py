@@ -29,7 +29,7 @@ import uuid
 
 import pandas as pd
 from garf.core import cache, report
-from garf.executors import exceptions, execution_context, executor
+from garf.executors import exceptions, execution_context, executor, utils
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer, sqldb_writer
 
@@ -102,6 +102,11 @@ class SqlAlchemyQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
+    if not utils.is_valid_query(query, regexp='with|select|create|update'):
+      raise SqlAlchemyQueryExecutorError(
+        'Unsupported query: must include only SELECT, CREATE or UPDATE '
+        'statements'
+      )
     with self.api_client.begin() as conn:
       if re.findall(r'(create|update) ', query.lower()):
         try:

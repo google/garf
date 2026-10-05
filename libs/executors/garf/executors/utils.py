@@ -15,7 +15,11 @@
 """Common utilities for garf executors."""
 
 import copy
+import re
 from typing import Any
+
+import sqlparse
+from garf.core import query_editor
 
 
 def merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
@@ -31,3 +35,11 @@ def merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
     else:
       result[key] = value
   return result
+
+
+def is_valid_query(query: str, regexp: str = 'with|select|create') -> bool:
+  for r in sqlparse.split(query):
+    spec = query_editor.QuerySpecification(r).remove_comments()
+    if not re.match(f'^({regexp}).*', spec.query.text, re.IGNORECASE):
+      return False
+  return True

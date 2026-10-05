@@ -115,3 +115,15 @@ class TestBigQueryExecutor:
     with open(output_path, 'r', encoding='utf-8') as f:
       data = json.load(f)
     assert data == [{'one': 1}]
+
+  @pytest.mark.parametrize(
+    'statement',
+    [
+      '-- Comment\nDROP 1',
+      'SELECT 1; DROP TABLE test',
+      'ALTER TABLE test',
+    ],
+  )
+  def test_execute_raises_error_on_invalid_query(self, executor, statement):
+    with pytest.raises(bq_executor.BigQueryExecutorError):
+      executor.execute(title='test', query=statement)

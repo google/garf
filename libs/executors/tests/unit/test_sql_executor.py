@@ -175,3 +175,11 @@ class TestSqlAlchemyQueryExecutor:
     )
     expected_result = report.GarfReport(results=[[1]], column_names=['one'])
     assert result == expected_result
+
+  @pytest.mark.parametrize(
+    'statement',
+    ['-- Comment\nDROP 1', 'SELECT 1; DROP TABLE test', 'ALTER TABLE test'],
+  )
+  def test_execute_raises_error_on_invalid_query(self, executor, statement):
+    with pytest.raises(sql_executor.SqlAlchemyQueryExecutorError):
+      executor.execute(title='test', query=statement)

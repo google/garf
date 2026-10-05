@@ -31,7 +31,7 @@ except ImportError as e:
 import logging
 
 from garf.core import cache, report
-from garf.executors import exceptions, execution_context, executor
+from garf.executors import exceptions, execution_context, executor, utils
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
@@ -132,6 +132,10 @@ class BigQueryExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
+    if not utils.is_valid_query(query):
+      raise BigQueryExecutorError(
+        'Unsupported query: must include only SELECT or CREATE statements'
+      )
     job = self.api_client.query(query)
     try:
       result = job.result()
