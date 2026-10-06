@@ -23,6 +23,7 @@ from concurrent import futures
 import garf.executors
 import grpc
 from garf.executors import (
+  config,
   execution_context,
   fetchers,
   garf_pb2,
@@ -33,7 +34,6 @@ from garf.executors import (
 )
 from garf.executors.entrypoints import grpc_interceptors, utils
 from garf.executors.entrypoints.tracer import (
-  initialize_logger,
   initialize_meter,
   initialize_tracer,
 )
@@ -191,13 +191,27 @@ class GarfService(garf_pb2_grpc.GarfService):
     )
 
   def ExecuteWorkflow(self, request, context):
-    execution_workflow = workflow.Workflow(
-      **MessageToDict(request.workflow, preserving_proto_field_name=True),
-      context=MessageToDict(request.context, preserving_proto_field_name=True),
-      execution_config=MessageToDict(
-        request.config, preserving_proto_field_name=True
-      ),
-    )
+    if config_path := request.config_path:
+      execution_config = config.Config.from_file(config_path)
+    else:
+      execution_config = MessageToDict(
+        request.config_data, preserving_proto_field_name=True
+      )
+    if workflow_path := request.workflow_path:
+      execution_workflow = workflow.Workflow.from_file(
+        path=workflow_path, config_data=execution_config
+      )
+
+    else:
+      execution_workflow = workflow.Workflow(
+        **MessageToDict(
+          request.workflow_data, preserving_proto_field_name=True
+        ),
+        context=MessageToDict(
+          request.context, preserving_proto_field_name=True
+        ),
+        execution_config=execution_config,
+      )
     telemetry.workflow_requested.add(
       1, attributes=execution_workflow.attributes
     )
