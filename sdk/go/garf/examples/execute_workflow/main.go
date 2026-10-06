@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -20,6 +21,26 @@ func main() {
 	defer g.Close()
 	runInlineWorkflow(g)
 	runWorkflowFromFile(g)
+	runWorkflowFromFileNoRead(g)
+}
+
+func runWorkflowFromFileNoRead(g *garf.Garf) error {
+	ctx := context.Background()
+	originalFile, err := os.Open("test_workflow.yaml")
+	if err != nil {
+		log.Fatal("File not found")
+	}
+	defer originalFile.Close()
+
+	tmpWorkflow, err := os.CreateTemp("", "test_workflow.yaml")
+	if err != nil {
+		log.Fatal("Failed to create tmp file")
+	}
+	defer tmpWorkflow.Close()
+	_, err = io.Copy(tmpWorkflow, originalFile)
+	resultsFileWorkflow := g.ExecuteWorkflowFromFile(ctx, tmpWorkflow.Name(), "", &garf.ExecutionContext{})
+	fmt.Println(resultsFileWorkflow)
+	return nil
 }
 
 func runWorkflowFromFile(g *garf.Garf) error {
@@ -32,8 +53,8 @@ func runWorkflowFromFile(g *garf.Garf) error {
 	resultsFileWorkflow := g.ExecuteWorkflow(ctx, workflow, &garf.Config{}, &garf.ExecutionContext{})
 	fmt.Println(resultsFileWorkflow)
 	return err
-
 }
+
 func runInlineWorkflow(g *garf.Garf) error {
 	ctx := context.Background()
 	fetcherParameters := map[string]any{
