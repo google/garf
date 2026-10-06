@@ -41,7 +41,7 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           command:
-            - "celery"
+            - "/venv/bin/celery"
             - "-A"
             - "garf.executors.entrypoints.tasks"
             - "--broker=$(CELERY_BROKER_URL)"
