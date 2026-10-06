@@ -356,13 +356,45 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow, config *
 	defer span.End()
 
 	request := ExecuteWorkflowRequest{
-		Workflow:        workflow,
+		Workflow: &ExecuteWorkflowRequest_WorkflowData{
+			WorkflowData: workflow,
+		},
 		SelectedAliases: []string{},
 		SkippedAliases:  []string{},
-		Config:          config,
-		Context:         executionContext,
-		CacheOptions:    &GarfCacheOptions{},
-		Simulate:        false,
+		Config: &ExecuteWorkflowRequest_ConfigData{
+			ConfigData: config,
+		},
+		Context:      executionContext,
+		CacheOptions: &GarfCacheOptions{},
+		Simulate:     false,
+	}
+	r, err := g.client.ExecuteWorkflow(ctx, &request)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed workflow")
+	}
+	result := r.Results
+	versionAttr := attribute.StringSlice("garf.results", result)
+	span.SetAttributes(versionAttr)
+	logger.InfoContext(ctx, "Executed workflow", "workflow", result)
+	return result
+}
+
+func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath, configPath string, executionContext *ExecutionContext) []string {
+	ctx, span := tracer.Start(ctx, "execute-workflow")
+	defer span.End()
+
+	request := ExecuteWorkflowRequest{
+		Workflow: &ExecuteWorkflowRequest_WorkflowPath{
+			WorkflowPath: workflowPath,
+		},
+		SelectedAliases: []string{},
+		SkippedAliases:  []string{},
+		Config: &ExecuteWorkflowRequest_ConfigPath{
+			ConfigPath: configPath,
+		},
+		Context:      executionContext,
+		CacheOptions: &GarfCacheOptions{},
+		Simulate:     false,
 	}
 	r, err := g.client.ExecuteWorkflow(ctx, &request)
 	if err != nil {

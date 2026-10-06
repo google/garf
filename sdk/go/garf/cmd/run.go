@@ -30,19 +30,26 @@ var runCmd = &cobra.Command{
 		var err error
 		workflowPath, _ := cmd.Flags().GetString("file")
 		configPath, _ := cmd.Flags().GetString("config")
-		config := &garf.Config{}
-		if configPath != "" {
-			config, err = garf.ReadConfigFromFile(configPath)
-			if err != nil {
-				log.Fatalf("Problem reading config: %v", err)
-			}
-		}
-		workflow, err := garf.ReadWorkflowFromFile(workflowPath)
-		if err != nil {
-			log.Fatalf("Problem reading workflow: %v", err)
-		}
+		asFiles, _ := cmd.Flags().GetBool("as-file")
+		var resultsFileWorkflow []string
+		if asFiles {
+			resultsFileWorkflow = GarfClient.ExecuteWorkflowFromFile(ctx, workflowPath, configPath, &garf.ExecutionContext{})
 
-		resultsFileWorkflow := GarfClient.ExecuteWorkflow(ctx, workflow, config, &garf.ExecutionContext{})
+		} else {
+			config := &garf.Config{}
+			if configPath != "" {
+				config, err = garf.ReadConfigFromFile(configPath)
+				if err != nil {
+					log.Fatalf("Problem reading config: %v", err)
+				}
+			}
+			workflow, err := garf.ReadWorkflowFromFile(workflowPath)
+			if err != nil {
+				log.Fatalf("Problem reading workflow: %v", err)
+			}
+
+			resultsFileWorkflow = GarfClient.ExecuteWorkflow(ctx, workflow, config, &garf.ExecutionContext{})
+		}
 		fmt.Println(resultsFileWorkflow)
 	},
 }
@@ -51,4 +58,5 @@ func init() {
 	workflowCmd.AddCommand(runCmd)
 	runCmd.Flags().StringP("file", "f", "", "Path to garf workflow")
 	runCmd.Flags().StringP("config", "c", "", "Path to garf config")
+	runCmd.Flags().Bool("as-file", false, "Whether to pass workflow/configs as file paths")
 }

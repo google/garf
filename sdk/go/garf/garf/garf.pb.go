@@ -1399,16 +1399,24 @@ func (x *Workflow) GetPrefix() string {
 }
 
 type ExecuteWorkflowRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Workflow        *Workflow              `protobuf:"bytes,1,opt,name=workflow,proto3" json:"workflow,omitempty"`
-	SelectedAliases []string               `protobuf:"bytes,2,rep,name=selected_aliases,json=selectedAliases,proto3" json:"selected_aliases,omitempty"`
-	SkippedAliases  []string               `protobuf:"bytes,3,rep,name=skipped_aliases,json=skippedAliases,proto3" json:"skipped_aliases,omitempty"`
-	Config          *Config                `protobuf:"bytes,4,opt,name=config,proto3" json:"config,omitempty"`
-	Context         *ExecutionContext      `protobuf:"bytes,5,opt,name=context,proto3" json:"context,omitempty"`
-	CacheOptions    *GarfCacheOptions      `protobuf:"bytes,6,opt,name=cache_options,json=cacheOptions,proto3" json:"cache_options,omitempty"`
-	Simulate        bool                   `protobuf:"varint,7,opt,name=simulate,proto3" json:"simulate,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Workflow:
+	//
+	//	*ExecuteWorkflowRequest_WorkflowData
+	//	*ExecuteWorkflowRequest_WorkflowPath
+	Workflow        isExecuteWorkflowRequest_Workflow `protobuf_oneof:"workflow"`
+	SelectedAliases []string                          `protobuf:"bytes,3,rep,name=selected_aliases,json=selectedAliases,proto3" json:"selected_aliases,omitempty"`
+	SkippedAliases  []string                          `protobuf:"bytes,4,rep,name=skipped_aliases,json=skippedAliases,proto3" json:"skipped_aliases,omitempty"`
+	// Types that are valid to be assigned to Config:
+	//
+	//	*ExecuteWorkflowRequest_ConfigData
+	//	*ExecuteWorkflowRequest_ConfigPath
+	Config        isExecuteWorkflowRequest_Config `protobuf_oneof:"config"`
+	Context       *ExecutionContext               `protobuf:"bytes,7,opt,name=context,proto3" json:"context,omitempty"`
+	CacheOptions  *GarfCacheOptions               `protobuf:"bytes,8,opt,name=cache_options,json=cacheOptions,proto3" json:"cache_options,omitempty"`
+	Simulate      bool                            `protobuf:"varint,9,opt,name=simulate,proto3" json:"simulate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExecuteWorkflowRequest) Reset() {
@@ -1441,11 +1449,29 @@ func (*ExecuteWorkflowRequest) Descriptor() ([]byte, []int) {
 	return file_garf_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *ExecuteWorkflowRequest) GetWorkflow() *Workflow {
+func (x *ExecuteWorkflowRequest) GetWorkflow() isExecuteWorkflowRequest_Workflow {
 	if x != nil {
 		return x.Workflow
 	}
 	return nil
+}
+
+func (x *ExecuteWorkflowRequest) GetWorkflowData() *Workflow {
+	if x != nil {
+		if x, ok := x.Workflow.(*ExecuteWorkflowRequest_WorkflowData); ok {
+			return x.WorkflowData
+		}
+	}
+	return nil
+}
+
+func (x *ExecuteWorkflowRequest) GetWorkflowPath() string {
+	if x != nil {
+		if x, ok := x.Workflow.(*ExecuteWorkflowRequest_WorkflowPath); ok {
+			return x.WorkflowPath
+		}
+	}
+	return ""
 }
 
 func (x *ExecuteWorkflowRequest) GetSelectedAliases() []string {
@@ -1462,11 +1488,29 @@ func (x *ExecuteWorkflowRequest) GetSkippedAliases() []string {
 	return nil
 }
 
-func (x *ExecuteWorkflowRequest) GetConfig() *Config {
+func (x *ExecuteWorkflowRequest) GetConfig() isExecuteWorkflowRequest_Config {
 	if x != nil {
 		return x.Config
 	}
 	return nil
+}
+
+func (x *ExecuteWorkflowRequest) GetConfigData() *Config {
+	if x != nil {
+		if x, ok := x.Config.(*ExecuteWorkflowRequest_ConfigData); ok {
+			return x.ConfigData
+		}
+	}
+	return nil
+}
+
+func (x *ExecuteWorkflowRequest) GetConfigPath() string {
+	if x != nil {
+		if x, ok := x.Config.(*ExecuteWorkflowRequest_ConfigPath); ok {
+			return x.ConfigPath
+		}
+	}
+	return ""
 }
 
 func (x *ExecuteWorkflowRequest) GetContext() *ExecutionContext {
@@ -1489,6 +1533,38 @@ func (x *ExecuteWorkflowRequest) GetSimulate() bool {
 	}
 	return false
 }
+
+type isExecuteWorkflowRequest_Workflow interface {
+	isExecuteWorkflowRequest_Workflow()
+}
+
+type ExecuteWorkflowRequest_WorkflowData struct {
+	WorkflowData *Workflow `protobuf:"bytes,1,opt,name=workflow_data,json=workflowData,proto3,oneof"`
+}
+
+type ExecuteWorkflowRequest_WorkflowPath struct {
+	WorkflowPath string `protobuf:"bytes,2,opt,name=workflow_path,json=workflowPath,proto3,oneof"`
+}
+
+func (*ExecuteWorkflowRequest_WorkflowData) isExecuteWorkflowRequest_Workflow() {}
+
+func (*ExecuteWorkflowRequest_WorkflowPath) isExecuteWorkflowRequest_Workflow() {}
+
+type isExecuteWorkflowRequest_Config interface {
+	isExecuteWorkflowRequest_Config()
+}
+
+type ExecuteWorkflowRequest_ConfigData struct {
+	ConfigData *Config `protobuf:"bytes,5,opt,name=config_data,json=configData,proto3,oneof"`
+}
+
+type ExecuteWorkflowRequest_ConfigPath struct {
+	ConfigPath string `protobuf:"bytes,6,opt,name=config_path,json=configPath,proto3,oneof"`
+}
+
+func (*ExecuteWorkflowRequest_ConfigData) isExecuteWorkflowRequest_Config() {}
+
+func (*ExecuteWorkflowRequest_ConfigPath) isExecuteWorkflowRequest_Config() {}
 
 type ExecuteWorkflowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1825,15 +1901,22 @@ const file_garf_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12(\n" +
 	"\x05steps\x18\x02 \x03(\v2\x12.garf.WorkflowStepR\x05steps\x122\n" +
 	"\bmetadata\x18\x03 \x01(\v2\x16.garf.WorkflowMetadataR\bmetadata\x12\x16\n" +
-	"\x06prefix\x18\x04 \x01(\tR\x06prefix\"\xc9\x02\n" +
-	"\x16ExecuteWorkflowRequest\x12*\n" +
-	"\bworkflow\x18\x01 \x01(\v2\x0e.garf.WorkflowR\bworkflow\x12)\n" +
-	"\x10selected_aliases\x18\x02 \x03(\tR\x0fselectedAliases\x12'\n" +
-	"\x0fskipped_aliases\x18\x03 \x03(\tR\x0eskippedAliases\x12$\n" +
-	"\x06config\x18\x04 \x01(\v2\f.garf.ConfigR\x06config\x120\n" +
-	"\acontext\x18\x05 \x01(\v2\x16.garf.ExecutionContextR\acontext\x12;\n" +
-	"\rcache_options\x18\x06 \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
-	"\bsimulate\x18\a \x01(\bR\bsimulate\"3\n" +
+	"\x06prefix\x18\x04 \x01(\tR\x06prefix\"\xbf\x03\n" +
+	"\x16ExecuteWorkflowRequest\x125\n" +
+	"\rworkflow_data\x18\x01 \x01(\v2\x0e.garf.WorkflowH\x00R\fworkflowData\x12%\n" +
+	"\rworkflow_path\x18\x02 \x01(\tH\x00R\fworkflowPath\x12)\n" +
+	"\x10selected_aliases\x18\x03 \x03(\tR\x0fselectedAliases\x12'\n" +
+	"\x0fskipped_aliases\x18\x04 \x03(\tR\x0eskippedAliases\x12/\n" +
+	"\vconfig_data\x18\x05 \x01(\v2\f.garf.ConfigH\x01R\n" +
+	"configData\x12!\n" +
+	"\vconfig_path\x18\x06 \x01(\tH\x01R\n" +
+	"configPath\x120\n" +
+	"\acontext\x18\a \x01(\v2\x16.garf.ExecutionContextR\acontext\x12;\n" +
+	"\rcache_options\x18\b \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
+	"\bsimulate\x18\t \x01(\bR\bsimulateB\n" +
+	"\n" +
+	"\bworkflowB\b\n" +
+	"\x06config\"3\n" +
 	"\x17ExecuteWorkflowResponse\x12\x18\n" +
 	"\aresults\x18\x01 \x03(\tR\aresults\"C\n" +
 	"\x14ListFetchersResponse\x12+\n" +
@@ -1933,8 +2016,8 @@ var file_garf_proto_depIdxs = []int32{
 	28, // 26: garf.Config.sources:type_name -> google.protobuf.Struct
 	18, // 27: garf.Workflow.steps:type_name -> garf.WorkflowStep
 	17, // 28: garf.Workflow.metadata:type_name -> garf.WorkflowMetadata
-	21, // 29: garf.ExecuteWorkflowRequest.workflow:type_name -> garf.Workflow
-	20, // 30: garf.ExecuteWorkflowRequest.config:type_name -> garf.Config
+	21, // 29: garf.ExecuteWorkflowRequest.workflow_data:type_name -> garf.Workflow
+	20, // 30: garf.ExecuteWorkflowRequest.config_data:type_name -> garf.Config
 	5,  // 31: garf.ExecuteWorkflowRequest.context:type_name -> garf.ExecutionContext
 	3,  // 32: garf.ExecuteWorkflowRequest.cache_options:type_name -> garf.GarfCacheOptions
 	16, // 33: garf.ListFetchersResponse.results:type_name -> garf.FetcherInfo
@@ -1973,6 +2056,12 @@ func file_garf_proto_init() {
 	file_garf_proto_msgTypes[11].OneofWrappers = []any{
 		(*ExecuteBatchRequest_BatchQueryDefinitions)(nil),
 		(*ExecuteBatchRequest_BatchQueryPaths)(nil),
+	}
+	file_garf_proto_msgTypes[22].OneofWrappers = []any{
+		(*ExecuteWorkflowRequest_WorkflowData)(nil),
+		(*ExecuteWorkflowRequest_WorkflowPath)(nil),
+		(*ExecuteWorkflowRequest_ConfigData)(nil),
+		(*ExecuteWorkflowRequest_ConfigPath)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
