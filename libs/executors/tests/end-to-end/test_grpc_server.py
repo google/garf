@@ -162,7 +162,7 @@ def test_fetch(grpc_stub):
 
 def test_execute_workflow(grpc_stub):
   request = pb.ExecuteWorkflowRequest(
-    workflow=pb.Workflow(
+    workflow_data=pb.Workflow(
       name='test',
       steps=[
         pb.WorkflowStep(

@@ -30,6 +30,30 @@ _SCRIPT_PATH = str(pathlib.Path(__file__).parent)
 
 
 class TestWorkflow:
+  config_data = {
+    'name': 'test_config',
+    'sources': {
+      'api': {
+        'query_parameters': {
+          'macro_expansion': True,
+          'macro': {
+            'start_date': '2025-01-01',
+          },
+          'template': {
+            'cohorts': 1,
+          },
+        },
+        'fetcher_parameters': {
+          'id': [1, 2, 3],
+        },
+        'writer': 'csv',
+        'writer_parameters': {
+          'destination_folder': '/tmp',
+        },
+      }
+    },
+    'metadata': {'version': '0.0.0'},
+  }
   data = {
     'steps': [
       {
@@ -85,6 +109,43 @@ class TestWorkflow:
         'required_fetchers': {'fake': '0.0.0'},
       },
       prefix=tmp_workflow.parent,
+    )
+    assert workflow == expected_workflow
+
+  def test_from_file_returns_correct_config_from_data(self, tmp_path):
+    tmp_workflow = tmp_path / 'workflow.yaml'
+    with open(tmp_workflow, 'w', encoding='utf-8') as f:
+      yaml.dump(self.data, f, encoding='utf-8')
+    workflow = Workflow.from_file(tmp_workflow, config_data=self.config_data)
+    expected_workflow = Workflow(
+      steps=self.data.get('steps'),
+      name='test workflow',
+      metadata={
+        'description': 'Test Workflow',
+        'required_fetchers': {'fake': '0.0.0'},
+      },
+      prefix=tmp_workflow.parent,
+      execution_config=config.Config(**self.config_data),
+    )
+    assert workflow == expected_workflow
+
+  def test_from_file_returns_correct_config_from_file(self, tmp_path):
+    tmp_workflow = tmp_path / 'workflow.yaml'
+    with open(tmp_workflow, 'w', encoding='utf-8') as f:
+      yaml.dump(self.data, f, encoding='utf-8')
+    tmp_config = tmp_path / 'config.yaml'
+    with open(tmp_config, 'w', encoding='utf-8') as f:
+      yaml.dump(self.config_data, f, encoding='utf-8')
+    workflow = Workflow.from_file(tmp_workflow, config_file=tmp_config)
+    expected_workflow = Workflow(
+      steps=self.data.get('steps'),
+      name='test workflow',
+      metadata={
+        'description': 'Test Workflow',
+        'required_fetchers': {'fake': '0.0.0'},
+      },
+      prefix=tmp_workflow.parent,
+      execution_config=config.Config(**self.config_data),
     )
     assert workflow == expected_workflow
 

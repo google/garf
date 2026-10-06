@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import pathlib
 import re
@@ -29,6 +30,8 @@ from garf.core import query_editor
 from garf.executors import config, exceptions, utils
 from garf.executors.execution_context import ExecutionContext
 from garf.io import reader
+
+logger = logging.getLogger(__name__)
 
 reader_client = reader.create_reader('file')
 
@@ -289,6 +292,7 @@ class Workflow(pydantic.BaseModel):
     path: str | pathlib.Path | os.PathLike[str],
     context: dict[str, dict[str, Any]] | None = None,
     config_file: str | pathlib.Path | os.PathLike[str] | None = None,
+    config_data: config.Config | dict[str, Any] | None = None,
   ) -> Workflow:
     """Builds workflow from local or remote yaml file."""
     with smart_open.open(path, 'r', encoding='utf-8') as f:
@@ -297,15 +301,28 @@ class Workflow(pydantic.BaseModel):
       if isinstance(path, str):
         path = pathlib.Path(path)
       metadata = data.get('metadata') or WorkflowMetadata()
+      if config_data and config_file:
+        logger.warning(
+          'Both config data and config file provided. Using config data'
+        )
+      if config_data:
+        execution_config = (
+          config.Config(**config_data)
+          if isinstance(config_data, dict)
+          else config_data
+        )
+      elif config_file:
+        execution_config = config.Config.from_file(config_file)
+      else:
+        execution_config = None
+
       return cls(
         steps=data.get('steps'),
         name=data.get('name') or str(path.stem),
         metadata=metadata,
         context=context,
         prefix=path.parent,
-        execution_config=config.Config.from_file(config_file)
-        if config_file
-        else None,
+        execution_config=execution_config,
       )
     except pydantic.ValidationError as e:
       raise GarfWorkflowError(f'Incorrect workflow:\n {e}') from e

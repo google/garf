@@ -162,13 +162,19 @@ message Workflow {
 }
 
 message ExecuteWorkflowRequest {
-  Workflow workflow = 1;
-  repeated string selected_aliases = 2;
-  repeated string skipped_aliases = 3;
-  Config config = 4;
-  ExecutionContext context = 5;
-  GarfCacheOptions cache_options = 6;
-  bool simulate = 7;
+  oneof workflow {
+    Workflow workflow_data = 1;
+    string workflow_path = 2;
+  }
+  repeated string selected_aliases = 3;
+  repeated string skipped_aliases = 4;
+  oneof config {
+    Config config_data = 5;
+    string config_path = 6;
+  }
+  ExecutionContext context = 7;
+  GarfCacheOptions cache_options = 8;
+  bool simulate = 9;
 }
 
 message ExecuteWorkflowResponse {
