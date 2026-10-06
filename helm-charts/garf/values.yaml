@@ -17,6 +17,12 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+  command:
+    - "/venv/bin/opentelemetry-instrument"
+    - "/venv/bin/uvicorn"
+    - "garf.executors.entrypoints.server:app"
+    - "--host"
+    - "0.0.0.0"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
