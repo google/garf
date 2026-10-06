@@ -21,15 +21,15 @@ func main() {
 }
 
 func runHelperFunctions(ctx context.Context, g *garf.Garf) {
-	version := g.GetVersion(ctx)
+	version, _ := g.GetVersion(ctx)
 	fmt.Println(version)
 
-	info := g.GetInfo(ctx)
+	info, _ := g.GetInfo(ctx)
 	fmt.Println(info)
 
-	fetchers := g.ListFetchers(ctx)
+	fetchers, _ := g.ListFetchers(ctx)
 	fmt.Println(fetchers)
 
-	executors := g.ListExecutors(ctx)
+	executors, _ := g.ListExecutors(ctx)
 	fmt.Println(executors)
 }

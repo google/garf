@@ -45,9 +45,13 @@ var executeCmd = &cobra.Command{
 }
 
 func runQueryBatch(ctx context.Context, source string, batch []string, writer string, queryAsFile bool) []string {
+	var err error
 	var results []string
 	if queryAsFile {
-		results = GarfClient.ExecuteBatchFromFiles(ctx, source, batch, writer)
+		results, err = GarfClient.ExecuteBatchFromFiles(ctx, source, batch, writer)
+		if err != nil {
+			log.Fatalf("Failed to run batch: %v", err)
+		}
 	} else {
 		batchQueries := make(map[string]string)
 		for _, query := range batch {
@@ -59,16 +63,23 @@ func runQueryBatch(ctx context.Context, source string, batch []string, writer st
 			ext := filepath.Ext(p)
 			title := strings.TrimSuffix(filepath.Base(p), ext)
 			batchQueries[title] = string(queryData)
-			results = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer)
+			results, err = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer)
+			if err != nil {
+				log.Fatalf("Failed to run batch: %v", err)
+			}
 		}
 	}
 	return results
 }
 
 func runQuery(ctx context.Context, source, query, writer string, queryAsFile bool) []string {
+	var err error
 	var results []string
 	if queryAsFile {
-		results = GarfClient.ExecuteFromFile(ctx, source, query, writer)
+		results, err = GarfClient.ExecuteFromFile(ctx, source, query, writer)
+		if err != nil {
+			log.Fatalf("Failed to run batch: %v", err)
+		}
 	} else {
 		p := filepath.Clean(query)
 		queryData, err := os.ReadFile(query)
@@ -77,7 +88,10 @@ func runQuery(ctx context.Context, source, query, writer string, queryAsFile boo
 		}
 		ext := filepath.Ext(p)
 		title := strings.TrimSuffix(filepath.Base(p), ext)
-		results = GarfClient.Execute(ctx, source, title, string(queryData), writer)
+		results, err = GarfClient.Execute(ctx, source, title, string(queryData), writer)
+		if err != nil {
+			log.Fatalf("Failed to run batch: %v", err)
+		}
 	}
 	return results
 }

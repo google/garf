@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -29,7 +30,10 @@ func executeQueryBatchInline(g *garf.Garf) error {
 		"test2": "SELECT metric.int AS field FROM fake",
 		"test3": "SELECT metric.int AS field FROM fake",
 	}
-	resultsBatch := g.ExecuteBatch(ctx, "fake", batch, "json")
+	resultsBatch, err := g.ExecuteBatch(ctx, "fake", batch, "json")
+	if err != nil {
+		log.Fatalf("Failed to execute batch: %v", err)
+	}
 	fmt.Println(resultsBatch)
 	return nil
 }
@@ -42,7 +46,10 @@ func executeQueryBatchFromFiles(g *garf.Garf) error {
 		filepath.Join(exeDir, "query1.sql"),
 		filepath.Join(exeDir, "query2.sql"),
 	}
-	resultsBatch := g.ExecuteBatchFromFiles(ctx, "fake", batch, "json")
+	resultsBatch, err := g.ExecuteBatchFromFiles(ctx, "fake", batch, "json")
+	if err != nil {
+		log.Fatalf("Failed to execute batch: %v", err)
+	}
 	fmt.Println(resultsBatch)
 	return nil
 }

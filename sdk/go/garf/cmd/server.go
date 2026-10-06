@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,10 @@ var serverCmd = &cobra.Command{
 	Short: "Server specific commands",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		info := GarfClient.GetInfo(ctx)
+		info, err := GarfClient.GetInfo(ctx)
+		if err != nil {
+			log.Fatalf("Failed to get version: %v", err)
+		}
 		fmt.Println(info)
 	},
 }
@@ -35,7 +39,10 @@ var versionCmd = &cobra.Command{
 	Short: "Show server version",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		version := GarfClient.GetVersion(ctx)
+		version, err := GarfClient.GetVersion(ctx)
+		if err != nil {
+			log.Fatalf("Failed to get version: %v", err)
+		}
 		fmt.Println(version)
 	},
 }
@@ -45,7 +52,10 @@ var infoCmd = &cobra.Command{
 	Short: "Show server info",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		info := GarfClient.GetInfo(ctx)
+		info, err := GarfClient.GetInfo(ctx)
+		if err != nil {
+			log.Fatalf("Failed to get info: %v", err)
+		}
 		fmt.Println(info)
 	},
 }
@@ -55,7 +65,10 @@ var fetchersCmd = &cobra.Command{
 	Short: "Show available fetchers",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		fetchers := GarfClient.ListFetchers(ctx)
+		fetchers, err := GarfClient.ListFetchers(ctx)
+		if err != nil {
+			log.Fatalf("Failed to get fetchers: %v", err)
+		}
 		fmt.Println(fetchers)
 	},
 }
@@ -65,7 +78,10 @@ var executorsCmd = &cobra.Command{
 	Short: "Show available executors",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		executors := GarfClient.ListExecutors(ctx)
+		executors, err := GarfClient.ListExecutors(ctx)
+		if err != nil {
+			log.Fatalf("Failed to get executors: %v", err)
+		}
 		fmt.Println(executors)
 	},
 }
