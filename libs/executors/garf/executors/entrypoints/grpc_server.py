@@ -40,7 +40,7 @@ from garf.executors.entrypoints.tracer import (
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import formatter, reader
 from google.protobuf.json_format import MessageToDict
-from grpc_health.v1 import health_pb2
+from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 from grpc_reflection.v1alpha import reflection
 from opentelemetry import metrics
 
@@ -336,5 +336,9 @@ if __name__ == '__main__':
     port=args.port,
     enable_reflection=os.getenv('GARF_GRPC_SERVER_ENABLE_REFLECTION'),
   )
+  health_servicer = health.HealthServicer()
+  health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+  health_servicer.set('', health_pb2.HealthCheckResponse.SERVING)
+
   server.start()
   server.wait_for_termination()
