@@ -33,7 +33,10 @@ var runCmd = &cobra.Command{
 		asFiles, _ := cmd.Flags().GetBool("as-file")
 		var resultsFileWorkflow []string
 		if asFiles {
-			resultsFileWorkflow = GarfClient.ExecuteWorkflowFromFile(ctx, workflowPath, configPath, &garf.ExecutionContext{})
+			resultsFileWorkflow, err = GarfClient.ExecuteWorkflowFromFile(ctx, workflowPath, configPath, &garf.ExecutionContext{})
+			if err != nil {
+				log.Fatalf("Failed to run the workflow: %v", err)
+			}
 
 		} else {
 			config := &garf.Config{}
@@ -48,7 +51,10 @@ var runCmd = &cobra.Command{
 				log.Fatalf("Problem reading workflow: %v", err)
 			}
 
-			resultsFileWorkflow = GarfClient.ExecuteWorkflow(ctx, workflow, config, &garf.ExecutionContext{})
+			resultsFileWorkflow, err = GarfClient.ExecuteWorkflow(ctx, workflow, config, &garf.ExecutionContext{})
+			if err != nil {
+				log.Fatalf("Failed to run the workflow: %v", err)
+			}
 		}
 		fmt.Println(resultsFileWorkflow)
 	},

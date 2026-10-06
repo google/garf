@@ -78,28 +78,30 @@ func (g *Garf) Close() error {
 }
 
 // GetVersion returns garf server version.
-func (g *Garf) GetVersion(ctx context.Context) string {
+func (g *Garf) GetVersion(ctx context.Context) (string, error) {
 	ctx, span := tracer.Start(ctx, "version")
 	defer span.End()
 	r, err := g.client.GetVersion(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get version: %v", err)
+		return "", err
 	}
 	version := r.Version
 	log.Printf("Version: %s", version)
 	versionAttr := attribute.String("garf.version", version)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Getting version", "version", version)
-	return r.Version
+	return r.Version, nil
 }
 
-func (g *Garf) GetInfo(ctx context.Context) string {
+func (g *Garf) GetInfo(ctx context.Context) (string, error) {
 	ctx, span := tracer.Start(ctx, "info")
 	defer span.End()
 
 	r, err := g.client.GetInfo(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get version: %v", err)
+		return "", err
 	}
 	version := r.ExecutorsVersion
 	log.Printf("Info: %s", r)
@@ -109,16 +111,17 @@ func (g *Garf) GetInfo(ctx context.Context) string {
 		attribute.String("garf.executors.version", r.ExecutorsVersion),
 	)
 	logger.InfoContext(ctx, "Getting info", "info", r)
-	return version
+	return version, nil
 }
 
-func (g *Garf) ListFetchers(ctx context.Context) []string {
+func (g *Garf) ListFetchers(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "list-fetchers")
 	defer span.End()
 
 	r, err := g.client.ListFetchers(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get fetchers: %v", err)
+		return nil, err
 	}
 	fetchers := r.Results
 	log.Printf("Fetchers: %s", fetchers)
@@ -129,26 +132,27 @@ func (g *Garf) ListFetchers(ctx context.Context) []string {
 	fetchersAttr := attribute.StringSlice("garf.fetchers", fetcherNames)
 	span.SetAttributes(fetchersAttr)
 	logger.InfoContext(ctx, "Getting fetchers", "fetchers", fetcherNames)
-	return fetcherNames
+	return fetcherNames, nil
 }
 
-func (g *Garf) ListExecutors(ctx context.Context) []string {
+func (g *Garf) ListExecutors(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "list-executors")
 	defer span.End()
 
 	r, err := g.client.ListExecutors(ctx, &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("cannot get executors: %v", err)
+		return nil, err
 	}
 	executors := r.Results
 	log.Printf("Executors: %s", executors)
 	executorsAttr := attribute.StringSlice("garf.executors", executors)
 	span.SetAttributes(executorsAttr)
 	logger.InfoContext(ctx, "Getting executors", "executors", executors)
-	return executors
+	return executors, nil
 }
 
-func (g *Garf) Fetch(ctx context.Context, title, query string) *FetchResponse {
+func (g *Garf) Fetch(ctx context.Context, title, query string) (*FetchResponse, error) {
 	ctx, span := tracer.Start(ctx, "fetch")
 	defer span.End()
 
@@ -177,14 +181,15 @@ func (g *Garf) Fetch(ctx context.Context, title, query string) *FetchResponse {
 	)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed execution", "title", title)
+		return nil, err
 	}
 	versionAttr := attribute.Int("garf.results", len(r.Rows))
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed query", "title", request.Title, "result", r)
-	return r
+	return r, nil
 
 }
-func (g *Garf) Execute(ctx context.Context, source, title, query, writer string) []string {
+func (g *Garf) Execute(ctx context.Context, source, title, query, writer string) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
@@ -218,15 +223,16 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed query", "title", title)
 		log.Fatalf("cannot execute query: %v", err)
+		return nil, err
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed query", "title", title, "result", result)
-	return result
+	return result, nil
 }
 
-func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string) []string {
+func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
@@ -256,15 +262,17 @@ func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer st
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed query", "query_path", queryPath)
 		log.Fatalf("cannot execute query: %v", err)
+		return nil, err
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed query", "query_path", queryPath, "result", result)
-	return result
+	return result, nil
 }
 
-func (g *Garf) ExecuteBatch(ctx context.Context, source string, batch map[string]string, writer string) []string {
+func (g *Garf) ExecuteBatch(ctx context.Context, source string,
+	batch map[string]string, writer string) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
@@ -301,15 +309,17 @@ func (g *Garf) ExecuteBatch(ctx context.Context, source string, batch map[string
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed batch", "batch", queries)
 		log.Fatalf("cannot execute batch: %v", queries)
+		return nil, err
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed batch", "batch", queries, "result", result)
-	return result
+	return result, nil
 }
 
-func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string, batch []string, writer string) []string {
+func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
+	batch []string, writer string) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
@@ -343,15 +353,17 @@ func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string, batch [
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed batch", "batch", queries)
 		log.Fatalf("cannot execute batch: %v", queries)
+		return nil, err
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed batch", "batch", queries, "result", result)
-	return result
+	return result, nil
 }
 
-func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow, config *Config, executionContext *ExecutionContext) []string {
+func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
+	config *Config, executionContext *ExecutionContext) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
@@ -371,15 +383,17 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow, config *
 	r, err := g.client.ExecuteWorkflow(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed workflow")
+		return nil, err
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed workflow", "workflow", result)
-	return result
+	return result, nil
 }
 
-func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath, configPath string, executionContext *ExecutionContext) []string {
+func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath,
+	configPath string, executionContext *ExecutionContext) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
@@ -399,12 +413,13 @@ func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath, config
 	r, err := g.client.ExecuteWorkflow(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed workflow")
+		return nil, err
 	}
 	result := r.Results
 	versionAttr := attribute.StringSlice("garf.results", result)
 	span.SetAttributes(versionAttr)
 	logger.InfoContext(ctx, "Executed workflow", "workflow", result)
-	return result
+	return result, nil
 }
 
 func ReadWorkflowFromFile(file string) (*Workflow, error) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -22,9 +23,12 @@ func main() {
 }
 
 func fetchQueryInline(ctx context.Context, g *garf.Garf) error {
-	results := g.Fetch(ctx, "test",
+	results, err := g.Fetch(ctx, "test",
 		"SELECT metric.int AS field, metric.float AS field2 FROM fake",
 	)
+	if err != nil {
+		log.Fatalf("Failed to execute query: %v", err)
+	}
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	columns := results.Columns
