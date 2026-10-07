@@ -1,0 +1,21 @@
+apiVersion: v1
+entries:
+  garf:
+  - apiVersion: v2
+    appVersion: 1.7.0
+    created: "2026-10-07T12:40:10.872872997Z"
+    dependencies:
+    - condition: redis.enabled
+      name: redis
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 23.x.x
+    description: Install garf server
+    digest: 6ba33a5ab4325bdeb30a24a6b815c441057e700c248d7f2d21f6b94413a0f0b5
+    maintainers:
+    - name: Andrei Markin
+    name: garf
+    type: application
+    urls:
+    - https://github.com/google/garf/releases/download/garf-0.1.1/garf-0.1.1.tgz
+    version: 0.1.1
+generated: "2026-10-07T12:40:10.872885821Z"
