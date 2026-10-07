@@ -51,7 +51,7 @@ class GarfCronJob(pydantic.BaseModel):
           'spec': {
             'containers': [
               {
-                'name': 'grf',
+                'name': 'garf',
                 'image': GARF_CLI_IMAGE,
                 'args': self.command,
               }
@@ -90,7 +90,7 @@ class GarfQueryCronJob(GarfCronJob):
 
     if self.config_path:
       cli_args.append(f'--config {self.config_path}')
-    return ' '.join(cli_args).split(' ')
+    return ' '.join(cli_args).split()
 
 
 class GarfWorkflowCronJob(GarfCronJob):
@@ -105,11 +105,15 @@ class GarfWorkflowCronJob(GarfCronJob):
 
     if self.config_path:
       cli_args.append(f'--config {self.config_path}')
-    return ' '.join(cli_args).split(' ')
+    return ' '.join(cli_args).split()
 
 
 def _build_cron_job(
-  name: str, namespace: str | None, spec: kopf.Spec, cronjob_type: str
+  name: str,
+  namespace: str | None,
+  spec: kopf.Spec,
+  cronjob_type: str,
+  logger: kopf.Logger,
 ) -> kubernetes.client.V1CronJob:
   if cronjob_type == 'GarfWorkflowCronJob':
     cronjob = GarfWorkflowCronJob(
@@ -130,6 +134,13 @@ def _build_cron_job(
     )
   else:
     raise kopf.PermanentError(f'Failed to delete GarfCronJob: {e}')
+  logger.info(
+    'Creating %s: %s/%s with parameters: %s',
+    cronjob_type,
+    namespace,
+    name,
+    ' '.join(cronjob.command),
+  )
   return kubernetes.client.V1CronJob(
     api_version='batch/v1',
     kind='CronJob',
@@ -154,18 +165,26 @@ def create_workflow_cj(
   **kwargs,
 ) -> None:
   cronjob = _build_cron_job(
-    name=name, namespace=namespace, spec=spec, cronjob_type=body['kind']
+    name=name,
+    namespace=namespace,
+    spec=spec,
+    cronjob_type=body['kind'],
+    logger=logger,
   )
   batch_v1 = kubernetes.client.BatchV1Api()
   try:
     batch_v1.create_namespaced_cron_job(namespace=namespace, body=cronjob)
-    logger.info(f'Successfully created GarfWorkflowCronJob: {namespace}/{name}')
+    logger.info(
+      'Successfully created GarfWorkflowCronJob: %s/%s', namespace, name
+    )
   except kubernetes.client.exceptions.ApiException as e:
     if e.status == 409:
       batch_v1.patch_namespaced_cron_job_status(
         name=name, namespace=namespace, body=cronjob
       )
-      logger.info(f'GarfWorkflowCronJob exists, patching: {namespace}/{name}')
+      logger.info(
+        'GarfWorkflowCronJob exists, patching: %s/%s', namespace, name
+      )
     else:
       raise kopf.PermanentError(f'Failed to create GarfWorkflowCronJob: {e}')
 
@@ -177,11 +196,13 @@ def delete_workflow_cj(
   batch_v1 = kubernetes.client.BatchV1Api()
   try:
     batch_v1.delete_namespaced_cron_job(name=name, namespace=namespace)
-    logger.info(f'Successfully deleted GarfWorkflowCronJob: {namespace}/{name}')
+    logger.info(
+      'Successfully deleted GarfWorkflowCronJob: %s/%s', namespace, name
+    )
   except kubernetes.client.exceptions.ApiException as e:
     if e.status == 404:
       logger.info(
-        f'GarfWorkflowCronJob {name} already deleted or does not exist'
+        'GarfWorkflowCronJob %s already deleted or does not exist', name
       )
     else:
       raise kopf.PermanentError(f'Failed to delete GarfWorkflowCronJob: {e}')
@@ -197,12 +218,16 @@ def create_query_cj(
   **kwargs,
 ) -> None:
   cronjob = _build_cron_job(
-    name=name, namespace=namespace, spec=spec, cronjob_type=body['kind']
+    name=name,
+    namespace=namespace,
+    spec=spec,
+    cronjob_type=body['kind'],
+    logger=logger,
   )
   batch_v1 = kubernetes.client.BatchV1Api()
   try:
     batch_v1.create_namespaced_cron_job(namespace=namespace, body=cronjob)
-    logger.info(f'Successfully created GarfQueryJob: {namespace}/{name}')
+    logger.info('Successfully created GarfQueryJob: %s/%s', namespace, name)
   except kubernetes.client.exceptions.ApiException as e:
     if e.status == 409:
       batch_v1.patch_namespaced_cron_job_status(
@@ -220,9 +245,9 @@ def delete_query_cj(
   batch_v1 = kubernetes.client.BatchV1Api()
   try:
     batch_v1.delete_namespaced_cron_job(name=name, namespace=namespace)
-    logger.info(f'Successfully deleted GarfQueryJob: {namespace}/{name}')
+    logger.info('Successfully deleted GarfQueryJob: %s/%s', namespace, name)
   except kubernetes.client.exceptions.ApiException as e:
     if e.status == 404:
-      logger.info(f'GarfQueryJob {name} already deleted or does not exist')
+      logger.info('GarfQueryJob %s already deleted or does not exist', name)
     else:
       raise kopf.PermanentError(f'Failed to delete GarfQueryJob: {e}')
