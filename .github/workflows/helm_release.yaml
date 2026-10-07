@@ -28,6 +28,7 @@ jobs:
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
         with:
+          charts_dir: helm-charts
           oci_registry_url: ghcr.io/${{ github.repository_owner }}
           oci_username: ${{ github.actor }}
           oci_password: ${{ secrets.GITHUB_TOKEN }}
