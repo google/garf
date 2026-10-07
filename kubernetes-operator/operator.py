@@ -54,6 +54,7 @@ class GarfCronJob(pydantic.BaseModel):
                 'name': 'garf',
                 'image': GARF_CLI_IMAGE,
                 'args': self.command,
+                'env': self.env,
               }
             ],
             'restartPolicy': 'OnFailure',
@@ -133,7 +134,7 @@ def _build_cron_job(
       env=spec.get('env'),
     )
   else:
-    raise kopf.PermanentError(f'Failed to delete GarfCronJob: {e}')
+    raise kopf.PermanentError(f'Unknown cronjob type: {cronjob_type}')
   logger.info(
     'Creating %s: %s/%s with parameters: %s',
     cronjob_type,
