@@ -18,7 +18,11 @@ rules:
     resources: ["customresourcedefinitions"]
     verbs: ["list", "watch"]
   - apiGroups: ["garf.io"]
-    resources: ["garfcronjobs", "garfcronjobs/status"]
+    resources:
+      - garfworkflowcronjobs
+      - garfworkflowcronjobs/status
+      - garfquerycronjobs
+      - garfquerycronjobs/status
     verbs: ["get", "list", "watch", "patch", "update"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
