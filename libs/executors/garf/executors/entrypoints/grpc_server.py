@@ -46,6 +46,7 @@ from opentelemetry import metrics
 
 OTEL_SERVICE_NAME = 'garf'
 CACHE_ENABLED = os.getenv('GARF_CACHE_LOCATION')
+ALLOWED_FOLDERS = os.getenv('GARF_ALLOWED_FOLDERS')
 
 server_start_time = time.time()
 
@@ -340,5 +341,11 @@ if __name__ == '__main__':
   health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
   health_servicer.set('', health_pb2.HealthCheckResponse.SERVING)
 
+  if not ALLOWED_FOLDERS:
+    logger.warning('GARF_ALLOWED_FOLDERS is not set')
+    logger.warning(
+      'Use GARF_ALLOWED_FOLDERS=location1,location2 '
+      'to setup file-base write restrictions'
+    )
   server.start()
   server.wait_for_termination()

@@ -44,6 +44,7 @@ from opentelemetry import _logs, metrics, trace
 from typing_extensions import Annotated
 
 OTEL_SERVICE_NAME = 'garf'
+ALLOWED_FOLDERS = os.getenv('GARF_ALLOWED_FOLDERS')
 
 server_start_time = time.time()
 tracer = initialize_tracer()
@@ -353,6 +354,12 @@ def main(
     int, typer.Option('--port', '-p', help='Port to start the server')
   ] = 8000,
 ):
+  if not ALLOWED_FOLDERS:
+    logger.warning('GARF_ALLOWED_FOLDERS is not set')
+    logger.warning(
+      'Use GARF_ALLOWED_FOLDERS=location1,location2 '
+      'to setup file-base write restrictions'
+    )
   uvicorn.run(app, host=host, port=port, log_config=None)
 
 
