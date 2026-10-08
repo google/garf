@@ -8,8 +8,8 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: {{ .Values.garf.server.type }}
       protocol: TCP
-      name: grpc
+      name: {{ .Values.garf.server.type }}
   selector:
     {{- include "garf.selectorLabels" . | nindent 4 }}
