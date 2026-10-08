@@ -6,7 +6,7 @@ metadata:
     {{- include "garf.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.garf.server.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
@@ -39,13 +39,27 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          {{- with .Values.image.command }}
+          {{ if eq .Values.garf.server.type "http" }}
           command:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            - "/venv/bin/opentelemetry-instrument"
+            - "/venv/bin/uvicorn"
+            - "garf.executors.entrypoints.server:app"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "{{ .Values.service.port | int }}"
+          {{ else if eq .Values.garf.server.type "grpc" }}
+          command:
+            - "/venv/bin/opentelemetry-instrument"
+            - "/venv/bin/python"
+            - "-m"
+            - "garf.executors.entrypoints.grpc_server"
+            - "--port"
+            - "{{ .Values.service.port | int }}"
+          {{ end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
+            - name: {{ .Values.garf.server.type }}
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           {{- with .Values.livenessProbe }}
@@ -70,9 +84,15 @@ spec:
               value: {{ include "garf.redisUrl" . | quote }}
             - name: GARF_CACHE_LOCATION
               value: {{ include "garf.redisUrl" . | quote }}
-            {{- end }}
-            {{- with .Values.env }}
-            {{- include "garf.renderEnv" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.garf.otel.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.garf.otel.serviceName | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.garf.otel.otelExporterOtlpEndpoint | quote }}
+          {{- end }}
+          {{- with .Values.env }}
+          {{- include "garf.renderEnv" . | nindent 12 }}
           {{- end }}
       {{- with .Values.volumes }}
       volumes:
