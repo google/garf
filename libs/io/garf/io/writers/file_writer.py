@@ -17,6 +17,7 @@ import os
 import pathlib
 from typing import Union
 
+from garf.io import exceptions
 from garf.io.telemetry import tracer
 from garf.io.writers.abs_writer import AbsWriter
 
@@ -30,13 +31,23 @@ class FileWriter(AbsWriter):
 
   def __init__(
     self,
-    destination_folder: Union[
-      str, os.PathLike[str], pathlib.Path
-    ] = pathlib.Path.cwd(),
+    destination_folder: Union[str, os.PathLike[str], pathlib.Path] = os.getenv(
+      'GARF_DESTINATION_FOLDER', str(pathlib.Path.cwd())
+    ),
     **kwargs: str,
   ) -> None:
     """Initializes FileWriter based on destination folder."""
     super().__init__(**kwargs)
+    if allowed_folders := os.getenv('GARF_ALLOWED_FOLDERS'):
+      allowed_folders = allowed_folders.split(',')
+      if not any(
+        allowed_destination in str(destination_folder)
+        for allowed_destination in allowed_folders
+      ):
+        raise exceptions.GarfIoError(
+          f'Destination folder {destination_folder} not supported.'
+        )
+
     self.destination_folder = str(destination_folder)
 
   @tracer.start_as_current_span('file.create_dir')
