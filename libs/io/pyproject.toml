@@ -87,8 +87,12 @@ pushgateway = [
 duckdb = [
   "duckdb",
 ]
+clickhouse = [
+  "clickhouse-connect",
+  "pandas",
+]
 all = [
-  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb]"
+  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb,clickhouse]"
 ]
 
 [project.entry-points.garf_writer]
@@ -109,6 +113,7 @@ mongo = "garf.io.writers.mongodb_writer"
 firestore = "garf.io.writers.firestore_writer"
 pushgateway = "garf.io.writers.pushgateway_writer"
 duckdb = "garf.io.writers.duckdb_writer"
+clickhouse = "garf.io.writers.clickhouse_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]

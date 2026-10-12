@@ -23,6 +23,7 @@
 | `mongo`    | MongoDbWriter     | `connection_string`, `db` |
 | `firestore`   | FirestoreWriter     | `project`, `db` |
 | `pushgateway`   | PushgatewayWriter     | `endpoint`, `namespace`, `job` |
+| `clickhouse`   | ClickHouseWriter     | `host`, `port`, `database`, `username`, `password`, `secure`, `if-exists=replace|append` |
 | `duckdb`   | DuckDBWriter     | `db`, `if-exists=fail|replace|append` |
 
 
@@ -58,7 +59,7 @@ To install specific writers use:
 * `pip install garf-io[mongo]` for MongoDB support
 * `pip install garf-io[firestore]` for Firestore support
 * `pip install garf-io[pushgateway]` for Prometheus Pushgateway support
-* `pip install garf-io[duckdb]` for DuckDB support
+* `pip install garf-io[clickhouse]` for ClickHouse support
 
 
 ## Usage
