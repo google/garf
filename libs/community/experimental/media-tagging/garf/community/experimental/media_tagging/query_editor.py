@@ -95,9 +95,11 @@ def process_schema(schema: str | dict[str, Any]) -> dict[str, Any]:
       ) from e
   else:
     try:
-      full_schema = ' '.join(value)
+      full_schema = ' '.join(schema)
       full_schema = full_schema.replace("'", '"')
       schema_data = json.loads(full_schema)
       return {'custom_schema': schema_data}
-    except json.decoder.JSONDecoder as e:
-      raise MediaTaggingApiQueryError(f'Invalid schema {schema}') from e
+    except json.decoder.JSONDecodeError as e:
+      raise MediaTaggingApiQueryError(
+        f'Invalid schema:\n{schema}\ndetails:\n{e}'
+      ) from e
