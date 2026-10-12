@@ -16,6 +16,8 @@ import json
 import pytest
 from garf.community.experimental.media_tagging.query_editor import (
   MediaTaggingApiQuery,
+  MediaTaggingApiQueryError,
+  process_schema,
 )
 from garf.core import query_editor
 
@@ -139,3 +141,39 @@ class TestMediaTaggingApiQuery:
       query_elements.filters.get('tagging_options').get('custom_schema')
       == custom_schema
     )
+
+
+@pytest.mark.parametrize(
+  'garf_schema',
+  ['boolean', 'integer', 'number', 'string'],
+)
+def test_process_schema_handles_builtin_option(garf_schema):
+  schema = process_schema(schema=garf_schema)
+  assert schema == {'custom_schema': {'type': garf_schema}}
+
+
+def test_process_schema_handles_enums():
+  garf_schema = 'enum:Category1,Category2'
+  schema = process_schema(schema=garf_schema)
+  assert schema == {
+    'custom_schema': {'type': 'string', 'enum': ['Category1', 'Category2']}
+  }
+
+
+@pytest.mark.parametrize(
+  'garf_schema,expected_schema',
+  [
+    ({'type': 'boolean'}, {'type': 'boolean'}),
+  ],
+)
+def test_process_schema_inline_schema(garf_schema, expected_schema):
+  schema = process_schema(schema=garf_schema)
+  assert schema == {'custom_schema': expected_schema}
+
+
+def test_process_schema_raises_error():
+  garf_schema = 'wrong'
+  with pytest.raises(
+    MediaTaggingApiQueryError, match=f'Invalid schema:\n{garf_schema}'
+  ):
+    process_schema(schema=garf_schema)
