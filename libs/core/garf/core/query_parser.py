@@ -72,6 +72,17 @@ class SliceField(pydantic.BaseModel):
   slice_literal: slice
   value: str | int
 
+  @pydantic.model_serializer
+  def serialize_model(self):
+    return {
+      'slice_literal': {
+        'start': self.slice_literal.start,
+        'stop': self.slice_literal.stop,
+        'step': self.slice_literal.step,
+      },
+      'value': self.value,
+    }
+
 
 class ProcessedField(pydantic.BaseModel):
   """Stores field with its customizers.
