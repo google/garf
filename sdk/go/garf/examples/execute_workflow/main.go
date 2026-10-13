@@ -38,7 +38,7 @@ func runWorkflowFromFileNoRead(g *garf.Garf) error {
 	}
 	defer tmpWorkflow.Close()
 	_, err = io.Copy(tmpWorkflow, originalFile)
-	resultsFileWorkflow, err := g.ExecuteWorkflowFromFile(ctx, tmpWorkflow.Name(), "", &garf.ExecutionContext{})
+	resultsFileWorkflow, err := g.ExecuteWorkflowFromFile(ctx, tmpWorkflow.Name(), &garf.WorkflowRequestOptions{})
 	if err != nil {
 		log.Fatalf("Failed to run worfklow: %v", err)
 	}
@@ -53,7 +53,8 @@ func runWorkflowFromFile(g *garf.Garf) error {
 		log.Fatalf("Failed to parse workflow: %v", err)
 	}
 
-	resultsFileWorkflow, err := g.ExecuteWorkflow(ctx, workflow, &garf.Config{}, &garf.ExecutionContext{})
+	options := garf.WorkflowRequestOptions{}
+	resultsFileWorkflow, err := g.ExecuteWorkflow(ctx, workflow, &options)
 	if err != nil {
 		log.Fatalf("Failed to run worfklow: %v", err)
 	}
@@ -112,7 +113,13 @@ func runInlineWorkflow(g *garf.Garf) error {
 	executionContext := garf.ExecutionContext{
 		FetcherParameters: contextStruct,
 	}
-	resultsWorkflow, err := g.ExecuteWorkflow(ctx, &workflow, &config, &executionContext)
+	options := garf.WorkflowRequestOptions{
+		QueryRequestOptions: garf.QueryRequestOptions{
+			Config:           &config,
+			ExecutionContext: &executionContext,
+		},
+	}
+	resultsWorkflow, err := g.ExecuteWorkflow(ctx, &workflow, &options)
 	if err != nil {
 		log.Fatalf("Failed to run worfklow: %v", err)
 	}
