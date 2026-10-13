@@ -44,6 +44,21 @@ var (
 	once   sync.Once
 )
 
+type WorkflowRequestOptions struct {
+	SelectedAliases []string
+	SkippedAliases  []string
+	QueryRequestOptions
+}
+
+type QueryRequestOptions struct {
+	Config           *Config
+	ConfigPath       string
+	ExecutionContext *ExecutionContext
+	EnableCache      bool
+	CacheTtlSeconds  uint32
+	Simulate         bool
+}
+
 // Garf represents gRPC client to garf server.
 type Garf struct {
 	Endpoint string
@@ -363,7 +378,7 @@ func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
 }
 
 func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
-	config *Config, executionContext *ExecutionContext) ([]string, error) {
+	options *WorkflowRequestOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
@@ -371,14 +386,17 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
 		Workflow: &ExecuteWorkflowRequest_WorkflowData{
 			WorkflowData: workflow,
 		},
-		SelectedAliases: []string{},
-		SkippedAliases:  []string{},
+		SelectedAliases: options.SelectedAliases,
+		SkippedAliases:  options.SkippedAliases,
 		Config: &ExecuteWorkflowRequest_ConfigData{
-			ConfigData: config,
+			ConfigData: options.QueryRequestOptions.Config,
 		},
-		Context:      executionContext,
-		CacheOptions: &GarfCacheOptions{},
-		Simulate:     false,
+		Context: options.QueryRequestOptions.ExecutionContext,
+		CacheOptions: &GarfCacheOptions{
+			EnableCache:     options.QueryRequestOptions.EnableCache,
+			CacheTtlSeconds: options.QueryRequestOptions.CacheTtlSeconds,
+		},
+		Simulate: options.QueryRequestOptions.Simulate,
 	}
 	r, err := g.client.ExecuteWorkflow(ctx, &request)
 	if err != nil {
@@ -392,8 +410,8 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
 	return result, nil
 }
 
-func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath,
-	configPath string, executionContext *ExecutionContext) ([]string, error) {
+func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath string,
+	options *WorkflowRequestOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
@@ -401,14 +419,17 @@ func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath,
 		Workflow: &ExecuteWorkflowRequest_WorkflowPath{
 			WorkflowPath: workflowPath,
 		},
-		SelectedAliases: []string{},
-		SkippedAliases:  []string{},
 		Config: &ExecuteWorkflowRequest_ConfigPath{
-			ConfigPath: configPath,
+			ConfigPath: options.QueryRequestOptions.ConfigPath,
 		},
-		Context:      executionContext,
-		CacheOptions: &GarfCacheOptions{},
-		Simulate:     false,
+		SelectedAliases: options.SelectedAliases,
+		SkippedAliases:  options.SkippedAliases,
+		Context:         options.QueryRequestOptions.ExecutionContext,
+		CacheOptions: &GarfCacheOptions{
+			EnableCache:     options.QueryRequestOptions.EnableCache,
+			CacheTtlSeconds: options.QueryRequestOptions.CacheTtlSeconds,
+		},
+		Simulate: options.QueryRequestOptions.Simulate,
 	}
 	r, err := g.client.ExecuteWorkflow(ctx, &request)
 	if err != nil {

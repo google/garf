@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/google/garf/sdk/go/garf/garf"
 	"github.com/spf13/cobra"
@@ -31,9 +32,24 @@ var runCmd = &cobra.Command{
 		workflowPath, _ := cmd.Flags().GetString("file")
 		configPath, _ := cmd.Flags().GetString("config")
 		asFiles, _ := cmd.Flags().GetBool("as-file")
+		enableCache, _ := cmd.Flags().GetBool("enable-cache")
+		selectedAliases, _ := cmd.Flags().GetString("selected-aliases")
+		excludedAliases, _ := cmd.Flags().GetString("excluded-aliases")
 		var resultsFileWorkflow []string
+		options := garf.WorkflowRequestOptions{}
+		if enableCache {
+			options.QueryRequestOptions.EnableCache = true
+			options.QueryRequestOptions.CacheTtlSeconds = 60 * 60
+		}
+		if excludedAliases != "" {
+			options.SkippedAliases = strings.Split(excludedAliases, ",")
+		}
+		if selectedAliases != "" {
+			options.SelectedAliases = strings.Split(selectedAliases, ",")
+		}
 		if asFiles {
-			resultsFileWorkflow, err = GarfClient.ExecuteWorkflowFromFile(ctx, workflowPath, configPath, &garf.ExecutionContext{})
+			options.QueryRequestOptions.ConfigPath = configPath
+			resultsFileWorkflow, err = GarfClient.ExecuteWorkflowFromFile(ctx, workflowPath, &options)
 			if err != nil {
 				log.Fatalf("Failed to run the workflow: %v", err)
 			}
@@ -51,7 +67,8 @@ var runCmd = &cobra.Command{
 				log.Fatalf("Problem reading workflow: %v", err)
 			}
 
-			resultsFileWorkflow, err = GarfClient.ExecuteWorkflow(ctx, workflow, config, &garf.ExecutionContext{})
+			options.QueryRequestOptions.Config = config
+			resultsFileWorkflow, err = GarfClient.ExecuteWorkflow(ctx, workflow, &options)
 			if err != nil {
 				log.Fatalf("Failed to run the workflow: %v", err)
 			}
@@ -65,4 +82,7 @@ func init() {
 	runCmd.Flags().StringP("file", "f", "", "Path to garf workflow")
 	runCmd.Flags().StringP("config", "c", "", "Path to garf config")
 	runCmd.Flags().Bool("as-file", false, "Whether to pass workflow/configs as file paths")
+	runCmd.Flags().Bool("enable-cache", false, "Whether to enable caching on server")
+	runCmd.Flags().StringP("selected-aliases", "i", "", "Workflow aliases to run")
+	runCmd.Flags().StringP("skipped-aliases", "e", "", "Workflow aliases to exclude")
 }
