@@ -19,7 +19,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"sync"
 
 	"buf.build/go/protoyaml"
 	"google.golang.org/grpc"
@@ -41,7 +40,6 @@ var (
 	tracer = otel.Tracer(name)
 	logger = otelslog.NewLogger(name)
 	garf   *Garf
-	once   sync.Once
 )
 
 type WorkflowRequestOptions struct {
@@ -70,19 +68,15 @@ type Garf struct {
 func New(ctx context.Context, endpoint string) *Garf {
 	ctx, span := tracer.Start(ctx, "init")
 	defer span.End()
-	once.Do(func() {
-		conn, err := grpc.NewClient(
-			endpoint,
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-		)
-		if err != nil {
-			log.Fatalf("did not connect: %v", err)
-		}
-		c := NewGarfServiceClient(conn)
-		garf = &Garf{Endpoint: endpoint, client: c, conn: conn}
-	})
-	return garf
+	conn, err := grpc.NewClient(
+		endpoint,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	return &Garf{Endpoint: endpoint, client: NewGarfServiceClient(conn), conn: conn}
 }
 
 func (g *Garf) Close() error {
@@ -92,8 +86,8 @@ func (g *Garf) Close() error {
 	return nil
 }
 
-// GetVersion returns garf server version.
-func (g *Garf) GetVersion(ctx context.Context) (string, error) {
+// Version returns garf server version.
+func (g *Garf) Version(ctx context.Context) (string, error) {
 	ctx, span := tracer.Start(ctx, "version")
 	defer span.End()
 	r, err := g.client.GetVersion(ctx, &emptypb.Empty{})
@@ -109,7 +103,7 @@ func (g *Garf) GetVersion(ctx context.Context) (string, error) {
 	return r.Version, nil
 }
 
-func (g *Garf) GetInfo(ctx context.Context) (string, error) {
+func (g *Garf) Info(ctx context.Context) (string, error) {
 	ctx, span := tracer.Start(ctx, "info")
 	defer span.End()
 
@@ -129,7 +123,7 @@ func (g *Garf) GetInfo(ctx context.Context) (string, error) {
 	return version, nil
 }
 
-func (g *Garf) ListFetchers(ctx context.Context) ([]string, error) {
+func (g *Garf) Fetchers(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "list-fetchers")
 	defer span.End()
 
@@ -150,7 +144,7 @@ func (g *Garf) ListFetchers(ctx context.Context) ([]string, error) {
 	return fetcherNames, nil
 }
 
-func (g *Garf) ListExecutors(ctx context.Context) ([]string, error) {
+func (g *Garf) Executors(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "list-executors")
 	defer span.End()
 
