@@ -26,11 +26,11 @@ func main() {
 func executeQueryBatchInline(g *garf.Garf) error {
 	ctx := context.Background()
 	batch := map[string]string{
-		"test":  "SELECT metric.int AS field FROM fake",
-		"test2": "SELECT metric.int AS field FROM fake",
-		"test3": "SELECT metric.int AS field FROM fake",
+		"test":  "SELECT metric.int AS field FROM fake LIMIT 10",
+		"test2": "SELECT metric.int AS field FROM fake LIMIT 10",
+		"test3": "SELECT metric.int AS field FROM fake LIMIT 10",
 	}
-	resultsBatch, err := g.ExecuteBatch(ctx, "fake", batch, "json")
+	resultsBatch, err := g.ExecuteBatch(ctx, "fake", batch, "json", garf.ExecutionOptions{})
 	if err != nil {
 		log.Fatalf("Failed to execute batch: %v", err)
 	}
@@ -46,7 +46,14 @@ func executeQueryBatchFromFiles(g *garf.Garf) error {
 		filepath.Join(exeDir, "query1.sql"),
 		filepath.Join(exeDir, "query2.sql"),
 	}
-	resultsBatch, err := g.ExecuteBatchFromFiles(ctx, "fake", batch, "json")
+	options := garf.ExecutionOptions{
+		FetchOptions: garf.FetchOptions{
+			FetcherParams: map[string]any{"n_rows": 10},
+		},
+	}
+	resultsBatch, err := g.ExecuteBatchFromFiles(
+		ctx, "fake", batch, "json", options,
+	)
 	if err != nil {
 		log.Fatalf("Failed to execute batch: %v", err)
 	}

@@ -23,8 +23,10 @@ func main() {
 }
 
 func fetchQueryInline(ctx context.Context, g *garf.Garf) error {
-	results, err := g.Fetch(ctx, "test",
-		"SELECT metric.int AS field, metric.float AS field2 FROM fake",
+	results, err := g.Fetch(ctx,
+		"test",
+		"SELECT metric.int AS field, metric.float AS field2 FROM fake LIMIT 10",
+		garf.FetchOptions{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to execute query: %v", err)
