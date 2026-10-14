@@ -23,7 +23,7 @@ func main() {
 
 func executeQueryInline(g *garf.Garf) error {
 	ctx := context.Background()
-	results := g.Execute(ctx, "fake", "test", "SELECT metric.int AS field FROM fake", "json")
+	results, _ := g.Execute(ctx, "fake", "test", "SELECT metric.int AS field FROM fake", "json")
 	fmt.Println(results)
 	return nil
 }
@@ -31,7 +31,7 @@ func executeQueryInline(g *garf.Garf) error {
 func executeQueryFromFile(g *garf.Garf) error {
 	ctx := context.Background()
 	queryData, err := os.ReadFile("test_query.sql")
-	results := g.Execute(ctx, "fake", "test", string(queryData), "json")
+	results, _ := g.Execute(ctx, "fake", "test", string(queryData), "json")
 	fmt.Println(results)
 	return err
 }
