@@ -23,6 +23,7 @@ except ImportError as e:
   ) from e
 
 import logging
+import threading
 from typing import Literal
 
 import pandas as pd
@@ -34,7 +35,6 @@ from garf.io.writers import abs_writer
 logger = logging.getLogger(__name__)
 
 DEFAULT_DB = ':memory:garf'
-DEFAULT_DUCKDB_INMEMORY_DB = duckdb.connect(database=DEFAULT_DB)
 
 
 class DuckDBWriterError(exceptions.GarfIoError):
@@ -45,8 +45,14 @@ class DuckDBWriter(abs_writer.AbsWriter):
   """Handles writing GarfReports data to DuckDB.
 
   Attributes:
-    db: Database location.
+    db: Database location. When None, all writers share one in-memory
+      database. Writes are serialized on a class-level lock since DuckDB
+      allows a single concurrent writer and its connections are not
+      thread-safe.
   """
+
+  _lock = threading.Lock()
+  _shared_connection: duckdb.DuckDBPyConnection | None = None
 
   def __init__(
     self,
@@ -61,9 +67,28 @@ class DuckDBWriter(abs_writer.AbsWriter):
     if_exists: Behaviour when data already exists in the table.
     """
     super().__init__(**kwargs)
-    self.db = db
     self.if_exists = if_exists
-    self.api_client = duckdb.connect(database=db or DEFAULT_DB)
+    if db is None:
+      with DuckDBWriter._lock:
+        if DuckDBWriter._shared_connection is None:
+          DuckDBWriter._shared_connection = duckdb.connect(database=DEFAULT_DB)
+      self.api_client = DuckDBWriter._shared_connection
+      self._owns_connection = False
+      self.db = DEFAULT_DB
+    else:
+      self.api_client = duckdb.connect(database=db)
+      self._owns_connection = True
+      self.db = db
+
+  def close(self) -> None:
+    """Closes the writer's own connection (no-op for the shared DB)."""
+    if self._owns_connection:
+      try:
+        self.api_client.close()
+      except Exception:
+        logger.debug('Failed to close DuckDB connection', exc_info=True)
+      finally:
+        self._owns_connection = False
 
   @tracer.start_as_current_span('duckdb.write')
   def write(self, report: garf_report.GarfReport, destination: str) -> None:
@@ -86,20 +111,22 @@ class DuckDBWriter(abs_writer.AbsWriter):
     else:
       df = report.to_pandas()
     logger.debug('Writing %d rows of data to %s', len(df), destination)
-    if self.if_exists == 'replace':
-      self.api_client.execute(
-        f'CREATE OR REPLACE TABLE {destination} AS SELECT * FROM df'
-      )
-    elif self.if_exists == 'append':
-      self.api_client.execute(
-        f'INSERT INTO {destination} BY NAME (SELECT * FROM df) '
-      )
-    elif self.if_exists == 'create':
-      self.api_client.execute(
-        f'CREATE TABLE IF NOT EXISTS {destination} AS SELECT * FROM df'
-      )
-    else:
-      raise DuckDBWriterError(
-        f'Unsupported overwrite strategy: {self.if_exists}'
-      )
+    with DuckDBWriter._lock:
+      if self.if_exists == 'replace':
+        self.api_client.execute(
+          f'CREATE OR REPLACE TABLE {destination} AS SELECT * FROM df'
+        )
+      elif self.if_exists == 'append':
+        self.api_client.execute(
+          f'INSERT INTO {destination} BY NAME (SELECT * FROM df) '
+        )
+      elif self.if_exists == 'create':
+        self.api_client.execute(
+          f'CREATE TABLE IF NOT EXISTS {destination} AS SELECT * FROM df'
+        )
+      else:
+        raise DuckDBWriterError(
+          f'Unsupported overwrite strategy: {self.if_exists}'
+        )
     logger.debug('Writing to %s is completed', destination)
+    return f'[DuckDB] - at {self.db}/{destination}'
