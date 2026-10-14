@@ -63,10 +63,10 @@ func runQueryBatch(ctx context.Context, source string, batch []string, writer st
 			ext := filepath.Ext(p)
 			title := strings.TrimSuffix(filepath.Base(p), ext)
 			batchQueries[title] = string(queryData)
-			results, err = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer, executeOptions)
-			if err != nil {
-				log.Fatalf("Failed to run batch: %v", err)
-			}
+		}
+		results, err = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer, executeOptions)
+		if err != nil {
+			log.Fatalf("Failed to run batch: %v", err)
 		}
 	}
 	return results
