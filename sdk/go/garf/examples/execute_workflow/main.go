@@ -106,12 +106,10 @@ func runInlineWorkflow(g *garf.Garf) error {
 		},
 		Sources: sourcesStruct,
 	}
-	contextStruct, _ := structpb.NewStruct(map[string]any{
-		"n_rows": 20,
-	})
-
-	executionContext := garf.ExecutionContext{
-		FetcherParameters: contextStruct,
+	executionContext := garf.ExecutionOptions{
+		FetchOptions: garf.FetchOptions{
+			FetcherParams: map[string]any{"n_rows": 20},
+		},
 	}
 	options := garf.WorkflowRequestOptions{
 		QueryRequestOptions: garf.QueryRequestOptions{

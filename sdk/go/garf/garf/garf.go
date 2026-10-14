@@ -17,6 +17,7 @@ package garf
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -51,10 +52,67 @@ type WorkflowRequestOptions struct {
 type QueryRequestOptions struct {
 	Config           *Config
 	ConfigPath       string
-	ExecutionContext *ExecutionContext
+	ExecutionContext *ExecutionOptions
 	EnableCache      bool
 	CacheTtlSeconds  uint32
 	Simulate         bool
+}
+
+type FetchOptions struct {
+	Template, FetcherParams map[string]any
+}
+
+type ExecutionOptions struct {
+	FetchOptions
+	WriterParams map[string]any
+}
+
+func (o *FetchOptions) Build() (*FetchContext, error) {
+	if o == nil {
+		return &FetchContext{}, nil
+	}
+	templates, err := toStruct(o.Template)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse template params: %w", err)
+	}
+	fetcherParams, err := toStruct(o.FetcherParams)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse fetcher params: %w", err)
+	}
+	return &FetchContext{
+		QueryParameters:   &QueryParameters{Template: templates},
+		FetcherParameters: fetcherParams,
+	}, nil
+}
+
+func (o *ExecutionOptions) Build() (*ExecutionContext, error) {
+	if o == nil {
+		return &ExecutionContext{}, nil
+	}
+	templates, err := toStruct(o.Template)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse template params: %w", err)
+	}
+	fetcherParams, err := toStruct(o.FetcherParams)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse fetcher params: %w", err)
+	}
+	writerParams, err := toStruct(o.WriterParams)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse writer params: %w", err)
+	}
+	return &ExecutionContext{
+		QueryParameters:   &QueryParameters{Template: templates},
+		FetcherParameters: fetcherParams,
+		WriterParameters:  writerParams,
+	}, nil
+}
+
+func toStruct(m map[string]any) (*structpb.Struct, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	return structpb.NewStruct(m)
 }
 
 // Garf represents gRPC client to garf server.
@@ -161,25 +219,20 @@ func (g *Garf) Executors(ctx context.Context) ([]string, error) {
 	return executors, nil
 }
 
-func (g *Garf) Fetch(ctx context.Context, title, query string) (*FetchResponse, error) {
+func (g *Garf) Fetch(ctx context.Context, title, query string, options FetchOptions) (*FetchResponse, error) {
 	ctx, span := tracer.Start(ctx, "fetch")
 	defer span.End()
 
-	fetcherParameters := map[string]any{
-		"n_rows": 10,
-	}
-	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	fetchContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create fetcher parameters: %v", err)
+		log.Fatalf("Failed to parse fetch options: %v", err)
 	}
 
 	request := FetchRequest{
-		Source: "fake",
-		Title:  title,
-		Query:  query,
-		Context: &FetchContext{
-			FetcherParameters: fetcherParameterStruct,
-		},
+		Source:  "fake",
+		Title:   title,
+		Query:   query,
+		Context: fetchContext,
 	}
 
 	r, err := g.client.Fetch(ctx, &request)
@@ -198,17 +251,15 @@ func (g *Garf) Fetch(ctx context.Context, title, query string) (*FetchResponse, 
 	return r, nil
 
 }
-func (g *Garf) Execute(ctx context.Context, source, title, query, writer string) ([]string, error) {
+func (g *Garf) Execute(ctx context.Context, source, title, query, writer string, options ExecutionOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
-	fetcherParameters := map[string]any{
-		"n_rows": 10,
-	}
-	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create fetcher parameters: %v", err)
+		log.Fatalf("Failed to create execution context: %v", err)
 	}
+	executionContext.Writer = writer
 	request := ExecuteRequest{
 		Source: source,
 		Query: &ExecuteRequest_QueryDefinition{
@@ -217,10 +268,7 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string)
 				Text:  query,
 			},
 		},
-		Context: &ExecutionContext{
-			FetcherParameters: fetcherParameterStruct,
-			Writer:            writer,
-		},
+		Context: executionContext,
 	}
 	span.SetAttributes(
 		attribute.String("query.title", title),
@@ -241,26 +289,21 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string)
 	return result, nil
 }
 
-func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string) ([]string, error) {
+func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string, options ExecutionOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
-	fetcherParameters := map[string]any{
-		"n_rows": 10,
-	}
-	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create fetcher parameters: %v", err)
+		log.Fatalf("Failed to create execution context: %v", err)
 	}
+	executionContext.Writer = writer
 	request := ExecuteRequest{
 		Source: source,
 		Query: &ExecuteRequest_QueryPath{
 			QueryPath: queryPath,
 		},
-		Context: &ExecutionContext{
-			FetcherParameters: fetcherParameterStruct,
-			Writer:            writer,
-		},
+		Context: executionContext,
 	}
 	span.SetAttributes(
 		attribute.String("query.query_path", queryPath),
@@ -281,17 +324,15 @@ func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer st
 }
 
 func (g *Garf) ExecuteBatch(ctx context.Context, source string,
-	batch map[string]string, writer string) ([]string, error) {
+	batch map[string]string, writer string, options ExecutionOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
-	fetcherParameters := map[string]any{
-		"n_rows": 10,
-	}
-	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create fetcher parameters: %v", err)
+		log.Fatalf("Failed to create execution context: %v", err)
 	}
+	executionContext.Writer = writer
 	var queries []*QueryDefinition
 
 	for title, query := range batch {
@@ -304,10 +345,7 @@ func (g *Garf) ExecuteBatch(ctx context.Context, source string,
 				Queries: queries,
 			},
 		},
-		Context: &ExecutionContext{
-			FetcherParameters: fetcherParameterStruct,
-			Writer:            writer,
-		},
+		Context: executionContext,
 	}
 	span.SetAttributes(
 		attribute.Int("query.batch_size", len(batch)),
@@ -328,16 +366,13 @@ func (g *Garf) ExecuteBatch(ctx context.Context, source string,
 }
 
 func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
-	batch []string, writer string) ([]string, error) {
+	batch []string, writer string, options ExecutionOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
-	fetcherParameters := map[string]any{
-		"n_rows": 10,
-	}
-	fetcherParameterStruct, err := structpb.NewStruct(fetcherParameters)
+	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create fetcher parameters: %v", err)
+		log.Fatalf("Failed to create execution context: %v", err)
 	}
 	var queries []*QueryDefinition
 
@@ -348,10 +383,7 @@ func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
 				QueryPaths: batch,
 			},
 		},
-		Context: &ExecutionContext{
-			FetcherParameters: fetcherParameterStruct,
-			Writer:            writer,
-		},
+		Context: executionContext,
 	}
 	span.SetAttributes(
 		attribute.Int("query.batch_size", len(batch)),
@@ -376,6 +408,10 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
 	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
+	executionContext, err := options.QueryRequestOptions.ExecutionContext.Build()
+	if err != nil {
+		log.Fatalf("Failed to created execution context: %v", err)
+	}
 	request := ExecuteWorkflowRequest{
 		Workflow: &ExecuteWorkflowRequest_WorkflowData{
 			WorkflowData: workflow,
@@ -385,7 +421,7 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
 		Config: &ExecuteWorkflowRequest_ConfigData{
 			ConfigData: options.QueryRequestOptions.Config,
 		},
-		Context: options.QueryRequestOptions.ExecutionContext,
+		Context: executionContext,
 		CacheOptions: &GarfCacheOptions{
 			EnableCache:     options.QueryRequestOptions.EnableCache,
 			CacheTtlSeconds: options.QueryRequestOptions.CacheTtlSeconds,
@@ -409,6 +445,10 @@ func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath string,
 	ctx, span := tracer.Start(ctx, "execute-workflow")
 	defer span.End()
 
+	executionContext, err := options.QueryRequestOptions.ExecutionContext.Build()
+	if err != nil {
+		log.Fatalf("Failed to created execution context: %v", err)
+	}
 	request := ExecuteWorkflowRequest{
 		Workflow: &ExecuteWorkflowRequest_WorkflowPath{
 			WorkflowPath: workflowPath,
@@ -418,7 +458,7 @@ func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath string,
 		},
 		SelectedAliases: options.SelectedAliases,
 		SkippedAliases:  options.SkippedAliases,
-		Context:         options.QueryRequestOptions.ExecutionContext,
+		Context:         executionContext,
 		CacheOptions: &GarfCacheOptions{
 			EnableCache:     options.QueryRequestOptions.EnableCache,
 			CacheTtlSeconds: options.QueryRequestOptions.CacheTtlSeconds,

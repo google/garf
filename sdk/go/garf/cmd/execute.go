@@ -48,7 +48,7 @@ func runQueryBatch(ctx context.Context, source string, batch []string, writer st
 	var err error
 	var results []string
 	if queryAsFile {
-		results, err = GarfClient.ExecuteBatchFromFiles(ctx, source, batch, writer)
+		results, err = GarfClient.ExecuteBatchFromFiles(ctx, source, batch, writer, executeOptions)
 		if err != nil {
 			log.Fatalf("Failed to run batch: %v", err)
 		}
@@ -63,7 +63,7 @@ func runQueryBatch(ctx context.Context, source string, batch []string, writer st
 			ext := filepath.Ext(p)
 			title := strings.TrimSuffix(filepath.Base(p), ext)
 			batchQueries[title] = string(queryData)
-			results, err = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer)
+			results, err = GarfClient.ExecuteBatch(ctx, source, batchQueries, writer, executeOptions)
 			if err != nil {
 				log.Fatalf("Failed to run batch: %v", err)
 			}
@@ -76,7 +76,7 @@ func runQuery(ctx context.Context, source, query, writer string, queryAsFile boo
 	var err error
 	var results []string
 	if queryAsFile {
-		results, err = GarfClient.ExecuteFromFile(ctx, source, query, writer)
+		results, err = GarfClient.ExecuteFromFile(ctx, source, query, writer, executeOptions)
 		if err != nil {
 			log.Fatalf("Failed to run batch: %v", err)
 		}
@@ -88,7 +88,7 @@ func runQuery(ctx context.Context, source, query, writer string, queryAsFile boo
 		}
 		ext := filepath.Ext(p)
 		title := strings.TrimSuffix(filepath.Base(p), ext)
-		results, err = GarfClient.Execute(ctx, source, title, string(queryData), writer)
+		results, err = GarfClient.Execute(ctx, source, title, string(queryData), writer, executeOptions)
 		if err != nil {
 			log.Fatalf("Failed to run batch: %v", err)
 		}

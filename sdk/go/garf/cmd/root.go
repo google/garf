@@ -30,10 +30,11 @@ import (
 const name = "github.com/google/garf/sdk/go/garf"
 
 var (
-	tracer       = otel.Tracer(name)
-	EnableCache  bool
-	GarfEndpoint string
-	GarfClient   *garf.Garf
+	tracer         = otel.Tracer(name)
+	EnableCache    bool
+	GarfEndpoint   string
+	GarfClient     *garf.Garf
+	executeOptions garf.ExecutionOptions
 )
 
 var rootCmd = &cobra.Command{
