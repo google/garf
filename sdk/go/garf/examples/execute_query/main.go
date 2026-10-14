@@ -15,7 +15,7 @@ func main() {
 		garfEndpoint = "127.0.0.1:50051"
 	}
 	ctx := context.Background()
-	g := garf.New(ctx, garfEndpoint)
+	g, _ := garf.New(ctx, garfEndpoint)
 	defer g.Close()
 	executeQueryInline(g)
 	executeQueryFromFile(g)

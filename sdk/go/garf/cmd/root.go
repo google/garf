@@ -47,7 +47,10 @@ var rootCmd = &cobra.Command{
 		cmd.SetContext(ctx)
 		defer span.End()
 		garfEndpoint := viper.GetString("endpoint")
-		g := garf.New(ctx, garfEndpoint)
+		g, err := garf.New(ctx, garfEndpoint)
+		if err != nil {
+			return err
+		}
 		GarfClient = g
 		return nil
 	},
