@@ -17,7 +17,7 @@ func main() {
 	if garfEndpoint == "" {
 		garfEndpoint = "127.0.0.1:50051"
 	}
-	g := garf.New(ctx, garfEndpoint)
+	g, _ := garf.New(ctx, garfEndpoint)
 	defer g.Close()
 	fetchQueryInline(ctx, g)
 }

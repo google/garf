@@ -17,7 +17,7 @@ func main() {
 	if garfEndpoint == "" {
 		garfEndpoint = "127.0.0.1:50051"
 	}
-	g := garf.New(context.Background(), garfEndpoint)
+	g, _ := garf.New(context.Background(), garfEndpoint)
 	defer g.Close()
 	runInlineWorkflow(g)
 	runWorkflowFromFile(g)

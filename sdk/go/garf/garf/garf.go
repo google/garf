@@ -123,7 +123,7 @@ type Garf struct {
 }
 
 // New creates new Garf instance.
-func New(ctx context.Context, endpoint string) *Garf {
+func New(ctx context.Context, endpoint string) (*Garf, error) {
 	ctx, span := tracer.Start(ctx, "init")
 	defer span.End()
 	conn, err := grpc.NewClient(
@@ -132,9 +132,9 @@ func New(ctx context.Context, endpoint string) *Garf {
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		return nil, fmt.Errorf("did not connect: %w", err)
 	}
-	return &Garf{Endpoint: endpoint, client: NewGarfServiceClient(conn), conn: conn}
+	return &Garf{Endpoint: endpoint, client: NewGarfServiceClient(conn), conn: conn}, nil
 }
 
 func (g *Garf) Close() error {
@@ -257,7 +257,7 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string,
 
 	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create execution context: %v", err)
+		return nil, fmt.Errorf("Failed to create execution context: %w", err)
 	}
 	executionContext.Writer = writer
 	request := ExecuteRequest{
@@ -295,7 +295,7 @@ func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer st
 
 	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create execution context: %v", err)
+		return nil, fmt.Errorf("Failed to create execution context: %w", err)
 	}
 	executionContext.Writer = writer
 	request := ExecuteRequest{
@@ -330,7 +330,7 @@ func (g *Garf) ExecuteBatch(ctx context.Context, source string,
 
 	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create execution context: %v", err)
+		return nil, fmt.Errorf("Failed to create execution context: %v", err)
 	}
 	executionContext.Writer = writer
 	var queries []*QueryDefinition
@@ -372,7 +372,7 @@ func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
 
 	executionContext, err := options.Build()
 	if err != nil {
-		log.Fatalf("Failed to create execution context: %v", err)
+		return nil, fmt.Errorf("Failed to create execution context: %w", err)
 	}
 	var queries []*QueryDefinition
 
@@ -410,7 +410,7 @@ func (g *Garf) ExecuteWorkflow(ctx context.Context, workflow *Workflow,
 
 	executionContext, err := options.QueryRequestOptions.ExecutionContext.Build()
 	if err != nil {
-		log.Fatalf("Failed to created execution context: %v", err)
+		return nil, fmt.Errorf("Failed to created execution context: %w", err)
 	}
 	request := ExecuteWorkflowRequest{
 		Workflow: &ExecuteWorkflowRequest_WorkflowData{
@@ -447,7 +447,7 @@ func (g *Garf) ExecuteWorkflowFromFile(ctx context.Context, workflowPath string,
 
 	executionContext, err := options.QueryRequestOptions.ExecutionContext.Build()
 	if err != nil {
-		log.Fatalf("Failed to created execution context: %v", err)
+		return nil, fmt.Errorf("Failed to created execution context: %w", err)
 	}
 	request := ExecuteWorkflowRequest{
 		Workflow: &ExecuteWorkflowRequest_WorkflowPath{
