@@ -26,6 +26,7 @@ except ImportError as e:
 
 import logging
 import pathlib
+import threading
 
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
@@ -62,6 +63,8 @@ class DuckDBExecutor(executor.Executor):
       cache_ttl_seconds=cache_ttl_seconds,
     )
     self.db = db or duckdb_writer.DEFAULT_DB
+    self._lock = threading.Lock()
+    self._conn = duckdb.connect(self.db)
 
   @tracer.start_as_current_span('duckdb.execute')
   def _execute(
@@ -80,8 +83,9 @@ class DuckDBExecutor(executor.Executor):
     Returns:
       Report with data if query returns some data otherwise empty Report.
     """
-    conn = duckdb.connect(self.db)
-    execution_result = conn.sql(query=query)
+    conn = self._conn
+    with self._lock:
+      execution_result = conn.sql(query=query)
     if execution_result:
       return report.GarfReport.from_pandas(execution_result.to_df())
     return report.GarfReport()
