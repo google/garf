@@ -35,6 +35,7 @@ class GarfCronJob(pydantic.BaseModel):
   context: dict[str, Any] = pydantic.Field(default_factory=dict)
   config_path: str | None = None
   server_info: ServerInfo | None = None
+  enable_cache: bool = False
   env: list[dict[str, Any]] = pydantic.Field(default_factory=list)
 
   @property
@@ -83,7 +84,7 @@ class GarfQueryCronJob(GarfCronJob):
     cli_args = [
       'execute',
       ' '.join(q.path for q in self.queries),
-      f' --source {self.source} --writer {self.writer} --as-file ',
+      f' --source {self.source} --writer {self.writer} --as-file',
     ]
 
     if server := self.server_info:
@@ -91,21 +92,31 @@ class GarfQueryCronJob(GarfCronJob):
 
     if self.config_path:
       cli_args.append(f'--config {self.config_path}')
+    if self.enable_cache:
+      cli_args.append('--enable-cache')
     return ' '.join(cli_args).split()
 
 
 class GarfWorkflowCronJob(GarfCronJob):
   workflow_path: str
+  selected_aliases: list[str] = pydantic.Field(default_factory=list)
+  skipped_aliases: list[str] = pydantic.Field(default_factory=list)
 
   @property
   def command(self) -> list[str]:
-    cli_args = ['workflow run', f'-f {self.workflow_path} --as-file ']
+    cli_args = ['workflow run', f'-f {self.workflow_path} --as-file']
 
     if server := self.server_info:
       cli_args.append(f'--endpoint={server.url}')
 
     if self.config_path:
       cli_args.append(f'--config {self.config_path}')
+    if selected_aliases := ','.join(self.selected_aliases):
+      cli_args.append(f'--selected-aliases {selected_aliases}')
+    if skipped_aliases := ','.join(self.skipped_aliases):
+      cli_args.append(f'--skipped-aliases {skipped_aliases}')
+    if self.enable_cache:
+      cli_args.append('--enable-cache')
     return ' '.join(cli_args).split()
 
 
@@ -121,6 +132,9 @@ def _build_cron_job(
       workflow_path=spec.get('workflowPath'),
       config_path=spec.get('configPath'),
       server_info=spec.get('server'),
+      selected_aliases=spec.get('selectedAliases', []),
+      skipped_aliases=spec.get('skippedAliases', []),
+      enable_cache=bool(spec.get('enableCache', False)),
       env=spec.get('env'),
     )
   elif cronjob_type == 'GarfQueryCronJob':
@@ -131,6 +145,7 @@ def _build_cron_job(
       config_path=spec.get('configPath'),
       context=spec.get('context'),
       server_info=spec.get('server'),
+      enable_cache=bool(spec.get('enableCache', False)),
       env=spec.get('env'),
     )
   else:
