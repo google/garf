@@ -34,15 +34,15 @@ var runCmd = &cobra.Command{
 		asFiles, _ := cmd.Flags().GetBool("as-file")
 		enableCache, _ := cmd.Flags().GetBool("enable-cache")
 		selectedAliases, _ := cmd.Flags().GetString("selected-aliases")
-		excludedAliases, _ := cmd.Flags().GetString("excluded-aliases")
+		skippedAliases, _ := cmd.Flags().GetString("skipped-aliases")
 		var resultsFileWorkflow []string
 		options := garf.WorkflowRequestOptions{}
 		if enableCache {
 			options.QueryRequestOptions.EnableCache = true
 			options.QueryRequestOptions.CacheTtlSeconds = 60 * 60
 		}
-		if excludedAliases != "" {
-			options.SkippedAliases = strings.Split(excludedAliases, ",")
+		if skippedAliases != "" {
+			options.SkippedAliases = strings.Split(skippedAliases, ",")
 		}
 		if selectedAliases != "" {
 			options.SelectedAliases = strings.Split(selectedAliases, ",")
