@@ -27,6 +27,19 @@ spec:
                 configPath:
                   type: string
                   description: "Path to the garf config"
+                selectedAliases:
+                  type: array
+                  description: "Workflow aliases to execute"
+                  items:
+                    type: string
+                skippedAliases:
+                  type: array
+                  description: "Workflow aliases to skip"
+                  items:
+                    type: string
+                enableCache:
+                  type: boolean
+                  description: "Whether to perform query results caching"
                 server:
                   type: object
                   properties:
@@ -115,6 +128,9 @@ spec:
                       type: string
                     server_type:
                       type: string
+                enableCache:
+                  type: boolean
+                  description: "Whether to perform query results caching"
                 env:
                   type: array
                   description: ""
