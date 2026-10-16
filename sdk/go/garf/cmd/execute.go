@@ -22,6 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/spf13/cobra"
 )
 
@@ -31,11 +34,21 @@ var executeCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
+		span := trace.SpanFromContext(ctx)
 		writer, _ := cmd.Flags().GetString("writer")
 		source, _ := cmd.Flags().GetString("source")
 		queryAsFile, _ := cmd.Flags().GetBool("as-file")
 		var results []string
+		span.SetAttributes(
+			attribute.String("command", "execute"),
+			attribute.StringSlice("queries", args),
+			attribute.String("source", source),
+			attribute.String("writer", writer),
+		)
 		if len(args) > 1 {
+			span.SetAttributes(
+				attribute.Bool("is_batch", true),
+			)
 			results = runQueryBatch(ctx, source, args, writer, queryAsFile)
 		} else {
 			results = runQuery(ctx, source, args[0], writer, queryAsFile)
