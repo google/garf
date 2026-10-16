@@ -104,7 +104,7 @@ class Executor:
           args=context.query_parameters,
           kwargs=context.fetcher_parameters,
         )
-        logger.warning('Cached version of report is loaded')
+        logger.debug('Cached version of report is loaded')
         span.set_attribute('is_cached_report', True)
         if (
           (results or results.results_placeholder)
