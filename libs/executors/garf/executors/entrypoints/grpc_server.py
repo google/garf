@@ -20,6 +20,7 @@ import subprocess
 import time
 from concurrent import futures
 
+import garf.core
 import garf.executors
 import grpc
 from garf.executors import (
@@ -53,6 +54,24 @@ server_start_time = time.time()
 
 class GarfGrpcServerError(Exception):
   """Failure to find credentials."""
+
+
+def _serialize_result(result) -> str:
+  """Converts an execution result to a proto-safe string, freeing rows."""
+
+  if isinstance(result, garf.core.GarfReport):
+    serialized = result.to_json()
+    result.clear()
+    return serialized
+  return result
+
+
+def _serialize_results(results) -> list:
+  """Serializes a {query: result} mapping, freeing each report in turn."""
+  serialized = []
+  for key, result in results.items():
+    serialized.append(f'{key}: {_serialize_result(result)}')
+  return serialized
 
 
 def _get_server_info(options):
@@ -120,7 +139,7 @@ class GarfService(garf_pb2_grpc.GarfService):
         **MessageToDict(request.context, preserving_proto_field_name=True)
       ),
     )
-    return garf_pb2.ExecuteResponse(results=[result])
+    return garf_pb2.ExecuteResponse(results=[_serialize_result(result)])
 
   def ExecuteBatch(self, request, context):
     n_queries = len(
@@ -160,6 +179,8 @@ class GarfService(garf_pb2_grpc.GarfService):
         **MessageToDict(request.context, preserving_proto_field_name=True)
       ),
     )
+    if isinstance(results, dict):
+      return garf_pb2.ExecuteResponse(results=_serialize_results(results))
     return garf_pb2.ExecuteResponse(results=results)
 
   def Fetch(self, request, context):
@@ -187,9 +208,11 @@ class GarfService(garf_pb2_grpc.GarfService):
         title=request.title,
         args=query_args,
       )
-    return garf_pb2.FetchResponse(
+    response = garf_pb2.FetchResponse(
       columns=result.column_names, rows=result.to_list(row_type='dict')
     )
+    result.clear()
+    return response
 
   def ExecuteWorkflow(self, request, context):
     if config_path := request.config_path:
@@ -226,6 +249,18 @@ class GarfService(garf_pb2_grpc.GarfService):
       enable_cache=request.cache_options.enable_cache,
       cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
     )
+    if isinstance(results, dict):
+      serialized = []
+      for step_name, step_results in results.items():
+        if isinstance(step_results, dict):
+          serialized.extend(
+            f'{step_name}/{query}: {_serialize_result(report)}'
+            for query, report in step_results.items()
+          )
+        else:
+          serialized.append(f'{step_name}: {_serialize_result(step_results)}')
+      del results
+      return garf_pb2.ExecuteWorkflowResponse(results=serialized)
     return garf_pb2.ExecuteWorkflowResponse(results=results)
 
   def GetVersion(self, request, context):

@@ -107,6 +107,8 @@ app = celery.Celery(
   broker=redis_url,
   backend=redis_url,
 )
+# Don't pin full workflow payloads in Redis/worker memory forever.
+app.conf.update(result_expires=3600, result_persistent=False)
 
 
 @app.task(pydantic=True)
@@ -127,7 +129,10 @@ def execute(request: ApiExecutorRequest):
     -1, attributes={'executor.source': query_executor.source}
   )
   if isinstance(result, garf.core.GarfReport):
-    return result.to_list('dict')
+    converted = result.to_list('dict')
+    result.clear()
+    del result
+    return converted
   return [result]
 
 
@@ -152,7 +157,14 @@ def execute_batch(request: ApiExecutorBatchRequest):
   if all(
     isinstance(report, garf.core.GarfReport) for report in results.values()
   ):
-    return {query: report.to_list('dict') for query, report in results.items()}
+    # Convert one report at a time and release its payload immediately
+    # so peak memory is one report + one converted payload, not all of both.
+    converted = {}
+    for query, report in results.items():
+      converted[query] = report.to_list('dict')
+      report.clear()
+    del results
+    return converted
   return results
 
 
@@ -175,7 +187,24 @@ def execute_workflow(
     simulate=simulate,
   )
   telemetry.executor_active_workflows.add(-1)
-  return results
+  # Convert nested {step: {query: GarfReport}} one report at a time and
+  # release each payload immediately; otherwise every workflow step stays
+  # pinned in the Celery result backend.
+  converted: dict[str, dict] = {}
+  for step_name, step_results in results.items():
+    if isinstance(step_results, dict):
+      converted_step = {}
+      for query, report in step_results.items():
+        if isinstance(report, garf.core.GarfReport):
+          converted_step[query] = report.to_list('dict')
+          report.clear()
+        else:
+          converted_step[query] = report
+      converted[step_name] = converted_step
+    else:
+      converted[step_name] = step_results
+  del results
+  return converted
 
 
 @app.task(pydantic=True)

@@ -14,6 +14,7 @@
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
 import contextlib
+import gc
 import os
 import time
 
@@ -47,11 +48,18 @@ def _get_virtual_memory_consumption(options):
     yield metrics.Observation(value=memory_bytes, attributes={'pid': str(pid)})
 
 
-executor_started_seconds = meter.create_gauge(
-  'garf_executor_started_seconds',
-  unit='s',
-  description='Timestamp when process started',
-)
+def _get_python_gc_objects(options):
+  """Reports live Python object counts per GC generation.
+
+  Unlike RSS (which only grows within a process lifetime due to allocator
+  arenas), a flat reading here between requests proves no Python objects
+  are being retained; a stair-step pinpoints a real leak.
+  """
+  for generation, count in enumerate(gc.get_count()):
+    yield metrics.Observation(
+      value=count, attributes={'generation': str(generation)}
+    )
+
 
 executor_active_executions = meter.create_up_down_counter(
   'garf_execute_active',
@@ -151,4 +159,11 @@ meter.create_observable_gauge(
   unit='By',
   callbacks=[_get_virtual_memory_consumption],
   description='Virtual memory (VMS) consumed by garf server',
+)
+
+meter.create_observable_gauge(
+  'garf_python_gc_objects',
+  unit='1',
+  callbacks=[_get_python_gc_objects],
+  description='Live Python objects tracked by the garbage collector',
 )

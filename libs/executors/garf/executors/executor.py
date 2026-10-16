@@ -20,7 +20,6 @@ import asyncio
 import functools
 import inspect
 import logging
-import operator
 import pathlib
 import time
 from typing import Optional
@@ -124,8 +123,17 @@ class Executor:
       span.set_attribute('executor.multi_query.num_queries', len(query_parts))
       no_writer_context = context.model_copy(update={'writer': 'unset'})
       batch = {f'{title}_{i}': query for i, query in enumerate(query_parts)}
-      results = self.execute_batch(batch=batch, context=no_writer_context)
-      results = functools.reduce(operator.add, list(results.values()))
+      batch_results = self.execute_batch(batch=batch, context=no_writer_context)
+      batch_values = list(batch_results.values())
+      results = batch_values[0]
+      for other in batch_values[1:]:
+        results.results.extend(other.results)
+        if not results.results_placeholder and other.results_placeholder:
+          results.results_placeholder = other.results_placeholder
+        if results.query_specification is None:
+          results.query_specification = other.query_specification
+        other.clear()
+      del batch_results, batch_values
     else:
       try:
         results = self._execute(query=query_text, title=title, context=context)

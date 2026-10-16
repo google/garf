@@ -127,6 +127,13 @@ class ApiExecutorResponse(pydantic.BaseModel):
       for query, data in self.full_results.items():
         if isinstance(data, garf.core.GarfReport):
           self.full_results[query] = data.to_list(row_type='dict')
+          data.clear()
+      for step, step_results in list(self.full_results.items()):
+        if isinstance(step_results, dict):
+          for query, data in step_results.items():
+            if isinstance(data, garf.core.GarfReport):
+              step_results[query] = data.to_list(row_type='dict')
+              data.clear()
 
 
 @app.exception_handler(garf.core.exceptions.GarfError)
