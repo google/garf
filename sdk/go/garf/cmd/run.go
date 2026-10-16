@@ -19,6 +19,9 @@ import (
 	"log"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/google/garf/sdk/go/garf/garf"
 	"github.com/spf13/cobra"
 )
@@ -28,6 +31,10 @@ var runCmd = &cobra.Command{
 	Short: "Runs workflow from a file",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
+		span := trace.SpanFromContext(ctx)
+		span.SetAttributes(
+			attribute.String("command", "workflow run"),
+		)
 		var err error
 		workflowPath, _ := cmd.Flags().GetString("file")
 		configPath, _ := cmd.Flags().GetString("config")
@@ -40,12 +47,29 @@ var runCmd = &cobra.Command{
 		if enableCache {
 			options.QueryRequestOptions.EnableCache = true
 			options.QueryRequestOptions.CacheTtlSeconds = 60 * 60
+			span.SetAttributes(
+				attribute.Bool("enable_cache", true),
+			)
 		}
 		if skippedAliases != "" {
 			options.SkippedAliases = strings.Split(skippedAliases, ",")
+			span.SetAttributes(
+				attribute.StringSlice("skipped_aliases", options.SkippedAliases),
+			)
 		}
 		if selectedAliases != "" {
 			options.SelectedAliases = strings.Split(selectedAliases, ",")
+			span.SetAttributes(
+				attribute.StringSlice("selected_aliases", options.SelectedAliases),
+			)
+		}
+		span.SetAttributes(
+			attribute.String("workflow", workflowPath),
+		)
+		if configPath != "" {
+			span.SetAttributes(
+				attribute.String("config", configPath),
+			)
 		}
 		if asFiles {
 			options.QueryRequestOptions.ConfigPath = configPath

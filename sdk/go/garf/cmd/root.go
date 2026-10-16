@@ -42,10 +42,8 @@ var rootCmd = &cobra.Command{
 	Short:   "Interact with garf",
 	Version: "0.0.1",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		ctx := context.Background()
-		ctx, span := tracer.Start(ctx, "cli")
+		ctx, _ := tracer.Start(context.Background(), "cli")
 		cmd.SetContext(ctx)
-		defer span.End()
 		garfEndpoint := viper.GetString("endpoint")
 		g, err := garf.New(ctx, garfEndpoint)
 		if err != nil {
