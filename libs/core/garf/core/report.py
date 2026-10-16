@@ -525,6 +525,11 @@ class GarfReport:
       )
     return cls(results=results, column_names=column_names)
 
+  def clear(self) -> None:
+    """Clears report data and placeholders."""
+    self.results.clear()
+    self.results_placeholder.clear()
+
 
 class GarfRow:
   """Helper class to simplify iteration of GarfReport.
@@ -652,6 +657,10 @@ class GarfRow:
 
   def __bool__(self) -> bool:
     return bool(self.data)
+
+  def clear(self) -> None:
+    """Clears report row data."""
+    self.data.clear()
 
 
 class GarfReportError(exceptions.GarfError):

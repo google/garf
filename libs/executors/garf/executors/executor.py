@@ -334,4 +334,5 @@ def write_many(
     )
     writing_results.append(writing_result)
   logger.info('%s executed successfully', title)
+  results.clear()
   return writing_results[-1] if writing_results else None
