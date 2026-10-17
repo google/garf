@@ -19,10 +19,10 @@ rules:
     verbs: ["list", "watch"]
   - apiGroups: ["garf.io"]
     resources:
-      - garfworkflowcronjobs
-      - garfworkflowcronjobs/status
-      - garfquerycronjobs
-      - garfquerycronjobs/status
+      - workflows
+      - workflows/status
+      - queries
+      - queries/status
     verbs: ["get", "list", "watch", "patch", "update"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
@@ -31,7 +31,7 @@ rules:
     resources: ["events", "namespaces"]
     verbs: ["create", "patch"]
   - apiGroups: ["batch"]
-    resources: ["cronjobs"]
+    resources: ["cronjobs", "jobs"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1

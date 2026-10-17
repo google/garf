@@ -1,4 +1,4 @@
-# garf operator - simplified garf cronjob execution in Kubernetes
+# garf operator - simplified garf jobs & cronjobs execution in Kubernetes
 
 ## Prerequisites
 
@@ -18,16 +18,18 @@ kubectl apply -f https://raw.githubusercontent.com/google/garf/refs/heads/main/k
 kubectl apply -f https://raw.githubusercontent.com/google/garf/refs/heads/main/kubernetes-operator/garf-operator.yaml
 ```
 
-## Create cronjobs
+## Create jobs & cronjobs
 
-`garf-operator` supports two types of cronjobs - Workflow and Queries.
+`garf-operator` supports two types of jobs & cronjobs - Workflow and Query.
+
+If schedule is omitted that the object is treated as Job.
 
 
 ### Workflows
 
 ```yaml
 apiVersion: garf.io/v1
-kind: GarfWorkflowCronJob
+kind: Workflow
 metadata:
   name: garf-workflow
 spec:
@@ -43,7 +45,7 @@ spec:
 
 ```yaml
 apiVersion: garf.io/v1
-kind: GarfQueryCronJob
+kind: Queries
 metadata:
   name: garf-query
 spec:
