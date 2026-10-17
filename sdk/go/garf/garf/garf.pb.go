@@ -271,10 +271,15 @@ type ExecuteRequest struct {
 	//
 	//	*ExecuteRequest_QueryDefinition
 	//	*ExecuteRequest_QueryPath
-	Query         isExecuteRequest_Query `protobuf_oneof:"query"`
-	Context       *ExecutionContext      `protobuf:"bytes,4,opt,name=context,proto3" json:"context,omitempty"`
-	CacheOptions  *GarfCacheOptions      `protobuf:"bytes,5,opt,name=cache_options,json=cacheOptions,proto3" json:"cache_options,omitempty"`
-	Simulate      bool                   `protobuf:"varint,6,opt,name=simulate,proto3" json:"simulate,omitempty"`
+	Query isExecuteRequest_Query `protobuf_oneof:"query"`
+	// Types that are valid to be assigned to Config:
+	//
+	//	*ExecuteRequest_ConfigData
+	//	*ExecuteRequest_ConfigPath
+	Config        isExecuteRequest_Config `protobuf_oneof:"config"`
+	Context       *ExecutionContext       `protobuf:"bytes,6,opt,name=context,proto3" json:"context,omitempty"`
+	CacheOptions  *GarfCacheOptions       `protobuf:"bytes,7,opt,name=cache_options,json=cacheOptions,proto3" json:"cache_options,omitempty"`
+	Simulate      bool                    `protobuf:"varint,8,opt,name=simulate,proto3" json:"simulate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -341,6 +346,31 @@ func (x *ExecuteRequest) GetQueryPath() string {
 	return ""
 }
 
+func (x *ExecuteRequest) GetConfig() isExecuteRequest_Config {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *ExecuteRequest) GetConfigData() *Config {
+	if x != nil {
+		if x, ok := x.Config.(*ExecuteRequest_ConfigData); ok {
+			return x.ConfigData
+		}
+	}
+	return nil
+}
+
+func (x *ExecuteRequest) GetConfigPath() string {
+	if x != nil {
+		if x, ok := x.Config.(*ExecuteRequest_ConfigPath); ok {
+			return x.ConfigPath
+		}
+	}
+	return ""
+}
+
 func (x *ExecuteRequest) GetContext() *ExecutionContext {
 	if x != nil {
 		return x.Context
@@ -377,6 +407,22 @@ type ExecuteRequest_QueryPath struct {
 func (*ExecuteRequest_QueryDefinition) isExecuteRequest_Query() {}
 
 func (*ExecuteRequest_QueryPath) isExecuteRequest_Query() {}
+
+type isExecuteRequest_Config interface {
+	isExecuteRequest_Config()
+}
+
+type ExecuteRequest_ConfigData struct {
+	ConfigData *Config `protobuf:"bytes,4,opt,name=config_data,json=configData,proto3,oneof"`
+}
+
+type ExecuteRequest_ConfigPath struct {
+	ConfigPath string `protobuf:"bytes,5,opt,name=config_path,json=configPath,proto3,oneof"`
+}
+
+func (*ExecuteRequest_ConfigData) isExecuteRequest_Config() {}
+
+func (*ExecuteRequest_ConfigPath) isExecuteRequest_Config() {}
 
 type ExecutionContext struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
@@ -706,10 +752,15 @@ type ExecuteBatchRequest struct {
 	//
 	//	*ExecuteBatchRequest_BatchQueryDefinitions
 	//	*ExecuteBatchRequest_BatchQueryPaths
-	Batch         isExecuteBatchRequest_Batch `protobuf_oneof:"batch"`
-	Context       *ExecutionContext           `protobuf:"bytes,4,opt,name=context,proto3" json:"context,omitempty"`
-	CacheOptions  *GarfCacheOptions           `protobuf:"bytes,5,opt,name=cache_options,json=cacheOptions,proto3" json:"cache_options,omitempty"`
-	Simulate      bool                        `protobuf:"varint,6,opt,name=simulate,proto3" json:"simulate,omitempty"`
+	Batch isExecuteBatchRequest_Batch `protobuf_oneof:"batch"`
+	// Types that are valid to be assigned to Config:
+	//
+	//	*ExecuteBatchRequest_ConfigData
+	//	*ExecuteBatchRequest_ConfigPath
+	Config        isExecuteBatchRequest_Config `protobuf_oneof:"config"`
+	Context       *ExecutionContext            `protobuf:"bytes,6,opt,name=context,proto3" json:"context,omitempty"`
+	CacheOptions  *GarfCacheOptions            `protobuf:"bytes,7,opt,name=cache_options,json=cacheOptions,proto3" json:"cache_options,omitempty"`
+	Simulate      bool                         `protobuf:"varint,8,opt,name=simulate,proto3" json:"simulate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -776,6 +827,31 @@ func (x *ExecuteBatchRequest) GetBatchQueryPaths() *BatchQueryPaths {
 	return nil
 }
 
+func (x *ExecuteBatchRequest) GetConfig() isExecuteBatchRequest_Config {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *ExecuteBatchRequest) GetConfigData() *Config {
+	if x != nil {
+		if x, ok := x.Config.(*ExecuteBatchRequest_ConfigData); ok {
+			return x.ConfigData
+		}
+	}
+	return nil
+}
+
+func (x *ExecuteBatchRequest) GetConfigPath() string {
+	if x != nil {
+		if x, ok := x.Config.(*ExecuteBatchRequest_ConfigPath); ok {
+			return x.ConfigPath
+		}
+	}
+	return ""
+}
+
 func (x *ExecuteBatchRequest) GetContext() *ExecutionContext {
 	if x != nil {
 		return x.Context
@@ -812,6 +888,22 @@ type ExecuteBatchRequest_BatchQueryPaths struct {
 func (*ExecuteBatchRequest_BatchQueryDefinitions) isExecuteBatchRequest_Batch() {}
 
 func (*ExecuteBatchRequest_BatchQueryPaths) isExecuteBatchRequest_Batch() {}
+
+type isExecuteBatchRequest_Config interface {
+	isExecuteBatchRequest_Config()
+}
+
+type ExecuteBatchRequest_ConfigData struct {
+	ConfigData *Config `protobuf:"bytes,4,opt,name=config_data,json=configData,proto3,oneof"`
+}
+
+type ExecuteBatchRequest_ConfigPath struct {
+	ConfigPath string `protobuf:"bytes,5,opt,name=config_path,json=configPath,proto3,oneof"`
+}
+
+func (*ExecuteBatchRequest_ConfigData) isExecuteBatchRequest_Config() {}
+
+func (*ExecuteBatchRequest_ConfigPath) isExecuteBatchRequest_Config() {}
 
 type ExecuteBatchResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1825,16 +1917,21 @@ const file_garf_proto_rawDesc = "" +
 	"\x12fetcher_parameters\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x11fetcherParameters\"a\n" +
 	"\x10GarfCacheOptions\x12!\n" +
 	"\fenable_cache\x18\x01 \x01(\bR\venableCache\x12*\n" +
-	"\x11cache_ttl_seconds\x18\x02 \x01(\rR\x0fcacheTtlSeconds\"\xa1\x02\n" +
+	"\x11cache_ttl_seconds\x18\x02 \x01(\rR\x0fcacheTtlSeconds\"\xff\x02\n" +
 	"\x0eExecuteRequest\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12B\n" +
 	"\x10query_definition\x18\x02 \x01(\v2\x15.garf.QueryDefinitionH\x00R\x0fqueryDefinition\x12\x1f\n" +
 	"\n" +
-	"query_path\x18\x03 \x01(\tH\x00R\tqueryPath\x120\n" +
-	"\acontext\x18\x04 \x01(\v2\x16.garf.ExecutionContextR\acontext\x12;\n" +
-	"\rcache_options\x18\x05 \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
-	"\bsimulate\x18\x06 \x01(\bR\bsimulateB\a\n" +
-	"\x05query\"\x94\x02\n" +
+	"query_path\x18\x03 \x01(\tH\x00R\tqueryPath\x12/\n" +
+	"\vconfig_data\x18\x04 \x01(\v2\f.garf.ConfigH\x01R\n" +
+	"configData\x12!\n" +
+	"\vconfig_path\x18\x05 \x01(\tH\x01R\n" +
+	"configPath\x120\n" +
+	"\acontext\x18\x06 \x01(\v2\x16.garf.ExecutionContextR\acontext\x12;\n" +
+	"\rcache_options\x18\a \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
+	"\bsimulate\x18\b \x01(\bR\bsimulateB\a\n" +
+	"\x05queryB\b\n" +
+	"\x06config\"\x94\x02\n" +
 	"\x10ExecutionContext\x12@\n" +
 	"\x10query_parameters\x18\x01 \x01(\v2\x15.garf.QueryParametersR\x0fqueryParameters\x12F\n" +
 	"\x12fetcher_parameters\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x11fetcherParameters\x12\x16\n" +
@@ -1854,15 +1951,20 @@ const file_garf_proto_rawDesc = "" +
 	"\aqueries\x18\x01 \x03(\v2\x15.garf.QueryDefinitionR\aqueries\"2\n" +
 	"\x0fBatchQueryPaths\x12\x1f\n" +
 	"\vquery_paths\x18\x01 \x03(\tR\n" +
-	"queryPaths\"\xdd\x02\n" +
+	"queryPaths\"\xbb\x03\n" +
 	"\x13ExecuteBatchRequest\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12U\n" +
 	"\x17batch_query_definitions\x18\x02 \x01(\v2\x1b.garf.BatchQueryDefinitionsH\x00R\x15batchQueryDefinitions\x12C\n" +
-	"\x11batch_query_paths\x18\x03 \x01(\v2\x15.garf.BatchQueryPathsH\x00R\x0fbatchQueryPaths\x120\n" +
-	"\acontext\x18\x04 \x01(\v2\x16.garf.ExecutionContextR\acontext\x12;\n" +
-	"\rcache_options\x18\x05 \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
-	"\bsimulate\x18\x06 \x01(\bR\bsimulateB\a\n" +
-	"\x05batch\"0\n" +
+	"\x11batch_query_paths\x18\x03 \x01(\v2\x15.garf.BatchQueryPathsH\x00R\x0fbatchQueryPaths\x12/\n" +
+	"\vconfig_data\x18\x04 \x01(\v2\f.garf.ConfigH\x01R\n" +
+	"configData\x12!\n" +
+	"\vconfig_path\x18\x05 \x01(\tH\x01R\n" +
+	"configPath\x120\n" +
+	"\acontext\x18\x06 \x01(\v2\x16.garf.ExecutionContextR\acontext\x12;\n" +
+	"\rcache_options\x18\a \x01(\v2\x16.garf.GarfCacheOptionsR\fcacheOptions\x12\x1a\n" +
+	"\bsimulate\x18\b \x01(\bR\bsimulateB\a\n" +
+	"\x05batchB\b\n" +
+	"\x06config\"0\n" +
 	"\x14ExecuteBatchResponse\x12\x18\n" +
 	"\aresults\x18\x01 \x03(\tR\aresults\"9\n" +
 	"\n" +
@@ -1993,55 +2095,57 @@ var file_garf_proto_depIdxs = []int32{
 	6,  // 3: garf.FetchContext.query_parameters:type_name -> garf.QueryParameters
 	28, // 4: garf.FetchContext.fetcher_parameters:type_name -> google.protobuf.Struct
 	8,  // 5: garf.ExecuteRequest.query_definition:type_name -> garf.QueryDefinition
-	5,  // 6: garf.ExecuteRequest.context:type_name -> garf.ExecutionContext
-	3,  // 7: garf.ExecuteRequest.cache_options:type_name -> garf.GarfCacheOptions
-	6,  // 8: garf.ExecutionContext.query_parameters:type_name -> garf.QueryParameters
-	28, // 9: garf.ExecutionContext.fetcher_parameters:type_name -> google.protobuf.Struct
-	28, // 10: garf.ExecutionContext.writer_parameters:type_name -> google.protobuf.Struct
-	28, // 11: garf.QueryParameters.macro:type_name -> google.protobuf.Struct
-	28, // 12: garf.QueryParameters.template:type_name -> google.protobuf.Struct
-	8,  // 13: garf.BatchQueryDefinitions.queries:type_name -> garf.QueryDefinition
-	9,  // 14: garf.ExecuteBatchRequest.batch_query_definitions:type_name -> garf.BatchQueryDefinitions
-	10, // 15: garf.ExecuteBatchRequest.batch_query_paths:type_name -> garf.BatchQueryPaths
-	5,  // 16: garf.ExecuteBatchRequest.context:type_name -> garf.ExecutionContext
-	3,  // 17: garf.ExecuteBatchRequest.cache_options:type_name -> garf.GarfCacheOptions
-	8,  // 18: garf.QueryEntry.query:type_name -> garf.QueryDefinition
-	16, // 19: garf.WorkflowMetadata.required_fetchers:type_name -> garf.FetcherInfo
-	13, // 20: garf.WorkflowStep.queries:type_name -> garf.QueryEntry
-	6,  // 21: garf.WorkflowStep.query_parameters:type_name -> garf.QueryParameters
-	28, // 22: garf.WorkflowStep.fetcher_parameters:type_name -> google.protobuf.Struct
-	28, // 23: garf.WorkflowStep.writer_parameters:type_name -> google.protobuf.Struct
-	19, // 24: garf.Config.metadata:type_name -> garf.ConfigMetadata
-	5,  // 25: garf.Config.global_parameters:type_name -> garf.ExecutionContext
-	28, // 26: garf.Config.sources:type_name -> google.protobuf.Struct
-	18, // 27: garf.Workflow.steps:type_name -> garf.WorkflowStep
-	17, // 28: garf.Workflow.metadata:type_name -> garf.WorkflowMetadata
-	21, // 29: garf.ExecuteWorkflowRequest.workflow_data:type_name -> garf.Workflow
-	20, // 30: garf.ExecuteWorkflowRequest.config_data:type_name -> garf.Config
-	5,  // 31: garf.ExecuteWorkflowRequest.context:type_name -> garf.ExecutionContext
-	3,  // 32: garf.ExecuteWorkflowRequest.cache_options:type_name -> garf.GarfCacheOptions
-	16, // 33: garf.ListFetchersResponse.results:type_name -> garf.FetcherInfo
-	4,  // 34: garf.GarfService.Execute:input_type -> garf.ExecuteRequest
-	11, // 35: garf.GarfService.ExecuteBatch:input_type -> garf.ExecuteBatchRequest
-	22, // 36: garf.GarfService.ExecuteWorkflow:input_type -> garf.ExecuteWorkflowRequest
-	0,  // 37: garf.GarfService.Fetch:input_type -> garf.FetchRequest
-	29, // 38: garf.GarfService.GetVersion:input_type -> google.protobuf.Empty
-	29, // 39: garf.GarfService.GetInfo:input_type -> google.protobuf.Empty
-	29, // 40: garf.GarfService.ListFetchers:input_type -> google.protobuf.Empty
-	29, // 41: garf.GarfService.ListExecutors:input_type -> google.protobuf.Empty
-	7,  // 42: garf.GarfService.Execute:output_type -> garf.ExecuteResponse
-	12, // 43: garf.GarfService.ExecuteBatch:output_type -> garf.ExecuteBatchResponse
-	23, // 44: garf.GarfService.ExecuteWorkflow:output_type -> garf.ExecuteWorkflowResponse
-	1,  // 45: garf.GarfService.Fetch:output_type -> garf.FetchResponse
-	26, // 46: garf.GarfService.GetVersion:output_type -> garf.GarfVersion
-	27, // 47: garf.GarfService.GetInfo:output_type -> garf.GarfInfo
-	24, // 48: garf.GarfService.ListFetchers:output_type -> garf.ListFetchersResponse
-	25, // 49: garf.GarfService.ListExecutors:output_type -> garf.ListExecutorsResponse
-	42, // [42:50] is the sub-list for method output_type
-	34, // [34:42] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	20, // 6: garf.ExecuteRequest.config_data:type_name -> garf.Config
+	5,  // 7: garf.ExecuteRequest.context:type_name -> garf.ExecutionContext
+	3,  // 8: garf.ExecuteRequest.cache_options:type_name -> garf.GarfCacheOptions
+	6,  // 9: garf.ExecutionContext.query_parameters:type_name -> garf.QueryParameters
+	28, // 10: garf.ExecutionContext.fetcher_parameters:type_name -> google.protobuf.Struct
+	28, // 11: garf.ExecutionContext.writer_parameters:type_name -> google.protobuf.Struct
+	28, // 12: garf.QueryParameters.macro:type_name -> google.protobuf.Struct
+	28, // 13: garf.QueryParameters.template:type_name -> google.protobuf.Struct
+	8,  // 14: garf.BatchQueryDefinitions.queries:type_name -> garf.QueryDefinition
+	9,  // 15: garf.ExecuteBatchRequest.batch_query_definitions:type_name -> garf.BatchQueryDefinitions
+	10, // 16: garf.ExecuteBatchRequest.batch_query_paths:type_name -> garf.BatchQueryPaths
+	20, // 17: garf.ExecuteBatchRequest.config_data:type_name -> garf.Config
+	5,  // 18: garf.ExecuteBatchRequest.context:type_name -> garf.ExecutionContext
+	3,  // 19: garf.ExecuteBatchRequest.cache_options:type_name -> garf.GarfCacheOptions
+	8,  // 20: garf.QueryEntry.query:type_name -> garf.QueryDefinition
+	16, // 21: garf.WorkflowMetadata.required_fetchers:type_name -> garf.FetcherInfo
+	13, // 22: garf.WorkflowStep.queries:type_name -> garf.QueryEntry
+	6,  // 23: garf.WorkflowStep.query_parameters:type_name -> garf.QueryParameters
+	28, // 24: garf.WorkflowStep.fetcher_parameters:type_name -> google.protobuf.Struct
+	28, // 25: garf.WorkflowStep.writer_parameters:type_name -> google.protobuf.Struct
+	19, // 26: garf.Config.metadata:type_name -> garf.ConfigMetadata
+	5,  // 27: garf.Config.global_parameters:type_name -> garf.ExecutionContext
+	28, // 28: garf.Config.sources:type_name -> google.protobuf.Struct
+	18, // 29: garf.Workflow.steps:type_name -> garf.WorkflowStep
+	17, // 30: garf.Workflow.metadata:type_name -> garf.WorkflowMetadata
+	21, // 31: garf.ExecuteWorkflowRequest.workflow_data:type_name -> garf.Workflow
+	20, // 32: garf.ExecuteWorkflowRequest.config_data:type_name -> garf.Config
+	5,  // 33: garf.ExecuteWorkflowRequest.context:type_name -> garf.ExecutionContext
+	3,  // 34: garf.ExecuteWorkflowRequest.cache_options:type_name -> garf.GarfCacheOptions
+	16, // 35: garf.ListFetchersResponse.results:type_name -> garf.FetcherInfo
+	4,  // 36: garf.GarfService.Execute:input_type -> garf.ExecuteRequest
+	11, // 37: garf.GarfService.ExecuteBatch:input_type -> garf.ExecuteBatchRequest
+	22, // 38: garf.GarfService.ExecuteWorkflow:input_type -> garf.ExecuteWorkflowRequest
+	0,  // 39: garf.GarfService.Fetch:input_type -> garf.FetchRequest
+	29, // 40: garf.GarfService.GetVersion:input_type -> google.protobuf.Empty
+	29, // 41: garf.GarfService.GetInfo:input_type -> google.protobuf.Empty
+	29, // 42: garf.GarfService.ListFetchers:input_type -> google.protobuf.Empty
+	29, // 43: garf.GarfService.ListExecutors:input_type -> google.protobuf.Empty
+	7,  // 44: garf.GarfService.Execute:output_type -> garf.ExecuteResponse
+	12, // 45: garf.GarfService.ExecuteBatch:output_type -> garf.ExecuteBatchResponse
+	23, // 46: garf.GarfService.ExecuteWorkflow:output_type -> garf.ExecuteWorkflowResponse
+	1,  // 47: garf.GarfService.Fetch:output_type -> garf.FetchResponse
+	26, // 48: garf.GarfService.GetVersion:output_type -> garf.GarfVersion
+	27, // 49: garf.GarfService.GetInfo:output_type -> garf.GarfInfo
+	24, // 50: garf.GarfService.ListFetchers:output_type -> garf.ListFetchersResponse
+	25, // 51: garf.GarfService.ListExecutors:output_type -> garf.ListExecutorsResponse
+	44, // [44:52] is the sub-list for method output_type
+	36, // [36:44] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_garf_proto_init() }
@@ -2052,10 +2156,14 @@ func file_garf_proto_init() {
 	file_garf_proto_msgTypes[4].OneofWrappers = []any{
 		(*ExecuteRequest_QueryDefinition)(nil),
 		(*ExecuteRequest_QueryPath)(nil),
+		(*ExecuteRequest_ConfigData)(nil),
+		(*ExecuteRequest_ConfigPath)(nil),
 	}
 	file_garf_proto_msgTypes[11].OneofWrappers = []any{
 		(*ExecuteBatchRequest_BatchQueryDefinitions)(nil),
 		(*ExecuteBatchRequest_BatchQueryPaths)(nil),
+		(*ExecuteBatchRequest_ConfigData)(nil),
+		(*ExecuteBatchRequest_ConfigPath)(nil),
 	}
 	file_garf_proto_msgTypes[22].OneofWrappers = []any{
 		(*ExecuteWorkflowRequest_WorkflowData)(nil),

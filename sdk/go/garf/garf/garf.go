@@ -251,11 +251,11 @@ func (g *Garf) Fetch(ctx context.Context, title, query string, options FetchOpti
 	return r, nil
 
 }
-func (g *Garf) Execute(ctx context.Context, source, title, query, writer string, options ExecutionOptions) ([]string, error) {
+func (g *Garf) Execute(ctx context.Context, source, title, query, writer string, options QueryRequestOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
-	executionContext, err := options.Build()
+	executionContext, err := options.ExecutionContext.Build()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create execution context: %w", err)
 	}
@@ -276,6 +276,10 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string,
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
+	if options.Config != nil {
+		request.Config = &ExecuteRequest_ConfigData{ConfigData: options.Config}
+
+	}
 	r, err := g.client.Execute(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed query", "title", title)
@@ -289,11 +293,11 @@ func (g *Garf) Execute(ctx context.Context, source, title, query, writer string,
 	return result, nil
 }
 
-func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string, options ExecutionOptions) ([]string, error) {
+func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer string, options QueryRequestOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute")
 	defer span.End()
 
-	executionContext, err := options.Build()
+	executionContext, err := options.ExecutionContext.Build()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create execution context: %w", err)
 	}
@@ -310,6 +314,10 @@ func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer st
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
+	if options.ConfigPath != "" {
+		request.Config = &ExecuteRequest_ConfigPath{ConfigPath: options.ConfigPath}
+
+	}
 	r, err := g.client.Execute(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed query", "query_path", queryPath)
@@ -324,11 +332,11 @@ func (g *Garf) ExecuteFromFile(ctx context.Context, source, queryPath, writer st
 }
 
 func (g *Garf) ExecuteBatch(ctx context.Context, source string,
-	batch map[string]string, writer string, options ExecutionOptions) ([]string, error) {
+	batch map[string]string, writer string, options QueryRequestOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
-	executionContext, err := options.Build()
+	executionContext, err := options.ExecutionContext.Build()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create execution context: %v", err)
 	}
@@ -352,6 +360,10 @@ func (g *Garf) ExecuteBatch(ctx context.Context, source string,
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
+	if options.Config != nil {
+		request.Config = &ExecuteBatchRequest_ConfigData{ConfigData: options.Config}
+
+	}
 	r, err := g.client.ExecuteBatch(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed batch", "batch", queries)
@@ -366,11 +378,11 @@ func (g *Garf) ExecuteBatch(ctx context.Context, source string,
 }
 
 func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
-	batch []string, writer string, options ExecutionOptions) ([]string, error) {
+	batch []string, writer string, options QueryRequestOptions) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "execute-batch")
 	defer span.End()
 
-	executionContext, err := options.Build()
+	executionContext, err := options.ExecutionContext.Build()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create execution context: %w", err)
 	}
@@ -390,6 +402,10 @@ func (g *Garf) ExecuteBatchFromFiles(ctx context.Context, source string,
 		attribute.String("query.source", request.Source),
 		attribute.String("query.context.writer", request.Context.Writer),
 	)
+	if options.ConfigPath != "" {
+		request.Config = &ExecuteBatchRequest_ConfigPath{ConfigPath: options.ConfigPath}
+
+	}
 	r, err := g.client.ExecuteBatch(ctx, &request)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed batch", "batch", queries)
