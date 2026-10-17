@@ -34,7 +34,7 @@ var (
 	EnableCache    bool
 	GarfEndpoint   string
 	GarfClient     *garf.Garf
-	executeOptions garf.ExecutionOptions
+	executeOptions garf.QueryRequestOptions
 )
 
 var rootCmd = &cobra.Command{

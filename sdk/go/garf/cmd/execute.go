@@ -38,6 +38,8 @@ var executeCmd = &cobra.Command{
 		writer, _ := cmd.Flags().GetString("writer")
 		source, _ := cmd.Flags().GetString("source")
 		queryAsFile, _ := cmd.Flags().GetBool("as-file")
+		configPath, _ := cmd.Flags().GetString("config")
+		enableCache, _ := cmd.Flags().GetBool("enable-cache")
 		var results []string
 		span.SetAttributes(
 			attribute.String("command", "execute"),
@@ -45,6 +47,19 @@ var executeCmd = &cobra.Command{
 			attribute.String("source", source),
 			attribute.String("writer", writer),
 		)
+		if configPath != "" {
+			span.SetAttributes(
+				attribute.String("config", configPath),
+			)
+			executeOptions.ConfigPath = configPath
+		}
+		if enableCache {
+			span.SetAttributes(
+				attribute.Bool("enable_cache", true),
+			)
+			executeOptions.EnableCache = enableCache
+			executeOptions.CacheTtlSeconds = 60 * 60
+		}
 		if len(args) > 1 {
 			span.SetAttributes(
 				attribute.Bool("is_batch", true),
@@ -114,4 +129,5 @@ func init() {
 	executeCmd.Flags().StringP("source", "s", "fake", "Type of API source")
 	executeCmd.Flags().StringP("writer", "w", "json", "Name of writer")
 	executeCmd.Flags().Bool("as-file", false, "Whether to pass query as a file path")
+	executeCmd.Flags().StringP("config", "c", "", "Path to garf config")
 }
