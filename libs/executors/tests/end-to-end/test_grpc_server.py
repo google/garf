@@ -86,6 +86,40 @@ def test_execute_inline(grpc_stub):
   assert 'CSV' in result.results[0]
 
 
+def test_execute_inline_with_config_inline(grpc_stub):
+  fake_data = _SCRIPT_PATH / 'test.json'
+  request = pb.ExecuteRequest(
+    source='fake',
+    query_definition=pb.QueryDefinition(
+      title='text',
+      text=_QUERY,
+    ),
+    config_data=pb.Config(),
+    context=pb.ExecutionContext(
+      fetcher_parameters={
+        'data_location': str(fake_data),
+      },
+      writer='csv',
+    ),
+  )
+  result = grpc_stub.Execute(request)
+  assert 'CSV' in result.results[0]
+
+
+def test_execute_inline_with_config_file(grpc_stub):
+  config_path = _SCRIPT_PATH / 'test_config.yaml'
+  request = pb.ExecuteRequest(
+    source='fake',
+    query_definition=pb.QueryDefinition(
+      title='text',
+      text=_QUERY,
+    ),
+    config_path=str(config_path),
+  )
+  result = grpc_stub.Execute(request)
+  assert 'Console' in result.results[0]
+
+
 def test_execute_from_file(grpc_stub):
   fake_data = _SCRIPT_PATH / 'test.json'
   query_path = _SCRIPT_PATH / 'query.sql'
@@ -114,12 +148,31 @@ def test_execute_batch(grpc_stub):
         )
       ],
     ),
+    config_data=pb.Config(),
     context=pb.ExecutionContext(
       fetcher_parameters={
         'n_rows': 1,
       },
       writer='csv',
     ),
+  )
+  result = grpc_stub.ExecuteBatch(request)
+  assert 'example' in result.results[0]
+
+
+def test_execute_batch_with_config_file(grpc_stub):
+  config_path = _SCRIPT_PATH / 'test_config.yaml'
+  request = pb.ExecuteBatchRequest(
+    source='fake',
+    batch_query_definitions=pb.BatchQueryDefinitions(
+      queries=[
+        pb.QueryDefinition(
+          title='example',
+          text='SELECT metric.int FROM fake',
+        )
+      ],
+    ),
+    config_path=str(config_path),
   )
   result = grpc_stub.ExecuteBatch(request)
   assert 'example' in result.results[0]

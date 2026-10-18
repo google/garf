@@ -37,6 +37,7 @@ from garf.executors.entrypoints.tracer import (
   initialize_meter,
   initialize_tracer,
 )
+from garf.executors.utils import merge_dicts
 from garf.executors.workflows import workflow, workflow_runner
 from garf.io import formatter, reader
 from google.protobuf.json_format import MessageToDict
@@ -86,23 +87,44 @@ executor_info = telemetry.meter.create_observable_gauge(
 )
 
 
+def _build_execution_context(request) -> execution_context.ExecutionContext:
+  if config_path := request.config_path:
+    execution_config = config.Config.from_file(config_path)
+    config_context = execution_config.expand().sources.get(request.source)
+  elif request.config_data.sources:
+    execution_config = MessageToDict(
+      request.config_data, preserving_proto_field_name=True
+    )
+    config_context = (
+      config.Config(**execution_config).expand().sources.get(request.source)
+    )
+  else:
+    config_context = execution_context.ExecutionContext()
+  return execution_context.ExecutionContext(
+    **merge_dicts(
+      config_context.model_dump(exclude_none=True),
+      MessageToDict(request.context, preserving_proto_field_name=True),
+    )
+  )
+
+
 class GarfService(garf_pb2_grpc.GarfService):
   def Execute(self, request, context):
     telemetry.executor_requested_counter.add(
       1, attributes={'executor.source': request.source}
     )
+    context = _build_execution_context(request)
+
     query_executor = setup.setup_executor(
       source=request.source,
-      fetcher_parameters=request.context.fetcher_parameters,
+      fetcher_parameters=context.fetcher_parameters,
       enable_cache=bool(request.cache_options.enable_cache)
       if CACHE_ENABLED
       else False,
       cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
       simulate=request.simulate,
-      writers=request.context.writers or request.context.writer,
-      writer_parameters=MessageToDict(
-        request.context.writer_parameters, preserving_proto_field_name=True
-      ),
+      writers=context.writer,
+      writer_parameters=context.writer_parameters,
     )
     if query := request.query_path:
       title = formatter.format_extension(query)
@@ -116,9 +138,7 @@ class GarfService(garf_pb2_grpc.GarfService):
     result = query_executor.execute(
       query=text,
       title=title,
-      context=execution_context.ExecutionContext(
-        **MessageToDict(request.context, preserving_proto_field_name=True)
-      ),
+      context=context,
     )
     return garf_pb2.ExecuteResponse(results=[result])
 
@@ -130,18 +150,17 @@ class GarfService(garf_pb2_grpc.GarfService):
     telemetry.executor_requested_counter.add(
       n_queries, attributes={'executor.source': request.source}
     )
+    context = _build_execution_context(request)
     query_executor = setup.setup_executor(
       source=request.source,
-      fetcher_parameters=request.context.fetcher_parameters,
+      fetcher_parameters=context.fetcher_parameters,
       enable_cache=bool(request.cache_options.enable_cache)
       if CACHE_ENABLED
       else False,
       cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
       simulate=request.simulate,
-      writers=request.context.writers or request.context.writer,
-      writer_parameters=MessageToDict(
-        request.context.writer_parameters, preserving_proto_field_name=True
-      ),
+      writers=context.writer,
+      writer_parameters=context.writer_parameters,
     )
     if query_batch := request.batch_query_paths.query_paths:
       file_reader = reader.FileReader()
@@ -156,9 +175,7 @@ class GarfService(garf_pb2_grpc.GarfService):
       }
     results = query_executor.execute_batch(
       batch=batch,
-      context=execution_context.ExecutionContext(
-        **MessageToDict(request.context, preserving_proto_field_name=True)
-      ),
+      context=context,
     )
     return garf_pb2.ExecuteResponse(results=results)
 
