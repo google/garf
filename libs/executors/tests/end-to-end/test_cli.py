@@ -20,7 +20,6 @@ import subprocess
 import sys
 
 import pytest
-import yaml
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
@@ -139,7 +138,7 @@ class TestCli:
     query_path = tmp_path / 'query.sql'
     with pathlib.Path.open(query_path, 'w', encoding='utf-8') as f:
       f.write(self.query)
-    tmp_config = _prepare_config(tmp_path)
+    tmp_config = _SCRIPT_PATH / 'test_config.yaml'
     command = (
       f'{command} {str(query_path)} --source fake '
       f'-c {str(tmp_config)} '
@@ -175,10 +174,10 @@ class TestCli:
         assert json.loads(output) == self.expected_output
 
   @pytest.mark.parametrize('command', ['garf -w', 'grf workflow run -f'])
-  def test_fake_source_from_workflow_with_config(self, command, tmp_path):
+  def test_fake_source_from_workflow_with_config(self, command):
     _skip_python_39(command)
     workflow_path = _SCRIPT_PATH / 'test_workflow.yaml'
-    tmp_config = _prepare_config(tmp_path)
+    tmp_config = _SCRIPT_PATH / 'test_config.yaml'
     command = (
       f'{command} {str(workflow_path)} --loglevel ERROR -c {str(tmp_config)}'
     )
@@ -194,19 +193,3 @@ class TestCli:
     for output in result.stdout.split('\n'):
       if output:
         assert json.loads(output) == self.expected_output_arrays
-
-
-def _prepare_config(path):
-  test_config = _SCRIPT_PATH / 'test_config.yaml'
-  with open(test_config, 'r', encoding='utf-8') as f:
-    config_data = yaml.safe_load(f)
-    original_data_location = config_data['sources']['fake'][
-      'fetcher_parameters'
-    ]['data_location']
-    config_data['sources']['fake']['fetcher_parameters']['data_location'] = str(
-      _SCRIPT_PATH / original_data_location
-    )
-  tmp_config = path / 'config.yaml'
-  with open(tmp_config, 'w', encoding='utf-8') as f:
-    yaml.dump(config_data, f, encoding='utf-8')
-  return tmp_config

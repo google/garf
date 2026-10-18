@@ -50,9 +50,13 @@ message ExecuteRequest {
     QueryDefinition query_definition = 2;
     string query_path = 3;
   }
-  ExecutionContext context = 4;
-  GarfCacheOptions cache_options = 5;
-  bool simulate = 6;
+  oneof config {
+    Config config_data = 4;
+    string config_path = 5;
+  }
+  ExecutionContext context = 6;
+  GarfCacheOptions cache_options = 7;
+  bool simulate = 8;
 
 }
 
@@ -97,9 +101,13 @@ message ExecuteBatchRequest {
     BatchQueryDefinitions batch_query_definitions = 2;
     BatchQueryPaths batch_query_paths = 3;
   }
-  ExecutionContext context = 4;
-  GarfCacheOptions cache_options = 5;
-  bool simulate = 6;
+  oneof config {
+    Config config_data = 4;
+    string config_path = 5;
+  }
+  ExecutionContext context = 6;
+  GarfCacheOptions cache_options = 7;
+  bool simulate = 8;
 }
 
 message ExecuteBatchResponse {
