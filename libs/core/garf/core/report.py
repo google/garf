@@ -529,6 +529,8 @@ class GarfReport:
     """Clears report data and placeholders."""
     self.results.clear()
     self.results_placeholder.clear()
+    self.column_names.clear()
+    del self.query_specification
 
 
 class GarfRow:

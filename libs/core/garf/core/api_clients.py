@@ -55,6 +55,10 @@ class GarfApiResponse(pydantic.BaseModel):
   def __bool__(self) -> bool:
     return bool(self.results)
 
+  def clear(self):
+    self.results.clear()
+    self.results_placeholder.clear()
+
 
 class GarfApiError(exceptions.GarfError):
   """API specific exception."""

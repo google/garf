@@ -217,22 +217,26 @@ class ApiReportFetcher:
 
     response = self.api_client.call_api(query, **kwargs)
     if not response:
-      placeholder_parsed_response = self.parser(query).parse_response(
-        api_clients.GarfApiResponse(results=response.results_placeholder)
+      placeholder_response = api_clients.GarfApiResponse(
+        results=response.results_placeholder,
+        results_placeholder=response.results_placeholder,
       )
+      self.parser(query).parse_response(placeholder_response)
       placeholder_report = report.GarfReport(
         query_specification=query,
-        results_placeholder=placeholder_parsed_response,
+        results_placeholder=placeholder_response.results_placeholder,
         column_names=[c for c in query.column_names if c != '_'],
       )
+      response.clear()
+      del response
       span.set_attribute('report.placeholder', True)
       if self.enable_cache:
         self.cache.save(placeholder_report, query, args, kwargs)
       return placeholder_report
 
-    parsed_response = self.parser(query).parse_response(response)
+    self.parser(query).parse_response(response)
     fetched_report = report.GarfReport(
-      results=parsed_response,
+      results=response.results,
       column_names=[c for c in query.column_names if c != '_'],
       query_specification=query,
     )

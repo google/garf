@@ -106,12 +106,11 @@ class ApiReportSimulator:
       simulator_specification = self.simulator_specification_builder(**kwargs)
     for _ in range(simulator_specification.n_rows):
       simulated_results.append(self._generate_random_values(response_types))
-    parsed_response = self.parser(query).parse_response(
-      api_clients.GarfApiResponse(results=simulated_results)
-    )
+    simulated_response = api_clients.GarfApiResponse(results=simulated_results)
+    self.parser(query).parse_response(simulated_response)
 
     return report.GarfReport(
-      results=parsed_response,
+      results=simulated_response.results,
       query_specification=query,
       column_names=[c for c in query.column_names if c != '_'],
     )
