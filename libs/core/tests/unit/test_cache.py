@@ -34,7 +34,7 @@ class TestGarfCache:
     ).generate()
 
     test_cache.save(test_report, query)
-    loaded_report = test_cache.load(query)
+    loaded_report, _ = test_cache.load(query)
 
     assert loaded_report == test_report
 
@@ -59,6 +59,6 @@ class TestGarfCache:
     ).generate()
 
     test_cache.save(test_report, query)
-    loaded_report = test_cache.load(query)
+    loaded_report, _ = test_cache.load(query)
 
     assert loaded_report == test_report
