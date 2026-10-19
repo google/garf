@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+#   Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,17 +56,18 @@ class BaseParser(abc.ABC):
   def parse_response(
     self,
     response: api_clients.GarfApiResponse,
-  ) -> list[list[api_clients.ApiRowElement]]:
+  ):
     """Parses response."""
     with tracer.start_as_current_span('parse_response') as span:
-      if not response.results:
+      if not response.results and not response.results_placeholder:
         span.set_attribute('num_results', 0)
-        return [[]]
-      results = []
-      for result in response.results:
-        results.append(self.parse_row(result))
-      span.set_attribute('num_results', len(results))
-      return results
+        response.results = [[]]
+        return
+      for i, result in enumerate(response.results):
+        response.results[i] = self.parse_row(result)
+      for i, placeholder in enumerate(response.results_placeholder):
+        response.results_placeholder[i] = self.parse_row(placeholder)
+      span.set_attribute('num_results', len(response.results))
 
   @abc.abstractmethod
   def get_row_element(self, row, key):

@@ -60,20 +60,20 @@ class TestDictParser:
       ]
     )
 
-    parsed_row = test_parser.parse_response(test_response)
+    test_parser.parse_response(test_response)
     expected_row = [['1'], ['11']]
 
-    assert parsed_row == expected_row
+    assert test_response.results == expected_row
 
   def test_parse_response_returns_empty_list_on_missing_results(
     self, test_parser
   ):
     test_response = api_clients.GarfApiResponse(results=[])
 
-    parsed_row = test_parser.parse_response(test_response)
+    test_parser.parse_response(test_response)
     expected_row = [[]]
 
-    assert parsed_row == expected_row
+    assert test_response.results == expected_row
 
   def test_parse_response_returns_none_for_missing_field(self):
     test_specification = query_editor.QuerySpecification(
@@ -87,10 +87,10 @@ class TestDictParser:
       ]
     )
 
-    parsed_row = parser.parse_response(test_response)
+    parser.parse_response(test_response)
     expected_row = [['1', None], ['11', None]]
 
-    assert parsed_row == expected_row
+    assert test_response.results == expected_row
 
   @pytest.mark.parametrize(
     ('slice', 'results'),
@@ -131,10 +131,10 @@ class TestDictParser:
       ]
     )
 
-    parsed_row = test_parser.parse_response(test_response)
+    test_parser.parse_response(test_response)
     expected_row = list(results)
 
-    assert parsed_row == expected_row
+    assert test_response.results == expected_row
 
   @pytest.mark.parametrize(
     ('index', 'expected'),
@@ -155,8 +155,8 @@ class TestDictParser:
         {'resource': 'resource/1/test/1~IMAGE~12345'},
       ]
     )
-    parsed_row = test_parser.parse_response(test_response)
-    assert parsed_row == expected
+    test_parser.parse_response(test_response)
+    assert test_response.results == expected
 
   def test_parse_response_raises_customizer_error_on_invalid_position(self):
     spec = query_editor.QuerySpecification(
@@ -201,10 +201,10 @@ class TestDictParser:
       ]
     )
 
-    parsed_row = test_parser.parse_response(test_response)
+    test_parser.parse_response(test_response)
     expected_row = [[2], [22]]
 
-    assert parsed_row == expected_row
+    assert test_response.results == expected_row
 
 
 class TestNumericDictParser:
@@ -302,12 +302,14 @@ class TestVirtualColumnValidation:
     spec = query_editor.QuerySpecification(
       'SELECT metrics.clicks / metrics.impressions AS ctr FROM test'
     ).generate()
+    clicks = 1000
+    impressions = 50000
     parser = parsers.DictParser(spec)
     test_response = api_clients.GarfApiResponse(
-      results=[{'metrics.clicks': 1000, 'metrics.impressions': 50000}]
+      results=[{'metrics.clicks': clicks, 'metrics.impressions': impressions}]
     )
-    parsed = parser.parse_response(test_response)
-    assert parsed == [[0.02]]
+    parser.parse_response(test_response)
+    assert test_response.results == [[clicks / impressions]]
 
   def test_virtual_column_returns_none_for_identifier_injection(self):
     spec = query_editor.QuerySpecification(
@@ -315,7 +317,9 @@ class TestVirtualColumnValidation:
     ).generate()
     parser = parsers.DictParser(spec)
     test_response = api_clients.GarfApiResponse(
-      results=[{'metrics.clicks': 'injected_name', 'metrics.impressions': 50000}]
+      results=[
+        {'metrics.clicks': 'injected_name', 'metrics.impressions': 50000}
+      ]
     )
-    parsed = parser.parse_response(test_response)
-    assert parsed == [[None]]
+    parser.parse_response(test_response)
+    assert test_response.results == [[None]]
