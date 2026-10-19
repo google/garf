@@ -69,7 +69,7 @@ class GarfCache:
 
   def load(
     self, query: query_editor.BaseQueryElements, args=None, kwargs=None
-  ) -> report.GarfReport:
+  ) -> tuple[report.GarfReport, str]:
     """Loads report from cache based on query definition.
 
     Args:
@@ -78,7 +78,7 @@ class GarfCache:
       kwargs: Optional keyword arguments.
 
     Returns:
-      Cached report.
+      Cached report and its hash identifier.
 
     Raises:
       GarfCacheFileNotFoundError: If cached report not found
@@ -92,7 +92,7 @@ class GarfCache:
       else ''
     )
     hash_identifier = f'{query.hash}:{args_hash}:{kwargs_hash}'
-    return self.cache_provider.load(hash_identifier, query)
+    return self.cache_provider.load(hash_identifier, query), hash_identifier
 
   def save(
     self,
@@ -100,7 +100,7 @@ class GarfCache:
     query: query_editor.BaseQueryElements,
     args=None,
     kwargs=None,
-  ) -> None:
+  ) -> str:
     """Saves report to cache based on query definition.
 
     Args:
@@ -108,6 +108,9 @@ class GarfCache:
       query: Query elements.
       args: Query parameters.
       kwargs: Optional keyword arguments.
+
+    Returns:
+      Hash identifier.
     """
     args_hash = args.hash if args else ''
     kwargs_hash = (
@@ -120,6 +123,7 @@ class GarfCache:
     hash_identifier = f'{query.hash}:{args_hash}:{kwargs_hash}'
     result = self.cache_provider.save(fetched_report, hash_identifier)
     logger.info('Report is saved to cache: %s', result)
+    return hash_identifier
 
   @property
   def size(self) -> int:
@@ -214,27 +218,24 @@ class FileGarfCache:
       Cached report.
 
     Raises:
-      GarfCacheFileNotFoundError: If cached report not found
+      GarfCacheFileNotFoundError: If cached report not found or failed to load.
     """
     if self.type == 'local':
       cached_path = self.location / f'{hash_identifier}.json'
     else:
       cached_path = f'{self.location}/{hash_identifier}.json'
-    if (
-      self.type == 'local'
-      and cached_path.exists()
-      and cached_path.stat().st_ctime > self.max_cache_timestamp
-    ):
-      with smart_open.open(cached_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    elif self.type == 'remote':
-      try:
+    try:
+      if (
+        self.type == 'local'
+        and cached_path.exists()
+        and cached_path.stat().st_ctime > self.max_cache_timestamp
+      ) or self.type == 'remote':
         with smart_open.open(cached_path, 'r', encoding='utf-8') as f:
           data = json.load(f)
-      except Exception as e:
-        raise GarfCacheFileNotFoundError from e
-    else:
-      raise GarfCacheFileNotFoundError
+      else:
+        raise GarfCacheFileNotFoundError
+    except Exception as e:
+      raise GarfCacheFileNotFoundError from e
     logger.debug('Report is loaded from cache: %s', str(cached_path))
     loaded_report = report.GarfReport.from_json(json.dumps(data))
     loaded_report.query_specification = query

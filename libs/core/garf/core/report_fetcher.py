@@ -202,9 +202,10 @@ class ApiReportFetcher:
 
     if self.enable_cache:
       try:
-        cached_report = self.cache.load(query, args, kwargs)
+        cached_report, hash_identifier = self.cache.load(query, args, kwargs)
         logger.warning('Cached version of report is loaded')
-        span.set_attribute('is_cached_report', True)
+        span.set_attribute('report.cached', True)
+        span.set_attribute('report.cached.hash', hash_identifier)
         return cached_report
       except cache.GarfCacheFileNotFoundError:
         logger.info('Cached version not found, generating')
@@ -224,7 +225,7 @@ class ApiReportFetcher:
         results_placeholder=placeholder_parsed_response,
         column_names=[c for c in query.column_names if c != '_'],
       )
-      span.set_attribute('is_placeholder_report', True)
+      span.set_attribute('report.placeholder', True)
       if self.enable_cache:
         self.cache.save(placeholder_report, query, args, kwargs)
       return placeholder_report
@@ -236,5 +237,7 @@ class ApiReportFetcher:
       query_specification=query,
     )
     if self.enable_cache:
-      self.cache.save(fetched_report, query, args, kwargs)
+      hash_identifier = self.cache.save(fetched_report, query, args, kwargs)
+      span.set_attribute('report.cached.hash', hash_identifier)
+
     return fetched_report
