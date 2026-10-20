@@ -239,6 +239,7 @@ class FileGarfCache:
     logger.debug('Report is loaded from cache: %s', str(cached_path))
     loaded_report = report.GarfReport.from_json(json.dumps(data))
     loaded_report.query_specification = query
+    data.clear()
     return loaded_report
 
   def save(

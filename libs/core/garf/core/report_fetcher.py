@@ -236,12 +236,13 @@ class ApiReportFetcher:
 
     self.parser(query).parse_response(response)
     fetched_report = report.GarfReport(
-      results=response.results,
+      results=list(response.results),
       column_names=[c for c in query.column_names if c != '_'],
       query_specification=query,
     )
     if self.enable_cache:
       hash_identifier = self.cache.save(fetched_report, query, args, kwargs)
       span.set_attribute('report.cached.hash', hash_identifier)
-
+    response.clear()
+    del response
     return fetched_report

@@ -489,14 +489,7 @@ class GarfReport:
         have the same keys.
     """
     data = json.loads(json_str)
-
-    def validate_value(value):
-      if not isinstance(value, get_args(api_clients.ApiRowElement)):
-        raise TypeError(
-          f'Unsupported type {type(value)} for value {value}. '
-          'Expected types: int, float, str, bool, list, or None.'
-        )
-      return value
+    del json_str
 
     # Case 1: `data` is a dictionary
     if isinstance(data, dict):
@@ -504,7 +497,7 @@ class GarfReport:
       if not data.values():
         results = []
       else:
-        results = [[validate_value(value) for value in data.values()]]
+        results = [[_validate_value(value) for value in data.values()]]
 
     # Case 2: `data` is a list of dictionaries, each representing a row
     elif isinstance(data, list):
@@ -517,20 +510,21 @@ class GarfReport:
             'All dictionaries must have consistent keys in the same order.'
           )
       results = [
-        [validate_value(value) for value in row.values()] for row in data
+        [_validate_value(value) for value in row.values()] for row in data
       ]
     else:
       raise TypeError(
         'Input JSON must be a dictionary or a list of dictionaries.'
       )
-    return cls(results=results, column_names=column_names)
+    report = cls(results=results, column_names=column_names)
+    data.clear()
+    return report
 
   def clear(self) -> None:
     """Clears report data and placeholders."""
     self.results.clear()
     self.results_placeholder.clear()
     self.column_names.clear()
-    del self.query_specification
 
 
 class GarfRow:
@@ -663,6 +657,15 @@ class GarfRow:
   def clear(self) -> None:
     """Clears report row data."""
     self.data.clear()
+
+
+def _validate_value(value):
+  if not isinstance(value, get_args(api_clients.ApiRowElement)):
+    raise TypeError(
+      f'Unsupported type {type(value)} for value {value}. '
+      'Expected types: int, float, str, bool, list, or None.'
+    )
+  return value
 
 
 class GarfReportError(exceptions.GarfError):
