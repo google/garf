@@ -252,7 +252,7 @@ class FakeApiClient(BaseClient):
     else:
       results = []
 
-    results_placeholder = self.results_placeholder or results
+    results_placeholder = self.results_placeholder or results[:1]
     if (
       failure_rate := options.failure_rate
     ) and random.random() < failure_rate:
