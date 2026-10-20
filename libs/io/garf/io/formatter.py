@@ -39,37 +39,16 @@ class FormattingStrategy:
     return enum[value.upper()] if isinstance(value, str) else value
 
   @tracer.start_as_current_span('apply_transformations')
-  def apply_transformations(
-    self, report: garf_report.GarfReport
-  ) -> garf_report.GarfReport:
+  def apply_transformations(self, report: garf_report.GarfReport) -> None:
     """Replaces arrays in the report."""
-    formatted_rows = self._format_rows(report.results)
-    formatted_placeholders = self._format_rows(report.results_placeholder)
-    return garf_report.GarfReport(
-      results=formatted_rows,
-      column_names=report.column_names,
-      results_placeholder=formatted_placeholders,
-      query_specification=report.query_specification,
-    )
+    self._format_rows(report.results)
+    self._format_rows(report.results_placeholder)
 
-  def _format_rows(
-    self, rows: list[list[api_clients.ApiRowElement]]
-  ) -> list[list[api_clients.ApiRowElement]]:
-    """Formats rows of report based on formatting strategy for each element.
-
-    Args:
-      rows: Rows in report.
-
-    Returns:
-      Formatted rows.
-    """
-    formatted_rows = []
+  def _format_rows(self, rows: list[list[api_clients.ApiRowElement]]) -> None:
+    """Formats rows of report based on formatting strategy for each element."""
     for row in rows:
-      formatted_row = []
-      for field in row:
-        formatted_row.append(self.format_field(field))
-      formatted_rows.append(formatted_row)
-    return formatted_rows
+      for i, field in enumerate(row):
+        row[i] = self.format_field(field)
 
   def format_field(
     self, field: api_clients.ApiRowElement
@@ -99,13 +78,10 @@ class DateHandlingStrategy(FormattingStrategy):
     except (ValueError, TypeError):
       return field
 
-  def apply_transformations(
-    self, report: garf_report.GarfReport
-  ) -> garf_report.GarfReport:
+  def apply_transformations(self, report: garf_report.GarfReport):
     """Replaces arrays in the report."""
-    if self.type_ == 'strings':
-      return report
-    return super().apply_transformations(report)
+    if self.type_ == 'arrays':
+      super().apply_transformations(report)
 
 
 class DateTimeHandlingStrategy(FormattingStrategy):
@@ -123,13 +99,10 @@ class DateTimeHandlingStrategy(FormattingStrategy):
     except TypeError:
       return field
 
-  def apply_transformations(
-    self, report: garf_report.GarfReport
-  ) -> garf_report.GarfReport:
+  def apply_transformations(self, report: garf_report.GarfReport):
     """Replaces arrays in the report."""
-    if self.type_ == 'strings':
-      return report
-    return super().apply_transformations(report)
+    if self.type_ != 'strings':
+      super().apply_transformations(report)
 
 
 class ArrayHandling(Enum):
@@ -168,13 +141,10 @@ class ArrayHandlingStrategy(FormattingStrategy):
       return self.delimiter.join([str(element) for element in field])
     return field
 
-  def apply_transformations(
-    self, report: garf_report.GarfReport
-  ) -> garf_report.GarfReport:
+  def apply_transformations(self, report: garf_report.GarfReport):
     """Replaces arrays in the report."""
-    if self.type_ == ArrayHandling.ARRAYS:
-      return report
-    return super().apply_transformations(report)
+    if self.type_ == ArrayHandling.STRINGS:
+      super().apply_transformations(report)
 
 
 @tracer.start_as_current_span('format_report_for_writing')
@@ -192,7 +162,7 @@ def format_report_for_writing(
       New report with updated data.
   """
   for strategy in formatting_strategies:
-    report = strategy.apply_transformations(report)
+    strategy.apply_transformations(report)
   report.disable_scalar_conversions()
   return report
 
