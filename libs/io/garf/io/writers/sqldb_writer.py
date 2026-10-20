@@ -101,6 +101,7 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
       write_params.update({'dtype': dtypes})
     df.to_sql(**write_params)
     logger.debug('Writing to %s is completed', destination)
+    return f'[SQL] - at {destination}'
 
   @property
   def engine(self) -> sqlalchemy.engine.Engine:
