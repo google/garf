@@ -115,7 +115,7 @@ class ClickHouseWriter(abs_writer.AbsWriter):
       )
 
   @tracer.start_as_current_span('clickhouse.write')
-  def write(self, report: garf_report.GarfReport, destination: str) -> None:
+  def write(self, report: garf_report.GarfReport, destination: str) -> str:
     """Writes Garf report to the table.
 
     Args:
@@ -157,6 +157,7 @@ class ClickHouseWriter(abs_writer.AbsWriter):
       database=database,
     )
     logger.debug('Writing to %s.%s is completed', database, table)
+    return f'[Clickhouse] - at {database}.{table}'
 
   def _split_destination(self, destination: str) -> tuple[str, str]:
     parts = destination.split('.')

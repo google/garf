@@ -106,9 +106,8 @@ class SheetWriter(AbsWriter):
       self._add_rows_if_needed(num_data_rows, sheet)
       sheet.append_rows(report.results, value_input_option='RAW')
 
-    success_msg = f'Report is saved to {sheet.url}'
-    logger.info(success_msg)
-    return success_msg
+    logger.info('Report is saved to %s', sheet.url)
+    return f'[Sheets] at {sheet.url}'
 
   @property
   @tracer.start_as_current_span('sheets.create_client')
