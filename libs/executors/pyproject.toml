@@ -20,13 +20,12 @@ authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
   {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "Executes queries against API and writes data to local/remote storage."
 readme = "README.md"
 license = {text = "Apache 2.0"}
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

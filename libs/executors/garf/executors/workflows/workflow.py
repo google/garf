@@ -286,6 +286,13 @@ class Workflow(pydantic.BaseModel):
         fetchers.add(step.fetcher)
     return fetchers
 
+  def clear(self):
+    self.steps.clear()
+    if self.execution_config:
+      self.execution_config.clear()
+    if self.context:
+      self.context.clear()
+
   @classmethod
   def from_file(
     cls,

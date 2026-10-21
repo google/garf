@@ -233,17 +233,19 @@ class GarfService(garf_pb2_grpc.GarfService):
     telemetry.workflow_requested.add(
       1, attributes=execution_workflow.attributes
     )
-    runner = workflow_runner.WorkflowRunner(
+    with workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow
-    )
-    results = runner.run(
-      selected_aliases=request.selected_aliases,
-      skipped_aliases=request.skipped_aliases,
-      simulate=request.simulate,
-      enable_cache=request.cache_options.enable_cache,
-      cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
-    )
-    return garf_pb2.ExecuteWorkflowResponse(results=results)
+    ) as runner:
+      results = runner.run(
+        selected_aliases=request.selected_aliases,
+        skipped_aliases=request.skipped_aliases,
+        simulate=request.simulate,
+        enable_cache=request.cache_options.enable_cache,
+        cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
+      )
+      response = garf_pb2.ExecuteWorkflowResponse(results=list(results))
+      del results
+      return response
 
   def GetVersion(self, request, context):
     return garf_pb2.GarfVersion(version=version.__version__)
@@ -321,9 +323,9 @@ def init_server(
     server_credentials = grpc.ssl_server_credentials(
       private_key_certificate_chain_pairs=[(server_key, server_cert)],
     )
-    server.add_secure_port(f'127.0.0.1:{port}', server_credentials)
+    server.add_secure_port(f'[::]:{port}', server_credentials)
   except GarfGrpcServerError:
-    server.add_insecure_port(f'127.0.0.1:{port}')
+    server.add_insecure_port(f'[::]:{port}')
   if enable_reflection:
     service_names = (
       garf_pb2.DESCRIPTOR.services_by_name['GarfService'].full_name,
