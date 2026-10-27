@@ -22,6 +22,8 @@ from garf.executors.telemetry import tracer
 from opentelemetry import trace
 
 logger = logging.getLogger(name='garf.executors.fetchers')
+fetcher_modules = {}
+fetcher_classes = {}
 
 
 @tracer.start_as_current_span('find_fetchers')
@@ -40,8 +42,15 @@ def find_simulators() -> set[str]:
   return set()
 
 
-@tracer.start_as_current_span('get_report_fetcher')
 def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
+  """Gets report fetcher for a given source from cache or loads."""
+  if fetcher_info := fetcher_classes.get(source):
+    return fetcher_info.get('class')
+  return _get_report_fetcher(source)
+
+
+@tracer.start_as_current_span('get_report_fetcher')
+def _get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   """Loads report fetcher for a given source.
 
   Args:
@@ -60,8 +69,16 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
     if fetcher.name == source:
       try:
         with tracer.start_as_current_span('load_fetcher_module'):
-          fetcher_module = fetcher.load()
-          return get(fetcher_module, fetcher.name)
+          if not (fetcher_module := fetcher_modules.get(source)):
+            fetcher_module = fetcher.load()
+            fetcher_modules[source] = fetcher_module
+          fetcher_class = get(fetcher_module, fetcher.name)
+          fetcher_class_info = {
+            'name': fetcher.name,
+            'class': fetcher_class,
+          }
+          fetcher_class_info[source] = fetcher_class_info
+          return fetcher_class_info.get('class')
       except ModuleNotFoundError as e:
         raise report_fetcher.ApiReportFetcherError(
           f'Failed to load fetcher for source {source}, reason: {e}'

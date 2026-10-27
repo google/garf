@@ -26,6 +26,9 @@ from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 from opentelemetry import trace
 
+writer_modules = {}
+writer_classes = {}
+
 
 @tracer.start_as_current_span('get_writers')
 def _get_writers():
@@ -56,8 +59,16 @@ class GarfIoWriterError(exceptions.GarfIoError):
   """Writer specific exception."""
 
 
-@tracer.start_as_current_span('create_writer')
 def create_writer(
+  writer_option: str | WriterOption, **kwargs: str
+) -> type[abs_writer.AbsWriter]:
+  if writer_info := writer_classes.get(writer_option):
+    return writer_info.get('class')(**kwargs)
+  return _create_writer(writer_option, **kwargs)
+
+
+@tracer.start_as_current_span('create_writer')
+def _create_writer(
   writer_option: str | WriterOption, **kwargs: str
 ) -> type[abs_writer.AbsWriter]:
   """Factory function for creating concrete writer.
@@ -86,10 +97,21 @@ def create_writer(
     try:
       if writer.name != writer_option:
         continue
-      writer_module = writer.load()
-      for name, obj in inspect.getmembers(writer_module):
-        if inspect.isclass(obj) and issubclass(obj, abs_writer.AbsWriter):
-          found_writers[writer.name] = getattr(writer_module, name)
+      if not (writer_module := writer_modules.get(writer)):
+        writer_module = writer.load()
+        writer_modules[writer] = writer_module
+      if not (writer_class_info := writer_classes.get(writer)):
+        for name, obj in inspect.getmembers(writer_module):
+          if inspect.isclass(obj) and issubclass(obj, abs_writer.AbsWriter):
+            writer_class = getattr(writer_module, name)
+            writer_class_info = {
+              'name': writer.name,
+              'class': writer_class,
+            }
+            writer_classes[writer.name] = writer_class_info
+      found_writers[writer_class_info.get('name')] = writer_class_info.get(
+        'class'
+      )
     except ModuleNotFoundError:
       continue
     except ImportError as e:
