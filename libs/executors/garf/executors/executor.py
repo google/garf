@@ -199,7 +199,12 @@ class Executor:
       _handle_processors(processors=self.preprocessors, context=context)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
-    if len(batch) > 1:
+    if parallel_threshold == 1:
+      results = {}
+      for title, text in dict(sorted(batch.items())).items():
+        result = self.execute(query=text, title=title, context=context)
+        results[title] = result
+    elif len(batch) > 1:
       results = asyncio.run(
         self._run(
           batch=batch, context=context, parallel_threshold=parallel_threshold
