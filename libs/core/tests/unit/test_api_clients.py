@@ -39,7 +39,7 @@ class TestFakeApiClient:
     response = api_client.get_response(request)
     assert len(response.results) == n_rows
 
-    response_types = [type(v) for v in response.results[0].values()]
+    response_types = [type(v) for v in response.results[0]]
     assert response_types == [float, int, str, bool]
 
   @pytest.mark.parametrize('delay_seconds', [0.0, 0.1, 0.5])

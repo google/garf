@@ -201,6 +201,12 @@ class BaseParser(abc.ABC):
         'Not a valid position in resource: %s, %d', resource, customizer.value
       ) from e
 
+  def parse_rows(
+    self,
+    rows: list[api_clients.ApiResponseRow],
+  ):
+    return [self.parse_row(row) for row in rows]
+
   def parse_row(
     self,
     row: api_clients.ApiResponseRow,
@@ -229,6 +235,37 @@ class BaseParser(abc.ABC):
     self, row: api_clients.ApiResponseRow, key: str
   ) -> api_clients.ApiRowElement:
     """Returns nested fields from a dictionary."""
+
+
+class IdentityParser(BaseParser):
+  def parse_row(
+    self,
+    row: api_clients.ApiResponseRow,
+  ) -> list[api_clients.ApiRowElement]:
+    """Parses single row from response."""
+    results = []
+    fields = self.query_spec.fields
+    index = 0
+    for column in self.query_spec.column_names:
+      if column == '_':
+        index += 1
+        continue
+      if virtual_column := self.query_spec.virtual_columns.get(column):
+        result = self.process_virtual_column(row, virtual_column)
+      elif customizer := self.query_spec.customizers.get(column):
+        result = self.process_customizer(row, customizer, fields[index])
+        index += 1
+      else:
+        result = self.parse_row_element(row, index)
+        index += 1
+      results.append(result)
+    return results
+
+  def parse_row_element(self, row, key):
+    return row[key]
+
+  def get_row_element(self, row, key):
+    return None
 
 
 class DictParser(BaseParser):
