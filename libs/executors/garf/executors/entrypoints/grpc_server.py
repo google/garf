@@ -135,12 +135,15 @@ class GarfService(garf_pb2_grpc.GarfService):
         request.query_definition.text,
       )
 
-    result = query_executor.execute(
-      query=text,
-      title=title,
-      context=context,
-    )
-    return garf_pb2.ExecuteResponse(results=[result])
+    try:
+      result = query_executor.execute(
+        query=text,
+        title=title,
+        context=context,
+      )
+      return garf_pb2.ExecuteResponse(results=[result])
+    finally:
+      query_executor.close()
 
   def ExecuteBatch(self, request, context):
     n_queries = len(
@@ -173,11 +176,14 @@ class GarfService(garf_pb2_grpc.GarfService):
         query.title: query.text
         for query in request.batch_query_definitions.queries
       }
-    results = query_executor.execute_batch(
-      batch=batch,
-      context=context,
-    )
-    return garf_pb2.ExecuteResponse(results=results)
+    try:
+      results = query_executor.execute_batch(
+        batch=batch,
+        context=context,
+      )
+      return garf_pb2.ExecuteResponse(results=results)
+    finally:
+      query_executor.close()
 
   def Fetch(self, request, context):
     query_executor = setup.setup_executor(
@@ -192,21 +198,24 @@ class GarfService(garf_pb2_grpc.GarfService):
     query_args = execution_context.ExecutionContext(
       **MessageToDict(request.context, preserving_proto_field_name=True)
     ).query_parameters
-    if hasattr(query_executor, 'fetcher'):
-      result = query_executor.fetcher.fetch(
-        query_specification=request.query,
-        title=request.title,
-        args=query_args,
+    try:
+      if hasattr(query_executor, 'fetcher'):
+        result = query_executor.fetcher.fetch(
+          query_specification=request.query,
+          title=request.title,
+          args=query_args,
+        )
+      else:
+        result = query_executor.fetch(
+          query_specification=request.query,
+          title=request.title,
+          args=query_args,
+        )
+      return garf_pb2.FetchResponse(
+        columns=result.column_names, rows=result.to_list(row_type='dict')
       )
-    else:
-      result = query_executor.fetch(
-        query_specification=request.query,
-        title=request.title,
-        args=query_args,
-      )
-    return garf_pb2.FetchResponse(
-      columns=result.column_names, rows=result.to_list(row_type='dict')
-    )
+    finally:
+      query_executor.close()
 
   def ExecuteWorkflow(self, request, context):
     if config_path := request.config_path:
@@ -233,17 +242,17 @@ class GarfService(garf_pb2_grpc.GarfService):
     telemetry.workflow_requested.add(
       1, attributes=execution_workflow.attributes
     )
-    runner = workflow_runner.WorkflowRunner(
+    with workflow_runner.WorkflowRunner(
       execution_workflow=execution_workflow
-    )
-    results = runner.run(
-      selected_aliases=request.selected_aliases,
-      skipped_aliases=request.skipped_aliases,
-      simulate=request.simulate,
-      enable_cache=request.cache_options.enable_cache,
-      cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
-    )
-    return garf_pb2.ExecuteWorkflowResponse(results=results)
+    ) as runner:
+      results = runner.run(
+        selected_aliases=request.selected_aliases,
+        skipped_aliases=request.skipped_aliases,
+        simulate=request.simulate,
+        enable_cache=request.cache_options.enable_cache,
+        cache_ttl_seconds=request.cache_options.cache_ttl_seconds,
+      )
+      return garf_pb2.ExecuteWorkflowResponse(results=list(results))
 
   def GetVersion(self, request, context):
     return garf_pb2.GarfVersion(version=version.__version__)
@@ -321,9 +330,9 @@ def init_server(
     server_credentials = grpc.ssl_server_credentials(
       private_key_certificate_chain_pairs=[(server_key, server_cert)],
     )
-    server.add_secure_port(f'127.0.0.1:{port}', server_credentials)
+    server.add_secure_port(f'[::]:{port}', server_credentials)
   except GarfGrpcServerError:
-    server.add_insecure_port(f'127.0.0.1:{port}')
+    server.add_insecure_port(f'[::]:{port}')
   if enable_reflection:
     service_names = (
       garf_pb2.DESCRIPTOR.services_by_name['GarfService'].full_name,
