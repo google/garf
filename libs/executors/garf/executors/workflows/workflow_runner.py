@@ -74,12 +74,14 @@ class WorkflowRunner:
     )
 
   def __enter__(self):
+    telemetry.executor_active_workflows.add(1)
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
     self.close()
 
   def close(self) -> None:
+    telemetry.executor_active_workflows.add(-1)
     self.workflow.clear()
 
   def _run_parallel_step_thread(
