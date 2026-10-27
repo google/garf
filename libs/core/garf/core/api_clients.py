@@ -31,7 +31,7 @@ from urllib.parse import urlparse
 import pydantic
 import requests
 import smart_open
-from garf.core import exceptions, query_editor, telemetry
+from garf.core import exceptions, parsers, query_editor, telemetry
 from garf.core.telemetry import tracer
 from opentelemetry import trace
 from typing_extensions import TypeAlias, override
@@ -128,18 +128,24 @@ class BaseClient(abc.ABC):
 
   @tracer.start_as_current_span('call_api')
   def call_api(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self,
+    request: query_editor.BaseQueryElements,
+    parser: parsers.BaseParser | None = None,
+    **kwargs: str,
   ) -> GarfApiResponse:
     """Method for getting response."""
     span = trace.get_current_span()
-    response = self.get_response(request, **kwargs)
+    response = self.get_response(request=request, parser=parser, **kwargs)
     span.set_attribute('num_rows_api_response', len(response.results))
     telemetry.api_counter.add(1, {'api.client.class': self.__class__.__name__})
     return response
 
   @abc.abstractmethod
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self,
+    request: query_editor.BaseQueryElements,
+    parser: parsers.BaseParser | None = None,
+    **kwargs: str,
   ) -> GarfApiResponse:
     """Method for getting response."""
 
@@ -172,7 +178,10 @@ class RestApiClient(BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements, **kwargs: str
+    self,
+    request: query_editor.BaseQueryElements,
+    parser: parsers.BaseParser | None = None,
+    **kwargs: str,
   ) -> GarfApiResponse:
     url = f'{self.endpoint}/{request.resource_name}'
     params = {}
@@ -192,6 +201,8 @@ class RestApiClient(BaseClient):
       results = response.json()
       if not isinstance(results, list):
         results = [results]
+      if parser:
+        results = parser.parse_rows(results)
       return GarfApiResponse(results=results)
     raise GarfApiError('Failed to get data from API, reason: ', response.text)
 
@@ -236,7 +247,10 @@ class FakeApiClient(BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.BaseQueryElements | None = None, **kwargs: str
+    self,
+    request: query_editor.BaseQueryElements | None = None,
+    parser=None,
+    **kwargs: str,
   ) -> GarfApiResponse:
     base_options = self.options.model_dump()
     if request:
@@ -250,6 +264,7 @@ class FakeApiClient(BaseClient):
     else:
       options = self.options
     if n_rows := options.n_rows:
+      parser = parsers.IdentityParser(request)
       string_pool = [
         ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         for _ in range(100)
@@ -286,17 +301,20 @@ class FakeApiClient(BaseClient):
       raise GarfApiError(f'Failed with failure_rate {failure_rate}')
     if delay := options.delay_seconds:
       time.sleep(delay)
+    if parser:
+      results = parser.parse_rows(results)
+
     return GarfApiResponse(
       results=results, results_placeholder=results_placeholder
     )
 
   def _convert_request(self, fields: list[tuple[str, str]], conversion_rules):
-    results = {}
+    results = []
     for field, field_type in fields:
       if field_value := conversion_rules.get(field_type):
-        results[field] = field_value()
+        results.append(field_value())
       else:
-        results[field] = ''
+        results.append('')
     return results
 
   @override
