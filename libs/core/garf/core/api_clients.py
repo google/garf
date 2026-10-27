@@ -149,6 +149,9 @@ class BaseClient(abc.ABC):
     """Method for getting response."""
     raise NotImplementedError
 
+  def close(self):
+    return
+
 
 class RestApiClient(BaseClient):
   """Specifies REST client."""
@@ -208,7 +211,7 @@ class FakeApiClient(BaseClient):
     self,
     results: Sequence[dict[str, Any]] | None = None,
     results_placeholder: Sequence[dict[str, Any]] | None = None,
-    options: FakeApiClientOptions = FakeApiClientOptions(),
+    options: FakeApiClientOptions | None = None,
     **kwargs: str,
   ) -> None:
     """Initializes FakeApiClient."""
@@ -222,9 +225,14 @@ class FakeApiClient(BaseClient):
       self.results if not results_placeholder else list(results_placeholder)
     )
     self.kwargs = kwargs
-    self.options = (
-      FakeApiClientOptions(**options) if isinstance(options, dict) else options
-    )
+    if options is None:
+      self.options = FakeApiClientOptions()
+    else:
+      self.options = (
+        FakeApiClientOptions(**options)
+        if isinstance(options, dict)
+        else options
+      )
 
   @override
   def get_response(
@@ -242,9 +250,28 @@ class FakeApiClient(BaseClient):
     else:
       options = self.options
     if n_rows := options.n_rows:
-      results = []
-      for row in range(n_rows):
-        results.append(self._convert_request(request))
+      string_pool = [
+        ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        for _ in range(100)
+      ]
+      float_pool = [round(random.uniform(0, 100), 4) for _ in range(100)]
+      conversion_rules = {
+        'float': lambda: random.choice(float_pool),
+        'int': lambda: random.randint(0, 100),
+        'bool': lambda: random.choice([True, False]),
+        'string': lambda: random.choice(string_pool),
+      }
+      conversion_rules['str'] = conversion_rules['string']
+
+      field_types = []
+      for field in request.fields:
+        _, field_type = field.split('.')
+        field_types.append((field, field_type))
+
+      results = [
+        self._convert_request(field_types, conversion_rules)
+        for _ in range(n_rows)
+      ]
     elif self.results:
       results = self.results
     elif not self.results and not self.results_placeholder:
@@ -263,18 +290,9 @@ class FakeApiClient(BaseClient):
       results=results, results_placeholder=results_placeholder
     )
 
-  def _convert_request(self, request: query_editor.BaseQueryElements):
-    characters = string.ascii_letters + string.digits
-    conversion_rules = {
-      'float': lambda: random.uniform(0, 100),
-      'int': lambda: int(random.uniform(0, 100)),
-      'bool': lambda: random.choice([True, False]),
-      'string': lambda: ''.join(random.choices(characters, k=8)),
-    }
-    conversion_rules['str'] = conversion_rules['string']
+  def _convert_request(self, fields: list[tuple[str, str]], conversion_rules):
     results = {}
-    for field in request.fields:
-      _, field_type = field.split('.')
+    for field, field_type in fields:
       if field_value := conversion_rules.get(field_type):
         results[field] = field_value()
       else:
@@ -362,6 +380,14 @@ class FakeApiClient(BaseClient):
         return FakeApiClient(data, **kwargs)
     except (AttributeError, FileNotFoundError) as e:
       raise GarfApiError(f'Failed to open {file_location}') from e
+
+  def close(self):
+    if self.results:
+      self.results.clear()
+      self.results = None
+    if self.results_placeholder:
+      self.results_placeholder.clear()
+      self.results_placeholder = None
 
 
 def _field_converter(field: str):

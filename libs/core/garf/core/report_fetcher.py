@@ -246,3 +246,6 @@ class ApiReportFetcher:
     response.clear()
     del response
     return fetched_report
+
+  def close(self):
+    self.api_client.close()

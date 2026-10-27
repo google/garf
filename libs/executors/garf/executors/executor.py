@@ -274,6 +274,10 @@ class Executor:
       context=execution_context.ExecutionContext(query_parameters=args),
     )
 
+  def close(self):
+    if hasattr(self, 'fetcher'):
+      self.fetcher.close()
+
 
 @tracer.start_as_current_span('executor.handle_processors')
 def _handle_processors(
@@ -338,6 +342,7 @@ def write_many(
       type(writer_client),
     )
     writing_results.append(writing_result)
+    writer_client.close()
   logger.info('%s executed successfully', title)
   results.clear()
   return writing_results[-1] if writing_results else None

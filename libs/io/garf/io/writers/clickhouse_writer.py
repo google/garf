@@ -181,3 +181,6 @@ class ClickHouseWriter(abs_writer.AbsWriter):
       f'CREATE TABLE {guard}`{database}`.`{table}` ({columns}) '
       'ENGINE = MergeTree() ORDER BY tuple()'
     )
+
+  def close(self):
+    self.client.close()

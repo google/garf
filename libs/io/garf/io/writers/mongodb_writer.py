@@ -68,3 +68,6 @@ class MongoDbWriter(nosql_writer.NoSqlWriter):
       collection_name
     ]
     return collection.insert_many(data)
+
+  def close(self):
+    self.client.close()
