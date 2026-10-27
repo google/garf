@@ -224,3 +224,6 @@ class BigQueryWriter(abs_writer.AbsWriter):
     )
     logger.debug('Writing to %s is completed', destination)
     return f'[BigQuery] - at {self.options.dataset_id}.{destination}'
+
+  def close(self):
+    return self.client.close()

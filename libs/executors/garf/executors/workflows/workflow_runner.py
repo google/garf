@@ -73,6 +73,15 @@ class WorkflowRunner:
       execution_workflow=execution_workflow, wf_parent=workflow_file.parent
     )
 
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    self.close()
+
+  def close(self) -> None:
+    self.workflow.clear()
+
   def _run_parallel_step_thread(
     self,
     step,
@@ -351,6 +360,8 @@ class WorkflowRunner:
         telemetry.workflow_step_error_counter.add(1, workflow_step_attributes)
         telemetry.workflow_error_counter.add(1, workflow_attributes)
         raise e
+      finally:
+        query_executor.close()
 
 
 def _validate_fetcher_version(

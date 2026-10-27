@@ -246,10 +246,12 @@ class Workflow(pydantic.BaseModel):
     default=None, excluded=True
   )
   name: str | None = None
-  metadata: WorkflowMetadata = WorkflowMetadata()
+  metadata: WorkflowMetadata | None = None
   edges: list[WorkflowEdge] = pydantic.Field(default_factory=list)
 
   def model_post_init(self, __context__) -> None:
+    if self.metadata is None:
+      self.metadata = WorkflowMetadata()
     if self.execution_config:
       self.execution_config.expand()
       config_parameters = self.execution_config.sources
@@ -285,6 +287,13 @@ class Workflow(pydantic.BaseModel):
       else:
         fetchers.add(step.fetcher)
     return fetchers
+
+  def clear(self):
+    self.steps.clear()
+    if self.execution_config:
+      self.execution_config.clear()
+    if self.context:
+      self.context.clear()
 
   @classmethod
   def from_file(

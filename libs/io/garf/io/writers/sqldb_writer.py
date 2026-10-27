@@ -111,3 +111,6 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
       if self.connection_string
       else DEFAULT_SQLITE_INMEMORY_DB
     )
+
+  def close(self):
+    self.engine.dispose()

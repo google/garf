@@ -130,3 +130,6 @@ class DuckDBWriter(abs_writer.AbsWriter):
         )
     logger.debug('Writing to %s is completed', destination)
     return f'[DuckDB] - at {self.db}/{destination}'
+
+  def close(self):
+    self.api_client.close()

@@ -76,3 +76,6 @@ class AbsWriter(abc.ABC):
     return formatter.format_report_for_writing(
       report, [array_handling_strategy, date_handling_strategy]
     )
+
+  def close(self):
+    return
