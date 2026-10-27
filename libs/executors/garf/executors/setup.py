@@ -30,6 +30,8 @@ from opentelemetry import trace
 
 logger = logging.getLogger('garf.executors.setup')
 
+executor_modules = {}
+
 _EXECUTORS_MODULES: dict[str, str] = {
   'bq': {
     'import_path': 'garf.executors.bq_executor',
@@ -101,9 +103,11 @@ def setup_executor(
   else:
     writer_clients = None
   if concrete_executor_module := _EXECUTORS_MODULES.get(source):
-    executor_module = importlib.import_module(
-      concrete_executor_module.get('import_path')
-    )
+    if not (executor_module := executor_modules.get(source)):
+      executor_module = importlib.import_module(
+        concrete_executor_module.get('import_path')
+      )
+      executor_modules[source] = executor_module
     query_executor = getattr(
       executor_module, concrete_executor_module.get('executor_class')
     )(
