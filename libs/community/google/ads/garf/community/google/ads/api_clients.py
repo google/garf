@@ -86,7 +86,7 @@ class SearchAds360ApiClient(api_clients.BaseClient):
     self.kwargs = kwargs
 
   def get_response(
-    self, request, account: int, **kwargs: str
+    self, request, account: int, parser, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     """Executes a single API request for a given customer_id and a query."""
     from garf.community.google.ads import search_ads_360_client
@@ -102,8 +102,7 @@ class SearchAds360ApiClient(api_clients.BaseClient):
       query_resource_consumption = 0
       for batch in response:
         query_resource_consumption += batch.query_resource_consumption
-        for result in batch.results:
-          results.append(result)
+        results.extend(parser.parse_rows(batch.results))
     finally:
       detach(suppress_token)
     span.set_attributes(
@@ -112,10 +111,12 @@ class SearchAds360ApiClient(api_clients.BaseClient):
         'sa360.account': account,
       }
     )
-    return api_clients.GarfApiResponse(
+    response = api_clients.GarfApiResponse(
       results=results,
-      results_placeholder=[search_ads_360_client.SearchAds360Row()],
     )
+    if not results:
+      response.results_placeholder = [search_ads_360_client.SearchAds360Row()]
+    return response
 
 
 class GoogleAdsApiClient(api_clients.BaseClient):
@@ -167,6 +168,12 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     self.client.use_proto_plus = use_proto_plus
     self.ads_service = self.client.get_service('GoogleAdsService')
     self.kwargs = kwargs
+
+  def close(self):
+    if self.ads_service is not None:
+      self.ads_service.transport.close()
+      self.ads_service = None
+      self.client = None
 
   @property
   def _base_module(self) -> str:
@@ -343,7 +350,11 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     reraise=True,
   )
   def get_response(
-    self, request: query_editor.GoogleAdsApiQuery, account: int, **kwargs: str
+    self,
+    request: query_editor.GoogleAdsApiQuery,
+    account: int,
+    parser,
+    **kwargs: str,
   ) -> api_clients.GarfApiResponse:
     """Executes a single API request for a given customer_id and GAQL query."""
     span = trace.get_current_span()
@@ -357,8 +368,7 @@ class GoogleAdsApiClient(api_clients.BaseClient):
       query_resource_consumption = 0
       for batch in response:
         query_resource_consumption += batch.query_resource_consumption
-        for result in batch.results:
-          results.append(result)
+        results.extend(parser.parse_rows(batch.results))
     finally:
       detach(suppress_token)
 
@@ -368,9 +378,12 @@ class GoogleAdsApiClient(api_clients.BaseClient):
         'google.ads.account': account,
       }
     )
-    return api_clients.GarfApiResponse(
-      results=results, results_placeholder=[self._get_google_ads_row()]
+    response = api_clients.GarfApiResponse(
+      results=results,
     )
+    if not results:
+      response.results_placeholder = [self._get_google_ads_row()]
+    return response
 
   def _init_client(
     self,
