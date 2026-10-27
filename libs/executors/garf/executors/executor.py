@@ -57,16 +57,24 @@ class Executor:
     self.postprocessors = postprocessors or {}
     self.simulator = report_simulator
     self.enable_cache = enable_cache
-    self.cache = cache.GarfCache(cache_path, ttl_seconds=cache_ttl_seconds)
+    self.cache_path = cache_path
+    self.cache_ttl_seconds = cache_ttl_seconds
+    self._cache = None
+
+  @property
+  def cache(self) -> cache.GarfCache:
+    if not self._cache:
+      self._cache = cache.GarfCache(
+        location=self.cache_path, ttl_seconds=self.cache_ttl_seconds
+      )
+    return self._cache
 
   @tracer.start_as_current_span('executor.execute')
   def execute(
     self,
     query: str,
     title: str,
-    context: execution_context.ExecutionContext = (
-      execution_context.ExecutionContext()
-    ),
+    context: execution_context.ExecutionContext | None = None,
   ) -> report.GarfReport:
     """Executes query.
 
@@ -81,6 +89,8 @@ class Executor:
     start_time = time.perf_counter()
     span = trace.get_current_span()
     executor_attributes = {'executor.class': self.__class__.__name__}
+    if context is None:
+      context = execution_context.ExecutionContext()
     query_spec = (
       query_editor.QuerySpecification(
         text=query, title=title, args=context.query_parameters
@@ -99,13 +109,14 @@ class Executor:
       _handle_processors(processors=self.preprocessors, context=context)
     if self.enable_cache:
       try:
-        results = self.cache.load(
+        results, hash_identifier = self.cache.load(
           query_spec.query,
           args=context.query_parameters,
           kwargs=context.fetcher_parameters,
         )
         logger.debug('Cached version of report is loaded')
-        span.set_attribute('is_cached_report', True)
+        span.set_attribute('report.cached', True)
+        span.set_attribute('report.cached.hash', hash_identifier)
         if (
           (results or results.results_placeholder)
           and context.writer != 'unset'
@@ -117,7 +128,7 @@ class Executor:
           telemetry.executor_histogram.record(duration, executor_attributes)
           return write_outputs
       except cache.GarfCacheFileNotFoundError:
-        logger.info('Cached version not found, generating')
+        logger.debug('Cached version not found, generating')
 
     if len(query_parts := query_spec.query_parts) > 1:
       span.set_attribute('executor.multi_query', True)
@@ -130,12 +141,16 @@ class Executor:
       try:
         results = self._execute(query=query_text, title=title, context=context)
         if self.enable_cache:
-          self.cache.save(
+          hash_identifier = self.cache.save(
             results,
             query_spec.query,
             args=context.query_parameters,
             kwargs=context.fetcher_parameters,
           )
+          logger.debug(
+            'Report saved to cache: %s, hash: %s', title, hash_identifier
+          )
+          span.set_attribute('report.cached.hash', hash_identifier)
       except exceptions.GarfExecutorError as e:
         telemetry.executor_error_counter.add(1, executor_attributes)
         raise e
@@ -165,9 +180,7 @@ class Executor:
     self,
     query: str,
     title: str,
-    context: execution_context.ExecutionContext = (
-      execution_context.ExecutionContext()
-    ),
+    context: execution_context.ExecutionContext | None = None,
   ) -> report.GarfReport:
     """Executes query."""
     raise NotImplementedError
