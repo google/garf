@@ -350,7 +350,7 @@ def execute(
       query_executor.execute_batch(batch, context, parallel_threshold)
     elif len(batch) > 1:
       garf_logger.info('Running queries sequentially')
-      for query_title, text in batch.items():
+      for query_title, text in dict(sorted(batch.items())).items():
         query_executor.execute(query=text, title=query_title, context=context)
     else:
       for query_title, text in batch.items():
