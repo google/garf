@@ -104,6 +104,60 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     Raises:
       GoogleAdsApiReportFetcherError: If not account provided or found.
     """
+    account = self._get_account(
+      account, args, expand_mcc, expand_mcc_type, customer_ids_query
+    )
+    if len(account) == 1:
+      return super().fetch(
+        query_specification=query_specification,
+        args=args,
+        account=str(account[0]),
+        **kwargs,
+      )
+    reports = asyncio.run(
+      self._process_accounts(
+        query=query_specification,
+        account=account,
+        args=args,
+      )
+    )
+    return functools.reduce(operator.add, reports)
+
+  async def afetch(
+    self,
+    query_specification: str | query_editor.GoogleAdsApiQuery,
+    args: garf.core.query_editor.GarfQueryParameters | None = None,
+    account: str | list[str] | None = None,
+    expand_mcc: bool = False,
+    expand_mcc_type: Literal['roots', 'leaves', 'hierarchy'] = 'leaves',
+    customer_ids_query: str | None = None,
+    **kwargs: str,
+  ) -> garf.core.GarfReport:
+    account = self._get_account(
+      account, args, expand_mcc, expand_mcc_type, customer_ids_query
+    )
+    if len(account) == 1:
+      return await super().afetch(
+        query_specification=query_specification,
+        args=args,
+        account=str(account[0]),
+        **kwargs,
+      )
+    reports = await self._process_accounts(
+      query=query_specification,
+      account=account,
+      args=args,
+    )
+    return functools.reduce(operator.add, reports)
+
+  def _get_account(
+    self,
+    account,
+    args,
+    expand_mcc: bool = False,
+    expand_mcc_type: Literal['roots', 'leaves', 'hierarchy'] = 'leaves',
+    customer_ids_query: str | None = None,
+  ) -> list[str]:
     if not account:
       raise GoogleAdsApiReportFetcherError(
         'Provide an account to get data from.'
@@ -127,21 +181,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
         raise GoogleAdsApiReportFetcherError(
           'No account found satisfying the condition {customer_ids_query}.'
         )
-    if len(account) == 1:
-      return super().fetch(
-        query_specification=query_specification,
-        args=args,
-        account=str(account[0]),
-        **kwargs,
-      )
-    reports = asyncio.run(
-      self._process_accounts(
-        query=query_specification,
-        account=account,
-        args=args,
-      )
-    )
-    return functools.reduce(operator.add, reports)
+    return account
 
   async def _process_accounts(
     self,
