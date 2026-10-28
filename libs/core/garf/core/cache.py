@@ -159,8 +159,11 @@ class RedisGarfCache:
     """
     if not (data := self.r.get(hash_identifier)):
       raise GarfCacheFileNotFoundError
+    data = json.loads(data)
     logger.debug('Report is loaded from cache: %s', str(hash_identifier))
-    loaded_report = report.GarfReport.from_json(data)
+    loaded_report = report.GarfReport(
+      results=data.get('results'), column_names=data.get('columns')
+    )
     loaded_report.query_specification = query
     return loaded_report
 
@@ -175,7 +178,12 @@ class RedisGarfCache:
       fetched_report: Report to save.
       hash_identifier: Unique identifier of a query.
     """
-    data = json.dumps(fetched_report.to_list(row_type='dict'))
+    data = json.dumps(
+      {
+        'results': fetched_report.results,
+        'columns': fetched_report.column_names,
+      },
+    )
     self.r.set(hash_identifier, data, ex=self.ttl_seconds)
     logger.info('Report is saved to cache: %s', str(hash_identifier))
     return hash_identifier
@@ -232,15 +240,16 @@ class FileGarfCache:
       ) or self.type == 'remote':
         with smart_open.open(cached_path, 'r', encoding='utf-8') as f:
           data = json.load(f)
+          loaded_report = report.GarfReport(
+            results=data.get('results'), column_names=data.get('columns')
+          )
+          loaded_report.query_specification = query
+          logger.debug('Report is loaded from cache: %s', str(cached_path))
+          return loaded_report
       else:
         raise GarfCacheFileNotFoundError
     except Exception as e:
       raise GarfCacheFileNotFoundError from e
-    logger.debug('Report is loaded from cache: %s', str(cached_path))
-    loaded_report = report.GarfReport.from_json(json.dumps(data))
-    loaded_report.query_specification = query
-    data.clear()
-    return loaded_report
 
   def save(
     self, fetched_report: report.GarfReport, hash_identifier: str
@@ -258,7 +267,13 @@ class FileGarfCache:
     else:
       cached_path = f'{self.location}/{hash_identifier}.json'
     with smart_open.open(str(cached_path), 'w', encoding='utf-8') as f:
-      json.dump(fetched_report.to_list(row_type='dict'), f)
+      json.dump(
+        {
+          'results': fetched_report.results,
+          'columns': fetched_report.column_names,
+        },
+        f,
+      )
     logger.info('Report is saved to cache: %s', str(cached_path))
     return str(cached_path)
 
