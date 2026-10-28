@@ -30,7 +30,7 @@ class TestGarfExporterService:
       alias='fake', source_parameters={'csv_location': _SCRIPT_DIR / 'test.csv'}
     )
 
-  def test_generate_metrics_from_collector_name_returns_correct_results(
+  async def test_generate_metrics_from_collector_name_returns_correct_results(
     self, service, caplog
   ):
     caplog.set_level(logging.INFO)
@@ -42,7 +42,7 @@ class TestGarfExporterService:
       source='fake', collectors=[col]
     )
 
-    service.generate_metrics(test_request, test_exporter)
+    await service.generate_metrics(test_request, test_exporter)
 
     assert 'Beginning export' in caplog.text
     assert col.title in caplog.text

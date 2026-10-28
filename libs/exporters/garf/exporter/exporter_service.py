@@ -113,7 +113,7 @@ class GarfExporterService:
     return self._report_fetcher
 
   @tracer.start_as_current_span('generate_metrics')
-  def generate_metrics(
+  async def generate_metrics(
     self,
     request: GarfExporterRequest,
     exporter: garf.exporter.GarfExporter,
@@ -133,7 +133,7 @@ class GarfExporterService:
     for col in collectors:
       logger.info('Exporting from collector: %s', col.title)
       start = time()
-      report = self.fetcher.fetch(
+      report = await self.fetcher.afetch(
         col.query, args=request.query_parameters, **self.source_parameters
       )
       end = time()
