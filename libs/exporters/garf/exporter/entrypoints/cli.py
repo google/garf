@@ -100,7 +100,7 @@ async def start_metric_generation(
   iterations = None
   export_metrics = True
   while export_metrics:
-    garf_exporter_service.generate_metrics(request, exporter)
+    await garf_exporter_service.generate_metrics(request, exporter)
     if request.runtime_options.expose_type == 'pushgateway':
       prometheus_client.push_to_gateway(
         gateway=request.runtime_options.address,

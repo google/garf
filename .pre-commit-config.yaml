@@ -66,7 +66,7 @@ repos:
     entry: pytest -n auto libs/exporters/tests/unit/
     language: system
     pass_filenames: false
-    files: ^libs/(core/.*|io/.*|executors/.*|exporter/.*)\.py$
+    files: ^libs/(core/.*|io/.*|executors/.*|exporters/.*)\.py$
   - id: pytest-check-actors
     name: pytest-check-actors
     entry: pytest -n auto libs/actors/tests/unit/

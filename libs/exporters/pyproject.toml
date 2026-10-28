@@ -21,13 +21,12 @@ authors = [
   {name = "Andrei Markin", email = "andrey.markin.ppc@gmail.com"},
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "Exports data from APIs to Prometheus"
 readme = "README.md"
 license = {text = "Apache 2.0"}
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -49,3 +48,6 @@ garf-exporter="garf.exporter.entrypoints.cli:typer_app"
 [tool.setuptools.packages.find]
 where = ["."]
 include=["garf.*", "garf_exporter*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
