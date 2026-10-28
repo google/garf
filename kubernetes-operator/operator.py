@@ -21,6 +21,9 @@ import pydantic
 GARF_CLI_IMAGE: Final[str] = os.getenv(
   'GARF_CLI_IMAGE', 'ghcr.io/google/garf-go:latest'
 )
+GARF_EXPORTER_IMAGE: Final[str] = os.getenv(
+  'GARF_EXPORTER_IMAGE', 'ghcr.io/google/garf-exporter:latest'
+)
 
 
 class ServerInfo(pydantic.BaseModel):
@@ -118,6 +121,96 @@ class WorkflowJob(GarfJob):
     if self.enable_cache:
       cli_args.append('--enable-cache')
     return ' '.join(cli_args).split()
+
+
+class Exporter(pydantic.BaseModel):
+  source: str
+  config_path: str
+  delay_minutes: int = 15
+  fetcher_parameters: dict[str, Any] = pydantic.Field(default_factory=dict)
+
+  @property
+  def command(self):
+    cli_args = [
+      '/venv/bin/opentelemetry-instrument',
+      '/venv/bin/python',
+      '/app/garf/exporter/entrypoints/cli.py',
+      '--source',
+      self.source,
+      '--config',
+      self.config_path,
+      '--delay-minutes',
+      str(self.delay_minutes),
+    ]
+    for key, value in self.fetcher_parameters.items():
+      cli_args.append(f'--source.{key}={value}')
+    return ' '.join(cli_args).split()
+
+
+def _create_exporter_deployment(
+  name: str,
+  namespace: str | None,
+  spec: kopf.Spec,
+  logger: kopf.Logger,
+) -> kubernetes.client.V1Deployment:
+  exporter = Exporter(
+    source=spec.get('source'),
+    config_path=spec.get('configPath'),
+    fetcher_parameters=spec.get('fetcherParameters') or {},
+  )
+  if delay_minutes := spec.get('delayMinutes'):
+    exporter.delay_minutes = int(delay_minutes)
+  return kubernetes.client.V1Deployment(
+    api_version='apps/v1',
+    kind='Deployment',
+    metadata={
+      'annotations': {
+        'prometheus.io/path': '/metrics',
+        'prometheus.io/port': '8000',
+        'prometheus.io/scrape': 'true',
+      },
+      'name': name,
+      'namespace': namespace,
+    },
+    spec={
+      'replicas': 1,
+      'selector': {
+        'matchLabels': {
+          'app': name,
+        },
+      },
+      'template': {
+        'metadata': {
+          'labels': {
+            'app': name,
+          },
+        },
+        'spec': {
+          'containers': [
+            {
+              'name': 'garf-exporter',
+              'image': GARF_EXPORTER_IMAGE,
+              'args': exporter.command,
+              'ports': [
+                {
+                  'containerPort': 8000,
+                }
+              ],
+              'livenessProbe': {
+                'httpGet': {'path': '/health', 'port': 8000},
+                'initialDelaySeconds': 300,
+                'periodSeconds': 20,
+                'timeoutSeconds': 5,
+                'failureThreshold': 3,
+                'successThreshold': 1,
+              },
+              'env': spec.get('env'),
+            }
+          ],
+        },
+      },
+    },
+  )
 
 
 def _build_job(
@@ -302,3 +395,55 @@ def delete_query(
       logger.info('GarfQueryJob %s already deleted or does not exist', name)
     else:
       raise kopf.PermanentError(f'Failed to delete Query: {e}')
+
+
+@kopf.on.create('garf.io', 'v1', 'exporters')
+def create_exporter(
+  body: kopf.Body,
+  spec: kopf.Spec,
+  name: str,
+  namespace: str | None,
+  logger: kopf.Logger,
+  **kwargs,
+) -> None:
+  deployment = _create_exporter_deployment(
+    name=name,
+    namespace=namespace,
+    spec=spec,
+    logger=logger,
+  )
+  apps = kubernetes.client.AppsV1Api()
+  try:
+    apps.create_namespaced_deployment(namespace=namespace, body=deployment)
+    logger.info(
+      'Successfully created Exporter Deployment: %s/%s', namespace, name
+    )
+  except kubernetes.client.exceptions.ApiException as e:
+    if e.status == 409:
+      apps.patch_namespaced_deployment(
+        name=name, namespace=namespace, body=deployment
+      )
+      logger.info('Exporter exists, patching: %s/%s', namespace, name)
+    else:
+      raise kopf.PermanentError(f'Failed to create Exporter: {e}')
+
+
+@kopf.on.delete('garf.io', 'v1', 'exporters')
+def delete_exporter(
+  spec: kopf.Spec,
+  name: str,
+  namespace: str | None,
+  logger: kopf.Logger,
+  **kwargs,
+) -> None:
+  apps = kubernetes.client.AppsV1Api()
+  try:
+    apps.delete_namespaced_deployment(name=name, namespace=namespace)
+    logger.info(
+      'Successfully deleted Exporter Deployment: %s/%s', namespace, name
+    )
+  except kubernetes.client.exceptions.ApiException as e:
+    if e.status == 404:
+      logger.info('Exporter %s already deleted or does not exist', name)
+    else:
+      raise kopf.PermanentError(f'Failed to delete Exporter: {e}')

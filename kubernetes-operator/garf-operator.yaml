@@ -23,15 +23,20 @@ rules:
       - workflows/status
       - queries
       - queries/status
+      - exporters
+      - exporters/status
     verbs: ["get", "list", "watch", "patch", "update"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["create", "get", "update", "patch"]
   - apiGroups: [""]
-    resources: ["events", "namespaces"]
+    resources: ["events", "namespaces", "pods"]
     verbs: ["create", "patch"]
   - apiGroups: ["batch"]
     resources: ["cronjobs", "jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
