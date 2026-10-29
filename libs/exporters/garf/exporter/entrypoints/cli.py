@@ -34,7 +34,6 @@ import uvicorn
 from garf.executors.entrypoints import utils as garf_utils
 from garf.exporter import exporter_service
 from garf.exporter.entrypoints.tracer import initialize_tracer
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from typing_extensions import Annotated
 
 typer_app = typer.Typer()
@@ -86,7 +85,6 @@ app = fastapi.FastAPI(debug=False)
 exporter = garf.exporter.GarfExporter()
 metrics_app = prometheus_client.make_asgi_app(registry=exporter.registry)
 app.mount('/metrics', metrics_app)
-FastAPIInstrumentor.instrument_app(app)
 
 
 async def start_metric_generation(

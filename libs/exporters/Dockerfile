@@ -1,11 +1,25 @@
-FROM python:3.12-alpine
-ENV PYTHONDONTWRITEBYTECODE=1
-RUN apk --no-cache add curl
-WORKDIR /app
+FROM python:3.13-slim AS build
 ADD requirements.txt .
-RUN pip install --require-hashes -r requirements.txt --no-deps
-ENV APP_PORT 8000
-ENTRYPOINT ["garf-exporter"]
+RUN python -m venv venv && \
+    venv/bin/pip install --require-hashes -r requirements.txt --no-cache-dir
+ARG EXTRA_LIBS=""
+RUN if [ -n "$EXTRA_LIBS" ]; then \
+  /venv/bin/pip install --no-cache-dir $EXTRA_LIBS; \
+fi
+RUN venv/bin/pip install opentelemetry-distro
+
+RUN venv/bin/opentelemetry-bootstrap -a install
+
+FROM python:3.13-slim
+COPY --from=build /venv/ /venv/
+
+WORKDIR /app
+COPY pyproject.toml .
+COPY garf garf
+
+ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+ENV PYTHONPATH=/app
+CMD ["/venv/bin/opentelemetry-instrument", "/venv/bin/python", "/app/garf/exporter/entrypoints/cli.py"]
 HEALTHCHECK --interval=1m \
   --timeout=10s \
   --retries=3 --start-period=2m \
