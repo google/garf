@@ -1,0 +1,86 @@
+name: stamp
+metadata:
+  version: '0.0.0'
+  description: |
+    Stamp MCC generation
+  required_fetchers:
+    google-ads: "1.3.0"
+steps:
+  - fetcher: google-ads
+    alias: search_terms
+    queries:
+      - text: |
+          SELECT
+            customer.id,
+            campaign.id,
+            ad_group.id,
+            ad_group_criterion.keyword.text AS keyword
+          FROM ad_group_criterion
+          WHERE
+            ad_group_criterion.type = KEYWORD
+            AND ad_group_criterion.status = ENABLED
+            AND ad_group.status = ENABLED
+            AND campaign.status = ENABLED
+        title: keywords
+      - text: |
+          SELECT
+            customer.id,
+            campaign.id,
+            ad_group.id,
+            segments.keyword.info.text AS keyword,
+            search_term_view.search_term AS search_term,
+            metrics.cost_micros AS cost_micros,
+            metrics.conversions AS conversions
+          FROM search_term_view
+          WHERE
+            search_term_view.status NOT IN (ADDED, EXCLUDED, ADDED_EXCLUDED)
+            AND metrics.conversions > {{min_conversions}}
+            AND segments.date >= "{{start_date}}"
+            AND segments.date <= "{{end_date}}"
+        title: stamp
+    writer: duckdb
+    query_parameters:
+      template:
+        min_conversions: 1
+        start_date: :YYYYMMDD-30
+        end_date: :YYYYMMDD-1
+    fetcher_parameters:
+      customer_ids_query: |
+        SELECT
+          customer.id
+        FROM campaign
+        WHERE campaign.advertising_channel_type = SEARCH
+
+  - fetcher: duckdb
+    alias: out
+    queries:
+      - title: stamp
+        text: |
+          WITH AccountKeywords AS (
+            SELECT
+              customer_id,
+              LOWER(keyword) AS keyword
+            FROM keywords
+            GROUP BY ALL
+          )
+          SELECT
+            'Add' AS action,
+            'Paused' AS 'Keyword Status',
+            S.customer_id AS 'Customer ID',
+            campaign_id AS 'Campaign ID',
+            '' AS 'Campaign Name',
+            ad_group_id AS 'Ad group ID',
+            '' AS 'Ad group Name',
+            search_term AS Keyword,
+            'Broad Match' AS 'Match Type',
+            'STAMP' AS Label
+          FROM stamp AS S
+          LEFT JOIN AccountKeywords AS AK
+            ON S.customer_id = AK.customer_id
+              AND S.search_term = AK.keyword
+          WHERE
+            LOWER(S.keyword) != search_term
+            AND LEN(search_term) <= 80
+            AND LEN(SPLIT(search_term, ' ')) <= 5
+            AND AK.keyword IS NULL;
+    writer: csv

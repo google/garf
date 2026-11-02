@@ -1,0 +1,691 @@
+steps:
+- query_parameters:
+    macro: {}
+    template: {}
+    macro_expansion: true
+  fetcher_parameters:
+    customer_ids_query: 'SELECT customer.id
+
+      FROM campaign
+
+      WHERE campaign.advertising_channel_type = "PERFORMANCE_MAX"
+
+      '
+  writer:
+  - bq
+  writer_parameters:
+    dataset: pmax_ads
+    array_handling: arrays
+  fetcher: google-ads
+  alias: performance
+  queries:
+  - text: SELECT * FROM builtin.ocid_mapping
+    title: ocid_mapping.sql
+  - text: SELECT segments.date AS date, campaign.id, asset_group.id AS asset_group_id,
+      asset.id AS asset_id, asset_group_asset.field_type AS asset_sub_type, asset.text_asset.text
+      AS text_asset_text, metrics.cost_micros/1e6 AS cost, metrics.impressions AS
+      impressions, metrics.clicks AS clicks, metrics.conversions AS conversions, metrics.conversions_value
+      AS conversions_value FROM asset_group_asset WHERE campaign.advertising_channel_type
+      = 'PERFORMANCE_MAX' AND campaign.status = 'ENABLED' AND asset_group.status =
+      'ENABLED' AND asset_group_asset.status = 'ENABLED' AND asset_group_asset.source
+      = 'ADVERTISER' AND segments.date >= '{start_date}' AND segments.date <= '{end_date}'
+      AND asset.type = 'TEXT'
+    title: text_assetgroup_assets.sql
+  - text: SELECT segments.date AS date, campaign.id, asset_group.id AS asset_group_id,
+      asset.id AS asset_id, asset_group_asset.field_type AS asset_sub_type, asset.image_asset.file_size
+      AS image_file_size, asset.image_asset.full_size.url AS image_url, asset.image_asset.full_size.height_pixels
+      AS image_height, asset.image_asset.full_size.width_pixels AS image_width, metrics.cost_micros/1e6
+      AS cost, metrics.impressions AS impressions, metrics.clicks AS clicks, metrics.conversions
+      AS conversions, metrics.conversions_value AS conversions_value FROM asset_group_asset
+      WHERE campaign.advertising_channel_type = 'PERFORMANCE_MAX' AND campaign.status
+      = 'ENABLED' AND asset_group.status = 'ENABLED' AND asset_group_asset.status
+      = 'ENABLED' AND asset_group_asset.source = 'ADVERTISER' AND segments.date >=
+      '{start_date}' AND segments.date <= '{end_date}' AND asset.type = 'IMAGE'
+    title: image_assetgroup_assets.sql
+  - text: SELECT segments.date AS date, campaign.id AS campaign_id, asset_group.id
+      AS asset_group_id, asset.id AS asset_id, asset_group_asset.field_type AS asset_sub_type,
+      asset.youtube_video_asset.youtube_video_id AS video_id, asset.youtube_video_asset.youtube_video_title
+      AS video_title, metrics.cost_micros/1e6 AS cost, metrics.impressions AS impressions,
+      metrics.clicks AS clicks, metrics.conversions AS conversions, metrics.conversions_value
+      AS conversions_value FROM asset_group_asset WHERE campaign.advertising_channel_type
+      = 'PERFORMANCE_MAX' AND campaign.status = 'ENABLED' AND asset_group.status =
+      'ENABLED' AND asset_group_asset.status = 'ENABLED' AND asset_group_asset.source
+      = 'ADVERTISER' AND segments.date >= '{start_date}' AND segments.date <= '{end_date}'
+      AND asset.type = 'YOUTUBE_VIDEO'
+    title: video_assetgroup_assets.sql
+  - text: SELECT customer.id AS account_id, customer_asset.field_type AS asset_type
+      FROM customer_asset WHERE segments.date >= "{start_date}" AND segments.date
+      <= "{end_date}" AND customer_asset.field_type IN (SITELINK, CALLOUT, STRUCTURED_SNIPPET)
+    title: customerasset.sql
+  - text: SELECT segments.date AS date, customer.id AS account_id, customer.descriptive_name
+      AS account_name, campaign.id AS campaign_id, campaign.name AS campaign_name,
+      campaign.status AS campaign_status, campaign.asset_automation_settings AS url_expansion_opt_out,
+      campaign.bidding_strategy_type AS bidding_strategy, campaign_budget.amount_micros
+      AS budget_amount, campaign_budget.total_amount_micros AS total_budget, campaign_budget.type
+      AS budget_type, campaign_budget.explicitly_shared AS is_shared_budget, campaign_budget.period
+      AS budget_period, bidding_strategy.maximize_conversion_value.target_roas AS
+      bidding_strategy_mcv_troas, bidding_strategy.target_roas.target_roas AS bidding_strategy_troas,
+      bidding_strategy.maximize_conversions.target_cpa_micros AS bidding_strategy_mc_tcpa,
+      bidding_strategy.target_cpa.target_cpa_micros AS bidding_strategy_tcpa, campaign.maximize_conversions.target_cpa_micros
+      AS campaign_mc_tcpa, campaign.target_cpa.target_cpa_micros AS campaign_tcpa,
+      campaign.maximize_conversion_value.target_roas AS campaign_mcv_troas, campaign.target_roas.target_roas
+      AS campaign_troas, campaign.selective_optimization.conversion_actions AS selective_optimization_conversion_actions,
+      campaign.shopping_setting.merchant_id as gmc_id, campaign.optimization_score
+      as optiscore, campaign.geo_target_type_setting.negative_geo_target_type as negative_geo_target_type,
+      campaign.geo_target_type_setting.positive_geo_target_type as positive_geo_target_type,
+      metrics.cost_micros AS cost, metrics.conversions AS conversions, metrics.conversions_value
+      AS conversions_value, metrics.all_conversions_value AS all_conversions_value
+      FROM campaign WHERE campaign.advertising_channel_type = "PERFORMANCE_MAX" AND
+      segments.date >= "{start_date}" AND segments.date <= "{end_date}" AND campaign.status
+      = 'ENABLED'
+    title: campaign_settings.sql
+  - text: SELECT segments.date AS date, asset_group.id AS asset_group_id, asset_group.name
+      AS asset_group_name, asset_group.status AS asset_group_status, campaign.id AS
+      campaign_id, campaign.name AS campaign_name, customer.id AS account_id, customer.descriptive_name
+      AS account_name, asset_group.ad_strength AS ad_strength, metrics.clicks AS clicks,
+      metrics.conversions AS conversions, metrics.all_conversions AS all_conversions,
+      metrics.cost_micros As cost, metrics.conversions_value AS conversions_value,
+      metrics.impressions AS impressions, metrics.ctr AS ctr, metrics.value_per_all_conversions
+      AS value_per_all_conversions, metrics.value_per_conversion AS value_per_conversion,
+      metrics.all_conversions_value AS all_conversions_value, FROM asset_group WHERE
+      campaign.advertising_channel_type = 'PERFORMANCE_MAX' AND asset_group.status
+      = 'ENABLED' AND campaign.status = 'ENABLED' AND segments.date >= '{start_date}'
+      AND segments.date <= '{end_date}'
+    title: assetgroupsummary.sql
+  - text: SELECT customer.id AS account_id, custom_conversion_goal.id AS custom_conversion_goal_id,
+      custom_conversion_goal.name AS custom_conversion_goal_name FROM custom_conversion_goal
+    title: custom_goal_names.sql
+  - text: SELECT campaign.id, campaign.advertising_channel_type AS _, campaign.status
+      AS _, campaign_asset.field_type AS asset_type FROM campaign_asset WHERE campaign.advertising_channel_type
+      = PERFORMANCE_MAX AND campaign.status = ENABLED AND campaign_asset.field_type
+      IN (SITELINK, CALLOUT, STRUCTURED_SNIPPET)
+    title: campaignasset.sql
+  - text: SELECT segments.date AS date, campaign.status AS _, campaign.advertising_channel_type
+      AS _, campaign.id, performance_max_placement_view.display_name AS placement_name,
+      performance_max_placement_view.placement AS placement, performance_max_placement_view.placement_type
+      AS placement_type, performance_max_placement_view.target_url AS placement_target_url,
+      metrics.impressions AS impressions FROM performance_max_placement_view WHERE
+      campaign.advertising_channel_type = PERFORMANCE_MAX AND segments.date >= "{start_date}"
+      AND segments.date <= "{end_date}" AND campaign.status = ENABLED AND metrics.impressions
+      > 10 ORDER BY metrics.impressions DESC, segments.date DESC LIMIT 10000
+    title: pmax_placement_view.sql
+  - text: SELECT campaign.id AS campaign_id, customer.id AS account_id, campaign_conversion_goal.category
+      AS conversion_name, campaign.advertising_channel_type AS campaign_type FROM
+      campaign_conversion_goal WHERE campaign.advertising_channel_type IN ("PERFORMANCE_MAX",
+      "SEARCH") AND campaign_conversion_goal.biddable = true
+    title: conversion_category.sql
+  - text: SELECT campaign.id AS campaign_id, conversion_goal_campaign_config.custom_conversion_goal~0
+      AS custom_conversion_goal_id, customer.id AS account_id, campaign.advertising_channel_type
+      AS campaign_type FROM conversion_goal_campaign_config WHERE campaign.advertising_channel_type
+      IN ("PERFORMANCE_MAX", "SEARCH") AND conversion_goal_campaign_config.custom_conversion_goal
+      IS NOT NULL
+    title: conversion_custom.sql
+  - text: SELECT asset_group_signal.audience.audience AS audience_signals, campaign.id
+      AS campaign_id, asset_group.id AS asset_group_id FROM asset_group_signal WHERE
+      asset_group_signal.audience.audience IS NOT NULL AND asset_group.status = 'ENABLED'
+      AND campaign.status = 'ENABLED'
+    title: assetgroupsignal.sql
+- query_parameters:
+    macro:
+      dataset: pmax_ads
+    template: {}
+    macro_expansion: true
+  fetcher_parameters:
+    enable_cache: false
+  writer_parameters: {}
+  fetcher: bq
+  alias: processing
+  queries:
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.summaryassets` AS ( WITH Assets
+      AS ( SELECT date, campaign_id, asset_group_id, asset_id, asset_sub_type, text_asset_text,
+      '' AS image_video, '' AS image_video_url, SUM(cost) AS cost, SUM(impressions)
+      AS impressions, SUM(clicks) AS clicks, SUM(conversions) AS conversions, SUM(conversions_value)
+      AS conversions_value FROM `{bq_dataset}.text_assetgroup_assets` GROUP BY ALL
+      UNION ALL SELECT date, campaign_id, asset_group_id, asset_id, asset_sub_type,
+      '' AS text_asset_text, image_url AS image_video, image_url AS image_video_url,
+      SUM(cost) AS cost, SUM(impressions) AS impressions, SUM(clicks) AS clicks, SUM(conversions)
+      AS conversions, SUM(conversions_value) AS conversions_value FROM `{bq_dataset}.image_assetgroup_assets`
+      GROUP BY ALL UNION ALL SELECT date, campaign_id, asset_group_id, asset_id, asset_sub_type,
+      '' AS text_asset_text, CONCAT('https://www.youtube.com/watch?v=', video_id)
+      AS image_video, CONCAT('https://i.ytimg.com/vi/', CONCAT(video_id, '/hqdefault.jpg'))
+      AS image_video_url, SUM(cost) AS cost, SUM(impressions) AS impressions, SUM(clicks)
+      AS clicks, SUM(conversions) AS conversions, SUM(conversions_value) AS conversions_value
+      FROM `{bq_dataset}.video_assetgroup_assets` GROUP BY ALL ), Mapping AS ( SELECT
+      asset_group_id, campaign_id, ANY_VALUE(asset_group_name) AS asset_group_name,
+      ANY_VALUE(campaign_name) AS campaign_name, ANY_VALUE(account_id) AS account_id,
+      ANY_VALUE(account_name) AS account_name, ANY_VALUE(asset_group_status) AS asset_group_status
+      FROM `{bq_dataset}.assetgroupsummary` GROUP BY 1, 2 )  SELECT AGA.date, AGS.account_id,
+      AGS.account_name, AGS.asset_group_id, AGS.asset_group_name, AGS.campaign_name,
+      AGS.campaign_id, AGA.asset_id, AGA.asset_sub_type, AGA.text_asset_text, AGS.asset_group_status,
+      AGA.image_video, AGA.image_video_url, OCID.ocid, CS.last_30_day_campaign_cost,
+      AGA.cost, AGA.impressions, AGA.clicks, AGA.conversions, AGA.conversions_value
+      FROM Assets AS AGA JOIN Mapping AS AGS USING (campaign_id, asset_group_id) LEFT
+      JOIN `{bq_dataset}.ocid_mapping` AS OCID ON OCID.account_id = AGS.account_id
+      LEFT JOIN ( SELECT campaign_id, SUM(cost) AS last_30_day_campaign_cost FROM
+      `{bq_dataset}.campaign_settings` WHERE PARSE_DATE('%Y-%m-%d', date) >= DATE_SUB(CURRENT_DATE(),  INTERVAL
+      30 DAY) GROUP BY campaign_id ) AS CS ON AGA.campaign_id = CS.campaign_id WHERE
+      AGA.campaign_id IN (SELECT campaign_id FROM `{bq_dataset}.campaign_settings`)
+      GROUP BY ALL);
+    title: 08-assetsummary.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.text_assets` AS WITH count_headlines
+      AS ( SELECT campaign_id, asset_group_id, COUNT(*) AS count_headlines FROM `{bq_dataset}.text_assetgroup_assets`
+      WHERE asset_sub_type IN ('HEADLINE', 'LONG_HEADLINE') GROUP BY 1, 2 ), count_short_headlines
+      AS ( SELECT campaign_id, asset_group_id, COUNT(*) AS count_short_headlines FROM
+      `{bq_dataset}.text_assetgroup_assets` WHERE asset_sub_type = 'HEADLINE' GROUP
+      BY 1, 2 ), count_long_headlines AS ( SELECT campaign_id, asset_group_id, COUNT(*)
+      AS count_long_headlines FROM `{bq_dataset}.text_assetgroup_assets` WHERE asset_sub_type
+      = 'LONG_HEADLINE' GROUP BY 1, 2 ), count_descriptions AS ( SELECT campaign_id,
+      asset_group_id, COUNT(*) AS count_descriptions FROM `{bq_dataset}.text_assetgroup_assets`
+      WHERE asset_sub_type = 'DESCRIPTION' GROUP BY 1, 2 ), count_short_descriptions
+      AS ( SELECT campaign_id, asset_group_id, COUNT(*) AS count_short_descriptions
+      FROM `{bq_dataset}.text_assetgroup_assets` WHERE asset_sub_type = 'DESCRIPTION'
+      AND LENGTH(text_asset_text) <= 60 GROUP BY 1, 2 ), Mapping AS ( SELECT asset_group_id,
+      campaign_id, ANY_VALUE(asset_group_name) AS asset_group_name, ANY_VALUE(campaign_name)
+      AS campaign_name, ANY_VALUE(account_id) AS account_id, ANY_VALUE(account_name)
+      AS account_name FROM `{bq_dataset}.assetgroupsummary` GROUP BY 1, 2 ) SELECT
+      DISTINCT AGS.account_id, AGS.account_name, AGS.campaign_id, AGS.campaign_name,
+      AGS.asset_group_id, AGS.asset_group_name, COALESCE(CH.count_headlines,0) AS
+      count_headlines, COALESCE(CSH.count_short_headlines,0) AS count_short_headlines,
+      COALESCE(CD.count_descriptions,0) AS count_descriptions, COALESCE(CSD.count_short_descriptions,0)
+      AS count_short_descriptions, COALESCE(CLH.count_long_headlines,0) AS count_long_headlines
+      FROM `{bq_dataset}.text_assetgroup_assets` AS IAS LEFT JOIN Mapping AS AGS USING
+      (campaign_id, asset_group_id) LEFT JOIN count_headlines AS CH ON CH.campaign_id
+      = AGS.campaign_id AND CH.asset_group_id = AGS.asset_group_id LEFT JOIN count_short_headlines
+      AS CSH ON CSH.campaign_id = AGS.campaign_id AND CSH.asset_group_id = AGS.asset_group_id
+      LEFT JOIN count_descriptions AS CD ON CD.campaign_id = AGS.campaign_id AND CD.asset_group_id
+      = AGS.asset_group_id LEFT JOIN count_short_descriptions AS CSD ON CSD.campaign_id
+      = AGS.campaign_id AND CSD.asset_group_id = AGS.asset_group_id LEFT JOIN count_long_headlines
+      AS CLH ON CLH.campaign_id = AGS.campaign_id AND CLH.asset_group_id = AGS.asset_group_id
+      GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+    title: 04-text_assets.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.assetgroup_performance` AS ( WITH
+      LOW_ASSETS AS ( SELECT asset_group_id, 0 AS sum_of_low_perf_assets FROM `{bq_dataset}_bq.summaryassets`
+      GROUP BY 1,2 ) SELECT AGS.date, AGS.account_id, AGS.account_name, AGS.campaign_id,
+      AGS.campaign_name, AGS.asset_group_id, AGS.asset_group_name, AGS.asset_group_status,
+      AGS.ad_strength, AGS.clicks, AGS.impressions, AGS.ctr, AGS.cost / 1e6 AS cost,
+      AGS.conversions, AGS.all_conversions, AGS.conversions_value, AGS.all_conversions_value,
+      AGS.value_per_all_conversions, AGS.value_per_conversion, IFNULL(LA.sum_of_low_perf_assets,
+      0) AS sum_of_low_performing_assets FROM `{bq_dataset}.assetgroupsummary` AS
+      AGS LEFT JOIN LOW_ASSETS AS LA ON AGS.asset_group_id = LA.asset_group_id )
+    title: 19-assetgroupperformance.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.campaign_data` AS WITH TARGETS_RAW
+      AS ( SELECT account_id, campaign_id, CASE WHEN campaign_mcv_troas IS NOT NULL
+      THEN campaign_mcv_troas WHEN campaign_troas IS NOT NULL THEN campaign_troas
+      WHEN bidding_strategy_mcv_troas IS NOT NULL THEN bidding_strategy_mcv_troas
+      WHEN bidding_strategy_troas IS NOT NULL THEN bidding_strategy_troas END AS troas,
+      CASE WHEN campaign_mc_tcpa IS NOT NULL THEN campaign_mc_tcpa WHEN campaign_tcpa
+      IS NOT NULL THEN campaign_tcpa WHEN bidding_strategy_mc_tcpa IS NOT NULL THEN
+      bidding_strategy_mc_tcpa WHEN bidding_strategy_tcpa IS NOT NULL THEN bidding_strategy_tcpa
+      END AS tcpa FROM `{bq_dataset}.campaign_settings` ), TARGETS AS ( SELECT account_id,
+      campaign_id, ANY_VALUE(troas) AS troas, ANY_VALUE(tcpa) AS tcpa FROM TARGETS_RAW
+      GROUP BY 1, 2 ), ASSET_GROUPS_COUNT AS ( SELECT campaign_id, COUNT(DISTINCT
+      asset_group_id) AS number_of_asset_groups FROM `{bq_dataset}.assetgroupsummary`
+      GROUP BY campaign_id ), AUDIENCE_SIGNALS_COUNT AS ( SELECT COUNT(DISTINCT AGS.audience_signals)
+      AS number_of_audience_signals, AGS.campaign_id AS campaign_id FROM `{bq_dataset}.assetgroupsignal`
+      AS AGS GROUP BY campaign_id ), CAMPIAGN_SITELINKS_DATA AS ( SELECT campaign_id,
+      COUNT(*) AS campaign_sitelinks, FROM `{bq_dataset}.campaignasset` WHERE asset_type
+      = 'SITELINK' GROUP BY 1 ), ACCOUNT_SITELINKS_DATA AS ( SELECT account_id, COUNT(*)
+      AS account_sitelinks, FROM `{bq_dataset}.customerasset` WHERE asset_type = 'SITELINK'
+      GROUP BY 1 ), CAMPAIGN_CALLOUTS_DATA AS ( SELECT campaign_id, COUNT(*) AS campaign_callouts
+      FROM `{bq_dataset}.campaignasset` WHERE asset_type = 'CALLOUT' GROUP BY 1 ),
+      ACCOUNT_CALLOUTS_DATA AS ( SELECT account_id, COUNT(*) AS account_callouts FROM
+      `{bq_dataset}.customerasset` WHERE asset_type='CALLOUT' GROUP BY 1 ), CAMPAIGN_STRUCTURED_SNIPPETS_DATA
+      AS ( SELECT campaign_id, COUNT(*) AS campaign_structsnippets FROM `{bq_dataset}.campaignasset`
+      WHERE asset_type = 'STRUCTURED_SNIPPET' GROUP BY 1 ), ACCOUNT_STRUCTURED_SNIPPETS_DATA
+      AS ( SELECT account_id, COUNT(*) AS account_structsnippets FROM `{bq_dataset}.customerasset`
+      WHERE asset_type = 'STRUCTURED_SNIPPET' GROUP BY 1 ) SELECT C.date, C.account_id,
+      C.account_name, C.campaign_id, C.campaign_name, C.campaign_status, C.url_expansion_opt_out[0].asset_automation_type
+      ='FINAL_URL_EXPANSION_TEXT_ASSET_AUTOMATION' AND C.url_expansion_opt_out[0].asset_automation_status
+      = 'OPTED_OUT' AS url_expansion_opt_out, C.bidding_strategy, C.budget_amount,
+      C.total_budget, C.budget_type, C.is_shared_budget, C.budget_period, T.troas,
+      T.tcpa, C.gmc_id, C.optiscore, C.cost/1e6 AS cost, C.conversions, C.conversions_value,
+      PCA.conversion_name AS pmax_conversion, PCAS.conversion_name AS primary_conversion_search,
+      C.negative_geo_target_type as negative_geo_target_type, C.positive_geo_target_type
+      as positive_geo_target_type, IF (ASCC.number_of_audience_signals IS NOT NULL,
+      ASCC.number_of_audience_signals, 0) AS number_of_audience_signals, AGC.number_of_asset_groups
+      AS number_of_asset_groups, IF (C.negative_geo_target_type != 'PRESENCE_OR_INTEREST',
+      "X", "Yes") as negative_geo_target_type_configured_good, IF (C.positive_geo_target_type
+      != 'PRESENCE_OR_INTEREST', "X", "Yes") as positive_geo_target_type_configured_good,
+      CASE WHEN (IF(SD.campaign_sitelinks IS NULL, 0, SD.campaign_sitelinks) + IF(ASD.account_sitelinks
+      IS NULL, 0, ASD.account_sitelinks)) >= 4 THEN 0 ELSE 4 - (IF(SD.campaign_sitelinks
+      IS NULL, 0, SD.campaign_sitelinks) + IF(ASD.account_sitelinks IS NULL, 0, ASD.account_sitelinks))
+      END AS missing_sitelinks, CASE WHEN (IF(CD.campaign_callouts IS NULL, 0, CD.campaign_callouts)
+      + IF(ACD.account_callouts IS NULL, 0, ACD.account_callouts)) >= 1 THEN 0 ELSE
+      1 END AS missing_callouts, CASE WHEN (IF(SSD.campaign_structsnippets IS NULL,
+      0, SSD.campaign_structsnippets) + IF(ASSD.account_structsnippets IS NULL, 0,
+      ASSD.account_structsnippets)) >= 1 THEN 0 ELSE 1 END AS missing_structured_snippets,
+      CASE WHEN T.tcpa IS NOT NULL AND T.tcpa > 0 THEN 'tCPA' WHEN T.troas IS NOT
+      NULL AND T.troas > 0 THEN 'tROAS' ELSE 'null' END AS target_type, CASE WHEN
+      T.tcpa IS NOT NULL AND T.tcpa > 0 THEN T.tcpa WHEN T.troas IS NOT NULL AND T.troas
+      > 0 THEN T.troas ELSE NULL END AS target_value, CASE WHEN ASCC.number_of_audience_signals
+      IS NULL THEN 0 ELSE (ASCC.number_of_audience_signals) / AGC.number_of_asset_groups
+      END AS audience_signals_score, OCID.ocid FROM `{bq_dataset}.campaign_settings`
+      C LEFT JOIN TARGETS AS T ON C.account_id = T.account_id AND C.campaign_id =
+      T.campaign_id LEFT JOIN `{bq_dataset}_bq.primary_conversion_action_search` AS
+      PCAS ON C.account_id = PCAS.account_id LEFT JOIN `{bq_dataset}_bq.primary_conversion_action_pmax`
+      AS PCA ON PCA.account_id = C.account_id AND PCA.campaign_id = C.campaign_id
+      LEFT JOIN ASSET_GROUPS_COUNT AS AGC ON C.campaign_id = AGC.campaign_id LEFT
+      JOIN AUDIENCE_SIGNALS_COUNT AS ASCC ON C.campaign_id = ASCC.campaign_id LEFT
+      JOIN CAMPIAGN_SITELINKS_DATA AS SD ON C.campaign_id = SD.campaign_id LEFT JOIN
+      ACCOUNT_SITELINKS_DATA AS ASD ON C.account_id = ASD.account_id LEFT JOIN CAMPAIGN_CALLOUTS_DATA
+      AS CD ON C.campaign_id = CD.campaign_id LEFT JOIN ACCOUNT_CALLOUTS_DATA AS ACD
+      ON C.account_id = ACD.account_id LEFT JOIN CAMPAIGN_STRUCTURED_SNIPPETS_DATA
+      AS SSD ON C.campaign_id = SSD.campaign_id LEFT JOIN ACCOUNT_STRUCTURED_SNIPPETS_DATA
+      AS ASSD ON C.account_id = ASSD.account_id LEFT JOIN `{bq_dataset}.ocid_mapping`
+      AS OCID ON OCID.account_id = C.account_id;
+    title: 07-campaign_data.sql
+  - text: CREATE SCHEMA IF NOT EXISTS `{bq_dataset}_bq`; CREATE OR REPLACE TABLE `{bq_dataset}_bq.image_assets`
+      AS WITH count_image_assets AS ( SELECT campaign_id, asset_group_id, COUNT(*)
+      AS count_images FROM `{bq_dataset}.image_assetgroup_assets` GROUP BY 1, 2 ),
+      count_logos AS ( SELECT campaign_id, asset_group_id, COUNT(*) AS count_logos
+      FROM `{bq_dataset}.image_assetgroup_assets` WHERE asset_sub_type = 'LOGO' GROUP
+      BY 1, 2 ), count_landscape_assets AS ( SELECT campaign_id, asset_group_id, COUNT(*)
+      AS count_landscape FROM `{bq_dataset}.image_assetgroup_assets` WHERE asset_sub_type
+      = 'MARKETING_IMAGE' GROUP BY 1, 2 ), count_portrait_assets AS ( SELECT campaign_id,
+      asset_group_id, COUNT(*) AS count_portrait FROM `{bq_dataset}.image_assetgroup_assets`
+      WHERE asset_sub_type = 'PORTRAIT_MARKETING_IMAGE' GROUP BY 1, 2 ), count_square_images
+      AS ( SELECT campaign_id, asset_group_id, COUNT(*) AS count_square FROM `{bq_dataset}.image_assetgroup_assets`
+      WHERE asset_sub_type = 'SQUARE_MARKETING_IMAGE' GROUP BY 1, 2 ), count_square_logos
+      AS ( SELECT campaign_id, asset_group_id, COUNT(*) AS count_square_logos FROM
+      `{bq_dataset}.image_assetgroup_assets` WHERE image_width = image_height AND
+      asset_sub_type = 'LOGO' GROUP BY 1, 2 ), count_landscape_logos AS ( SELECT campaign_id,
+      asset_group_id, COUNT(*) AS count_landscape_logos FROM `{bq_dataset}.image_assetgroup_assets`
+      WHERE ROUND(SAFE_DIVIDE(image_width, image_height),2) = 4 AND asset_sub_type
+      = 'LOGO' GROUP BY 1, 2 ), Mapping AS ( SELECT asset_group_id, campaign_id, ANY_VALUE(asset_group_name)
+      AS asset_group_name, ANY_VALUE(campaign_name) AS campaign_name, ANY_VALUE(account_id)
+      AS account_id, ANY_VALUE(account_name) AS account_name FROM `{bq_dataset}.assetgroupsummary`
+      GROUP BY 1, 2 ) SELECT DISTINCT AGS.account_id, AGS.account_name, AGS.campaign_id,
+      AGS.campaign_name, AGS.asset_group_id, AGS.asset_group_name, COALESCE(CIA.count_images,0)
+      AS count_images, COALESCE(CL.count_logos,0) AS count_logos, COALESCE(CLA.count_landscape,0)
+      AS count_landscape, COALESCE(CSN.count_square,0) AS count_square, COALESCE(CPA.count_portrait,0)
+      AS count_portrait, COALESCE(CSL.count_square_logos,0) AS count_square_logos,
+      COALESCE(CRL.count_landscape_logos,0) AS count_landscape_logos, FROM `{bq_dataset}.image_assetgroup_assets`
+      AS IAS LEFT JOIN Mapping AS AGS USING (campaign_id, asset_group_id) LEFT JOIN
+      count_image_assets AS CIA ON CIA.campaign_id = AGS.campaign_id AND CIA.asset_group_id
+      = AGS.asset_group_id LEFT JOIN count_logos AS CL ON CL.campaign_id = AGS.campaign_id
+      AND CL.asset_group_id = AGS.asset_group_id LEFT JOIN count_landscape_assets
+      AS CLA ON CLA.campaign_id = AGS.campaign_id AND CLA.asset_group_id = AGS.asset_group_id
+      LEFT JOIN count_square_images AS CSN ON CSN.campaign_id = AGS.campaign_id AND
+      CSN.asset_group_id = AGS.asset_group_id LEFT JOIN count_portrait_assets AS CPA
+      ON CPA.campaign_id = AGS.campaign_id AND CPA.asset_group_id = AGS.asset_group_id
+      LEFT JOIN count_square_logos AS CSL ON CSL.campaign_id = AGS.campaign_id AND
+      CSL.asset_group_id = AGS.asset_group_id LEFT JOIN count_landscape_logos AS CRL
+      ON CRL.campaign_id = AGS.campaign_id AND CRL.asset_group_id = AGS.asset_group_id
+      GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+    title: 01-image_assets.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.campaignbpscore_{date_iso}` AS
+      ( SELECT date, CD.account_id, CD.account_name, CD.campaign_id, CD.campaign_name,
+      round( ( IF(CD.url_expansion_opt_out=true,1,0) + CD.audience_signals_score +
+      IF(CD.missing_sitelinks=0,1,missing_sitelinks/4) + CASE WHEN positive_geo_target_type_configured_good='X'
+      AND negative_geo_target_type_configured_good='X' THEN 0 WHEN positive_geo_target_type_configured_good='Yes'
+      AND negative_geo_target_type_configured_good='X' THEN 0.5 WHEN positive_geo_target_type_configured_good='X'
+      AND negative_geo_target_type_configured_good='Yes' THEN 0.5 WHEN positive_geo_target_type_configured_good='Yes'
+      AND negative_geo_target_type_configured_good='Yes' THEN 1 END )/4,2 ) AS campaign_bp_score
+      FROM `{bq_dataset}_bq.campaign_data`AS CD GROUP BY 1,2,3,4,5,6 )
+    title: 09-bpscore.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.primary_conversion_action_search`
+      AS WITH CONVERSION_ACCOUNT_LEVEL AS ( SELECT DISTINCT account_id, campaign_id,
+      campaign_type, conversion_name FROM `{bq_dataset}.conversion_category` ), CONVERSION_SPLIT
+      AS ( SELECT account_id, campaign_id, campaign_type, ARRAY_TO_STRING(ARRAY_AGG(conversion_name),",")
+      AS conversion_name FROM CONVERSION_ACCOUNT_LEVEL GROUP BY 1,2,3 UNION ALL SELECT
+      CC.account_id, campaign_id, campaign_type, custom_conversion_goal_name AS conversion_name
+      FROM `{bq_dataset}.conversion_custom` AS CC JOIN `{bq_dataset}.custom_goal_names`
+      AS CGN ON CC.account_id = CGN.account_id AND CAST(CC.custom_conversion_goal_id
+      AS INT64) = CGN.custom_conversion_goal_id ), CONVERSION_SPLIT_GROUPED_W_CUSTOM
+      AS ( SELECT account_id, campaign_id, campaign_type, ARRAY_TO_STRING(ARRAY_AGG(conversion_name),",")
+      AS conversion_name FROM CONVERSION_SPLIT GROUP BY 1,2,3 ), CONVERSION_ACTION_FREQUENCY
+      AS ( SELECT account_id, campaign_type, conversion_name, RANK() OVER (PARTITION
+      BY account_id, campaign_type ORDER BY COUNT(DISTINCT campaign_id) DESC) AS row_num
+      FROM CONVERSION_SPLIT_GROUPED_W_CUSTOM WHERE campaign_type = "SEARCH" GROUP
+      BY account_id, conversion_name, campaign_type ), CONVERSION_ACTION_FREQUENCY_GROUPED
+      AS ( SELECT DISTINCT account_id, campaign_type, row_num, conversion_name FROM
+      CONVERSION_ACTION_FREQUENCY ), MOST_USED_CONVERSIONS AS ( SELECT DISTINCT CS.account_id,
+      CS.campaign_id, CF.conversion_name FROM CONVERSION_SPLIT_GROUPED_W_CUSTOM CS
+      JOIN CONVERSION_ACTION_FREQUENCY_GROUPED CF USING (account_id) WHERE row_num
+      = 1 AND CS.campaign_type = "SEARCH" ) SELECT DISTINCT account_id, conversion_name
+      FROM MOST_USED_CONVERSIONS
+    title: 03-primary_conversion_action_search.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.primary_conversion_action_pmax`
+      AS WITH CONVERSION_ACCOUNT_LEVEL AS ( SELECT DISTINCT account_id, campaign_id,
+      campaign_type, conversion_name FROM `{bq_dataset}.conversion_category` ), CONVERSION_SPLIT
+      AS ( SELECT account_id, campaign_id, campaign_type, ARRAY_TO_STRING(ARRAY_AGG(conversion_name),",")
+      AS conversion_name FROM CONVERSION_ACCOUNT_LEVEL GROUP BY 1,2,3 UNION ALL SELECT
+      CC.account_id, campaign_id, campaign_type, custom_conversion_goal_name AS conversion_name
+      FROM `{bq_dataset}.conversion_custom` AS CC JOIN `{bq_dataset}.custom_goal_names`
+      AS CGN ON CC.account_id = CGN.account_id AND CAST(CC.custom_conversion_goal_id
+      AS INT64) = CGN.custom_conversion_goal_id ), CONVERSION_SPLIT_GROUPED_W_CUSTOM
+      AS ( SELECT account_id, campaign_id, campaign_type, ARRAY_TO_STRING(ARRAY_AGG(conversion_name),",")
+      AS conversion_name FROM CONVERSION_SPLIT GROUP BY 1,2,3 ), CONVERSION_ACTION_FREQUENCY
+      AS ( SELECT account_id, campaign_id, campaign_type, conversion_name, RANK()
+      OVER (PARTITION BY account_id, campaign_type ORDER BY COUNT(DISTINCT campaign_id)
+      DESC) AS row_num FROM CONVERSION_SPLIT_GROUPED_W_CUSTOM WHERE campaign_type
+      = "PERFORMANCE_MAX" GROUP BY account_id, conversion_name, campaign_type, campaign_id
+      ), CONVERSION_ACTION_FREQUENCY_GROUPED AS ( SELECT account_id, campaign_id,
+      campaign_type, row_num, ARRAY_TO_STRING(ARRAY_AGG(conversion_name),",") AS conversion_name
+      FROM CONVERSION_ACTION_FREQUENCY GROUP BY account_id, campaign_id, campaign_type,
+      row_num ), MOST_USED_CONVERSIONS AS ( SELECT CS.account_id, CS.campaign_id,
+      ARRAY_TO_STRING(ARRAY_AGG(CF.conversion_name),",") AS conversion_name FROM CONVERSION_SPLIT_GROUPED_W_CUSTOM
+      AS CS JOIN CONVERSION_ACTION_FREQUENCY_GROUPED AS CF USING (account_id, campaign_id)
+      WHERE row_num = 1 AND CS.campaign_type = "PERFORMANCE_MAX" GROUP BY 1,2 ) SELECT
+      DISTINCT account_id, campaign_id, conversion_name FROM MOST_USED_CONVERSIONS
+    title: 02-primary_conversion_action_pmax.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.assetgroupbestpractices` AS WITH
+      VIDEO_DATA AS ( SELECT account_id, account_name, campaign_id, campaign_name,
+      asset_group_id, asset_group_name, ad_strength, is_video_uploaded, count_videos,
+      IF(count_videos < 3, CAST(0 AS FLOAT64), CAST(1 as FLOAT64)) AS video_score
+      FROM `{bq_dataset}_bq.video_assets` ), TEXT_DATA AS ( SELECT account_id, account_name,
+      campaign_id, campaign_name, asset_group_id, count_descriptions, count_headlines,
+      count_long_headlines, count_short_descriptions, count_short_headlines, (IF(count_descriptions
+      >= 4, 1, 0) + IF(count_headlines >= 11, 1, 0) + IF(count_long_headlines >= 2,
+      1, 0)) / 3 AS text_score FROM `{bq_dataset}_bq.text_assets` ), IMAGE_DATA AS
+      ( SELECT account_id, account_name, campaign_id, campaign_name, asset_group_id,
+      count_images, count_logos, count_landscape, count_portrait, count_landscape_logos,
+      count_square, count_square_logos, (IF(count_landscape >= 4, 1, 0) + IF(count_square
+      >= 4, 1, 0) + IF(count_portrait >= 4, 1, 0) + IF(count_landscape_logos >= 1,
+      1, 0) + IF(count_square_logos >= 1, 1, 0)) / 5 AS image_score FROM `{bq_dataset}_bq.image_assets`
+      ), AUDIENCE_SIGNALS_COUNT AS ( SELECT COUNT(DISTINCT AGS.asset_group_id) AS
+      number_of_audience_signals, AGS.campaign_id AS campaign_id, AGS.asset_group_id
+      FROM `{bq_dataset}.assetgroupsignal` AS AGS GROUP BY campaign_id, asset_group_id
+      ) SELECT AGS.date, AGS.account_id, AGS.account_name, AGS.campaign_id, AGS.campaign_name,
+      AGS.asset_group_id, AGS.asset_group_name, AGS.ad_strength, V.is_video_uploaded,
+      V.video_score, T.text_score, I.image_score, "Recommended" AS recommendation_type,
+      IF(T.count_descriptions < 4, 4 - T.count_descriptions, 0) AS missing_descriptions,
+      IF(T.count_headlines < 11, 11 - T.count_headlines, 0) AS missing_headlines,
+      IF(T.count_long_headlines < 2, 2 - T.count_long_headlines, 0) AS missing_long_headlines,
+      IF((I.count_landscape + I.count_square + I.count_portrait + I.count_logos) <
+      12, 12 - (I.count_landscape + I.count_square + I.count_portrait + I.count_logos),
+      0) AS missing_images, IF(I.count_landscape < 4, 4 - I.count_landscape, 0) AS
+      missing_landscape, IF(I.count_square < 4, 4 - I.count_square, 0) AS missing_square,
+      IF(I.count_portrait < 2, 2 - I.count_portrait, 0) AS missing_portrait, IF(I.count_logos
+      < 2, 2 - I.count_logos, 0) AS missing_logos, IF(I.count_square_logos = 0, 1,
+      0) AS missing_square_logos, IF(I.count_landscape_logos = 0, 1, 0) AS missing_landscape_logos,
+      IF(V.count_videos < 3, 3 - V.count_videos, 0) AS missing_video, IF(ASA.number_of_audience_signals
+      IS NOT NULL,"Yes","X") AS audience_signals, OCID.ocid FROM `{bq_dataset}.assetgroupsummary`
+      AS AGS INNER JOIN VIDEO_DATA AS V ON AGS.account_id = V.account_id AND AGS.campaign_id
+      = V.campaign_id AND AGS.asset_group_id = V.asset_group_id INNER JOIN TEXT_DATA
+      AS T ON AGS.account_id = T.account_id AND AGS.campaign_id = T.campaign_id AND
+      AGS.asset_group_id = T.asset_group_id INNER JOIN IMAGE_DATA AS I ON AGS.account_id
+      = I.account_id AND AGS.campaign_id = I.campaign_id AND AGS.asset_group_id =
+      I.asset_group_id LEFT JOIN AUDIENCE_SIGNALS_COUNT AS ASA ON AGS.campaign_id
+      = ASA.campaign_id AND AGS.asset_group_id = ASA.asset_group_id LEFT JOIN `{bq_dataset}.ocid_mapping`
+      AS OCID ON OCID.account_id = AGS.account_id WHERE AGS.campaign_id IN (SELECT
+      campaign_id FROM `{bq_dataset}.campaign_settings`) UNION ALL SELECT AGS.date,
+      AGS.account_id, AGS.account_name, AGS.campaign_id, AGS.campaign_name, AGS.asset_group_id,
+      AGS.asset_group_name, AGS.ad_strength, V.is_video_uploaded, V.video_score, T.text_score,
+      I.image_score, "Maximum" AS recommendation_type, IF(T.count_descriptions < 5,
+      5 - T.count_descriptions, 0) AS missing_descriptions, IF(T.count_headlines <
+      15, 15 - T.count_headlines, 0) AS missing_headlines, IF(T.count_long_headlines
+      < 5, 5 - T.count_long_headlines, 0) AS missing_long_headlines, IF((I.count_landscape
+      + I.count_square + I.count_portrait + I.count_logos) < 20, 20 - (I.count_landscape
+      + I.count_square + I.count_portrait + I.count_logos), 0) AS missing_images,
+      IF(I.count_landscape < 4, 4 - I.count_landscape, 0) AS missing_landscape, IF(I.count_square
+      < 4, 4 - I.count_square, 0) AS missing_square, IF(I.count_portrait < 2, 2 -
+      I.count_portrait, 0) AS missing_portrait, IF(I.count_logos < 2, 2 - I.count_logos,
+      0) AS missing_logos, IF(I.count_square_logos = 0, 1, 0) AS missing_square_logos,
+      IF(I.count_landscape_logos = 0, 1, 0) AS missing_landscape_logos, IF(V.count_videos
+      < 5, 5 - V.count_videos, 0) AS missing_video, IF(ASA.number_of_audience_signals
+      IS NOT NULL,"Yes","X") AS audience_signals, OCID.ocid FROM `{bq_dataset}.assetgroupsummary`
+      AS AGS INNER JOIN VIDEO_DATA AS V ON AGS.account_id = V.account_id AND AGS.campaign_id
+      = V.campaign_id AND AGS.asset_group_id = V.asset_group_id INNER JOIN TEXT_DATA
+      AS T ON AGS.account_id = T.account_id AND AGS.campaign_id = T.campaign_id AND
+      AGS.asset_group_id = T.asset_group_id INNER JOIN IMAGE_DATA AS I ON AGS.account_id
+      = I.account_id AND AGS.campaign_id = I.campaign_id AND AGS.asset_group_id =
+      I.asset_group_id LEFT JOIN AUDIENCE_SIGNALS_COUNT AS ASA ON AGS.campaign_id
+      = ASA.campaign_id AND AGS.asset_group_id = ASA.asset_group_id LEFT JOIN `{bq_dataset}.ocid_mapping`
+      AS OCID ON OCID.account_id = AGS.account_id WHERE AGS.campaign_id IN (SELECT
+      campaign_id FROM `{bq_dataset}.campaign_settings`);
+    title: 10-assetgroupbestpractices.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.assetgroupbpscore_{yesterday_iso}`
+      AS WITH video_data AS ( SELECT account_id, account_name, campaign_id, campaign_name,
+      asset_group_id, asset_group_name, ad_strength, is_video_uploaded, count_videos,
+      IF(count_videos < 3, CAST(0 AS FLOAT64), CAST(1 as FLOAT64)) AS video_score
+      FROM `{bq_dataset}_bq.video_assets` ), text_data AS ( SELECT account_id, account_name,
+      campaign_id, campaign_name, asset_group_id, count_descriptions, count_headlines,
+      count_long_headlines, count_short_descriptions, count_short_headlines, (IF(count_descriptions
+      >= 4, 1, 0) + IF(count_headlines >= 11, 1, 0) + IF(count_long_headlines >= 2,
+      1, 0)) / 3 AS text_score FROM `{bq_dataset}_bq.text_assets` ), image_data AS
+      ( SELECT account_id, account_name, campaign_id, campaign_name, asset_group_id,
+      count_images, count_logos, count_landscape, count_portrait, count_landscape_logos,
+      count_square, count_square_logos, (IF(count_landscape >= 4, 1, 0) + IF(count_square
+      >= 4, 1, 0) + IF(count_portrait >= 4, 1, 0) + IF(count_landscape_logos >= 1,
+      1, 0) + IF(count_square_logos >= 1, 1, 0)) / 5 AS image_score FROM `{bq_dataset}_bq.image_assets`
+      ), audience_signals_count AS ( SELECT AGS.campaign_id AS campaign_id, AGS.asset_group_id,
+      COUNT(DISTINCT AGS.asset_group_id) AS number_of_audience_signals, FROM `{bq_dataset}.assetgroupsignal`
+      AGS GROUP BY campaign_id, asset_group_id ) SELECT CURRENT_DATE() AS date, AGS.account_id,
+      AGS.account_name, AGS.campaign_id, AGS.campaign_name, AGS.asset_group_id, AGS.asset_group_name,
+      AGS.ad_strength, V.is_video_uploaded, V.video_score, T.text_score, I.image_score,
+      IF(T.count_descriptions < 4, 4 - T.count_descriptions, 0) AS missing_descriptions,
+      IF(T.count_descriptions < 5, 5 - T.count_descriptions, 0) AS missing_descriptions_max,
+      IF(T.count_headlines < 11, 11 - T.count_headlines, 0) AS missing_headlines,
+      IF(T.count_headlines < 15, 15 - T.count_headlines, 0) AS missing_headlines_max,
+      IF(T.count_long_headlines < 2, 2 - T.count_long_headlines, 0) AS missing_long_headlines,
+      IF(T.count_long_headlines < 5, 5 - T.count_long_headlines, 0) AS missing_long_headlines_max,
+      IF((I.count_landscape + I.count_square + I.count_portrait + I.count_logos) <
+      12, 12 - (I.count_landscape + I.count_square + I.count_portrait + I.count_logos),
+      0) AS missing_images, IF((I.count_landscape + I.count_square + I.count_portrait
+      + I.count_logos) < 20, 20 - (I.count_landscape + I.count_square + I.count_portrait
+      + I.count_logos), 0) AS missing_images_max, IF(I.count_landscape < 4, 4 - I.count_landscape,
+      0) AS missing_landscape, IF(I.count_square < 4, 4 - I.count_square, 0) AS missing_square,
+      IF(I.count_portrait < 2, 2 - I.count_portrait, 0) AS missing_portrait, IF(I.count_logos
+      < 2, 2 - I.count_logos, 0) AS missing_logos, IF(I.count_square_logos = 0, 1,
+      0) AS missing_square_logos, IF(I.count_landscape_logos = 0, 1, 0) AS missing_landscape_logos,
+      IF(V.count_videos < 3, 3 - V.count_videos, 0) AS missing_video, IF(V.count_videos
+      < 5, 5 - V.count_videos, 0) AS missing_video_max, IF(ASA.number_of_audience_signals
+      IS NOT NULL,"Yes","X") AS audience_signals FROM `{bq_dataset}.assetgroupsummary`
+      AGS INNER JOIN video_data AS V ON AGS.account_id = V.account_id AND AGS.campaign_id
+      = V.campaign_id AND AGS.asset_group_id = V.asset_group_id INNER JOIN text_data
+      AS T ON AGS.account_id = T.account_id AND AGS.campaign_id = T.campaign_id AND
+      AGS.asset_group_id = T.asset_group_id INNER JOIN image_data AS I ON AGS.account_id
+      = I.account_id AND AGS.campaign_id = I.campaign_id AND AGS.asset_group_id =
+      I.asset_group_id LEFT JOIN audience_signals_count AS ASA ON AGS.campaign_id
+      = ASA.campaign_id AND AGS.asset_group_id = ASA.asset_group_id WHERE AGS.campaign_id
+      IN (SELECT campaign_id FROM `{bq_dataset}.campaign_settings`)
+    title: 11-assetgroupbestpracticessnapshots.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.campaign_scores_union` AS WITH
+      score_types AS ( SELECT 'Video Score' AS score_type UNION ALL SELECT 'Image
+      Score' UNION ALL SELECT 'Text Score' UNION ALL SELECT 'Campaign Best Practice
+      Score' ),  scores_union AS ( SELECT `date`, campaign_name, video_score, image_score,
+      text_score, campaign_bp_score, S.score_type AS score_type FROM `{bq_dataset}_bq.campaign_settings`
+      CROSS JOIN score_types S )  SELECT `date`, campaign_name, score_type, CASE score_type
+      WHEN "Video Score" THEN video_score WHEN "Image Score" THEN image_score WHEN
+      "Text Score" THEN text_score WHEN "Campaign Best Practice Score" THEN campaign_bp_score
+      ELSE NULL END AS score FROM scores_union
+    title: 13-campaign_scores_union.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.video_assets` AS ( WITH asset_group_with_videos
+      AS( SELECT DISTINCT asset_group_id FROM `{bq_dataset}.video_assetgroup_assets`
+      WHERE video_id IS NOT NULL AND video_id != '' ), count_videos AS ( SELECT campaign_id,
+      asset_group_id, COUNT(*) AS count_videos FROM `{bq_dataset}.video_assetgroup_assets`
+      GROUP BY 1, 2 ), Mapping AS ( SELECT asset_group_id, campaign_id, ANY_VALUE(asset_group_name)
+      AS asset_group_name, ANY_VALUE(campaign_name) AS campaign_name, ANY_VALUE(account_id)
+      AS account_id, ANY_VALUE(account_name) AS account_name, ANY_VALUE(ad_strength)
+      AS ad_strength FROM `{bq_dataset}.assetgroupsummary` GROUP BY 1, 2 ) SELECT
+      DISTINCT AGS.account_id, AGS.account_name, AGS.campaign_id, AGS.campaign_name,
+      AGS.asset_group_id, AGS.asset_group_name, AGS.ad_strength, IF(AGV.asset_group_id
+      IS NULL, "X", "Yes") AS is_video_uploaded, COALESCE(CV.count_videos,0) AS count_videos
+      FROM `{bq_dataset}.image_assetgroup_assets` AS IAS LEFT JOIN Mapping AS AGS
+      USING (campaign_id, asset_group_id) LEFT JOIN asset_group_with_videos AS AGV
+      USING (asset_group_id) LEFT JOIN count_videos CV USING (campaign_id,asset_group_id)
+      )
+    title: 05-video_assets.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.poor_assets_summary` AS SELECT
+      COUNT(distinct ABP.campaign_id) AS num_campaigns, COUNT(distinct ABP.asset_group_id)
+      AS num_asset_groups FROM `{bq_dataset}_bq.assetgroupbestpractices` ABP WHERE
+      ad_strength = 'POOR'
+    title: 14-poor_assets_summary.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.placements_view` AS ( WITH Mapping
+      AS ( SELECT campaign_id, ANY_VALUE(campaign_name) AS campaign_name, ANY_VALUE(campaign_status)
+      AS campaign_status, ANY_VALUE(account_name) AS account_name, ANY_VALUE(account_id)
+      AS account_id, FROM `{bq_dataset}.campaign_settings` GROUP BY 1 ) SELECT P.date,
+      'PERFORMANCE_MAX' AS campaign_type, M.campaign_status, M.account_id, M.account_name,
+      M.campaign_id, M.campaign_name, P.placement_name, P.placement, P.placement_type,
+      P.placement_target_url, P.impressions FROM `{bq_dataset}.pmax_placement_view`
+      AS P LEFT JOIN Mapping AS M USING (campaign_id) );
+    title: 20-placements_view.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.campaign_settings` AS WITH TARGETS
+      AS ( SELECT C.date, C.account_id, C.campaign_id, CASE WHEN C.campaign_mcv_troas
+      IS NOT NULL THEN C.campaign_mcv_troas WHEN C.campaign_troas IS NOT NULL THEN
+      C.campaign_troas WHEN C.bidding_strategy_mcv_troas IS NOT NULL THEN C.bidding_strategy_mcv_troas
+      WHEN C.bidding_strategy_troas IS NOT NULL THEN C.bidding_strategy_troas END
+      AS troas, CASE WHEN C.campaign_mc_tcpa IS NOT NULL THEN C.campaign_mc_tcpa WHEN
+      C.campaign_tcpa IS NOT NULL THEN C.campaign_tcpa WHEN C.bidding_strategy_mc_tcpa
+      IS NOT NULL THEN C.bidding_strategy_mc_tcpa WHEN C.bidding_strategy_tcpa IS
+      NOT NULL THEN C.bidding_strategy_tcpa END AS tcpa FROM `{bq_dataset}.campaign_settings`
+      C ), ASSET_GROUP_BEST_PRACTICES AS ( SELECT CAST(DATE(TIMESTAMP(CONCAT(SUBSTR(_TABLE_SUFFIX,0,4),'-',SUBSTR(_TABLE_SUFFIX,5,2),'-',SUBSTR(_TABLE_SUFFIX,7))))-1
+      AS STRING) AS date_, account_id, campaign_id, ROUND(AVG(video_score), 2) AS
+      video_score, ROUND(AVG(text_score), 2) AS text_score, ROUND(AVG(image_score),
+      2) AS image_score FROM `{bq_dataset}_bq.assetgroupbpscore_*` GROUP BY 1,2,3
+      ), CAMPAIGN_BEST_PRACTICES AS ( SELECT CAST(DATE(TIMESTAMP(CONCAT(SUBSTR(_TABLE_SUFFIX,0,4),'-',SUBSTR(_TABLE_SUFFIX,5,2),'-',SUBSTR(_TABLE_SUFFIX,7))))-1
+      AS STRING) AS date_, account_id, campaign_id, campaign_bp_score FROM `{bq_dataset}_bq.campaignbpscore_*`
+      GROUP BY 1,2,3,4 ) SELECT C.date, C.account_id, C.account_name, C.campaign_id,
+      C.campaign_name, C.bidding_strategy, C.budget_amount, C.total_budget, C.budget_type,
+      C.is_shared_budget, C.budget_period, T.troas, T.tcpa, C.gmc_id, C.optiscore,
+      C.cost/1e6 AS cost, C.conversions, C.conversions_value, C.all_conversions_value,
+      ABP.video_score, ABP.text_score, ABP.image_score, CBP.campaign_bp_score, OCID.ocid
+      FROM `{bq_dataset}.campaign_settings` AS C LEFT JOIN TARGETS AS T USING(account_id,
+      campaign_id, date) LEFT JOIN ASSET_GROUP_BEST_PRACTICES AS ABP ON C.date = ABP.date_
+      AND C.account_id = ABP.account_id AND C.campaign_id = ABP.campaign_id LEFT JOIN
+      CAMPAIGN_BEST_PRACTICES AS CBP ON C.date = CBP.date_ AND C.account_id = CBP.account_id
+      AND C.campaign_id = CBP.campaign_id LEFT JOIN `{bq_dataset}.ocid_mapping` AS
+      OCID ON OCID.account_id = C.account_id;
+    title: 12-campaign_settings.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.assetssnapshots_{yesterday_iso}`
+      AS ( WITH Mapping AS ( SELECT asset_group_id, campaign_id, ANY_VALUE(asset_group_name)
+      AS asset_group_name, ANY_VALUE(campaign_name) AS campaign_name, ANY_VALUE(account_id)
+      AS account_id, ANY_VALUE(account_name) AS account_name FROM `{bq_dataset}.assetgroupsummary`
+      GROUP BY 1, 2 ), Assets AS ( SELECT campaign_id, asset_group_id, asset_id, asset_sub_type,
+      text_asset_text, '' AS image_video, '' AS image_video_url FROM `{bq_dataset}.text_assetgroup_assets`
+      GROUP BY ALL UNION ALL SELECT campaign_id, asset_group_id, asset_id, asset_sub_type,
+      '' AS text_asset_text, image_url AS image_video, image_url AS image_video_url
+      FROM `{bq_dataset}.image_assetgroup_assets` GROUP BY ALL UNION ALL SELECT campaign_id,
+      asset_group_id, asset_id, asset_sub_type, '' AS text_asset_text, CONCAT('https://www.youtube.com/watch?v=',
+      video_id) AS image_video, CONCAT('https://i.ytimg.com/vi/', CONCAT(video_id,
+      '/hqdefault.jpg')) AS image_video_url FROM `{bq_dataset}.video_assetgroup_assets`
+      GROUP BY ALL ) SELECT CURRENT_DATE()-1 as day, AGA.account_id, AGA.account_name,
+      AGA.asset_group_id, AGA.asset_group_name, AGA.campaign_name, AGA.campaign_id,
+      A.asset_id, A.asset_sub_type, A.text_asset_text, A.image_video, A.image_video_url
+      FROM Mapping AS AGA FULL JOIN Assets AS A USING (campaign_id, asset_group_id)
+      GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12)
+    title: 06-assetssnapshots.sql
+  parallel_threshold: 1
+- query_parameters:
+    macro:
+      min_impressions: 10
+      max_results: 1000000
+    template: {}
+    macro_expansion: true
+  fetcher_parameters:
+    customer_ids_query: 'SELECT customer.id
+
+      FROM campaign
+
+      WHERE campaign.advertising_channel_type = "PERFORMANCE_MAX"
+
+      '
+  writer:
+  - bq
+  writer_parameters:
+    dataset: pmax_ads
+    array_handling: arrays
+  fetcher: google-ads
+  alias: shopping_performance
+  queries:
+  - text: SELECT campaign.advertising_channel_type AS _, campaign.status AS _, campaign.id
+      AS campaign_id, segments.date AS date, segments.product_type_l1 AS product_type_l1,
+      segments.product_type_l2 AS product_type_l2, segments.product_type_l3 AS product_type_l3,
+      segments.product_type_l4 AS product_type_l4, segments.product_type_l5 AS product_type_l5,
+      metrics.clicks AS clicks, metrics.conversions AS conversions, metrics.impressions
+      AS impressions, metrics.conversions_value AS conversions_value, metrics.cost_micros
+      AS cost FROM shopping_performance_view WHERE campaign.advertising_channel_type
+      = "PERFORMANCE_MAX" AND segments.date >= "{start_date}" AND segments.date <=
+      "{end_date}" AND campaign.status = 'ENABLED' AND metrics.impressions > {min_impressions}
+      ORDER by metrics.impressions DESC, segments.date DESC LIMIT {max_results}
+    title: shoppingperformance_view.sql
+  - text: SELECT segments.date as date, campaign.id as campaign_id, segments.conversion_action_category
+      as conversion_action_category, segments.conversion_action_name as conversion_action_name,
+      metrics.all_conversions as all_conversions, metrics.all_conversions_value as
+      all_conversions_value, metrics.conversions as conversions, metrics.value_per_conversion
+      as value_per_conversion, metrics.view_through_conversions as view_through_conversions
+      FROM campaign WHERE campaign.advertising_channel_type = "PERFORMANCE_MAX" AND
+      segments.date >= "{start_date}" AND segments.date <= "{end_date}" AND campaign.status
+      = 'ENABLED'
+    title: campaignconversionaction.sql
+- query_parameters:
+    macro:
+      dataset: pmax_ads
+    template: {}
+    macro_expansion: true
+  fetcher_parameters:
+    enable_cache: false
+  writer_parameters: {}
+  fetcher: bq
+  alias: shopping_processing
+  queries:
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.shopping_lowclicks_highroas_producttype`
+      AS ( WITH Mapping AS ( SELECT campaign_id, ANY_VALUE(campaign_name) AS campaign_name,
+      ANY_VALUE(account_name) AS account_name, ANY_VALUE(account_id) AS account_id,
+      FROM `{bq_dataset}.campaign_settings` GROUP BY 1 ), no_date_shopping_gads AS
+      ( SELECT Mapping.account_id, Mapping.account_name, Mapping.campaign_id, Mapping.campaign_name,
+      CASE WHEN product_type_l1 IS NOT NULL AND product_type_l1 <> '' THEN COALESCE(product_type_l1,
+      '') || CASE WHEN product_type_l2 IS NOT NULL AND product_type_l2 <> '' THEN
+      ' > ' ELSE '' END || COALESCE(product_type_l2, '') || CASE WHEN product_type_l3
+      IS NOT NULL AND product_type_l3 <> '' THEN ' > ' ELSE '' END || COALESCE(product_type_l3,
+      '') || CASE WHEN product_type_l4 IS NOT NULL AND product_type_l4 <> '' THEN
+      ' > ' ELSE '' END || COALESCE(product_type_l4, '') || CASE WHEN product_type_l5
+      IS NOT NULL AND product_type_l5 <> '' THEN ' > ' ELSE '' END || COALESCE(product_type_l5,
+      '') ELSE '' END AS product_type, SUM(clicks) AS clicks, SUM(conversions) AS
+      conversions, SUM(impressions) AS impressions, SUM(conversions_value) AS conversions_value,
+      SUM(cost/1e6) AS cost, SUM(clicks) / SUM(impressions) AS ctr, FROM `{bq_dataset}.shoppingperformance_view`
+      LEFT JOIN Mapping USING (campaign_id) GROUP BY 1,2,3,4,5 ), AverageClicks AS
+      ( SELECT SUM(clicks) / COUNT(*) AS average_clicks FROM no_date_shopping_gads
+      ) SELECT NDSG.account_id, NDSG.account_name, NDSG.campaign_id, NDSG.campaign_name,
+      NDSG.product_type, CONCAT(NDSG.product_type, ' ||| ', NDSG.campaign_name) AS
+      product_type_plus_campaign, AC.average_clicks, NDSG.clicks, NDSG.impressions,
+      NDSG.cost, NDSG.conversions_value, CASE WHEN NDSG.cost = 0 THEN 0 ELSE NDSG.conversions_value/NDSG.cost
+      END AS roas FROM no_date_shopping_gads NDSG, AverageClicks AC WHERE NDSG.clicks
+      BETWEEN 0.10 * AC.average_clicks AND 0.50 * AC.average_clicks ORDER BY roas
+      DESC LIMIT 15 )
+    title: 18-shopping_lowclicks_highroas_producttype.sql
+  - text: CREATE OR  REPLACE TABLE `{bq_dataset}_bq.shopping_productgroupsummary`
+      AS ( WITH Mapping AS ( SELECT campaign_id, ANY_VALUE(campaign_name) AS campaign_name,
+      ANY_VALUE(account_name) AS account_name, ANY_VALUE(account_id) AS account_id,
+      FROM `{bq_dataset}.campaign_settings` GROUP BY 1 ) SELECT date, Mapping.account_id,
+      Mapping.account_name, Mapping.campaign_name, Mapping.campaign_id, product_type,
+      SUM(clicks) AS clicks, SUM(impressions) AS impressions, SUM(sum_cost) AS sum_cost,
+      SUM(sum_conversions_value) AS sum_conversions_value FROM `{bq_dataset}_bq.shopping_campaignproducttype`
+      LEFT JOIN Mapping USING (campaign_id) GROUP BY 1, 2, 3, 4, 5, 6 )
+    title: 17-shopping_productgroupsummary.sql
+  - text: CREATE OR  REPLACE TABLE `{bq_dataset}_bq.shopping_campaignproducttype`
+      AS ( WITH Mapping AS ( SELECT campaign_id, ANY_VALUE(campaign_name) AS campaign_name,
+      ANY_VALUE(account_name) AS account_name, ANY_VALUE(account_id) AS account_id,
+      FROM `{bq_dataset}.campaign_settings` GROUP BY 1 ) SELECT date, Mapping.account_id,
+      Mapping.account_name, Mapping.campaign_name, Mapping.campaign_id, CASE WHEN
+      product_type_l1 IS NOT NULL AND product_type_l1 <> '' THEN COALESCE(product_type_l1,
+      '') || CASE WHEN product_type_l2 IS NOT NULL AND product_type_l2 <> '' THEN
+      ' > ' ELSE '' END || COALESCE(product_type_l2, '') || CASE WHEN product_type_l3
+      IS NOT NULL AND product_type_l3 <> '' THEN ' > ' ELSE '' END || COALESCE(product_type_l3,
+      '') || CASE WHEN product_type_l4 IS NOT NULL AND product_type_l4 <> '' THEN
+      ' > ' ELSE '' END || COALESCE(product_type_l4, '') || CASE WHEN product_type_l5
+      IS NOT NULL AND product_type_l5 <> '' THEN ' > ' ELSE '' END || COALESCE(product_type_l5,
+      '') ELSE '' END AS product_type, SUM(clicks) AS clicks, SUM(conversions) AS
+      conversions, SUM(impressions) AS impressions, SUM(conversions_value) AS sum_conversions_value,
+      SUM(cost/1e6) AS sum_cost, FROM `{bq_dataset}.shoppingperformance_view` LEFT
+      JOIN Mapping USING (campaign_id) GROUP BY ALL )
+    title: 16-shopping_campaignproducttype.sql
+  - text: CREATE OR REPLACE TABLE `{bq_dataset}_bq.campaign_conversion_action_name`
+      AS ( WITH Mapping AS ( SELECT campaign_id, ANY_VALUE(campaign_name) AS campaign_name,
+      ANY_VALUE(account_name) AS account_name, ANY_VALUE(account_id) AS account_id,
+      FROM `{bq_dataset}.campaign_settings` GROUP BY 1 ) SELECT date, M.account_id,
+      M.account_name, M.campaign_id, M.campaign_name, C.conversion_action_name, C.conversion_action_category,
+      SUM(C.all_conversions) AS all_conversions, SUM(C.all_conversions_value) AS all_conversions_value,
+      SUM(C.conversions) AS conversions, SUM(C.view_through_conversions) AS view_thrupgh_conversions,
+      SUM(C.value_per_conversion) AS value_per_conversion FROM `{bq_dataset}.campaignconversionaction`
+      AS C LEFT JOIN Mapping AS M USING (campaign_id) GROUP BY 1, 2, 3, 4, 5, 6, 7
+      );
+    title: 15-campaign_conversion_action_name.sql
+  parallel_threshold: 1
+name: pmaximizer
+metadata:
+  description: 'Pmax Best Practice Dashboard'
+  version: 0.1.0
+  required_fetchers:
+    google-ads: 1.3.0
