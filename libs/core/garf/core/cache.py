@@ -127,7 +127,22 @@ class GarfCache:
 
   @property
   def size(self) -> int:
-    return 0
+    return self.cache_provider.size
+
+  def prune(self, ttl: int = 30) -> int:
+    """Removes all files older that a lookback in days.
+
+    Args:
+      ttl: Max cache entry size in days.
+
+    Returns:
+      Number of bytes pruned.
+    """
+    return self.cache_provider.prune(ttl)
+
+  def clean(self) -> None:
+    """Removes all cached files."""
+    return self.cache_provider.clean()
 
 
 class RedisGarfCache:
@@ -187,6 +202,16 @@ class RedisGarfCache:
     self.r.set(hash_identifier, data, ex=self.ttl_seconds)
     logger.info('Report is saved to cache: %s', str(hash_identifier))
     return hash_identifier
+
+  @property
+  def size(self) -> int:
+    return 0
+
+  def clean(self):
+    return
+
+  def prune(self, ttl: int = 30) -> int:
+    return 0
 
 
 class FileGarfCache:
