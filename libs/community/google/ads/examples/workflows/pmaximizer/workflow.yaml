@@ -1,0 +1,63 @@
+name: pmaximizer
+metadata:
+  version: '0.1.0'
+  description: |
+    Pmax Best Practice Dashboard
+  required_fetchers:
+    google-ads: "1.3.0"
+
+steps:
+  - fetcher: google-ads
+    fetcher_parameters:
+      customer_ids_query: |
+        SELECT customer.id
+        FROM campaign
+        WHERE campaign.advertising_channel_type = "PERFORMANCE_MAX"
+    alias: performance
+    queries:
+      - folder: queries/ads
+    writer: bq
+    writer_parameters:
+      dataset: pmax_ads
+      array_handling: arrays
+
+  - fetcher: bq
+    fetcher_parameters:
+      enable_cache: False
+    parallel_threshold: 1
+    alias: processing
+    queries:
+      - folder: queries/bq
+    query_parameters:
+      macro:
+        dataset: pmax_ads
+
+  - fetcher: google-ads
+    fetcher_parameters:
+      customer_ids_query: |
+        SELECT customer.id
+        FROM campaign
+        WHERE campaign.advertising_channel_type = "PERFORMANCE_MAX"
+    alias: shopping_performance
+    queries:
+      - folder: queries/retail/queries/ads
+    query_parameters:
+      macro:
+        min_impressions: 10
+        max_results: 1000000
+
+    writer: bq
+    writer_parameters:
+      dataset: pmax_ads
+      array_handling: arrays
+
+  - fetcher:  bq
+    fetcher_parameters:
+      enable_cache: False
+    parallel_threshold: 1
+    alias: shopping_processing
+    queries:
+      - folder: queries/retail/queries/bq
+    query_parameters:
+      macro:
+        dataset: pmax_ads
