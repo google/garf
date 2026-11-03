@@ -85,7 +85,6 @@ class DuckDBExecutor(executor.Executor):
     """
     conn = self._conn
     with self._lock:
-      execution_result = conn.sql(query=query)
-    if execution_result:
-      return report.GarfReport.from_pandas(execution_result.to_df())
+      if execution_result := conn.sql(query=query):
+        return report.GarfReport.from_pandas(execution_result.to_df())
     return report.GarfReport()
