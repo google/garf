@@ -108,14 +108,15 @@ def setup_executor(
         concrete_executor_module.get('import_path')
       )
       executor_modules[source] = executor_module
+    executor_parameters = {
+      'writers': writer_clients,
+      'enable_cache': enable_cache,
+      'cache_ttl_seconds': cache_ttl_seconds,
+    }
+    executor_parameters.update(fetcher_parameters)
     query_executor = getattr(
       executor_module, concrete_executor_module.get('executor_class')
-    )(
-      **fetcher_parameters,
-      writers=writer_clients,
-      enable_cache=enable_cache,
-      cache_ttl_seconds=cache_ttl_seconds,
-    )
+    )(**executor_parameters)
   else:
     concrete_api_fetcher = fetchers.get_report_fetcher(source)
     if simulate:
@@ -123,12 +124,16 @@ def setup_executor(
       concrete_simulator = fetchers.get_report_simulator(source)()
     else:
       concrete_simulator = None
+    combined_fetcher_parameters = {
+      'enable_cache': enable_cache,
+      'cache_ttl_seconds': cache_ttl_seconds
+      or garf.core.cache.DEFAULT_CACHE_TTL,
+    }
+    combined_fetcher_parameters.update(fetcher_parameters)
+
     query_executor = ApiQueryExecutor(
       fetcher=concrete_api_fetcher(
-        **fetcher_parameters,
-        enable_cache=enable_cache,
-        cache_ttl_seconds=cache_ttl_seconds
-        or garf.core.cache.DEFAULT_CACHE_TTL,
+        **combined_fetcher_parameters,
       ),
       report_simulator=concrete_simulator,
       writers=writer_clients,
