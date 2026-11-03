@@ -123,9 +123,17 @@ class BaseQueryElements(pydantic.BaseModel):
   @property
   def hash(self) -> str:
     hash_fields = self.model_dump(exclude_none=True, exclude={'title', 'text'})
+    if cleared_hash_fields := {k: v for k, v in hash_fields.items() if v}:
+      return hashlib.md5(
+        json.dumps(cleared_hash_fields).encode('utf-8'), usedforsecurity=False
+      ).hexdigest()
     return hashlib.md5(
-      json.dumps(hash_fields).encode('utf-8'), usedforsecurity=False
+      self.text.encode('utf-8'), usedforsecurity=False
     ).hexdigest()
+
+  @property
+  def query_parts(self):
+    return []
 
 
 class CommonParametersMixin:

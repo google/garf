@@ -200,7 +200,6 @@ class RedisGarfCache:
       },
     )
     self.r.set(hash_identifier, data, ex=self.ttl_seconds)
-    logger.info('Report is saved to cache: %s', str(hash_identifier))
     return hash_identifier
 
   @property
@@ -299,7 +298,6 @@ class FileGarfCache:
         },
         f,
       )
-    logger.info('Report is saved to cache: %s', str(cached_path))
     return str(cached_path)
 
   @property
