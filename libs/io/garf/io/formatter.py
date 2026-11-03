@@ -41,14 +41,24 @@ class FormattingStrategy:
   @tracer.start_as_current_span('apply_transformations')
   def apply_transformations(self, report: garf_report.GarfReport) -> None:
     """Replaces arrays in the report."""
-    self._format_rows(report.results)
-    self._format_rows(report.results_placeholder)
+    row_type = 'list' if isinstance(report.results[0], list) else 'dict'
+    self._format_rows(report.results, row_type=row_type)
+    self._format_rows(report.results_placeholder, row_type=row_type)
 
-  def _format_rows(self, rows: list[list[api_clients.ApiRowElement]]) -> None:
+  def _format_rows(
+    self,
+    rows: list[list[api_clients.ApiRowElement]],
+    row_type: Literal['list', 'dict'] = 'list',
+  ) -> None:
     """Formats rows of report based on formatting strategy for each element."""
-    for row in rows:
-      for i, field in enumerate(row):
-        row[i] = self.format_field(field)
+    if row_type == 'list':
+      for row in rows:
+        for i, field in enumerate(row):
+          row[i] = self.format_field(field)
+    elif row_type == 'dict':
+      for row in rows:
+        for k, v in row.items():
+          row[k] = self.format_field(v)
 
   def format_field(
     self, field: api_clients.ApiRowElement
