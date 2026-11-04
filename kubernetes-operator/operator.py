@@ -40,6 +40,9 @@ class GarfJob(pydantic.BaseModel):
   server_info: ServerInfo | None = None
   enable_cache: bool = False
   env: list[dict[str, Any]] = pydantic.Field(default_factory=list)
+  as_files: bool = True
+  backoff_limit: int = 1
+  config_maps: dict[str, Any] = pydantic.Field(default_factory=dict)
 
   @property
   def command(self) -> list[str]:
@@ -49,21 +52,70 @@ class GarfJob(pydantic.BaseModel):
   def job_template(
     self,
   ) -> kubernetes.client.models.v1_job_template_spec.V1JobTemplateSpec:
+    volumes = []
+    volume_mounts = []
+    if config := self.config_maps.get('config'):
+      volume_mounts.append(
+        {
+          'name': 'config',
+          'mountPath': '/app/config.yaml',
+          'subPath': 'config.yaml',
+        }
+      )
+      volumes.append(
+        {
+          'name': 'config',
+          'configMap': {
+            'name': config.get('name'),
+            'items': [
+              {
+                'key': config.get('key'),
+                'path': 'config.yaml',
+              }
+            ],
+          },
+        }
+      )
+    if workflow := self.config_maps.get('workflow'):
+      volume_mounts.append(
+        {
+          'name': 'workflow',
+          'mountPath': '/app/workflow.yaml',
+          'subPath': 'workflow.yaml',
+        }
+      )
+      volumes.append(
+        {
+          'name': 'workflow',
+          'configMap': {
+            'name': workflow.get('name'),
+            'items': [
+              {
+                'key': workflow.get('key'),
+                'path': 'workflow.yaml',
+              }
+            ],
+          },
+        }
+      )
     return kubernetes.client.models.v1_job_template_spec.V1JobTemplateSpec(
       spec={
         'template': {
           'spec': {
+            'volumes': volumes,
             'containers': [
               {
                 'name': 'garf',
                 'image': GARF_CLI_IMAGE,
                 'args': self.command,
                 'env': self.env,
+                'volumeMounts': volume_mounts,
               }
             ],
             'restartPolicy': 'OnFailure',
-          }
-        }
+          },
+        },
+        'backoffLimit': self.backoff_limit,
       }
     )
 
@@ -87,8 +139,10 @@ class GarfQueryJob(GarfJob):
     cli_args = [
       'execute',
       ' '.join(q.path for q in self.queries),
-      f' --source {self.source} --writer {self.writer} --as-file',
+      f' --source {self.source} --writer {self.writer}',
     ]
+    if self.as_files:
+      cli_args.append('--as-file')
 
     if server := self.server_info:
       cli_args.append(f'--endpoint={server.url}')
@@ -107,7 +161,9 @@ class WorkflowJob(GarfJob):
 
   @property
   def command(self) -> list[str]:
-    cli_args = ['workflow run', f'-f {self.workflow_path} --as-file']
+    cli_args = ['workflow run', f'-f {self.workflow_path}']
+    if self.as_files:
+      cli_args.append('--as-file')
 
     if server := self.server_info:
       cli_args.append(f'--endpoint={server.url}')
@@ -358,26 +414,39 @@ def _build_job(
   job_type: str,
   logger: kopf.Logger,
 ) -> kubernetes.client.V1CronJob:
+  common_job_parameters = {
+    'config_path': '/app/config.yaml'
+    if spec.get('configMaps', {}).get('config')
+    else spec.get('configPath'),
+    'enable_cache': bool(spec.get('enableCache', False)),
+    'env': spec.get('env'),
+    'backoff_limit': int(spec.get('backoffLimit', 1)),
+    'server_info': spec.get('server'),
+    'config_maps': spec.get('configMaps') or {},
+  }
   if job_type == 'Workflow':
+    workflow_config_map = spec.get('configMaps', {}).get('workflow')
+    if not spec.get('workflowPath') and not workflow_config_map:
+      raise kopf.PermanentError(
+        'Missing workflow definition. Either provide as workflowPath '
+        'or as configMaps.workflow'
+      )
     job = WorkflowJob(
-      workflow_path=spec.get('workflowPath'),
-      config_path=spec.get('configPath'),
-      server_info=spec.get('server'),
+      workflow_path='/app/workflow.yaml'
+      if workflow_config_map
+      else spec.get('workflowPath'),
       selected_aliases=spec.get('selectedAliases', []),
       skipped_aliases=spec.get('skippedAliases', []),
-      enable_cache=bool(spec.get('enableCache', False)),
-      env=spec.get('env'),
+      as_files=bool(spec.get('workflowPath')),
+      **common_job_parameters,
     )
   elif job_type == 'Query':
     job = GarfQueryJob(
       queries=spec.get('queries'),
       source=spec.get('source'),
       writer=spec.get('writer'),
-      config_path=spec.get('configPath'),
       context=spec.get('context') or {},
-      server_info=spec.get('server'),
-      enable_cache=bool(spec.get('enableCache', False)),
-      env=spec.get('env'),
+      **common_job_parameters,
     )
   else:
     raise kopf.PermanentError(f'Unknown job type: {job_type}')
