@@ -33,6 +33,7 @@ from garf.executors import (
   telemetry,
 )
 from garf.executors.telemetry import tracer
+from garf.io import exceptions as io_exceptions
 from garf.io.writers import abs_writer
 from opentelemetry import trace
 
@@ -326,6 +327,19 @@ def write_many(
   results: report.GarfReport,
   title: str,
 ) -> Optional[str]:
+  """Writes report via multiple writers.
+
+  Args:
+    writer_clients: Initialized writers.
+    results: Report to writer.
+    title: Name of the report.
+
+  Returns:
+    Results of writing.
+
+  Raises:
+    GarfIoError: If write failed for one or more writers.
+  """
   span = trace.get_current_span()
   span.set_attributes(
     {
@@ -337,9 +351,10 @@ def write_many(
     }
   )
   if not results:
-    span.set_attribute('executor.report.is_placeholder', True)
+    span.set_attribute('executor.report.placeholder', True)
 
   writing_results = []
+  errors = []
   for writer_client in writer_clients:
     start_time = time.perf_counter()
     logger.debug(
@@ -347,7 +362,16 @@ def write_many(
       title,
       type(writer_client),
     )
-    writing_result = writer_client.write(results, title)
+    try:
+      writing_result = writer_client.write(results, title)
+    except Exception as e:
+      logger.error(
+        'Failed writing data for query %s via %s writer',
+        title,
+        type(writer_client),
+      )
+      errors.append(e)
+      continue
     duration = time.perf_counter() - start_time
     telemetry.write_histogram.record(
       duration, {'writer_class': writer_client.__class__.__name__}
@@ -358,6 +382,8 @@ def write_many(
       type(writer_client),
     )
     writing_results.append(writing_result)
-  logger.info('%s executed successfully', title)
   results.clear()
+  if errors:
+    raise io_exceptions.GarfIoError(errors)
+  logger.info('%s executed successfully', title)
   return writing_results[-1] if writing_results else None
