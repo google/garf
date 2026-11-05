@@ -29,7 +29,7 @@ import pydantic
 import smart_open
 import tenacity
 import yaml
-from garf.community.google.ads import exceptions, query_editor
+from garf.community.google.ads import exceptions, query_editor, version
 from garf.core import api_clients
 from google import protobuf
 from google.ads.googleads import client as googleads_client
@@ -42,6 +42,11 @@ GOOGLE_ADS_API_VERSION: Final = googleads_client._DEFAULT_VERSION
 google_ads_service = importlib.import_module(
   f'google.ads.googleads.{GOOGLE_ADS_API_VERSION}.'
   'services.types.google_ads_service'
+)
+
+tracer = trace.get_tracer(
+  instrumenting_module_name='garf.community.google.ads',
+  instrumenting_library_version=version.__version__,
 )
 
 
@@ -100,8 +105,9 @@ class SearchAds360ApiClient(api_clients.BaseClient):
       response = self.search_ads_360_service.search_stream(request)
       results = []
       query_resource_consumption = 0
-      for batch in response:
-        query_resource_consumption += batch.query_resource_consumption
+      for i, batch in enumerate(response, 1):
+        with tracer.start_as_current_span(f'{i}-parse-rows'):
+          query_resource_consumption += batch.query_resource_consumption
         results.extend(parser.parse_rows(batch.results))
     finally:
       detach(suppress_token)
@@ -366,9 +372,10 @@ class GoogleAdsApiClient(api_clients.BaseClient):
       )
       results = []
       query_resource_consumption = 0
-      for batch in response:
-        query_resource_consumption += batch.query_resource_consumption
-        results.extend(parser.parse_rows(batch.results))
+      for i, batch in enumerate(response, 1):
+        with tracer.start_as_current_span(f'{i}-parse-rows'):
+          query_resource_consumption += batch.query_resource_consumption
+          results.extend(parser.parse_rows(batch.results))
     finally:
       detach(suppress_token)
 
