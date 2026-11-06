@@ -36,6 +36,10 @@ class GarfCacheFileNotFoundError(exceptions.GarfError):
   """Exception for not found cached report."""
 
 
+class GarfCacheFailedWriterError(exceptions.GarfError):
+  """Exception for failing to write to cache."""
+
+
 DEFAULT_CACHE_LOCATION: Final[str] = os.getenv(
   'GARF_CACHE_LOCATION', str(pathlib.Path.home() / '.garf/cache/')
 )
@@ -199,8 +203,11 @@ class RedisGarfCache:
         'columns': fetched_report.column_names,
       },
     )
-    self.r.set(hash_identifier, data, ex=self.ttl_seconds)
-    return hash_identifier
+    try:
+      self.r.set(hash_identifier, data, ex=self.ttl_seconds)
+      return hash_identifier
+    except redis.exceptions.RedisError as e:
+      raise GarfCacheFailedWriterError from e
 
   @property
   def size(self) -> int:
