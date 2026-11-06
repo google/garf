@@ -108,7 +108,7 @@ class TestCli:
     assert result.returncode == 0
     assert json.loads(result.stdout) == self.expected_output
 
-  @pytest.mark.parametrize('command', ['garf', 'grf execute'])
+  @pytest.mark.parametrize('command', ['garf', 'grf execute', 'grf query run'])
   def test_fake_source_from_file(self, tmp_path, command):
     _skip_python_39(command)
     query_path = tmp_path / 'query.sql'
@@ -132,7 +132,7 @@ class TestCli:
     assert result.returncode == 0
     assert json.loads(result.stdout) == self.expected_output
 
-  @pytest.mark.parametrize('command', ['garf', 'grf execute'])
+  @pytest.mark.parametrize('command', ['garf', 'grf execute', 'grf query run'])
   def test_fake_source_from_config(self, tmp_path, command):
     _skip_python_39(command)
     query_path = tmp_path / 'query.sql'
