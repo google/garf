@@ -74,7 +74,7 @@ class ElasticsearchQueryExecutor(executor.Executor):
       cache_ttl_seconds=cache_ttl_seconds,
     )
 
-  @tracer.start_as_current_span('opensearch.execute')
+  @tracer.start_as_current_span('elasticsearch.execute')
   def _execute(
     self, query: str, title: str, context: execution_context.ExecutionContext
   ) -> report.GarfReport:

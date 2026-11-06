@@ -70,11 +70,11 @@ def _get_server_info(options):
   yield metrics.Observation(
     value=1,
     attributes={
-      'version_executors': garf.executors.version.__version__,
-      'version_core': garf.executors.version.core_version,
-      'version_io': garf.executors.version.io_version,
-      'git_commit': commit_sha,
-      'server_type': 'grpc',
+      'garf.version.executors': garf.executors.version.__version__,
+      'garf.version.core': garf.executors.version.core_version,
+      'garf.version.io': garf.executors.version.io_version,
+      'git.commit': commit_sha,
+      'server.type': 'grpc',
     },
   )
 

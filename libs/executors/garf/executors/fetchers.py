@@ -26,7 +26,7 @@ fetcher_modules = {}
 fetcher_classes = {}
 
 
-@tracer.start_as_current_span('find_fetchers')
+@tracer.start_as_current_span('fetcher.find_fetchers')
 def find_fetchers() -> set[str]:
   """Identifiers all available report fetchers."""
   if entrypoints := get_entrypoints('garf'):
@@ -34,7 +34,7 @@ def find_fetchers() -> set[str]:
   return set()
 
 
-@tracer.start_as_current_span('find_simulators')
+@tracer.start_as_current_span('fetcher.find_simulators')
 def find_simulators() -> set[str]:
   """Identifiers all available report simulators."""
   if entrypoints := get_entrypoints('garf_simulator'):
@@ -49,7 +49,7 @@ def get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   return _get_report_fetcher(source)
 
 
-@tracer.start_as_current_span('get_report_fetcher')
+@tracer.start_as_current_span('fetcher.get_report_fetcher')
 def _get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   """Loads report fetcher for a given source.
 
@@ -68,7 +68,7 @@ def _get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   for fetcher in get_entrypoints('garf'):
     if fetcher.name == source:
       try:
-        with tracer.start_as_current_span('load_fetcher_module'):
+        with tracer.start_as_current_span('fetcher.load_fetcher_module'):
           if not (fetcher_module := fetcher_modules.get(source)):
             fetcher_module = fetcher.load()
             fetcher_modules[source] = fetcher_module
@@ -88,14 +88,14 @@ def _get_report_fetcher(source: str) -> type[report_fetcher.ApiReportFetcher]:
   )
 
 
-@tracer.start_as_current_span('get_all_report_fetchers')
+@tracer.start_as_current_span('fetcher.get_all_report_fetchers')
 def get_all_report_fetchers() -> dict[
   str, type[report_fetcher.ApiReportFetcher]
 ]:
   fetchers = {}
   for fetcher in get_entrypoints('garf'):
     try:
-      with tracer.start_as_current_span('load_fetcher_module'):
+      with tracer.start_as_current_span('fetcher.load_fetcher_module'):
         fetcher_module = fetcher.load()
         fetchers[fetcher.name] = get(fetcher_module, fetcher.name)
     except ModuleNotFoundError as e:
@@ -105,7 +105,7 @@ def get_all_report_fetchers() -> dict[
   return fetchers
 
 
-@tracer.start_as_current_span('get_report_simulator')
+@tracer.start_as_current_span('fetcher.get_report_simulator')
 def get_report_simulator(source: str) -> type[simulator.ApiReportSimulator]:
   """Loads report simulator for a given source.
 
@@ -125,23 +125,23 @@ def get_report_simulator(source: str) -> type[simulator.ApiReportSimulator]:
   for sim in get_entrypoints('garf_simulator'):
     if sim.name == source:
       try:
-        with tracer.start_as_current_span('load_simulator_module'):
+        with tracer.start_as_current_span('fetcher.load_simulator_module'):
           simulator_module = sim.load()
-        span.set_attribute('garf.simulator.module', simulator_module.__name__)
+        span.set_attribute('simulator.module', simulator_module.__name__)
         for name, obj in inspect.getmembers(simulator_module):
           if inspect.isclass(obj) and issubclass(
             obj, simulator.ApiReportSimulator
           ):
             span.set_attributes(
               {
-                'garf.simulator.class': name,
-                'garf.simulator.version': obj.version,
+                'simulator.class': name,
+                'simulator.version': obj.version,
               }
             )
             if not hasattr(obj, 'alias'):
               return getattr(simulator_module, name)
             if obj.alias == sim.name:
-              span.set_attribute('garf.simulator.alias', obj.alias)
+              span.set_attribute('simulator.alias', obj.alias)
               return getattr(simulator_module, name)
       except ModuleNotFoundError as e:
         raise simulator.GarfApiReportSimulatorError(
@@ -154,21 +154,21 @@ def get_report_simulator(source: str) -> type[simulator.ApiReportSimulator]:
 
 def get(fetcher_module, alias):
   span = trace.get_current_span()
-  span.set_attribute('garf.fetcher.module', fetcher_module.__name__)
+  span.set_attribute('fetcher.module', fetcher_module.__name__)
   for name, obj in inspect.getmembers(fetcher_module):
     if inspect.isclass(obj) and issubclass(
       obj, report_fetcher.ApiReportFetcher
     ):
       span.set_attributes(
         {
-          'garf.fetcher.class': name,
-          'garf.fetcher.version': obj.version,
+          'fetcher.class': name,
+          'fetcher.version': obj.version,
         }
       )
       if not hasattr(obj, 'alias'):
         return getattr(fetcher_module, name)
       if obj.alias == alias:
-        span.set_attribute('garf.fetcher.alias', obj.alias)
+        span.set_attribute('fetcher.alias', obj.alias)
         return getattr(fetcher_module, name)
   raise report_fetcher.ApiReportFetcherError(
     f'No fetcher available for the source "{alias}"'

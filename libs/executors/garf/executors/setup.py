@@ -96,7 +96,7 @@ def setup_executor(
     span.set_attribute('executor.writers', writers)
     if writer_parameters:
       span.set_attribute(
-        'executor.writer.parameters',
+        'executor.writers.parameters',
         json.dumps({k: v for k, v in writer_parameters.items() if v}),
       )
     writer_clients = writer.setup_writers(writers, writer_parameters)
@@ -142,7 +142,7 @@ def setup_executor(
   if enable_cache and hasattr(query_executor, 'fetcher'):
     span.set_attributes(
       {
-        'executor.cache': True,
+        'executor.cache.enabled': True,
         'executor.cache.location': query_executor.fetcher.cache.location,
         'executor.cache.ttl_seconds': (
           query_executor.fetcher.cache.ttl_seconds

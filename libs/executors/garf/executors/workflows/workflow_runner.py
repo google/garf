@@ -74,14 +74,18 @@ class WorkflowRunner:
     )
 
   def __enter__(self):
-    telemetry.executor_active_workflows.add(1)
+    telemetry.executor_active_workflows.add(
+      1, attributes={'workflow.name': self.workflow.name}
+    )
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
     self.close()
 
   def close(self) -> None:
-    telemetry.executor_active_workflows.add(-1)
+    telemetry.executor_active_workflows.add(
+      -1, attributes={'workflow.name': self.workflow.name}
+    )
     self.workflow.clear()
 
   def _run_parallel_step_thread(
@@ -201,8 +205,8 @@ class WorkflowRunner:
     if enable_cache:
       span.set_attributes(
         {
-          'workflow.enable_cache': enable_cache,
-          'workflow.cache_ttl_seconds': cache_ttl_seconds,
+          'workflow.cache.enabled': enable_cache,
+          'workflow.cache.ttl_seconds': cache_ttl_seconds,
         }
       )
     self.workflow.compile()
@@ -307,7 +311,7 @@ class WorkflowRunner:
         'workflow.step.fetcher': step.fetcher,
       }
       if step.writer:
-        step_attributes.update({'step.writer': step.writer})
+        step_attributes.update({'workflow.step.writers': step.writer})
 
       step_span.set_attributes(step_attributes)
 
