@@ -54,6 +54,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
     ),
     builtin_queries=builtins.BUILTIN_QUERIES,
     parallel_threshold: int = 10,
+    enable_inline_parsing: bool = True,
     **kwargs: str,
   ) -> None:
     """Initializes GoogleAdsApiReportFetcher."""
@@ -72,6 +73,7 @@ class GoogleAdsApiReportFetcher(garf.core.ApiReportFetcher):
       query_specification_builder=query_spec,
       builtin_queries=builtin_queries,
       preprocessors=preprocessors,
+      enable_inline_parsing=enable_inline_parsing,
       **kwargs,
     )
 
