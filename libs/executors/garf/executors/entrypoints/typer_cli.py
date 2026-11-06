@@ -66,15 +66,25 @@ trace.set_tracer_provider(telemetry_tracer)
 typer_app = typer.Typer(
   help='Garf\n\nCall APIs with SQL in your terminal', rich_markup_mode='rich'
 )
-workflow_app = typer.Typer(help='Executes workflow')
+query_app = typer.Typer(help='Executes query.')
+workflow_app = typer.Typer(help='Executes workflow.')
 cache_app = typer.Typer(help='Manages garf cache.')
+info_app = typer.Typer(help='Shows garf setup.')
 typer_app.add_typer(
   workflow_app,
   name='workflow',
 )
 typer_app.add_typer(
+  query_app,
+  name='query',
+)
+typer_app.add_typer(
   cache_app,
   name='cache',
+)
+typer_app.add_typer(
+  info_app,
+  name='info',
 )
 
 
@@ -202,6 +212,10 @@ def _init_runner(
 
 
 @typer_app.command(
+  context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
+)
+@query_app.command(
+  name='run',
   context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
 )
 @tracer.start_as_current_span('garf.cli.execute')
@@ -477,7 +491,16 @@ def deploy(
   )
 
 
-@typer_app.command()
+@info_app.command()
+def writers():
+  """Displays all available executors."""
+  table = Table('Writers')
+  for w in writer.WriterOption:
+    table.add_row(w)
+  console.print(table)
+
+
+@info_app.command()
 def executors():
   """Displays all available executors."""
   table = Table('Executor')
@@ -486,7 +509,7 @@ def executors():
   console.print(table)
 
 
-@typer_app.command()
+@info_app.command()
 def fetchers(
   show_versions: Annotated[
     bool,
