@@ -181,7 +181,7 @@ class YouTubeDataApiClient(api_clients.BaseClient):
   @override
   @telemetry.tracer.start_as_current_span('youtube.get_response')
   def get_response(
-    self, request: query_editor.YouTubeDataApiQuery, parser, **kwargs: str
+    self, request: query_editor.YouTubeDataApiQuery, parser=None, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     span = trace.get_current_span()
     api_parameters = {}
@@ -256,12 +256,16 @@ class YouTubeDataApiClient(api_clients.BaseClient):
               break
           if include_row:
             filtered_results.append(row)
+      if parser:
+        filtered_results = parser.parse_rows(filtered_results)
       return api_clients.GarfApiResponse(
-        results=parser.parse_rows(filtered_results),
+        results=filtered_results,
         results_placeholder=results_placeholder,
       )
+    if parser:
+      results = parser.parse_rows(results)
     return api_clients.GarfApiResponse(
-      results=parser.parse_rows(results),
+      results=results,
       results_placeholder=results_placeholder,
     )
 
@@ -326,7 +330,10 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.YouTubeAnalyticsApiQuery, parser, **kwargs: str
+    self,
+    request: query_editor.YouTubeAnalyticsApiQuery,
+    parser=None,
+    **kwargs: str,
   ) -> api_clients.GarfApiResponse:
     metrics = []
     dimensions = []
@@ -368,7 +375,9 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
         elif header.get('columnType') == 'METRIC':
           response_row['metrics'].update({header_name: row[position]})
       results.append(response_row)
-    return api_clients.GarfApiResponse(results=parser.parse_rows(results))
+    if parser:
+      return api_clients.GarfApiResponse(results=parser.parse_rows(results))
+    return api_clients.GarfApiResponse(results=results)
 
 
 class Comparator(pydantic.BaseModel):

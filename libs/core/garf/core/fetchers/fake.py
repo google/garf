@@ -59,7 +59,13 @@ class FakeApiReportFetcher(report_fetcher.ApiReportFetcher):
         options=api_clients.FakeApiClientOptions(**kwargs),
         **kwargs,
       )
-    super().__init__(api_client, parser, query_specification_builder, **kwargs)
+    super().__init__(
+      api_client,
+      parser,
+      query_specification_builder,
+      enable_inline_parsing=True,
+      **kwargs,
+    )
 
   @classmethod
   def from_data(cls, data: Sequence[dict[str, Any]]) -> FakeApiReportFetcher:
