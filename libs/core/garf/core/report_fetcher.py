@@ -92,6 +92,7 @@ class ApiReportFetcher:
     cache_ttl_seconds: int = 3600,
     preprocessors: dict[str, Processor] | None = None,
     postprocessors: dict[str, Processor] | None = None,
+    enable_inline_parsing: bool = False,
     **kwargs: str,
   ) -> None:
     """Instantiates ApiReportFetcher based on provided api client.
@@ -107,6 +108,7 @@ class ApiReportFetcher:
       cache_ttl_seconds: Maximum lifespan of cached reports.
       preprocessors: Functions to execute before fetching the query.
       postprocessors: Functions to execute after fetching the query.
+      enable_inline_parsing: Parse batches of API response.
     """
     self.api_client = api_client
     self.parser = parser
@@ -118,6 +120,7 @@ class ApiReportFetcher:
     self.builtin_queries = builtin_queries or {}
     self.preprocessors = preprocessors or {}
     self.postprocessors = postprocessors or {}
+    self.enable_inline_parsing = enable_inline_parsing
     self._cache = None
 
   @property
@@ -226,7 +229,12 @@ class ApiReportFetcher:
         )
 
     parser = self.parser(query)
-    response = self.api_client.call_api(request=query, parser=parser, **kwargs)
+    if self.enable_inline_parsing:
+      response = self.api_client.call_api(
+        request=query, parser=parser, **kwargs
+      )
+    else:
+      response = self.api_client.call_api(request=query, **kwargs)
     if not response:
       placeholder_response = api_clients.GarfApiResponse(
         results=response.results_placeholder,
@@ -249,6 +257,8 @@ class ApiReportFetcher:
           span.add_event('Saving to cache failed')
       return placeholder_report
 
+    if not self.enable_inline_parsing:
+      parser.parse_response(response)
     fetched_report = report.GarfReport(
       results=response.results,
       column_names=[c for c in query.column_names if c != '_'],

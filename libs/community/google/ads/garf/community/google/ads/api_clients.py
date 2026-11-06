@@ -91,7 +91,7 @@ class SearchAds360ApiClient(api_clients.BaseClient):
     self.kwargs = kwargs
 
   def get_response(
-    self, request, account: int, parser, **kwargs: str
+    self, request, account: int, parser=None, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     """Executes a single API request for a given customer_id and a query."""
     from garf.community.google.ads import search_ads_360_client
@@ -106,9 +106,12 @@ class SearchAds360ApiClient(api_clients.BaseClient):
       results = []
       query_resource_consumption = 0
       for i, batch in enumerate(response, 1):
-        with tracer.start_as_current_span(f'{i}-parse-rows'):
-          query_resource_consumption += batch.query_resource_consumption
-        results.extend(parser.parse_rows(batch.results))
+        if parser:
+          with tracer.start_as_current_span(f'{i}-parse-rows'):
+            query_resource_consumption += batch.query_resource_consumption
+          results.extend(parser.parse_rows(batch.results))
+        else:
+          results.extend(batch.results)
     finally:
       detach(suppress_token)
     span.set_attributes(
@@ -359,7 +362,7 @@ class GoogleAdsApiClient(api_clients.BaseClient):
     self,
     request: query_editor.GoogleAdsApiQuery,
     account: int,
-    parser,
+    parser=None,
     **kwargs: str,
   ) -> api_clients.GarfApiResponse:
     """Executes a single API request for a given customer_id and GAQL query."""
@@ -373,9 +376,12 @@ class GoogleAdsApiClient(api_clients.BaseClient):
       results = []
       query_resource_consumption = 0
       for i, batch in enumerate(response, 1):
-        with tracer.start_as_current_span(f'{i}-parse-rows'):
-          query_resource_consumption += batch.query_resource_consumption
+        if parser:
+          with tracer.start_as_current_span(f'{i}-parse-rows'):
+            query_resource_consumption += batch.query_resource_consumption
           results.extend(parser.parse_rows(batch.results))
+        else:
+          results.extend(batch.results)
     finally:
       detach(suppress_token)
 
