@@ -41,7 +41,7 @@ telemetry_logger = initialize_logger()
 trace.set_tracer_provider(telemetry_tracer)
 
 
-@tracer.start_as_current_span('garf.entrypoints.cli')
+@tracer.start_as_current_span('garf.cli.execute')
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('query', nargs='*')

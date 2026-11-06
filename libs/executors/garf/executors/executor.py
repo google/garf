@@ -116,8 +116,8 @@ class Executor:
           kwargs=context.fetcher_parameters,
         )
         logger.debug('Cached version of report is loaded')
-        span.set_attribute('report.cached', True)
-        span.set_attribute('report.cached.hash', hash_identifier)
+        span.set_attribute('executor.report.cached', True)
+        span.set_attribute('executor.report.cached.hash', hash_identifier)
         if (
           (results or results.results_placeholder)
           and context.writer != 'unset'
@@ -152,7 +152,7 @@ class Executor:
             logger.debug(
               'Report saved to cache: %s, hash: %s', title, hash_identifier
             )
-            span.set_attribute('report.cached.hash', hash_identifier)
+            span.set_attribute('executor.report.cached.hash', hash_identifier)
           except cache.GarfCacheFailedWriterError:
             logger.warning('Failed to write data to cache for query: %s', title)
             span.add_event('Saving to cache failed')
@@ -212,7 +212,7 @@ class Executor:
     """
     span = trace.get_current_span()
     span.set_attribute('executor.parallel_threshold', parallel_threshold)
-    span.set_attribute('executor.batch_size', len(batch))
+    span.set_attribute('executor.batch.num_queries', len(batch))
     if self.preprocessors and not self.simulator:
       _handle_processors(processors=self.preprocessors, context=context)
     if context.has_gquery:
@@ -347,11 +347,11 @@ def write_many(
   span = trace.get_current_span()
   span.set_attributes(
     {
-      'executor.writers': [
+      'executor.writers.classes': [
         writer.__class__.__name__ for writer in writer_clients
       ],
       'executor.report.num_rows': len(results),
-      'executor.report.num_column': len(results.column_names),
+      'executor.report.num_columns': len(results.column_names),
     }
   )
   if not results:
@@ -378,7 +378,7 @@ def write_many(
       continue
     duration = time.perf_counter() - start_time
     telemetry.write_histogram.record(
-      duration, {'writer_class': writer_client.__class__.__name__}
+      duration, {'writer.class': writer_client.__class__.__name__}
     )
     logger.debug(
       'Finish writing data for query %s via %s writer',

@@ -366,9 +366,9 @@ class Workflow(pydantic.BaseModel):
       workflow_attributes.update({'workflow.version': version})
     if config := self.execution_config:
       if config_version := config.metadata.version:
-        workflow_attributes.update({'config.version': config_version})
+        workflow_attributes.update({'workflow.config.version': config_version})
       if config_name := config.name:
-        workflow_attributes.update({'config.name': config_name})
+        workflow_attributes.update({'workflow.config.name': config_name})
     return workflow_attributes
 
 

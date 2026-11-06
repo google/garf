@@ -125,7 +125,7 @@ def clean():
 @cache_app.command(
   context_settings={'allow_extra_args': True, 'ignore_unknown_options': True},
 )
-@tracer.start_as_current_span('garf.cli.cache.clean')
+@tracer.start_as_current_span('garf.cli.cache.prune')
 def prune(time_days: int):
   """Removed old entries from the cache."""
   pruned_size = cache.GarfCache().prune(time_days)
@@ -312,7 +312,7 @@ def execute(
         f'No execution context found for source {source} in {config}'
       )
   parallel_queries = parallel_threshold > 1
-  with tracer.start_as_current_span('read_queries'):
+  with tracer.start_as_current_span('garf.cli.read_queries'):
     batch = {query: reader_client.read(query) for query in found_queries}
   if server_url:
     if server_type == ServerTypeEnum.http:
@@ -595,8 +595,7 @@ def _send_grpc(
       simulate=simulate,
     )
     response = stub.ExecuteBatch(request)
-    with tracer.start_as_current_span('parse_results batch'):
-      typer.secho(response.results)
+    typer.secho(response.results)
   else:
     for title, text in batch.items():
       request = pb.ExecuteRequest(
@@ -608,8 +607,7 @@ def _send_grpc(
         simulate=simulate,
       )
       response = stub.Execute(request)
-    with tracer.start_as_current_span('parse_results'):
-      typer.secho(response.results)
+    typer.secho(response.results)
 
 
 def _send_http(
@@ -637,8 +635,7 @@ def _send_http(
         f'Server error: {e.response.status_code} - {e.response.json()}'
       ) from e
 
-    with tracer.start_as_current_span('parse_results batch'):
-      typer.secho(response.json().get('results'))
+    typer.secho(response.json().get('results'))
   else:
     endpoint = f'{server_url}/api/execute'
     for title, text in batch.items():
@@ -657,8 +654,7 @@ def _send_http(
         raise exceptions.GarfExecutorError(
           f'Server error: {e.response.status_code} - {e.response.json()}'
         ) from e
-    with tracer.start_as_current_span(f'parse_results {title}'):
-      typer.secho(response.json().get('results'))
+    typer.secho(response.json().get('results'))
 
 
 def _run_worklow_grpc(server_url, workflow_data):
@@ -681,8 +677,7 @@ def _run_worklow_grpc(server_url, workflow_data):
     context=context_pb,
   )
   response = stub.ExecuteWorkflow(request)
-  with tracer.start_as_current_span('parse_results workflow'):
-    typer.secho(response.results)
+  typer.secho(response.results)
 
 
 def _run_worklow_http(server_url, workflow_file):
@@ -702,8 +697,7 @@ def _run_worklow_http(server_url, workflow_file):
       raise exceptions.GarfExecutorError(
         f'Server error: {e.response.status_code} - {e.response.json()}'
       ) from e
-    with tracer.start_as_current_span('parse_results workflow'):
-      typer.secho(response.json().get('results'))
+    typer.secho(response.json().get('results'))
 
 
 @typer_app.callback(
