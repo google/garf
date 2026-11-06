@@ -13,8 +13,10 @@
 # limitations under the License.
 
 # pylint: disable=C0330, g-bad-import-order, g-multiple-import
+from garf.community.google.youtube import version
 from opentelemetry import trace
 
 tracer = trace.get_tracer(
   instrumenting_module_name='garf.community.google.youtube',
+  instrumenting_library_version=version.__version__,
 )
