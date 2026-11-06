@@ -179,15 +179,15 @@ class YouTubeDataApiClient(api_clients.BaseClient):
     return results
 
   @override
-  @telemetry.tracer.start_as_current_span('youtube_data_api.get_response')
+  @telemetry.tracer.start_as_current_span('youtube.get_response')
   def get_response(
-    self, request: query_editor.YouTubeDataApiQuery, **kwargs: str
+    self, request: query_editor.YouTubeDataApiQuery, parser, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     span = trace.get_current_span()
     api_parameters = {}
     for k, v in kwargs.items():
       if k in ALLOWED_PARAMETERS:
-        span.set_attribute(f'youtube_data_api.kwargs.{k}', v)
+        span.set_attribute(f'youtube.api_client.kwargs.{k}', v)
         api_parameters[k] = v
 
     fields = {field.split('.')[0] for field in request.fields}
@@ -196,8 +196,10 @@ class YouTubeDataApiClient(api_clients.BaseClient):
 
     result = self._list(sub_service, part=part_str, **api_parameters)
     results = []
+    idx = 1
     if data := result.get('items'):
       results.extend(data)
+      idx += 1
     while result.get('nextPageToken'):
       result = self._list(
         sub_service,
@@ -207,22 +209,22 @@ class YouTubeDataApiClient(api_clients.BaseClient):
       )
       if data := result.get('items'):
         results.extend(data)
+        idx += 1
 
     if not results:
       types = self.get_types(request)
       results_placeholder = [self._generate_random_values(types)]
     else:
       results_placeholder = None
+    span.set_attribute('youtube.api_client.batch_size', idx)
     if filters := request.filters:
-      span.set_attribute('youtube_data_api.filters', filters)
+      span.set_attribute('youtube.api_client.filters', filters)
       filtered_results = []
       comparators = []
       for filter in filters:
         field, op, value = filter.split(' ')
         comparators.append(Comparator(field=field, operator=op, value=value))
-      with telemetry.tracer.start_as_current_span(
-        'youtube_data_api.apply_filters'
-      ):
+      with telemetry.tracer.start_as_current_span('youtube.apply_filters'):
         for row in results:
           include_row = True
           for comparator in comparators:
@@ -255,10 +257,12 @@ class YouTubeDataApiClient(api_clients.BaseClient):
           if include_row:
             filtered_results.append(row)
       return api_clients.GarfApiResponse(
-        results=filtered_results, results_placeholder=results_placeholder
+        results=parser.parse_rows(filtered_results),
+        results_placeholder=results_placeholder,
       )
     return api_clients.GarfApiResponse(
-      results=results, results_placeholder=results_placeholder
+      results=parser.parse_rows(results),
+      results_placeholder=results_placeholder,
     )
 
   def _list(
@@ -322,7 +326,7 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
 
   @override
   def get_response(
-    self, request: query_editor.YouTubeAnalyticsApiQuery, **kwargs: str
+    self, request: query_editor.YouTubeAnalyticsApiQuery, parser, **kwargs: str
   ) -> api_clients.GarfApiResponse:
     metrics = []
     dimensions = []
@@ -364,7 +368,7 @@ class YouTubeAnalyticsApiClient(api_clients.BaseClient):
         elif header.get('columnType') == 'METRIC':
           response_row['metrics'].update({header_name: row[position]})
       results.append(response_row)
-    return api_clients.GarfApiResponse(results=results)
+    return api_clients.GarfApiResponse(results=parser.parse_rows(results))
 
 
 class Comparator(pydantic.BaseModel):
