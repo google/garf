@@ -55,6 +55,9 @@ spec:
                 enableCache:
                   type: boolean
                   description: "Whether to perform query results caching"
+                backoffLimit:
+                  type: integer
+                  description: "Number of retries for a job"
                 server:
                   type: object
                   properties:
