@@ -242,7 +242,11 @@ class ApiReportFetcher:
       del response
       span.set_attribute('report.placeholder', True)
       if self.enable_cache:
-        self.cache.save(placeholder_report, query, args, kwargs)
+        try:
+          self.cache.save(placeholder_report, query, args, kwargs)
+        except cache.GarfCacheFailedWriterError:
+          logger.warning('Failed to write data to cache for report')
+          span.add_event('Saving to cache failed')
       return placeholder_report
 
     fetched_report = report.GarfReport(
@@ -251,8 +255,12 @@ class ApiReportFetcher:
       query_specification=query,
     )
     if self.enable_cache:
-      hash_identifier = self.cache.save(fetched_report, query, args, kwargs)
-      span.set_attribute('report.cached.hash', hash_identifier)
+      try:
+        hash_identifier = self.cache.save(fetched_report, query, args, kwargs)
+        span.set_attribute('report.cached.hash', hash_identifier)
+      except cache.GarfCacheFailedWriterError:
+        logger.warning('Failed to write data to cache for report')
+        span.add_event('Saving to cache failed')
     return fetched_report
 
   def close(self):

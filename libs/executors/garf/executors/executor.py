@@ -142,16 +142,20 @@ class Executor:
       try:
         results = self._execute(query=query_text, title=title, context=context)
         if self.enable_cache:
-          hash_identifier = self.cache.save(
-            results,
-            query_spec.query,
-            args=context.query_parameters,
-            kwargs=context.fetcher_parameters,
-          )
-          logger.debug(
-            'Report saved to cache: %s, hash: %s', title, hash_identifier
-          )
-          span.set_attribute('report.cached.hash', hash_identifier)
+          try:
+            hash_identifier = self.cache.save(
+              results,
+              query_spec.query,
+              args=context.query_parameters,
+              kwargs=context.fetcher_parameters,
+            )
+            logger.debug(
+              'Report saved to cache: %s, hash: %s', title, hash_identifier
+            )
+            span.set_attribute('report.cached.hash', hash_identifier)
+          except cache.GarfCacheFailedWriterError:
+            logger.warning('Failed to write data to cache for query: %s', title)
+            span.add_event('Saving to cache failed')
       except exceptions.GarfExecutorError as e:
         telemetry.executor_error_counter.add(1, executor_attributes)
         raise e
