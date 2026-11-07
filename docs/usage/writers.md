@@ -25,6 +25,7 @@
 | `pushgateway`   | PushgatewayWriter     | `endpoint`, `namespace`, `job` |
 | `clickhouse`   | ClickHouseWriter     | `host`, `port`, `database`, `username`, `password`, `secure`, `if-exists=replace|append` |
 | `duckdb`   | DuckDBWriter     | `db`, `if-exists=fail|replace|append` |
+| `neo4j`   | Neo4jWriter     | `uri`, `username`, `password`, `database`, `label-prefix`, `relationship-type`, `if-exists=merge|create|delete` |
 
 
 ## Installation
@@ -60,6 +61,7 @@ To install specific writers use:
 * `pip install garf-io[firestore]` for Firestore support
 * `pip install garf-io[pushgateway]` for Prometheus Pushgateway support
 * `pip install garf-io[clickhouse]` for ClickHouse support
+* `pip install garf-io[neo4j]` for Neo4j support
 
 
 ## Usage

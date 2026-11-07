@@ -80,6 +80,7 @@ nav:
       - Pushgateway: usage/writers/pushgateway-writer.md
       - DuckDB: usage/writers/duckdb-writer.md
       - ClickHouse: usage/writers/clickhouse-writer.md
+      - Neo4j: usage/writers/neo4j-writer.md
     - Executors:
       - usage/executors.md
       - Executor Types:
