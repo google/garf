@@ -91,8 +91,11 @@ clickhouse = [
   "clickhouse-connect",
   "pandas",
 ]
+neo4j = [
+  "neo4j",
+]
 all = [
-  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb,clickhouse]"
+  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb,clickhouse,neo4j]"
 ]
 
 [project.entry-points.garf_writer]
@@ -114,6 +117,7 @@ firestore = "garf.io.writers.firestore_writer"
 pushgateway = "garf.io.writers.pushgateway_writer"
 duckdb = "garf.io.writers.duckdb_writer"
 clickhouse = "garf.io.writers.clickhouse_writer"
+neo4j = "garf.io.writers.neo4j_writer"
 
 [tool.setuptools.packages.find]
 where = ["."]
