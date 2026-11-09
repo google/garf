@@ -7,11 +7,6 @@
     pip install garf-io[sheets]
     ```
 
-    `garf` uses [gspread](https://docs.gspread.org/en/latest/) to write data to
-    Google Sheets needs to be [configured](https://docs.gspread.org/en/latest/oauth2.html).
-
-
-
 
 /// tab | cli
 ```bash
@@ -25,7 +20,6 @@ garf query.sql --source API_SOURCE \
 from garf.core import report
 from garf.io.writers import sheets_writer
 
-# Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = sheets_writer.SheetsWriter()
@@ -39,6 +33,7 @@ writer.write(sample_report, 'query')
 
 By default reports are saved to a new spreadsheet.
 You can overwrite it with `spreadsheet_url` parameter.
+If no url is provided new spreadsheet will be created.
 
 /// tab | cli
 ```bash hl_lines="3"
@@ -53,7 +48,6 @@ garf query.sql --source API_SOURCE \
 from garf.core import report
 from garf.io.writers import sheets_writer
 
-# Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = sheets_writer.SheetsWriter(spreadsheet_url=SPREADSHEET_URL)
@@ -79,7 +73,6 @@ garf query.sql --source API_SOURCE \
 from garf.core import report
 from garf.io.writers import sheets_writer
 
-# Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = sheets_writer.SheetsWriter(share_with='your@email.com')
@@ -105,7 +98,6 @@ garf query.sql --source API_SOURCE \
 from garf.core import report
 from garf.io.writers import sheets_writer
 
-# Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = sheets_writer.SheetsWriter(is_append=True)
@@ -115,10 +107,7 @@ writer.write(sample_report, 'query')
 
 ### credentials_file
 
-`garf` uses [gspread](https://docs.gspread.org/en/latest/) to write data to
-Google Sheets which expects credentials file in `~/.config/gspread` folder.
-
-You can adjust it via `credentials_file` parameter.
+`credentials_file` allows you to specify how to connect to Sheets via API.
 
 /// tab | cli
 ```bash hl_lines="3"
@@ -133,7 +122,6 @@ garf query.sql --source API_SOURCE \
 from garf.core import report
 from garf.io.writers import sheets_writer
 
-# Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = sheets_writer.SheetsWriter(credentials_file='/path/to/credentials.json')
@@ -143,8 +131,8 @@ writer.write(sample_report, 'query')
 
 ### auth_mode
 
-By default `garf` will try to authenticate with [user credentials](https://docs.gspread.org/en/latest/oauth2.html#for-end-users-using-oauth-client-id)
-You can overwrite it via `auth_mode` parameter (which can be either `oauth` or `service_account`)
+You can set select one of `auth_mode` modes -  `oauth`,
+`service_account` or `adc` (Application Default Credentials).
 
 /// tab | cli
 ```bash hl_lines="3"
@@ -159,10 +147,60 @@ garf query.sql --source API_SOURCE \
 from garf.core import report
 from garf.io.writers import sheets_writer
 
-# Create example report
 sample_report = report.GarfReport(results=[[1]], column_names=['one'])
 
 writer = sheets_writer.SheetsWriter(auth_mode='service_account')
+writer.write(sample_report, 'query')
+```
+///
+
+### folder_id
+
+By default reports are saved to root folder of Drive.
+You can overwrite it with `folder_id` parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output sheets \
+  --sheets.folder_id=FOLDER_ID
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf.core import report
+from garf.io.writers import sheets_writer
+
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = sheets_writer.SheetsWriter(folder_id=FOLDER_ID)
+writer.write(sample_report, 'query')
+```
+///
+
+### spreadsheet_name
+
+If new spreadsheet is created (when `spreadsheet_url` is not provided) `garf` will
+name is `Garf SOME RANDOM_STRING`.
+You can overwrite it with `spreadsheet_name` parameter.
+
+/// tab | cli
+```bash hl_lines="3"
+garf query.sql --source API_SOURCE \
+  --output sheets \
+  --sheets.spreadsheet_name=my_data
+```
+///
+
+/// tab | python
+```python hl_lines="7"
+from garf.core import report
+from garf.io.writers import sheets_writer
+
+sample_report = report.GarfReport(results=[[1]], column_names=['one'])
+
+writer = sheets_writer.SheetsWriter(spreadsheet_name='my_data')
 writer.write(sample_report, 'query')
 ```
 ///
