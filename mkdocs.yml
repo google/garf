@@ -70,6 +70,7 @@ nav:
       - SQL: usage/writers/sql-writer.md
       - DuckDB: usage/writers/duckdb-writer.md
       - Google Sheets: usage/writers/sheets-writer.md
+      - Google Drive: usage/writers/google-drive-writer.md
       - Excel: usage/writers/excel-writer.md
       - Google PubSub: usage/writers/pubsub-writer.md
       - Kafka: usage/writers/kafka-writer.md

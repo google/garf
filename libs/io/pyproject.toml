@@ -57,7 +57,7 @@ sqlalchemy = [
   "opentelemetry-instrumentation-sqlalchemy",
 ]
 sheets = [
-  "gspread",
+  "google-api-python-client",
 ]
 opensearch = [
   "opensearch-py",
@@ -92,7 +92,7 @@ clickhouse = [
   "pandas",
 ]
 all = [
-  "garf-io[bq,sheets,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb,clickhouse]"
+  "garf-io[bq,sheets,drive,sqlalchemy,excel,opensearch,elasticsearch,kafka,pubsub,mongo,firestore,pushgateway,duckdb,clickhouse]"
 ]
 
 [project.entry-points.garf_writer]
@@ -103,6 +103,8 @@ csv = "garf.io.writers.csv_writer"
 json = "garf.io.writers.json_writer"
 sheet = "garf.io.writers.sheets_writer"
 sheets = "garf.io.writers.sheets_writer"
+drive = "garf.io.writers.drive_writer"
+google-drive = "garf.io.writers.drive_writer"
 sqldb = "garf.io.writers.sqldb_writer"
 opensearch = "garf.io.writers.opensearch_writer"
 elasticsearch = "garf.io.writers.elasticsearch_writer"

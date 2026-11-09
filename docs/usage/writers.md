@@ -8,23 +8,24 @@
 
 | CLI identifier | Writer Class           | Options  |
 |------------| ---------------- | -------- |
-| `console`  | ConsoleWriter    | `page-size=10`,`format=table|json|jsonl`|
-| `csv`      | CsvWriter        | `destination-folder` |
-| `json`     | JsonWriter       | `destination-folder`,`format=json|jsonl`|
-| `bq`       | BigQueryWriter   | `project`, `dataset`, `location`, `write-disposition` |
-| `sqldb`    | SqlAlchemyWriter | `connection-string`, `if-exists=fail|replace|append` |
-| `duckdb`    | DuckDBWriter | `db`, `if-exists=create|replace|append` |
-| `sheets`   | SheetsWriter     | `share-with`, `credentials-file`, `spreadsheet-url`, `is_append=True|False`|
+| `console`  | ConsoleWriter    | `page_size=10`,`format=table|json|jsonl`|
+| `csv`      | CsvWriter        | `destination_folder` |
+| `json`     | JsonWriter       | `destination_folder`,`format=json|jsonl`|
+| `bq`       | BigQueryWriter   | `project`, `dataset`, `location`, `write_disposition` |
+| `sqldb`    | SqlAlchemyWriter | `connection_string`, `if_exists=fail|replace|append` |
+| `duckdb`    | DuckDBWriter | `db`, `if_exists=create|replace|append` |
+| `sheets`   | SheetsWriter     | `share_with`, `credentials_file`, `spreadsheet_url`, `is_append=True|False`, `folder`, `spreadsheet_name`, `auth_mode`|
+| `drive`   | GoogleDriveWriter     | `share_with`, `credentials_file`, `folder`|
 | `elasticsearch`| ElasticsearchWriter| `hosts` |
-| `excel`    | ExcelWriter      | `destination-folder`, `file` |
-| `kafka`    | KafkaWriter      | `bootstrap-servers` |
+| `excel`    | ExcelWriter      | `destination_folder`, `file` |
+| `kafka`    | KafkaWriter      | `bootstrap_servers` |
 | `opensearch`| OpenSearchWriter | `hosts` |
 | `pubsub`   | PubSubWriter     | `project` |
 | `mongo`    | MongoDbWriter     | `connection_string`, `db` |
 | `firestore`   | FirestoreWriter     | `project`, `db` |
 | `pushgateway`   | PushgatewayWriter     | `endpoint`, `namespace`, `job` |
-| `clickhouse`   | ClickHouseWriter     | `host`, `port`, `database`, `username`, `password`, `secure`, `if-exists=replace|append` |
-| `duckdb`   | DuckDBWriter     | `db`, `if-exists=fail|replace|append` |
+| `clickhouse`   | ClickHouseWriter     | `host`, `port`, `database`, `username`, `password`, `secure`, `if_exists=replace|append` |
+| `duckdb`   | DuckDBWriter     | `db`, `if_exists=fail|replace|append` |
 
 
 ## Installation
@@ -48,16 +49,17 @@ To install all writers use the following command `pip install garf-io[all]`.
 To install specific writers use:
 
 * `pip install garf-io[bq]` for BigQuery support
-* `pip install garf-io[sheets]` for Google spreadsheets support
+* `pip install garf-io[sheets]` for Google Sheets support
+* `pip install garf-io[drive]` for Google Drive support
 * `pip install garf-io[sqlalchemy]` for SqlAlchemy support
 * `pip install garf-io[duckdb]` for DuckDB support
 * `pip install garf-io[elasticsearch]` for Elasticsearch support
 * `pip install garf-io[excel]` for Excel support
 * `pip install garf-io[kafka]` for Kafka support
 * `pip install garf-io[opensearch]` for OpenSearch support
-* `pip install garf-io[pubsub]` for PubSub support
+* `pip install garf-io[pubsub]` for Google PubSub support
 * `pip install garf-io[mongo]` for MongoDB support
-* `pip install garf-io[firestore]` for Firestore support
+* `pip install garf-io[firestore]` for Google Firestore support
 * `pip install garf-io[pushgateway]` for Prometheus Pushgateway support
 * `pip install garf-io[clickhouse]` for ClickHouse support
 
