@@ -15,6 +15,8 @@ source in `sources`.
 name: config_name
 metadata:
   version: '0.0.0'
+  labels:
+    key: value
 sources:
   source-alias:
     writer: bq
@@ -31,7 +33,7 @@ global_parameters:
 where:
 
 *   **name**: Optional config name.
-*   **metadata**: Optional metadata on config (version, description).
+*   **metadata**: Optional metadata on config (version, description, labels).
 *   **source-alias**: The source of data. Check [available fetchers](../fetchers/overview.md).
 *   **fetcher_parameters**: Key value pairs used to fine-tune fetching process.
 *   **writer**: Where the data should be saved. Check [available writers](writers.md).

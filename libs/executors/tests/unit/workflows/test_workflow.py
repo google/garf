@@ -52,7 +52,7 @@ class TestWorkflow:
         },
       }
     },
-    'metadata': {'version': '0.0.0'},
+    'metadata': {'version': '0.0.0', 'labels': {'client': 'test'}},
   }
   data = {
     'steps': [
@@ -87,13 +87,10 @@ class TestWorkflow:
     'metadata': {
       'description': 'Test Workflow',
       'required_fetchers': {'fake': '0.0.0'},
+      'labels': {
+        'environment': 'dev',
+      },
     },
-    'edges': [
-      {
-        'from_step': '(start)',
-        'to_step': '(end)',
-      }
-    ],
   }
 
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
@@ -107,10 +104,22 @@ class TestWorkflow:
       metadata={
         'description': 'Test Workflow',
         'required_fetchers': {'fake': '0.0.0'},
+        'labels': {'environment': 'dev'},
       },
       prefix=tmp_workflow.parent,
     )
     assert workflow == expected_workflow
+
+  def test_workflow_attributes(self):
+    workflow = Workflow(**self.data, execution_config=self.config_data)
+    expected_attributes = {
+      'workflow.name': 'test workflow',
+      'workflow.labels.environment': 'dev',
+      'config.name': 'test_config',
+      'config.version': '0.0.0',
+      'config.labels.client': 'test',
+    }
+    assert workflow.attributes == expected_attributes
 
   def test_from_file_returns_correct_config_from_data(self, tmp_path):
     tmp_workflow = tmp_path / 'workflow.yaml'
@@ -123,6 +132,7 @@ class TestWorkflow:
       metadata={
         'description': 'Test Workflow',
         'required_fetchers': {'fake': '0.0.0'},
+        'labels': {'environment': 'dev'},
       },
       prefix=tmp_workflow.parent,
       execution_config=config.Config(**self.config_data),
@@ -143,6 +153,7 @@ class TestWorkflow:
       metadata={
         'description': 'Test Workflow',
         'required_fetchers': {'fake': '0.0.0'},
+        'labels': {'environment': 'dev'},
       },
       prefix=tmp_workflow.parent,
       execution_config=config.Config(**self.config_data),
