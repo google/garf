@@ -3,6 +3,8 @@ metadata:
   description: Test Workflow
   version: 0.0.0
   required_garf_version: 0.0.0
+  labels:
+    example: go
 
 steps:
   - alias: test
