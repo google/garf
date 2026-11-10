@@ -23,6 +23,7 @@ import (
 	"github.com/google/garf/sdk/go/garf/telemetry"
 )
 
+//go:generate protoc --proto_path=../../../protos/ --go_out=./garf --go_opt=paths=source_relative --go-grpc_out=./garf --go-grpc_opt=paths=source_relative ../../../protos/garf.proto
 func main() {
 	if otelEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"); otelEndpoint != "" {
 		ctx := context.Background()
