@@ -18,7 +18,12 @@ use garf::Garf;
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
 {
     let g = Garf::new("http://127.0.0.1:50051");
-    g.execute("SELECT metric.int AS field FROM fake", "test")
-        .await?;
+    g.execute(
+        "SELECT metric.int AS field FROM fake LIMIT 10",
+        "test",
+        "fake",
+        "json",
+    )
+    .await?;
     Ok(())
 }
