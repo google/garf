@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+from typing import Any
 
 import pydantic
 import smart_open
@@ -28,6 +29,10 @@ from garf.core import query_editor
 from garf.executors import utils
 from garf.executors.execution_context import ExecutionContext
 from typing_extensions import Self
+
+
+def _ignore_empty_dict(v: Any) -> bool:
+  return isinstance(v, dict) and not v
 
 
 class ConfigMetadata(pydantic.BaseModel):
@@ -40,6 +45,9 @@ class ConfigMetadata(pydantic.BaseModel):
 
   description: str | None = None
   version: str | None = None
+  labels: dict[str, str] | None = pydantic.Field(
+    default_factory=dict, exclude_if=_ignore_empty_dict
+  )
 
 
 class Config(pydantic.BaseModel):
@@ -63,6 +71,18 @@ class Config(pydantic.BaseModel):
     with smart_open.open(path, 'r', encoding='utf-8') as f:
       data = yaml.safe_load(f)
     return Config(**data)
+
+  @property
+  def attributes(self) -> dict[str, str]:
+    config_attributes = {}
+    if name := self.name:
+      config_attributes.update({'config.name': name})
+    if version := self.metadata.version:
+      config_attributes.update({'config.version': version})
+    if labels := self.metadata.labels:
+      for k, v in labels.items():
+        config_attributes.update({f'config.labels.{k}': v})
+    return config_attributes
 
   def clear(self):
     self.sources.clear()

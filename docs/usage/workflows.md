@@ -23,6 +23,8 @@ metadata:
   required_garf_version: ""
   required_fetchers:
     garf-google-ads: "1.0.0"
+  labels:
+    key: value
 steps:
   - alias: step_name
     fetcher: source_name
@@ -53,6 +55,7 @@ steps:
       * **version**: Version of the workflow.
       * **required_garf_version**: Minimal required version of garf-executors library.
       * **required_fetchers**: Required fetchers and their version.
+      * **labels** : Optional key-value pairs.
 * **steps**: Can be sequential or parallel steps (later is specified with `parallel`)
   *   **fetcher**: The source of data. Check [available fetchers](../fetchers/overview.md).
   *   **fetcher_parameters**: Key value pairs used to fine-tune fetching process.

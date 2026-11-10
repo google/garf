@@ -17,72 +17,50 @@ from garf.executors.config import Config
 
 
 class TestConfig:
+  config_data = {
+    'name': 'test_config',
+    'sources': {
+      'api': {
+        'query_parameters': {
+          'macro_expansion': True,
+          'macro': {
+            'start_date': '2025-01-01',
+          },
+          'template': {
+            'cohorts': 1,
+          },
+        },
+        'fetcher_parameters': {
+          'id': [1, 2, 3],
+        },
+        'writer': 'csv',
+        'writer_parameters': {
+          'destination_folder': '/tmp',
+        },
+      }
+    },
+    'metadata': {'version': '0.0.0', 'labels': {'environment': 'dev'}},
+  }
+
   def test_from_file_returns_correct_context_from_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
-    data = {
-      'name': 'test_config',
-      'sources': {
-        'api': {
-          'query_parameters': {
-            'macro_expansion': True,
-            'macro': {
-              'start_date': '2025-01-01',
-            },
-            'template': {
-              'cohorts': 1,
-            },
-          },
-          'fetcher_parameters': {
-            'id': [1, 2, 3],
-          },
-          'writer': 'csv',
-          'writer_parameters': {
-            'destination_folder': '/tmp',
-          },
-        }
-      },
-      'metadata': {'version': '0.0.0'},
-    }
     with open(tmp_config, 'w', encoding='utf-8') as f:
-      yaml.dump(data, f, encoding='utf-8')
+      yaml.dump(self.config_data, f, encoding='utf-8')
     config = Config.from_file(tmp_config)
-    expected_config = Config(**data)
+    expected_config = Config(**self.config_data)
     assert config == expected_config
 
   def test_save_returns_correct_data(self, tmp_path):
     tmp_config = tmp_path / 'config.yaml'
-    data = {
-      'name': 'test_config',
-      'sources': {
-        'api': {
-          'query_parameters': {
-            'macro_expansion': True,
-            'macro': {
-              'start_date': '2025-01-01',
-            },
-            'template': {
-              'cohorts': 1,
-            },
-          },
-          'fetcher_parameters': {
-            'id': [1, 2, 3],
-          },
-          'writer': 'csv',
-          'writer_parameters': {
-            'destination_folder': '/tmp',
-          },
-        }
-      },
-      'metadata': {'version': '0.0.0'},
-    }
-    config = Config(**data)
+    config = Config(**self.config_data)
     config.save(tmp_config)
     with open(tmp_config, 'r', encoding='utf-8') as f:
       config_data = yaml.safe_load(f)
+    data = dict(self.config_data)
     data['sources']['api']['writer'] = [data['sources']['api']['writer']]
     assert config_data == data
 
-  def test_expand(self):
+  def test_expand_works_with_global_parameters(self):
     data = {
       'global_parameters': {
         'query_parameters': {
@@ -141,3 +119,12 @@ class TestConfig:
     assert config.sources.get('api2').writer_parameters == {
       'destination_folder': '/tmp/data',
     }
+
+  def test_attributes(self):
+    config = Config(**self.config_data)
+    expected_attributes = {
+      'config.name': 'test_config',
+      'config.version': '0.0.0',
+      'config.labels.environment': 'dev',
+    }
+    assert config.attributes == expected_attributes

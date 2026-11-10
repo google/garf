@@ -212,6 +212,7 @@ class WorkflowMetadata(pydantic.BaseModel):
     required_garf_version: Minimal required version of garf-executors package.
     required_fetchers:
       Fetchers needed for workflow with minimal required version.
+    labels: Optional labels to apply to workflow.
   """
 
   description: str | None = None
@@ -220,11 +221,9 @@ class WorkflowMetadata(pydantic.BaseModel):
   required_fetchers: dict[str, str] | None = pydantic.Field(
     default_factory=dict, exclude_if=_ignore_empty_dict
   )
-
-
-class WorkflowEdge(pydantic.BaseModel):
-  from_step: str = '(start)'
-  to_step: str = '(end)'
+  labels: dict[str, str] | None = pydantic.Field(
+    default_factory=dict, exclude_if=_ignore_empty_dict
+  )
 
 
 class Workflow(pydantic.BaseModel):
@@ -247,7 +246,6 @@ class Workflow(pydantic.BaseModel):
   )
   name: str | None = None
   metadata: WorkflowMetadata | None = None
-  edges: list[WorkflowEdge] = pydantic.Field(default_factory=list)
 
   def model_post_init(self, __context__) -> None:
     if self.metadata is None:
@@ -364,11 +362,11 @@ class Workflow(pydantic.BaseModel):
       workflow_attributes.update({'workflow.name': name})
     if version := self.metadata.version:
       workflow_attributes.update({'workflow.version': version})
+    if labels := self.metadata.labels:
+      for k, v in labels.items():
+        workflow_attributes.update({f'workflow.labels.{k}': v})
     if config := self.execution_config:
-      if config_version := config.metadata.version:
-        workflow_attributes.update({'workflow.config.version': config_version})
-      if config_name := config.name:
-        workflow_attributes.update({'workflow.config.name': config_name})
+      workflow_attributes.update(config.attributes)
     return workflow_attributes
 
 
