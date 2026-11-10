@@ -20,28 +20,20 @@ use garf::{
     },
 };
 use pbjson_types::{Struct, Value, value::Kind};
-use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>
 {
     let g = Garf::new("http://127.0.0.1:50051");
-    let mut fields = HashMap::new();
-    fields.insert(
-        "n_rows".to_string(),
-        Value {
-            kind: Some(Kind::NumberValue(10f64)),
-        },
-    );
     let workflow = Workflow {
         name: "test".to_string(),
         steps: vec![WorkflowStep {
             fetcher: "fake".to_string(),
             alias: "test".to_string(),
-            fetcher_parameters: Some(Struct { fields }),
             queries: vec![QueryEntry {
                 query: Some(QueryDefinition {
-                    text: "SELECT metric.int AS field FROM fake".to_string(),
+                    text: "SELECT metric.int AS field FROM fake LIMIT 10"
+                        .to_string(),
                     title: "test".to_string(),
                 }),
             }],

@@ -20,9 +20,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
 {
     let g = Garf::new("http://127.0.0.1:50051");
     let mut batches = HashMap::new();
-    batches.insert("test1", "SELECT metric.int AS field FROM fake");
-    batches.insert("test2", "SELECT metric.int AS field FROM fake");
-    batches.insert("test3", "SELECT metric.int AS field FROM fake");
-    g.execute_batch(batches).await?;
+    batches.insert("test1", "SELECT metric.int AS field FROM fake LIMIT 10");
+    batches.insert("test2", "SELECT metric.int AS field FROM fake LIMIT 10");
+    batches.insert("test3", "SELECT metric.int AS field FROM fake LIMIT 10");
+    g.execute_batch(batches, "fake", "json").await?;
     Ok(())
 }

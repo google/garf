@@ -237,24 +237,22 @@ impl Garf {
         &self,
         query: impl Into<String>,
         title: impl Into<String>,
+        source: impl Into<String>,
+        writer: impl Into<String>,
     ) -> GarfResult {
         let cx = telemetry::create_span("garf-rust", "execute");
         let mut client = self.connect_client().await?;
-        let mut fields = HashMap::new();
-        fields.insert(
-            "n_rows".to_string(),
-            Value {
-                kind: Some(Kind::NumberValue(10f64)),
-            },
-        );
         let payload = garf::ExecuteRequest {
-            source: "fake".to_string(),
-            query: query.into(),
-            title: title.into(),
+            source: source.into(),
+            query: Some(garf::execute_request::Query::QueryDefinition(
+                garf::QueryDefinition {
+                    title: title.into(),
+                    text: query.into(),
+                },
+            )),
             simulate: false,
             context: Some(garf::ExecutionContext {
-                writers: vec!["json".to_string()],
-                fetcher_parameters: Some(Struct { fields }),
+                writer: writer.into(),
                 ..Default::default()
             }),
             ..Default::default()
@@ -285,16 +283,11 @@ impl Garf {
     pub async fn execute_batch(
         &self,
         batch: HashMap<&str, &str>,
+        source: impl Into<String>,
+        writer: impl Into<String>,
     ) -> GarfResult {
         let cx = telemetry::create_span("garf-rust", "execute-batch");
         let mut client = self.connect_client().await?;
-        let mut fields = HashMap::new();
-        fields.insert(
-            "n_rows".to_string(),
-            Value {
-                kind: Some(Kind::NumberValue(10f64)),
-            },
-        );
         let mut queries: Vec<garf::QueryDefinition> = vec![];
         for (k, v) in batch {
             queries.push(garf::QueryDefinition {
@@ -303,12 +296,15 @@ impl Garf {
             });
         }
         let payload = garf::ExecuteBatchRequest {
-            source: "fake".to_string(),
-            batch: queries,
+            source: source.into(),
+            batch: Some(
+                garf::execute_batch_request::Batch::BatchQueryDefinitions(
+                    garf::BatchQueryDefinitions { queries },
+                ),
+            ),
             simulate: false,
             context: Some(garf::ExecutionContext {
-                writers: vec!["json".to_string()],
-                fetcher_parameters: Some(Struct { fields }),
+                writers: vec![writer.into()],
                 ..Default::default()
             }),
             ..Default::default()
@@ -345,8 +341,14 @@ impl Garf {
         let cx = telemetry::create_span("garf-rust", "execute-workflow");
         let mut client = self.connect_client().await?;
         let payload = garf::ExecuteWorkflowRequest {
-            workflow: Some(workflow),
-            config: Some(config),
+            workflow: Some(
+                garf::execute_workflow_request::Workflow::WorkflowData(
+                    workflow,
+                ),
+            ),
+            config: Some(garf::execute_workflow_request::Config::ConfigData(
+                config,
+            )),
             context: Some(execution_context),
             ..Default::default()
         };
