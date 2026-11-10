@@ -137,6 +137,7 @@ message WorkflowMetadata {
   string description = 2;
   string required_garf_version = 3;
   repeated FetcherInfo required_fetchers = 4;
+  google.protobuf.Struct labels = 5;
 }
 
 message WorkflowStep {
@@ -153,6 +154,7 @@ message WorkflowStep {
 message ConfigMetadata {
   string version = 1;
   string description = 2;
+  google.protobuf.Struct labels = 3;
 }
 
 message Config {

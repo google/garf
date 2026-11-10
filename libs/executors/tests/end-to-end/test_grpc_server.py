@@ -217,6 +217,10 @@ def test_execute_workflow(grpc_stub):
   request = pb.ExecuteWorkflowRequest(
     workflow_data=pb.Workflow(
       name='test',
+      metadata=pb.WorkflowMetadata(
+        version='0.0.0',
+        labels={'environment': 'dev'},
+      ),
       steps=[
         pb.WorkflowStep(
           fetcher='fake',
