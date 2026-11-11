@@ -11,20 +11,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v5
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: ~/.cache
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material pymdown-extensions
+      - name: Preserve Helm index.yaml from gh-pages
+        run: |
+          git fetch origin gh-pages:gh-pages || true
+          if git cat-file -e gh-pages:index.yaml 2>/dev/null; then
+            git show gh-pages:index.yaml > docs/index.yaml
+          fi
       - run: mkdocs gh-deploy --force
