@@ -13,10 +13,10 @@
 # limitations under the License.
 """Writes GarfReport to Firestore."""
 
-import logging
 import os
 from typing import Any
 
+import structlog
 from garf.io.writers import nosql_writer
 
 try:
@@ -27,7 +27,7 @@ except ImportError as e:
     '`pip install garf-io[firestore]`'
   ) from e
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class FirestoreWriter(nosql_writer.NoSqlWriter):

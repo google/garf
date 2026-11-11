@@ -18,12 +18,12 @@ Writing to remote storage systems (gs, s3, hadoop, stfp) is also supported.
 
 from __future__ import annotations
 
-import logging
 import os
 import pathlib
 from typing import Optional, Union
 
 import smart_open
+import structlog
 from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
@@ -36,7 +36,7 @@ except ImportError as e:
     'Please install garf-io with Excel support - `pip install garf-io[excel]`'
   ) from e
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ExcelWriter(file_writer.FileWriter):
@@ -95,10 +95,10 @@ class ExcelWriter(file_writer.FileWriter):
       sheet_name = destination
     self.create_dir()
     logger.debug(
-      'Writing %d rows of data to file %s, sheet %s',
-      len(report),
-      output_path,
-      destination,
+      'Writing data',
+      rows=len(report),
+      output_path=output_path,
+      destination=destination,
     )
     with (
       smart_open.open(
@@ -108,5 +108,5 @@ class ExcelWriter(file_writer.FileWriter):
       pd.ExcelWriter(f, engine='openpyxl') as writer,
     ):
       report.to_pandas().to_excel(writer, sheet_name=sheet_name, index=False)
-    logger.debug('Writing to %s is completed', output_path)
+    logger.debug('Writing completed', output_path=output_path)
     return f'[Excel] - at {output_path}'

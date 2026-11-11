@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-executors"
 dependencies = [
-  "garf-core>=1.5.2",
+  "garf-core>=1.6.0",
   "garf-io>=1.5.5",
   "pyyaml",
   "pydantic",

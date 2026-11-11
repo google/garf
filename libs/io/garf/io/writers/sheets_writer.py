@@ -29,6 +29,7 @@ except ImportError as e:
     'Please install garf-io with sheets support - `pip install garf-io[sheets]`'
   ) from e
 
+import structlog
 from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
@@ -37,7 +38,7 @@ from garf.io.writers.abs_writer import AbsWriter
 from opentelemetry import trace
 from typing_extensions import override
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 
@@ -137,7 +138,7 @@ class SheetsWriter(AbsWriter):
       f'https://docs.google.com/spreadsheets/d/{self.spreadsheet_id}'
       f'/edit#gid={sheet_id}'
     )
-    logger.info('Report is saved to %s', sheet_url)
+    logger.info('Report is saved', sheet_url=sheet_url)
     return f'[Sheets] at {sheet_url}'
 
   @property

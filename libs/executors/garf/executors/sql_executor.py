@@ -23,17 +23,17 @@ except ImportError as e:
     '- `pip install garf-executors[sqlalchemy]`'
   ) from e
 
-import logging
 import re
 import uuid
 
 import pandas as pd
+import structlog
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor, utils
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer, sqldb_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SqlAlchemyQueryExecutorError(exceptions.GarfExecutorError):

@@ -31,6 +31,7 @@ import logging
 
 import numpy as np
 import pydantic
+import structlog
 from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
@@ -38,7 +39,7 @@ from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
 from opentelemetry import trace
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 logging.getLogger('pandas_gbq').setLevel(logging.WARNING)
 
 _WRITE_DISPOSITION_MAPPING = {
@@ -180,7 +181,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       bq_dataset.location = self.options.location
       with contextlib.suppress(google_cloud_exceptions.Conflict):
         bq_dataset = self.client.create_dataset(bq_dataset, timeout=30)
-        logger.info('Created new dataset %s', self.options.dataset_id)
+        logger.info('Created new dataset', dataset_id=self.options.dataset_id)
     return bq_dataset
 
   @tracer.start_as_current_span('bq.write')
@@ -208,7 +209,11 @@ class BigQueryWriter(abs_writer.AbsWriter):
     else:
       df = report.to_pandas()
     df = df.replace({np.nan: None})
-    logger.debug('Writing %d rows of data to %s', len(df), destination)
+    logger.debug(
+      'Writing data',
+      rows=len(df),
+      destination=destination,
+    )
     pandas_gbq.to_gbq(
       dataframe=df,
       project_id=self.options.project,
@@ -222,7 +227,7 @@ class BigQueryWriter(abs_writer.AbsWriter):
       range_partitioning_range=self.options.range_partitioning_range,
       clustering_columns=self.options.clustering_columns,
     )
-    logger.debug('Writing to %s is completed', destination)
+    logger.debug('Writing completed', destination=destination)
     return f'[BigQuery] - at {self.options.dataset_id}.{destination}'
 
   def close(self):

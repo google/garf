@@ -108,3 +108,28 @@ class TestWorkflowRunner:
       '2-sqldb-parallel_1',
       '2-sqldb-parallel_2',
     }
+
+  def test_log_attributes_includes_workflow_and_config_metadata(self):
+    workflow = Workflow(
+      name='test_workflow',
+      metadata={'version': '1.2.3'},
+      steps=[
+        {
+          'fetcher': 'fake',
+          'alias': 'test',
+          'queries': [{'query': {'text': 'SELECT 1', 'title': 'q1'}}],
+        }
+      ],
+      execution_config={
+        'name': 'test_config',
+        'metadata': {'version': '0.1.0'},
+        'sources': {},
+      },
+    )
+    runner = workflow_runner.WorkflowRunner(execution_workflow=workflow)
+    assert runner._log_attributes == {
+      'workflow_name': 'test_workflow',
+      'workflow_version': '1.2.3',
+      'config_name': 'test_config',
+      'config_version': '0.1.0',
+    }

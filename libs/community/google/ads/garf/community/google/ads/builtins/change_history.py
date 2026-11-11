@@ -12,15 +12,15 @@
 # limitations under the License.
 import datetime
 import itertools
-import logging
 from typing import Final
 
 import garf.core
 import numpy as np
 import pandas as pd
+import structlog
 from garf.community.google.ads import exceptions
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 MAX_LOOKBACK_DAYS: Final[int] = 28
@@ -183,7 +183,7 @@ def target_cpa_history(
     report_fetcher, account, start_date, end_date
   )
   if not current_target_cpas:
-    logger.debug('No TARGET_CPA campaigns found for account %s', account)
+    logger.debug('No TARGET_CPA campaigns found', account=account)
     return garf.core.GarfReport(
       results_placeholder=[['', 1, 0.0]],
       column_names=['day', 'campaign_id', 'target_cpa'],
@@ -213,7 +213,7 @@ def target_roas_history(
     report_fetcher, account, start_date, end_date
   )
   if not current_target_roas:
-    logger.debug('No TARGET_ROAS campaigns found for account %s', account)
+    logger.debug('No TARGET_ROAS campaigns found', account=account)
     return garf.core.GarfReport(
       results_placeholder=[['', 1, 0.0]],
       column_names=['day', 'campaign_id', 'target_roas'],
@@ -243,7 +243,7 @@ def budget_history(
     report_fetcher, account, start_date, end_date
   )
   if not current_budgets:
-    logger.debug('No active campaigns found for account %s', account)
+    logger.debug('No active campaigns found', account=account)
     return garf.core.GarfReport(
       results_placeholder=[['', 1, 0]],
       column_names=['day', 'campaign_id', 'budget_amount'],
@@ -442,9 +442,9 @@ def _prepare_events(
   ]
   if not events.empty:
     events = _format_partial_event_history(events, event_type)
-    logging.debug('%d %s events were found', len(events), event_type)
+    logger.debug('Events were found', count=len(events), event_type=event_type)
   else:
-    logging.debug('no %s events were found', event_type)
+    logger.debug('No events were found', event_type=event_type)
   return events
 
 

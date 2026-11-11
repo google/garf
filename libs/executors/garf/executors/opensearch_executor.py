@@ -24,14 +24,13 @@ except ImportError as e:
   ) from e
 
 
-import logging
-
+import structlog
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class OpenSearchQueryExecutorError(exceptions.GarfExecutorError):

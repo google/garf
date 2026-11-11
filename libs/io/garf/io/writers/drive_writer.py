@@ -33,6 +33,7 @@ except ImportError as e:
 
 from typing import Literal
 
+import structlog
 from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
@@ -41,7 +42,7 @@ from garf.io.writers.abs_writer import AbsWriter
 from opentelemetry import trace
 from typing_extensions import override
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 

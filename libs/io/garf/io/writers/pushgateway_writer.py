@@ -13,7 +13,6 @@
 # limitations under the License.
 """Writes GarfReport to Prometheus Pushgateway."""
 
-import logging
 import re
 import time
 from collections import abc
@@ -21,11 +20,12 @@ from itertools import zip_longest
 
 import garf.core
 import prometheus_client
+import structlog
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PushgatewayWriter(abs_writer.AbsWriter):
@@ -181,7 +181,7 @@ class PushgatewayWriter(abs_writer.AbsWriter):
       for column, field in virtual_columns.items():
         if column != '_' and ('metric' in field.value or 'metric' in column):
           metrics[column] = self._define_gauge(column, suffix, registry, labels)
-    logger.debug('metrics: %s', metrics)
+    logger.debug('Defined metrics', metrics=metrics)
     return metrics
 
   def _define_labels(
@@ -212,7 +212,7 @@ class PushgatewayWriter(abs_writer.AbsWriter):
     for column, virtual_column in query_specification.virtual_columns.items():
       if virtual_column.type == 'built-in':
         labelnames.append(str(column))
-    logger.debug('labelnames: %s', labelnames)
+    logger.debug('Defined labelnames', labelnames=labelnames)
     return labelnames
 
   def _define_gauge(

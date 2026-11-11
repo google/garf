@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 from collections import defaultdict
 
+import structlog
 from garf.community.google.ads.actors import base
 from garf.community.google.ads.actors.models.label import Label
 from garf.community.google.ads.actors.services import label as label_service
 from google.ads.googleads.client import GoogleAdsClient
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 LABELS_QUERY = """
 SELECT

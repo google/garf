@@ -13,13 +13,13 @@
 # limitations under the License.
 """Defines Campaign Manager 360 API specific query parser."""
 
-import logging
 import re
 
+import structlog
 from garf.core import query_editor, query_parser
 from typing_extensions import Self
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CampaignManager360ApiQuery(query_editor.QuerySpecification):

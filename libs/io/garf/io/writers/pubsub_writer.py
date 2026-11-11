@@ -13,9 +13,9 @@
 # limitations under the License.
 """Writes GarfReport to Google PubSub topic."""
 
-import logging
 import os
 
+import structlog
 from garf.io.writers import topic_writer
 
 try:
@@ -27,7 +27,7 @@ except ImportError as e:
 
 from google.api_core.exceptions import NotFound
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PubSubWriter(topic_writer.TopicWriter):

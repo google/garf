@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import logging
 import os
 from time import time
 from typing import Literal, Optional, Union
@@ -26,11 +25,12 @@ from typing import Literal, Optional, Union
 import garf.core
 import garf.exporter
 import pydantic
+import structlog
 from garf.executors import fetchers
 from garf.exporter import collector
 from garf.exporter.telemetry import tracer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class GarfExporterRuntimeOptions(pydantic.BaseModel):
@@ -131,7 +131,7 @@ class GarfExporterService:
       request.collectors_config
     )
     for col in collectors:
-      logger.info('Exporting from collector: %s', col.title)
+      logger.info('Exporting from collector', collector=col.title)
       start = time()
       report = await self.fetcher.afetch(
         col.query, args=request.query_parameters, **self.source_parameters

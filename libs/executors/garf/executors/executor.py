@@ -19,12 +19,12 @@ from __future__ import annotations
 import asyncio
 import functools
 import inspect
-import logging
 import operator
 import pathlib
 import time
 from typing import Optional
 
+import structlog
 from garf.core import cache, query_editor, report, report_fetcher, simulator
 from garf.executors import (
   exceptions,
@@ -37,7 +37,7 @@ from garf.io import exceptions as io_exceptions
 from garf.io.writers import abs_writer
 from opentelemetry import trace
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class Executor:
@@ -103,7 +103,7 @@ class Executor:
     title = query_spec.query.title
     span.set_attribute('executor.query.title', title)
     span.set_attribute('executor.query.text', query_text)
-    logger.info('Executing script: %s', title)
+    logger.info('Executing script', query_title=title)
     if context.has_gquery:
       context = query_processor.process_gquery(context)
     if self.preprocessors and not self.simulator:
@@ -115,7 +115,11 @@ class Executor:
           args=context.query_parameters,
           kwargs=context.fetcher_parameters,
         )
-        logger.debug('Cached version of report is loaded')
+        logger.debug(
+          'Cached version of report is loaded',
+          query_title=title,
+          cache_hash=hash_identifier,
+        )
         span.set_attribute('executor.report.cached', True)
         span.set_attribute('executor.report.cached.hash', hash_identifier)
         if (
@@ -129,7 +133,7 @@ class Executor:
           telemetry.executor_histogram.record(duration, executor_attributes)
           return write_outputs
       except cache.GarfCacheFileNotFoundError:
-        logger.debug('Cached version not found, generating')
+        logger.debug('Cached version not found, generating', query_title=title)
 
     if len(query_parts := query_spec.query_parts) > 1:
       span.set_attribute('executor.multi_query', True)
@@ -150,11 +154,16 @@ class Executor:
               kwargs=context.fetcher_parameters,
             )
             logger.debug(
-              'Report saved to cache: %s, hash: %s', title, hash_identifier
+              'Report saved to cache',
+              query_title=title,
+              cache_hash=hash_identifier,
             )
             span.set_attribute('executor.report.cached.hash', hash_identifier)
           except cache.GarfCacheFailedWriterError:
-            logger.warning('Failed to write data to cache for query: %s', title)
+            logger.warning(
+              'Failed to write data to cache',
+              query_title=title,
+            )
             span.add_event('Saving to cache failed')
       except exceptions.GarfExecutorError as e:
         telemetry.executor_error_counter.add(1, executor_attributes)
@@ -362,17 +371,18 @@ def write_many(
   for writer_client in writer_clients:
     start_time = time.perf_counter()
     logger.debug(
-      'Start writing data for query %s via %s writer',
-      title,
-      type(writer_client),
+      'Start writing data',
+      query_title=title,
+      writer=type(writer_client).__name__,
     )
     try:
       writing_result = writer_client.write(results, title)
     except Exception as e:
       logger.error(
-        'Failed writing data for query %s via %s writer',
-        title,
-        type(writer_client),
+        'Failed writing data',
+        query_title=title,
+        writer=type(writer_client).__name__,
+        error=str(e),
       )
       errors.append(e)
       continue
@@ -381,13 +391,13 @@ def write_many(
       duration, {'writer.class': writer_client.__class__.__name__}
     )
     logger.debug(
-      'Finish writing data for query %s via %s writer',
-      title,
-      type(writer_client),
+      'Finish writing data',
+      query_title=title,
+      writer=type(writer_client).__name__,
     )
     writing_results.append(writing_result)
   results.clear()
   if errors:
     raise io_exceptions.GarfIoError(errors)
-  logger.info('%s executed successfully', title)
+  logger.info('Query executed successfully', query_title=title)
   return writing_results[-1] if writing_results else None

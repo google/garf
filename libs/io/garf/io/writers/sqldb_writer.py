@@ -23,15 +23,14 @@ except ImportError as e:
     '- `pip install garf-io[sqlalchemy]`'
   ) from e
 
-import logging
-
 import pandas as pd
+import structlog
 from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 DEFAULT_SQLITE_INMEMORY_DB = sqlalchemy.create_engine('sqlite://')
 
@@ -90,7 +89,7 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
       ).head(0)
     else:
       df = report.to_pandas()
-    logger.debug('Writing %d rows of data to %s', len(df), destination)
+    logger.debug('Writing data', rows=len(df), destination=destination)
     write_params = {
       'name': destination,
       'con': self.engine,
@@ -100,7 +99,7 @@ class SqlAlchemyWriter(abs_writer.AbsWriter):
     if dtypes:
       write_params.update({'dtype': dtypes})
     df.to_sql(**write_params)
-    logger.debug('Writing to %s is completed', destination)
+    logger.debug('Writing completed', destination=destination)
     return f'[SQL] - at {destination}'
 
   @property

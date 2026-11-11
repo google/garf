@@ -17,13 +17,13 @@ import contextlib
 import csv
 import io
 import json
-import logging
 import os
 import pathlib
 import pickle
 import socket
 from typing import Literal
 
+import structlog
 import tenacity
 from garf.community.google.campaign_manager import exceptions, query_editor
 from garf.core import api_clients
@@ -44,7 +44,7 @@ _DEFAULT_QUERY_CACHE_DIR = pathlib.Path.home() / '.garf/cm360'
 _CREDENTIALS_PATH = pathlib.Path.home() / '.garf/cm360/token.pickle'
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CampaignManager360ApiClientError(exceptions.CampaignManager360ApiError):
@@ -120,19 +120,19 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
     if cached_ids := self._load_cached_query_reference(query_hash):
       cached_file_id, cached_report_id = cached_ids
       logger.info(
-        'Attempting to reuse CM360 report %s for query hash %s.',
-        cached_report_id,
-        query_hash,
+        'Attempting to reuse CM360 report',
+        report_id=cached_report_id,
+        query_hash=query_hash,
       )
       try:
         status = self._get_report_status(cached_file_id, cached_report_id)
         file_id, report_id = cached_file_id, cached_report_id
       except Exception as exc:  # pylint: disable=broad-except
         logger.warning(
-          'Unable to reuse CM360 report %s (hash %s), regenerating. Reason: %s',
-          cached_report_id,
-          query_hash,
-          exc,
+          'Unable to reuse CM360 report, regenerating',
+          report_id=cached_report_id,
+          query_hash=query_hash,
+          error=str(exc),
         )
         status = None
 
@@ -141,7 +141,10 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
       self._save_cached_query_reference(query_hash, file_id, report_id)
       status = self._get_report_status(file_id, report_id)
 
-    logger.info('Report %s generated successfully. Now downloading.', report_id)
+    logger.info(
+      'Report generated successfully. Now downloading.',
+      report_id=report_id,
+    )
     data = (
       self.client.files()
       .get_media(reportId=report_id, fileId=file_id)
@@ -194,10 +197,10 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
     )
     file_id = report_response['id']
     logger.info(
-      'Query %s is running, report %s has been created and is currently '
-      'being generated.',
-      file_id,
-      report_id,
+      'Query is running, report has been created and is currently '
+      'being generated',
+      file_id=file_id,
+      report_id=report_id,
     )
     return file_id, report_id
 
@@ -220,9 +223,9 @@ class CampaignManager360ApiClient(api_clients.BaseClient):
       return data['file_id'], data['report_id']
     except (OSError, ValueError, KeyError) as exc:
       logger.warning(
-        'Failed to load CM360 cache file %s, ignoring. Reason: %s',
-        cache_path,
-        exc,
+        'Failed to load CM360 cache file, ignoring',
+        cache_path=str(cache_path),
+        error=str(exc),
       )
       return None
 
@@ -328,7 +331,10 @@ def _check_is_report_is_available(get_request) -> bool:
   status = get_request.execute()
   state = status.get('status')
   if state != 'REPORT_AVAILABLE':
-    logger.debug('Report %s it not ready, retrying...', status['reportId'])
+    logger.debug(
+      'Report is not ready, retrying...',
+      report_id=status['reportId'],
+    )
     raise Exception
   return status
 

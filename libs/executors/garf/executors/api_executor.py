@@ -20,9 +20,9 @@ GarfReport and saving it to local/remote storage.
 
 from __future__ import annotations
 
-import logging
 import pathlib
 
+import structlog
 from garf.core import report_fetcher, simulator
 from garf.executors import (
   exceptions,
@@ -35,7 +35,7 @@ from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 from opentelemetry import trace
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ApiQueryExecutor(executor.Executor):
@@ -113,7 +113,7 @@ class ApiQueryExecutor(executor.Executor):
     span.set_attribute(
       'api.client.class', self.fetcher.api_client.__class__.__name__
     )
-    logger.debug('starting query %s', query)
+    logger.debug('Starting query', query_title=title, query=query)
     title = pathlib.Path(title).name.split('.')[0]
     try:
       return self.fetcher.fetch(
@@ -123,7 +123,11 @@ class ApiQueryExecutor(executor.Executor):
         **context.fetcher_parameters,
       )
     except Exception as e:
-      logger.error('%s generated an exception: %s', title, str(e))
+      logger.error(
+        'Query generated an exception',
+        query_title=title,
+        error=str(e),
+      )
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e
@@ -154,7 +158,7 @@ class ApiQueryExecutor(executor.Executor):
     span.set_attribute(
       'api.client.class', self.simulator.api_client.__class__.__name__
     )
-    logger.debug('starting query %s', query)
+    logger.debug('Starting query', query_title=title, query=query)
     title = pathlib.Path(title).name.split('.')[0]
     try:
       return self.simulator.simulate(
@@ -164,7 +168,11 @@ class ApiQueryExecutor(executor.Executor):
         **context.fetcher_parameters,
       )
     except Exception as e:
-      logger.error('%s generated an exception: %s', title, str(e))
+      logger.error(
+        'Query generated an exception',
+        query_title=title,
+        error=str(e),
+      )
       raise exceptions.GarfExecutorError(
         '%s generated an exception: %s', title, str(e)
       ) from e

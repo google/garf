@@ -16,9 +16,9 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
+import structlog
 from garf.community.google.youtube import (
   YouTubeDataApiClient,
   query_editor,
@@ -26,7 +26,7 @@ from garf.community.google.youtube import (
 )
 from garf.core import parsers, simulator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class YouTubeDataApiSimulatorSpecification(simulator.SimulatorSpecification):

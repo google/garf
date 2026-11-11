@@ -16,9 +16,27 @@
 These abstractions are used by an implementation for a concrete reporting API.
 """
 
+import structlog
 from garf.core.base_query import BaseQuery
 from garf.core.report import GarfReport
 from garf.core.report_fetcher import ApiReportFetcher
+
+if not structlog.is_configured():
+  structlog.configure(
+    processors=[
+      structlog.contextvars.merge_contextvars,
+      structlog.stdlib.add_logger_name,
+      structlog.stdlib.add_log_level,
+      structlog.stdlib.PositionalArgumentsFormatter(),
+      structlog.processors.StackInfoRenderer(),
+      structlog.processors.format_exc_info,
+      structlog.processors.UnicodeDecoder(),
+      structlog.dev.ConsoleRenderer(colors=False),
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=False,
+  )
 
 __all__ = [
   'BaseQuery',

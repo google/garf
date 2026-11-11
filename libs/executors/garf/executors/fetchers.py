@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import inspect
-import logging
 import sys
 from importlib.metadata import entry_points
 
@@ -21,7 +20,6 @@ from garf.core import report_fetcher, simulator
 from garf.executors.telemetry import tracer
 from opentelemetry import trace
 
-logger = logging.getLogger(name='garf.executors.fetchers')
 fetcher_modules = {}
 fetcher_classes = {}
 

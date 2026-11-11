@@ -18,8 +18,7 @@
 
 from __future__ import annotations
 
-import logging
-
+import structlog
 from garf.core import (
   api_clients,
   parsers,
@@ -28,7 +27,7 @@ from garf.core import (
   version,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RestApiReportFetcher(report_fetcher.ApiReportFetcher):

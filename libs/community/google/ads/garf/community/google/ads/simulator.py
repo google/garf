@@ -17,15 +17,15 @@
 from __future__ import annotations
 
 import datetime
-import logging
 from typing import Any
 
 import garf.core
+import structlog
 from garf.community.google.ads import parsers, query_editor, version
 from garf.community.google.ads.api_clients import GoogleAdsApiClient
 from garf.core import simulator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class GoogleAdsApiSimulatorSpecification(simulator.SimulatorSpecification):

@@ -17,15 +17,15 @@
 from __future__ import annotations
 
 import datetime
-import logging
 from typing import Any
 
 import pydantic
+import structlog
 from garf.core import api_clients, exceptions, parsers, query_editor, report
 from garf.core.telemetry import tracer
 from opentelemetry import trace
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class GarfApiReportSimulatorError(exceptions.GarfError):

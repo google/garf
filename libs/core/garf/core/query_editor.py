@@ -18,19 +18,19 @@ from __future__ import annotations
 import datetime
 import hashlib
 import json
-import logging
 import re
 from typing import Generator, Union
 
 import jinja2
 import pydantic
 import sqlparse
+import structlog
 from dateutil import relativedelta
 from garf.core import query_parser
 from jinja2.sandbox import SandboxedEnvironment
 from typing_extensions import Self, TypeAlias
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
 

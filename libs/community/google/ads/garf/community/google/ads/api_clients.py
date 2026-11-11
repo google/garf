@@ -16,7 +16,6 @@
 from __future__ import annotations
 
 import importlib
-import logging
 import os
 import re
 from pathlib import Path
@@ -27,6 +26,7 @@ import google.auth
 import proto
 import pydantic
 import smart_open
+import structlog
 import tenacity
 import yaml
 from garf.community.google.ads import exceptions, query_editor, version
@@ -37,6 +37,8 @@ from google.api_core import exceptions as google_exceptions
 from opentelemetry import trace
 from opentelemetry.context import attach, detach, set_value
 from typing_extensions import override
+
+logger = structlog.get_logger(__name__)
 
 GOOGLE_ADS_API_VERSION: Final = googleads_client._DEFAULT_VERSION
 google_ads_service = importlib.import_module(
@@ -470,10 +472,10 @@ class GoogleAdsApiClient(api_clients.BaseClient):
       Instantiated GoogleAdsApiClient.
     """
     if use_proto_plus != ads_client.use_proto_plus:
-      logging.warning(
+      logger.warning(
         'Mismatch between values of "use_proto_plus" in '
-        'GoogleAdsClient and GoogleAdsApiClient, setting '
-        f'"use_proto_plus={use_proto_plus}"'
+        'GoogleAdsClient and GoogleAdsApiClient',
+        use_proto_plus=use_proto_plus,
       )
     return cls(
       ads_client=ads_client,

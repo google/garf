@@ -17,7 +17,6 @@ import contextlib
 import csv
 import io
 import json
-import logging
 import os
 import pathlib
 import pickle
@@ -25,6 +24,7 @@ import socket
 from typing import Literal
 
 import smart_open
+import structlog
 import tenacity
 from garf.community.google.bid_manager import exceptions, query_editor
 from garf.core import api_clients
@@ -43,7 +43,7 @@ _DEFAULT_QUERY_CACHE_DIR = pathlib.Path.home() / '.garf/bid_manager'
 _CREDENTIALS_PATH = pathlib.Path.home() / '.garf/bid_manager/token.pickle'
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class BidManagerApiClientError(exceptions.BidManagerApiError):
@@ -114,19 +114,19 @@ class BidManagerApiClient(api_clients.BaseClient):
     if cached_ids := self._load_cached_query_reference(query_hash):
       cached_query_id, cached_report_id = cached_ids
       logger.info(
-        'Attempting to reuse DV360 report %s for query hash %s.',
-        cached_report_id,
-        query_hash,
+        'Attempting to reuse DV360 report',
+        report_id=cached_report_id,
+        query_hash=query_hash,
       )
       try:
         status = self._get_report_status(cached_query_id, cached_report_id)
         query_id, report_id = cached_query_id, cached_report_id
       except Exception as exc:  # pylint: disable=broad-except
         logger.warning(
-          'Unable to reuse DV360 report %s (hash %s), regenerating. Reason: %s',
-          cached_report_id,
-          query_hash,
-          exc,
+          'Unable to reuse DV360 report, regenerating',
+          report_id=cached_report_id,
+          query_hash=query_hash,
+          error=str(exc),
         )
         status = None
 
@@ -135,7 +135,10 @@ class BidManagerApiClient(api_clients.BaseClient):
       self._save_cached_query_reference(query_hash, query_id, report_id)
       status = self._get_report_status(query_id, report_id)
 
-    logger.info('Report %s generated successfully. Now downloading.', report_id)
+    logger.info(
+      'Report generated successfully. Now downloading.',
+      report_id=report_id,
+    )
     with smart_open.open(
       status['metadata']['googleCloudStoragePath'], 'r', encoding='utf-8'
     ) as f:
@@ -183,10 +186,10 @@ class BidManagerApiClient(api_clients.BaseClient):
     query_id = report_response['key']['queryId']
     report_id = report_response['key']['reportId']
     logger.info(
-      'Query %s is running, report %s has been created and is currently '
-      'being generated.',
-      query_id,
-      report_id,
+      'Query is running, report has been created and is currently '
+      'being generated',
+      query_id=query_id,
+      report_id=report_id,
     )
     return query_id, report_id
 
@@ -213,9 +216,9 @@ class BidManagerApiClient(api_clients.BaseClient):
       return data['query_id'], data['report_id']
     except (OSError, ValueError, KeyError) as exc:
       logger.warning(
-        'Failed to load DV360 cache file %s, ignoring. Reason: %s',
-        cache_path,
-        exc,
+        'Failed to load DV360 cache file, ignoring',
+        cache_path=str(cache_path),
+        error=str(exc),
       )
       return None
 
@@ -304,7 +307,8 @@ def _check_if_report_is_done(get_request) -> bool:
   state = status.get('metadata').get('status').get('state')
   if state != 'DONE':
     logger.debug(
-      'Report %s it not ready, retrying...', status['key']['reportId']
+      'Report is not ready, retrying...',
+      report_id=status['key']['reportId'],
     )
     raise Exception
   return status

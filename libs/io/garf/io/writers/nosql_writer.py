@@ -15,15 +15,15 @@
 
 import enum
 import itertools
-import logging
 from typing import Any
 
+import structlog
 from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PushStrategy(str, enum.Enum):

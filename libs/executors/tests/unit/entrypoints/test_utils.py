@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+import json
+
 import pytest
 from garf.executors.entrypoints import utils
 
@@ -127,7 +129,34 @@ class TestParamsParser:
 
 @pytest.mark.parametrize(
   'logger_type',
-  ['local', 'rich', utils.LoggerEnum.local, utils.LoggerEnum.rich],
+  [
+    'local',
+    'rich',
+    'json',
+    utils.LoggerEnum.local,
+    utils.LoggerEnum.rich,
+    utils.LoggerEnum.json,
+  ],
 )
 def test_init_logging(logger_type):
   assert utils.init_logging(logger_type=logger_type)
+
+
+def test_init_logging_json_outputs_structured_json(capsys):
+  logger = utils.init_logging(logger_type='json', name='garf.test')
+  logger.info('Executing script', query_title='my_query', rows=10)
+  captured = capsys.readouterr()
+  payload = json.loads(captured.out.strip())
+  assert payload['event'] == 'Executing script'
+  assert payload['query_title'] == 'my_query'
+  assert payload['rows'] == 10
+  assert payload['level'] == 'info'
+  assert payload['logger'] == 'garf.test'
+
+
+def test_init_logging_local_outputs_key_values(capsys):
+  logger = utils.init_logging(logger_type='local', name='garf.test')
+  logger.info('Executing script', query_title='my_query')
+  captured = capsys.readouterr()
+  assert 'Executing script' in captured.out
+  assert 'query_title=my_query' in captured.out

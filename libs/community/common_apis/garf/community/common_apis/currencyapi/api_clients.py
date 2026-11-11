@@ -16,13 +16,12 @@
 
 from __future__ import annotations
 
-import logging
-
 import requests
+import structlog
 from garf.community.common_apis import exceptions
 from garf.core import api_clients, query_editor
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 _DEFAULT_ENDPOINT = 'https://api.currencyapi.com/v3'
 
@@ -125,8 +124,8 @@ class CurrencyApiClient(api_clients.RestApiClient):
       # Handle missing or empty data gracefully.
       if not data:
         logger.warning(
-          'CurrencyAPI response contained no data for resource %r.',
-          request.resource_name,
+          'CurrencyAPI response contained no data',
+          resource=request.resource_name,
         )
         return api_clients.GarfApiResponse(results=[])
 

@@ -16,13 +16,12 @@
 
 from __future__ import annotations
 
-import logging
-
 import requests
+import structlog
 from garf.community.common_apis import exceptions
 from garf.core import api_clients, query_editor
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 _DEFAULT_ENDPOINT = 'https://api.openweathermap.org/data/2.5'
 

@@ -19,18 +19,18 @@ Writing to remote storage systems (gs, s3, hadoop, stfp) is also supported.
 from __future__ import annotations
 
 import csv
-import logging
 import os
 import pathlib
 from typing import Literal, Union
 
 import smart_open
+import structlog
 from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import file_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CsvWriter(file_writer.FileWriter):
@@ -91,7 +91,7 @@ class CsvWriter(file_writer.FileWriter):
       suffix=self.options.suffix,
     )
     self.create_dir()
-    logger.debug('Writing %d rows of data to %s', len(report), destination)
+    logger.debug('Writing data', rows=len(report), destination=destination)
     output_path = os.path.join(self.destination_folder, destination)
     with smart_open.open(
       output_path,
@@ -106,5 +106,5 @@ class CsvWriter(file_writer.FileWriter):
       )
       writer.writerow(report.column_names)
       writer.writerows(report.results)
-    logger.debug('Writing to %s is completed', output_path)
+    logger.debug('Writing completed', output_path=output_path)
     return f'[CSV] - at {output_path}'

@@ -13,13 +13,13 @@
 # limitations under the License.
 """Defines Bid Manager API specific query parser."""
 
-import logging
 import re
 
+import structlog
 from garf.core import query_editor, query_parser
 from typing_extensions import Self
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class BidManagerApiQuery(query_editor.QuerySpecification):
