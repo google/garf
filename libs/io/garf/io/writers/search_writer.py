@@ -13,15 +13,15 @@
 # limitations under the License.
 """Shared functionality of writing GarfReport to Search index."""
 
-import logging
 from typing import Any, List, Union
 
+import structlog
 from garf.core import report as garf_report
 from garf.io import formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SearchWriter(abs_writer.AbsWriter):
@@ -61,7 +61,7 @@ class SearchWriter(abs_writer.AbsWriter):
     """Creates index if it does not exist."""
     if not self.client.indices.exists(index=index_name):
       self.client.indices.create(index=index_name)
-      logger.info(f'Created index {index_name}')
+      logger.info('Created index', index_name=index_name)
 
   def write(self, report: garf_report.GarfReport, destination: str) -> str:
     """Writes report.

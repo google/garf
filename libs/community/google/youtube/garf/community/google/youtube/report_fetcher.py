@@ -15,12 +15,12 @@
 
 import functools
 import itertools
-import logging
 import operator
 from collections.abc import Iterable, MutableSequence
 from typing import Final
 
 import garf.core.query_editor
+import structlog
 from garf.community.google.youtube import (
   api_clients,
   builtins,
@@ -32,7 +32,7 @@ from garf.community.google.youtube import (
 from garf.core import parsers, report, report_fetcher
 from typing_extensions import override
 
-logger = logging.getLogger('garf.community.google.youtube.report_fetcher')
+logger = structlog.get_logger('garf.community.google.youtube.report_fetcher')
 
 MAX_BATCH_SIZE: Final[int] = 50
 
@@ -86,7 +86,7 @@ class YouTubeDataApiReportFetcher(report_fetcher.ApiReportFetcher):
       if not isinstance(ids, MutableSequence):
         ids = ids.split(',')
       if not ids:
-        logger.warning('No values provided for %s parameter', name)
+        logger.warning('No values provided for parameter', parameter=name)
         placeholder_report = simulator.YouTubeDataApiReportSimulator(
           api_client=self.api_client,
           parser=self.parser,

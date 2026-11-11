@@ -15,6 +15,7 @@
 
 import logging
 
+import structlog
 from garf.io.writers import topic_writer
 
 try:
@@ -24,7 +25,7 @@ except ImportError as e:
     'Please install garf-io with Kafka support - `pip install garf-io[kafka]`'
   ) from e
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 logging.getLogger('kafka.conn').setLevel(logging.WARNING)
 
 

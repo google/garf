@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "garf-media-tagging"
 dependencies = [
+  "garf-core>=1.6.0",
   "media-tagging[server]",
 ]
 authors = [
@@ -12,7 +13,7 @@ authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},
 ]
 license = {text = "Apache 2.0"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "Garf implementation for media tagger"
 readme = "README.md"
 classifiers = [

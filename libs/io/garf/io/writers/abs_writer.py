@@ -17,15 +17,15 @@ from __future__ import annotations
 
 import abc
 import asyncio
-import logging
 from typing import Literal
 
 import pydantic
+import structlog
 from garf.core.report import GarfReport
 from garf.io import formatter
 from garf.io.telemetry import tracer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class WriterOptions(pydantic.BaseModel):

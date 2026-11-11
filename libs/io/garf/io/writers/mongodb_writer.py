@@ -13,9 +13,9 @@
 # limitations under the License.
 """Writes GarfReport to MongoDB."""
 
-import logging
 from typing import Any
 
+import structlog
 from garf.io.writers import nosql_writer
 
 try:
@@ -25,7 +25,7 @@ except ImportError as e:
     'Please install garf-io with MongoDB support - `pip install garf-io[mongo]`'
   ) from e
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MongoDbWriter(nosql_writer.NoSqlWriter):

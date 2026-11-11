@@ -17,17 +17,18 @@
 """GarfExporter is responsible for preparing data for Prometheus."""
 
 from __future__ import annotations
-from itertools import zip_longest
-import logging
+
 import time
 from collections import abc
 from collections.abc import Sequence
+from itertools import zip_longest
 
 import garf.core
 import prometheus_client
+import structlog
 from garf.exporter.telemetry import tracer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class GarfExporter:
@@ -161,7 +162,9 @@ class GarfExporter:
     metrics = {}
     labels = self._define_labels(query_specification)
     non_virtual_columns = self._get_non_virtual_columns(query_specification)
-    for column, field in zip_longest(non_virtual_columns, query_specification.fields):
+    for column, field in zip_longest(
+      non_virtual_columns, query_specification.fields
+    ):
       if not column or not field:
         continue
       if 'metric' in field or 'metric' in column:
@@ -169,7 +172,7 @@ class GarfExporter:
     if virtual_columns := query_specification.virtual_columns:
       for column, field in virtual_columns.items():
         metrics[column] = self._define_gauge(column, suffix, labels)
-    logger.debug('metrics: %s', metrics)
+    logger.debug('Defined metrics', metrics=metrics)
     return metrics
 
   def _define_labels(
@@ -190,12 +193,14 @@ class GarfExporter:
     """
     labelnames = []
     non_virtual_columns = self._get_non_virtual_columns(query_specification)
-    for column, field in zip_longest(non_virtual_columns, query_specification.fields):
+    for column, field in zip_longest(
+      non_virtual_columns, query_specification.fields
+    ):
       if not column or not field:
         continue
       if 'metric' not in field and 'metric' not in column:
         labelnames.append(str(column))
-    logger.debug('labelnames: %s', labelnames)
+    logger.debug('Defined labelnames', labelnames=labelnames)
     return labelnames
 
   def _define_gauge(

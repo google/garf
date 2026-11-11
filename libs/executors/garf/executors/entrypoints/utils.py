@@ -21,6 +21,7 @@ import sys
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import Any
 
+import structlog
 from rich import logging as rich_logging
 
 
@@ -110,23 +111,54 @@ class LoggerEnum(str, enum.Enum):
   local = 'local'
   rich = 'rich'
   gcloud = 'gcloud'
+  json = 'json'
+
+
+def _drop_rich_duplicates(
+  logger: Any, method_name: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
+  event_dict.pop('timestamp', None)
+  event_dict.pop('level', None)
+  event_dict.pop('logger', None)
+  return event_dict
 
 
 def init_logging(
   loglevel: str = 'INFO',
   logger_type: str | LoggerEnum = 'local',
   name: str = __name__,
-) -> logging.Logger:
+) -> structlog.stdlib.BoundLogger:
   loglevel = getattr(logging, loglevel)
+  shared_processors = [
+    structlog.contextvars.merge_contextvars,
+    structlog.stdlib.add_logger_name,
+    structlog.stdlib.add_log_level,
+    structlog.stdlib.PositionalArgumentsFormatter(),
+    structlog.processors.TimeStamper(fmt='%Y-%m-%d %H:%M:%S', utc=False),
+    structlog.processors.StackInfoRenderer(),
+    structlog.processors.UnicodeDecoder(),
+  ]
+  structlog.configure(
+    processors=[
+      *shared_processors,
+      structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=False,
+  )
+
   if logger_type == 'rich':
-    logging.basicConfig(
-      format='%(message)s',
-      level=loglevel,
-      datefmt='%Y-%m-%d %H:%M:%S',
-      handlers=[
-        rich_logging.RichHandler(rich_tracebacks=True),
+    formatter = structlog.stdlib.ProcessorFormatter(
+      foreign_pre_chain=shared_processors,
+      processors=[
+        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        _drop_rich_duplicates,
+        structlog.dev.ConsoleRenderer(colors=False),
       ],
     )
+    handler = rich_logging.RichHandler(rich_tracebacks=True)
+    handler.setFormatter(formatter)
   elif logger_type == 'gcloud':
     try:
       import google.cloud.logging as glogging
@@ -140,17 +172,41 @@ def init_logging(
     handler = glogging.handlers.CloudLoggingHandler(client, name=name)
     handler.close()
     glogging.handlers.setup_logging(handler, log_level=loglevel)
-    logging.basicConfig(
-      level=loglevel,
-      handlers=[handler],
+    formatter = structlog.stdlib.ProcessorFormatter(
+      foreign_pre_chain=shared_processors,
+      processors=[
+        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        structlog.processors.dict_tracebacks,
+        structlog.processors.JSONRenderer(),
+      ],
     )
+    handler.setFormatter(formatter)
+  elif logger_type == 'json':
+    formatter = structlog.stdlib.ProcessorFormatter(
+      foreign_pre_chain=shared_processors,
+      processors=[
+        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        structlog.processors.dict_tracebacks,
+        structlog.processors.JSONRenderer(),
+      ],
+    )
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
   else:
-    logging.basicConfig(
-      format='[%(asctime)s][%(name)s][%(levelname)s] %(message)s',
-      stream=sys.stdout,
-      level=loglevel,
-      datefmt='%Y-%m-%d %H:%M:%S',
+    formatter = structlog.stdlib.ProcessorFormatter(
+      foreign_pre_chain=shared_processors,
+      processors=[
+        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        structlog.dev.ConsoleRenderer(colors=False),
+      ],
     )
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+
+  root_logger = logging.getLogger()
+  root_logger.handlers.clear()
+  root_logger.addHandler(handler)
+  root_logger.setLevel(loglevel)
   logging.getLogger('smart_open.smart_open_lib').setLevel(logging.WARNING)
   logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-  return logging.getLogger()
+  return structlog.get_logger(name)

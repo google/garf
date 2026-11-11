@@ -19,7 +19,6 @@ from __future__ import annotations
 import datetime
 import hashlib
 import json
-import logging
 import os
 import pathlib
 import shutil
@@ -27,9 +26,10 @@ from typing import Final
 
 import redis
 import smart_open
+import structlog
 from garf.core import exceptions, query_editor, report
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class GarfCacheFileNotFoundError(exceptions.GarfError):
@@ -126,7 +126,7 @@ class GarfCache:
     )
     hash_identifier = f'{query.hash}:{args_hash}:{kwargs_hash}'
     result = self.cache_provider.save(fetched_report, hash_identifier)
-    logger.info('Report is saved to cache: %s', result)
+    logger.info('Report is saved to cache', cache_path=result)
     return hash_identifier
 
   @property
@@ -179,7 +179,7 @@ class RedisGarfCache:
     if not (data := self.r.get(hash_identifier)):
       raise GarfCacheFileNotFoundError
     data = json.loads(data)
-    logger.debug('Report is loaded from cache: %s', str(hash_identifier))
+    logger.debug('Report is loaded from cache', cache_hash=str(hash_identifier))
     loaded_report = report.GarfReport(
       results=data.get('results'), column_names=data.get('columns')
     )
@@ -275,7 +275,9 @@ class FileGarfCache:
             results=data.get('results'), column_names=data.get('columns')
           )
           loaded_report.query_specification = query
-          logger.debug('Report is loaded from cache: %s', str(cached_path))
+          logger.debug(
+            'Report is loaded from cache', cache_path=str(cached_path)
+          )
           return loaded_report
       else:
         raise GarfCacheFileNotFoundError

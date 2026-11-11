@@ -319,7 +319,7 @@ def execute(
   )
 
   if config:
-    garf_logger.info('Running queries with config: %s', config)
+    garf_logger.info('Running queries with config', config=config)
     execution_config = Config.from_file(config).expand()
     if not (context := execution_config.sources.get(source)):
       raise exceptions.GarfExecutorError(

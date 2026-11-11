@@ -98,7 +98,7 @@ def main():
   if args.version:
     print(garf.executors.version.__version__)
     sys.exit()
-  utils.init_logging(
+  logger = utils.init_logging(
     loglevel=args.loglevel.upper(), logger_type=args.logger, name=args.log_name
   )
   reader_client = reader.create_reader(args.input)

@@ -24,16 +24,16 @@ except ImportError as e:
     '- `pip install garf-executors[duckdb]`'
   ) from e
 
-import logging
 import pathlib
 import threading
 
+import structlog
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer, duckdb_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DuckDBExecutorError(exceptions.GarfExecutorError):

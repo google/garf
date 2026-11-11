@@ -22,17 +22,17 @@ except ImportError as e:
     'Please install garf-io with DuckDB support - `pip install garf-io[duckdb]`'
   ) from e
 
-import logging
 import threading
 from typing import Literal
 
 import pandas as pd
+import structlog
 from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 DEFAULT_DB = ':memory:garf'
 
@@ -110,7 +110,7 @@ class DuckDBWriter(abs_writer.AbsWriter):
       ).head(0)
     else:
       df = report.to_pandas()
-    logger.debug('Writing %d rows of data to %s', len(df), destination)
+    logger.debug('Writing data', rows=len(df), destination=destination)
     with DuckDBWriter._lock:
       if self.if_exists == 'replace':
         self.api_client.execute(
@@ -128,7 +128,7 @@ class DuckDBWriter(abs_writer.AbsWriter):
         raise DuckDBWriterError(
           f'Unsupported overwrite strategy: {self.if_exists}'
         )
-    logger.debug('Writing to %s is completed', destination)
+    logger.debug('Writing completed', destination=destination)
     return f'[DuckDB] - at {self.db}/{destination}'
 
   def close(self):

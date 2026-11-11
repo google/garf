@@ -16,10 +16,10 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import garf.core
+import structlog
 from garf.community.experimental.media_tagging import (
   api_clients,
   query_editor,
@@ -27,7 +27,7 @@ from garf.community.experimental.media_tagging import (
 )
 from garf.core import simulator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MediaTaggingApiSimulatorSpecification(simulator.SimulatorSpecification):

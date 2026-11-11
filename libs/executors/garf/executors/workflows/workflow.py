@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-import logging
 import os
 import pathlib
 import re
@@ -25,13 +24,14 @@ from typing import Any, Final
 
 import pydantic
 import smart_open
+import structlog
 import yaml
 from garf.core import query_editor
 from garf.executors import config, exceptions, utils
 from garf.executors.execution_context import ExecutionContext
 from garf.io import reader
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 reader_client = reader.create_reader('file')
 

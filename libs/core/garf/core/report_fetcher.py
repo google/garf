@@ -22,10 +22,10 @@ ApiReportFetcher fetches data from API, parses it and returns GarfReport.
 from __future__ import annotations
 
 import asyncio
-import logging
 import pathlib
 from typing import Any, Callable
 
+import structlog
 from garf.core import (
   api_clients,
   cache,
@@ -40,7 +40,7 @@ from typing_extensions import TypeAlias
 
 Processor: TypeAlias = Callable[..., Any]
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 meter = metrics.get_meter('garf.core')
 
 cache_size_meter = meter.create_gauge(
@@ -216,12 +216,19 @@ class ApiReportFetcher:
     if self.enable_cache:
       try:
         cached_report, hash_identifier = self.cache.load(query, args, kwargs)
-        logger.debug('Cached version of report is loaded')
+        logger.debug(
+          'Cached version of report is loaded',
+          query_title=query.title,
+          cache_hash=hash_identifier,
+        )
         span.set_attribute('report.cached', True)
         span.set_attribute('report.cached.hash', hash_identifier)
         return cached_report
       except cache.GarfCacheFileNotFoundError:
-        logger.debug('Cached version not found, generating')
+        logger.debug(
+          'Cached version not found, generating',
+          query_title=query.title,
+        )
 
       if cache_size := self.cache.size:
         cache_size_meter.set(
@@ -253,7 +260,10 @@ class ApiReportFetcher:
         try:
           self.cache.save(placeholder_report, query, args, kwargs)
         except cache.GarfCacheFailedWriterError:
-          logger.warning('Failed to write data to cache for report')
+          logger.warning(
+            'Failed to write data to cache for report',
+            query_title=query.title,
+          )
           span.add_event('Saving to cache failed')
       return placeholder_report
 
@@ -269,7 +279,10 @@ class ApiReportFetcher:
         hash_identifier = self.cache.save(fetched_report, query, args, kwargs)
         span.set_attribute('report.cached.hash', hash_identifier)
       except cache.GarfCacheFailedWriterError:
-        logger.warning('Failed to write data to cache for report')
+        logger.warning(
+          'Failed to write data to cache for report',
+          query_title=query.title,
+        )
         span.add_event('Saving to cache failed')
     return fetched_report
 

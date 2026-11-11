@@ -28,15 +28,14 @@ except ImportError as e:
     '- `pip install garf-executors[bq]`'
   ) from e
 
-import logging
-
+import structlog
 from garf.core import cache, report
 from garf.executors import exceptions, execution_context, executor, utils
 from garf.executors.telemetry import tracer
 from garf.io.writers import abs_writer
 from google.cloud import exceptions as google_cloud_exceptions
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class BigQueryExecutorError(exceptions.GarfExecutorError):
@@ -143,7 +142,7 @@ class BigQueryExecutor(executor.Executor):
       raise BigQueryExecutorError(
         f'Failed to execute query {title}: Reason: {e}'
       ) from e
-      logger.debug('%s launched successfully', title)
+    logger.debug('Query launched successfully', query_title=title)
     if result.total_rows:
       return report.GarfReport.from_pandas(result.to_dataframe())
     return report.GarfReport()
@@ -170,7 +169,7 @@ class BigQueryExecutor(executor.Executor):
           bq_dataset.location = self.location
           with contextlib.suppress(google_cloud_exceptions.Conflict):
             self.api_client.create_dataset(bq_dataset, timeout=30)
-            logger.info('Created new dataset %s', dataset_id)
+            logger.info('Created new dataset', dataset_id=dataset_id)
 
 
 def extract_datasets(macros: dict[str, Any] | None) -> set[str]:

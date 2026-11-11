@@ -18,17 +18,17 @@ from __future__ import annotations
 import contextlib
 import importlib
 import json
-import logging
 from typing import Any
 
 import garf.core
+import structlog
 from garf.executors import executor, fetchers
 from garf.executors.api_executor import ApiQueryExecutor
 from garf.executors.telemetry import tracer
 from garf.io import writer
 from opentelemetry import trace
 
-logger = logging.getLogger('garf.executors.setup')
+logger = structlog.get_logger(__name__)
 
 executor_modules = {}
 

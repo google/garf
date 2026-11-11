@@ -25,16 +25,16 @@ except ImportError as e:
     '`pip install garf-io[clickhouse]`'
   ) from e
 
-import logging
 from typing import Any, Literal
 
 import pandas as pd
+import structlog
 from garf.core import report as garf_report
 from garf.io import exceptions, formatter
 from garf.io.telemetry import tracer
 from garf.io.writers import abs_writer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ClickHouseWriterError(exceptions.GarfIoError):
@@ -138,7 +138,12 @@ class ClickHouseWriter(abs_writer.AbsWriter):
       ).head(0)
     else:
       df = report.to_pandas()
-    logger.debug('Writing %d rows of data to %s.%s', len(df), database, table)
+    logger.debug(
+      'Writing data',
+      rows=len(df),
+      database=database,
+      table=table,
+    )
     self.client.command(f'CREATE DATABASE IF NOT EXISTS `{database}`')
     self._create_table(database, table, df, if_not_exists=True)
     if self.if_exists == 'replace':
@@ -156,7 +161,7 @@ class ClickHouseWriter(abs_writer.AbsWriter):
       column_names=list(df.columns),
       database=database,
     )
-    logger.debug('Writing to %s.%s is completed', database, table)
+    logger.debug('Writing completed', database=database, table=table)
     return f'[Clickhouse] - at {database}.{table}'
 
   def _split_destination(self, destination: str) -> tuple[str, str]:

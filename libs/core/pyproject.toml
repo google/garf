@@ -16,6 +16,7 @@ dependencies = [
     "opentelemetry-api",
     "redis",
     "protobuf>=7.35",
+    "structlog",
 ]
 authors = [
   {name = "Google Inc. (gTech gPS CSE team)", email = "no-reply@google.com"},

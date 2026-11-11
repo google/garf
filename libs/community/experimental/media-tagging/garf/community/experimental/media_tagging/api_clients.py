@@ -20,6 +20,7 @@ import urllib.parse
 import garf.executors
 import grpc
 import requests
+import structlog
 from garf.community.experimental.media_tagging import query_editor
 from garf.core import api_clients
 from google.protobuf.json_format import MessageToDict, ParseDict
@@ -41,8 +42,8 @@ tracer = trace.get_tracer(
 )
 
 
-logger = logging.getLogger('media-tagging')
-logger.setLevel(logging.WARNING)
+logging.getLogger('media-tagging').setLevel(logging.WARNING)
+logger = structlog.get_logger('media-tagging')
 
 
 class MediaTaggingApiClient(api_clients.RestApiClient):

@@ -17,19 +17,19 @@ from __future__ import annotations
 
 import asyncio
 import collections
-import logging
 import pathlib
 import re
 import time
 from concurrent import futures
 
+import structlog
 import yaml
 from garf.executors import exceptions, setup, telemetry
 from garf.executors.telemetry import tracer
 from garf.executors.workflows import workflow
 from opentelemetry import trace
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 _SCRIPT_PATH = pathlib.Path(__file__).parent
 
@@ -88,6 +88,22 @@ class WorkflowRunner:
     )
     self.workflow.clear()
 
+  @property
+  def _log_attributes(self) -> dict[str, str | None]:
+    attributes: dict[str, str | None] = {
+      'workflow_name': self.workflow.name,
+    }
+    if self.workflow.metadata and (version := self.workflow.metadata.version):
+      attributes['workflow_version'] = version
+    if execution_config := self.workflow.execution_config:
+      if config_name := execution_config.name:
+        attributes['config_name'] = config_name
+      if execution_config.metadata and (
+        config_version := execution_config.metadata.version
+      ):
+        attributes['config_version'] = config_version
+    return attributes
+
   def _run_parallel_step_thread(
     self,
     step,
@@ -109,10 +125,11 @@ class WorkflowRunner:
           selected_aliases=selected_aliases,
         ):
           logger.warning(
-            'Skipping step %d, fetcher: %s, alias: %s',
-            i,
-            parallel_step.fetcher,
-            parallel_step.alias,
+            'Skipping step',
+            **self._log_attributes,
+            step=i,
+            fetcher=parallel_step.fetcher,
+            alias=parallel_step.alias,
           )
           continue
         future = thread_executor.submit(
@@ -151,10 +168,11 @@ class WorkflowRunner:
         selected_aliases=selected_aliases,
       ):
         logger.warning(
-          'Skipping step %d, fetcher: %s, alias: %s',
-          i,
-          parallel_step.fetcher,
-          parallel_step.alias,
+          'Skipping step',
+          **self._log_attributes,
+          step=i,
+          fetcher=parallel_step.fetcher,
+          alias=parallel_step.alias,
         )
         continue
       task = asyncio.to_thread(
@@ -211,7 +229,7 @@ class WorkflowRunner:
       )
     self.workflow.compile()
     execution_results = collections.OrderedDict()
-    logger.info('Starting Garf Workflow...')
+    logger.info('Starting Garf Workflow...', **self._log_attributes)
     for i, step in enumerate(self.workflow.steps, 1):
       if isinstance(step, workflow.ParallelStep):
         coroutines = self._run_parallel_step_async(
@@ -233,10 +251,11 @@ class WorkflowRunner:
           selected_aliases=selected_aliases,
         ):
           logger.warning(
-            'Skipping step %d, fetcher: %s, alias: %s',
-            i,
-            step.fetcher,
-            step.alias,
+            'Skipping step',
+            **self._log_attributes,
+            step=i,
+            fetcher=step.fetcher,
+            alias=step.alias,
           )
           continue
         results = self._run_step(
@@ -248,7 +267,7 @@ class WorkflowRunner:
           step_identifier=i,
         )
         execution_results.update(results)
-    logger.info('Garf Workflow completed.')
+    logger.info('Garf Workflow completed.', **self._log_attributes)
     telemetry.workflow_counter.add(1, workflow_attributes)
     duration = time.perf_counter() - start_time
     telemetry.workflow_histogram.record(duration, workflow_attributes)
@@ -301,10 +320,11 @@ class WorkflowRunner:
     }
     with tracer.start_as_current_span(step_name) as step_span:
       logger.info(
-        'Running step %s, fetcher: %s, alias: %s',
-        step_identifier,
-        step.fetcher,
-        step.alias,
+        'Running step',
+        **self._log_attributes,
+        step=step_identifier,
+        fetcher=step.fetcher,
+        alias=step.alias,
       )
       step_attributes = {
         'workflow.step.alias': step.alias,
@@ -335,7 +355,11 @@ class WorkflowRunner:
 
       batch = {}
       if not (queries := step.queries):
-        logger.error('Please provide one or more queries to run')
+        logger.error(
+          'Please provide one or more queries to run',
+          **self._log_attributes,
+          step=step_identifier,
+        )
         raise exceptions.GarfExecutorError(
           'Please provide one or more queries to run'
         )
