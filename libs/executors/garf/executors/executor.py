@@ -52,6 +52,7 @@ class Executor:
     enable_cache: bool = False,
     cache_path: str | pathlib.Path | None = None,
     cache_ttl_seconds: int = 3600,
+    workflow_attributes: dict[str, str] | None = None,
   ) -> None:
     self.source = source
     self.preprocessors = preprocessors or {}
@@ -60,6 +61,7 @@ class Executor:
     self.enable_cache = enable_cache
     self.cache_path = cache_path
     self.cache_ttl_seconds = cache_ttl_seconds
+    self.workflow_attributes = workflow_attributes or {}
     self._cache = None
 
   @property
@@ -103,7 +105,9 @@ class Executor:
     title = query_spec.query.title
     span.set_attribute('executor.query.title', title)
     span.set_attribute('executor.query.text', query_text)
-    logger.info('Executing script', query_title=title)
+    logger.info(
+      'Executing query', query_title=title, **self.workflow_attributes
+    )
     if context.has_gquery:
       context = query_processor.process_gquery(context)
     if self.preprocessors and not self.simulator:
@@ -183,9 +187,19 @@ class Executor:
       write_outputs = write_many(writer_clients, results, title)
       duration = time.perf_counter() - start_time
       telemetry.executor_histogram.record(duration, executor_attributes)
+      logger.info(
+        'Query executed successfully',
+        query_title=title,
+        **self.workflow_attributes,
+      )
       return write_outputs
     if self.postprocessors and not self.simulator:
       _handle_processors(processors=self.postprocessors, context=context)
+      logger.info(
+        'Query executed successfully',
+        query_title=title,
+        **self.workflow_attributes,
+      )
     duration = time.perf_counter() - start_time
     telemetry.executor_histogram.record(duration, executor_attributes)
     return results
