@@ -80,6 +80,7 @@ def setup_executor(
   simulate: bool = False,
   writers: str | list[str] | None = None,
   writer_parameters: dict[str, Any] | None = None,
+  workflow_attributes: dict[str, str] | None = None,
 ) -> type[executor.Executor]:
   """Initializes executors based on a source and parameters."""
   span = trace.get_current_span()
@@ -112,6 +113,7 @@ def setup_executor(
       'writers': writer_clients,
       'enable_cache': enable_cache,
       'cache_ttl_seconds': cache_ttl_seconds,
+      'workflow_attributes': workflow_attributes,
     }
     executor_parameters.update(fetcher_parameters)
     query_executor = getattr(
@@ -138,6 +140,7 @@ def setup_executor(
       report_simulator=concrete_simulator,
       writers=writer_clients,
       source=source,
+      workflow_attributes=workflow_attributes,
     )
   if enable_cache and hasattr(query_executor, 'fetcher'):
     span.set_attributes(

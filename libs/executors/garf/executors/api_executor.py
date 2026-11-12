@@ -42,7 +42,8 @@ class ApiQueryExecutor(executor.Executor):
   """Gets data from API and writes them to local/remote storage.
 
   Attributes:
-      api_client: a client used for connecting to API.
+    fetcher: Initialized ApiReportFetcher.
+    writers: Initilized garf writers.
   """
 
   def __init__(
@@ -51,6 +52,7 @@ class ApiQueryExecutor(executor.Executor):
     report_simulator: simulator.ApiReportSimulator | None = None,
     writers: list[abs_writer.AbsWriter] | None = None,
     source: str | None = None,
+    workflow_attributes: dict[str, str] | None = None,
   ) -> None:
     """Initializes ApiQueryExecutor.
 
@@ -65,6 +67,7 @@ class ApiQueryExecutor(executor.Executor):
       preprocessors=self.fetcher.preprocessors,
       postprocessors=self.fetcher.postprocessors,
       report_simulator=report_simulator,
+      workflow_attributes=workflow_attributes,
     )
 
   @classmethod
@@ -74,6 +77,7 @@ class ApiQueryExecutor(executor.Executor):
     fetcher_parameters: dict[str, str] | None = None,
     enable_cache: bool = False,
     cache_ttl_seconds: int = 3600,
+    workflow_attributes: dict[str, str] | None = None,
   ) -> ApiQueryExecutor:
     if not fetcher_parameters:
       fetcher_parameters = {}
@@ -83,7 +87,8 @@ class ApiQueryExecutor(executor.Executor):
         **fetcher_parameters,
         enable_cache=enable_cache,
         cache_ttl_seconds=cache_ttl_seconds,
-      )
+      ),
+      workflow_attributes=workflow_attributes,
     )
 
   @tracer.start_as_current_span('api.execute')

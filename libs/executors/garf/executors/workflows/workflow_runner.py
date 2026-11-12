@@ -343,6 +343,7 @@ class WorkflowRunner:
         simulate=simulate,
         writers=step.writer,
         writer_parameters=step.writer_parameters,
+        workflow_attributes=workflow_attributes,
       )
       if fetcher_version := self.workflow.metadata.required_fetchers.get(
         step.fetcher
