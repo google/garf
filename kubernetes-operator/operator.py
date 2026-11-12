@@ -42,6 +42,7 @@ class GarfJob(pydantic.BaseModel):
   env: list[dict[str, Any]] = pydantic.Field(default_factory=list)
   as_files: bool = True
   backoff_limit: int = 1
+  active_deadline_seconds: int = 3600
   config_maps: dict[str, Any] = pydantic.Field(default_factory=dict)
 
   @property
@@ -116,6 +117,7 @@ class GarfJob(pydantic.BaseModel):
           },
         },
         'backoffLimit': self.backoff_limit,
+        'activeDeadlineSeconds': self.active_deadline_seconds,
       }
     )
 
@@ -421,6 +423,7 @@ def _build_job(
     'enable_cache': bool(spec.get('enableCache', False)),
     'env': spec.get('env'),
     'backoff_limit': int(spec.get('backoffLimit', 1)),
+    'active_deadline_seconds': int(spec.get('activeDeadlineSeconds', 3600)),
     'server_info': spec.get('server'),
     'config_maps': spec.get('configMaps') or {},
   }
