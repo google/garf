@@ -58,6 +58,9 @@ spec:
                 backoffLimit:
                   type: integer
                   description: "Number of retries for a job"
+                activeDeadlineSeconds:
+                  type: integer
+                  description: "Duration in seconds before a job is terminated"
                 server:
                   type: object
                   properties:
@@ -163,6 +166,9 @@ spec:
                 backoffLimit:
                   type: integer
                   description: "Number of retries for a job"
+                activeDeadlineSeconds:
+                  type: integer
+                  description: "Duration in seconds before a job is terminated"
                 env:
                   type: array
                   description: ""
