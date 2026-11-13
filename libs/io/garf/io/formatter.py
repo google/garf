@@ -40,7 +40,9 @@ class FormattingStrategy:
 
   @tracer.start_as_current_span('apply_transformations')
   def apply_transformations(self, report: garf_report.GarfReport) -> None:
-    """Replaces arrays in the report."""
+    """Performs row formatting in the report."""
+    if not report.results:
+      return
     row_type = 'list' if isinstance(report.results[0], list) else 'dict'
     self._format_rows(report.results, row_type=row_type)
     self._format_rows(report.results_placeholder, row_type=row_type)
