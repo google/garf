@@ -20,12 +20,9 @@ import datetime
 from typing import Any
 
 import pydantic
-import structlog
 from garf.core import api_clients, exceptions, parsers, query_editor, report
 from garf.core.telemetry import tracer
 from opentelemetry import trace
-
-logger = structlog.get_logger(__name__)
 
 
 class GarfApiReportSimulatorError(exceptions.GarfError):

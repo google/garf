@@ -24,13 +24,10 @@ from typing import Generator, Union
 import jinja2
 import pydantic
 import sqlparse
-import structlog
 from dateutil import relativedelta
 from garf.core import query_parser
 from jinja2.sandbox import SandboxedEnvironment
 from typing_extensions import Self, TypeAlias
-
-logger = structlog.get_logger(__name__)
 
 QueryParameters: TypeAlias = dict[str, Union[str, float, int, list]]
 

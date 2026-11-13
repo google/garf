@@ -119,11 +119,6 @@ class Executor:
           args=context.query_parameters,
           kwargs=context.fetcher_parameters,
         )
-        logger.debug(
-          'Cached version of report is loaded',
-          query_title=title,
-          cache_hash=hash_identifier,
-        )
         span.set_attribute('executor.report.cached', True)
         span.set_attribute('executor.report.cached.hash', hash_identifier)
         if (
@@ -156,11 +151,6 @@ class Executor:
               query_spec.query,
               args=context.query_parameters,
               kwargs=context.fetcher_parameters,
-            )
-            logger.debug(
-              'Report saved to cache',
-              query_title=title,
-              cache_hash=hash_identifier,
             )
             span.set_attribute('executor.report.cached.hash', hash_identifier)
           except cache.GarfCacheFailedWriterError:
@@ -413,5 +403,4 @@ def write_many(
   results.clear()
   if errors:
     raise io_exceptions.GarfIoError(errors)
-  logger.info('Query executed successfully', query_title=title)
   return writing_results[-1] if writing_results else None

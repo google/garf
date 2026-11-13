@@ -23,7 +23,6 @@ import operator
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
-import structlog
 from garf.core import (
   api_clients,
   exceptions,
@@ -31,8 +30,6 @@ from garf.core import (
   query_parser,
 )
 from garf.core.telemetry import tracer
-
-logger = structlog.get_logger(__name__)
 
 VALID_VIRTUAL_COLUMN_OPERATORS = (
   ast.BinOp,

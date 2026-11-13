@@ -124,7 +124,7 @@ class WorkflowRunner:
           skipped_aliases=skipped_aliases,
           selected_aliases=selected_aliases,
         ):
-          logger.warning(
+          logger.info(
             'Skipping step',
             **self._log_attributes,
             step=i,
@@ -167,7 +167,7 @@ class WorkflowRunner:
         skipped_aliases=skipped_aliases,
         selected_aliases=selected_aliases,
       ):
-        logger.warning(
+        logger.info(
           'Skipping step',
           **self._log_attributes,
           step=i,
@@ -229,7 +229,7 @@ class WorkflowRunner:
       )
     self.workflow.compile()
     execution_results = collections.OrderedDict()
-    logger.info('Starting Garf Workflow...', **self._log_attributes)
+    logger.info('Starting Garf Workflow', **self._log_attributes)
     for i, step in enumerate(self.workflow.steps, 1):
       if isinstance(step, workflow.ParallelStep):
         coroutines = self._run_parallel_step_async(
@@ -250,7 +250,7 @@ class WorkflowRunner:
           skipped_aliases=skipped_aliases,
           selected_aliases=selected_aliases,
         ):
-          logger.warning(
+          logger.info(
             'Skipping step',
             **self._log_attributes,
             step=i,
@@ -267,7 +267,7 @@ class WorkflowRunner:
           step_identifier=i,
         )
         execution_results.update(results)
-    logger.info('Garf Workflow completed.', **self._log_attributes)
+    logger.info('Garf Workflow completed', **self._log_attributes)
     telemetry.workflow_counter.add(1, workflow_attributes)
     duration = time.perf_counter() - start_time
     telemetry.workflow_histogram.record(duration, workflow_attributes)

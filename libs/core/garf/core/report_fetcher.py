@@ -216,11 +216,6 @@ class ApiReportFetcher:
     if self.enable_cache:
       try:
         cached_report, hash_identifier = self.cache.load(query, args, kwargs)
-        logger.debug(
-          'Cached version of report is loaded',
-          query_title=query.title,
-          cache_hash=hash_identifier,
-        )
         span.set_attribute('report.cached', True)
         span.set_attribute('report.cached.hash', hash_identifier)
         return cached_report
