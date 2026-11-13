@@ -96,7 +96,16 @@ class GarfCache:
       else ''
     )
     hash_identifier = f'{query.hash}:{args_hash}:{kwargs_hash}'
-    return self.cache_provider.load(hash_identifier, query), hash_identifier
+    report = self.cache_provider.load(hash_identifier, query)
+    report_parameters = {}
+    if query.title:
+      report_parameters['query_title'] = query.title
+    logger.debug(
+      'Report is loaded from cache',
+      cache_hash=str(hash_identifier),
+      **report_parameters,
+    )
+    return report, hash_identifier
 
   def save(
     self,
@@ -126,7 +135,12 @@ class GarfCache:
     )
     hash_identifier = f'{query.hash}:{args_hash}:{kwargs_hash}'
     result = self.cache_provider.save(fetched_report, hash_identifier)
-    logger.info('Report is saved to cache', cache_path=result)
+    report_parameters = {}
+    if query.title:
+      report_parameters['query_title'] = query.title
+    logger.debug(
+      'Report is saved to cache', cache_path=result, **report_parameters
+    )
     return hash_identifier
 
   @property
@@ -179,7 +193,6 @@ class RedisGarfCache:
     if not (data := self.r.get(hash_identifier)):
       raise GarfCacheFileNotFoundError
     data = json.loads(data)
-    logger.debug('Report is loaded from cache', cache_hash=str(hash_identifier))
     loaded_report = report.GarfReport(
       results=data.get('results'), column_names=data.get('columns')
     )
@@ -275,9 +288,6 @@ class FileGarfCache:
             results=data.get('results'), column_names=data.get('columns')
           )
           loaded_report.query_specification = query
-          logger.debug(
-            'Report is loaded from cache', cache_path=str(cached_path)
-          )
           return loaded_report
       else:
         raise GarfCacheFileNotFoundError

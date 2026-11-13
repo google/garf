@@ -22,7 +22,6 @@ import os
 from collections.abc import Sequence
 from typing import Any
 
-import structlog
 from garf.core import (
   api_clients,
   parsers,
@@ -30,8 +29,6 @@ from garf.core import (
   report_fetcher,
   version,
 )
-
-logger = structlog.get_logger(__name__)
 
 
 class FakeApiReportFetcher(report_fetcher.ApiReportFetcher):

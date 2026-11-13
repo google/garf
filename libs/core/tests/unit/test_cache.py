@@ -26,17 +26,24 @@ def mock_redis():
 
 
 class TestGarfCache:
-  def test_load_returns_report_from_file_cache(self, tmp_path):
+  def test_load_returns_report_from_file_cache(self, tmp_path, caplog):
     test_cache = cache.GarfCache(location=str(tmp_path))
     test_report = report.GarfReport(results=[[1]], column_names=['test'])
-    query = query_editor.QuerySpecification(
-      text='SELECT test FROM test'
-    ).generate()
+    query_spec = query_editor.QuerySpecification(
+      text='SELECT test FROM test',
+      title='test',
+    )
 
-    test_cache.save(test_report, query)
-    loaded_report, _ = test_cache.load(query)
+    query = query_spec.generate()
+
+    caplog.set_level('DEBUG')
+    save_hash_identifier = test_cache.save(test_report, query)
+    save_log = caplog.text.split('\n')[-2]
+    assert 'query_title=test' in save_log
+    loaded_report, load_hash_identifier = test_cache.load(query)
 
     assert loaded_report == test_report
+    assert save_hash_identifier == load_hash_identifier
 
   def test_load_raises_error_on_outdated_file_cache(self, tmp_path):
     test_cache = cache.GarfCache(location=str(tmp_path), ttl_seconds=0)

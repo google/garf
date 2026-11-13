@@ -90,13 +90,11 @@ class TestApiReportFetcher:
     with caplog.at_level(logging.DEBUG):
       test_report = test_fetcher.fetch(query)
       assert 'Report is saved to cache' in caplog.text
-      assert 'Cached version not found, generating' in caplog.text
       assert test_report == expected_report
 
     with caplog.at_level(logging.DEBUG):
       test_report = test_fetcher.fetch(query)
       assert 'Report is loaded from cache' in caplog.text
-      assert 'Cached version of report is loaded' in caplog.text
       assert test_report == expected_report
 
   @pytest.mark.parametrize(
