@@ -65,6 +65,10 @@ server=[
   "grpcio-health-checking",
 
 ]
+mcp=[
+  "garf-executors[server]",
+  "fastmcp",
+]
 tests = [
   "pytest",
   "pytest-mock",
@@ -82,7 +86,7 @@ elasticsearch = [
   "elasticsearch",
 ]
 all = [
-  "garf-executors[bq,sql,server,gcp]"
+  "garf-executors[bq,sql,server,mcp,gcp]"
 ]
 
 [tool.setuptools.package-data]

@@ -146,12 +146,13 @@ async def error_handlier(
   )
 
 
-@app.get('/api/version')
+@app.get('/api/version', operation_id='version')
 async def version() -> str:
+  """Returns version of garf-executors library."""
   return garf.executors.version.__version__
 
 
-@app.get('/api/info')
+@app.get('/api/info', operation_id='info')
 async def info() -> dict[str, str]:
   """Returns version of installed core libraries."""
   return {
@@ -161,19 +162,25 @@ async def info() -> dict[str, str]:
   }
 
 
-@app.get('/api/fetchers')
+@app.get('/api/fetchers', operation_id='fetchers')
 async def get_fetchers() -> dict[str, str]:
   """Shows all available API sources."""
+  if not report_fetchers:
+    report_fetchers.update(fetchers.get_all_report_fetchers())
   return {r: f.version for r, f in report_fetchers.items()}
 
 
-@app.get('/api/executors')
+@app.get('/api/executors', operation_id='executors')
 async def get_executors() -> list[str]:
   """Shows all available API sources & executors."""
+  if len(executors) <= 1:
+    for executor in setup.available_executors():
+      if executor not in executors:
+        executors.append(executor)
   return executors
 
 
-@app.post('/api/execute')
+@app.post('/api/execute', operation_id='execute')
 def execute(request: tasks.ApiExecutorRequest) -> ApiExecutorResponse:
   """Executes a single query."""
   telemetry.executor_requested_counter.add(
@@ -185,7 +192,12 @@ def execute(request: tasks.ApiExecutorRequest) -> ApiExecutorResponse:
   )
 
 
-@app.post('/api/execute:task', status_code=fastapi.status.HTTP_202_ACCEPTED)
+@app.post(
+  '/api/execute:task',
+  status_code=fastapi.status.HTTP_202_ACCEPTED,
+  operation_id='execute_task',
+  tags=['tasks'],
+)
 def execute_task(request: tasks.ApiExecutorRequest) -> dict[str, str]:
   """Creates a single operation for running garf query."""
   telemetry.executor_requested_counter.add(
@@ -197,7 +209,7 @@ def execute_task(request: tasks.ApiExecutorRequest) -> dict[str, str]:
   return {'operation_id': task.id, 'status': 'PENDING'}
 
 
-@app.post('/api/execute:batch')
+@app.post('/api/execute:batch', operation_id='execute_batch')
 def execute_batch(
   request: tasks.ApiExecutorBatchRequest,
 ) -> ApiExecutorResponse:
@@ -211,7 +223,10 @@ def execute_batch(
 
 
 @app.post(
-  '/api/execute:batch_task', status_code=fastapi.status.HTTP_202_ACCEPTED
+  '/api/execute:batch_task',
+  status_code=fastapi.status.HTTP_202_ACCEPTED,
+  operation_id='execute_batch_task',
+  tags=['tasks'],
 )
 async def execute_batch_task(
   request: tasks.ApiExecutorBatchRequest,
@@ -227,14 +242,14 @@ async def execute_batch_task(
   return {'operation_id': task.id, 'status': 'PENDING'}
 
 
-@app.post('/api/execute:workflow')
+@app.post('/api/execute:workflow', operation_id='execute_workflow')
 def execute_workflow(
   workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
   workflow_path: str | pathlib.Path = None,
   config_file: Optional[fastapi.UploadFile] = fastapi.File(None),
   config_path: str | pathlib.Path = None,
-  selected_aliases: Optional[list[str]] = None,
-  skipped_aliases: Optional[list[str]] = None,
+  selected_aliases: Annotated[Optional[list[str]], fastapi.Query()] = None,
+  skipped_aliases: Annotated[Optional[list[str]], fastapi.Query()] = None,
   simulate: bool = False,
 ) -> dict[str, ApiExecutorResponse]:
   """Runs garf workflow till completion."""
@@ -260,15 +275,18 @@ def execute_workflow(
 
 
 @app.post(
-  '/api/execute:workflow_task', status_code=fastapi.status.HTTP_202_ACCEPTED
+  '/api/execute:workflow_task',
+  status_code=fastapi.status.HTTP_202_ACCEPTED,
+  operation_id='execute_workflow_task',
+  tags=['tasks'],
 )
 async def execute_workflow_task(
   workflow_file: Optional[fastapi.UploadFile] = fastapi.File(None),
   workflow_path: str | pathlib.Path = None,
   config_file: Optional[fastapi.UploadFile] = fastapi.File(None),
   config_path: str | pathlib.Path = None,
-  selected_aliases: Optional[list[str]] = None,
-  skipped_aliases: Optional[list[str]] = None,
+  selected_aliases: Annotated[Optional[list[str]], fastapi.Query()] = None,
+  skipped_aliases: Annotated[Optional[list[str]], fastapi.Query()] = None,
   simulate: bool = False,
 ) -> dict[str, str]:
   """Creates a single operation for running garf workflow."""
@@ -290,7 +308,11 @@ async def execute_workflow_task(
   return {'operation_id': task.id, 'status': 'PENDING'}
 
 
-@app.get('/api/operations/{operation_id}')
+@app.get(
+  '/api/operations/{operation_id}',
+  operation_id='operation_status',
+  tags=['tasks'],
+)
 def operation_status(operation_id: str):
   """Gets garf execution status and results."""
   operation = tasks.app.AsyncResult(operation_id)
@@ -301,7 +323,11 @@ def operation_status(operation_id: str):
   }
 
 
-@app.post('/api/operations/{operation_id}:cancel')
+@app.post(
+  '/api/operations/{operation_id}:cancel',
+  operation_id='cancel_operation',
+  tags=['tasks'],
+)
 def cancel_operation(operation_id: str):
   """Cancels garf operation."""
   tasks.app.control.revoke(operation_id, terminate=True)

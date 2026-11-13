@@ -50,7 +50,9 @@ class ApiExecutorRequest(pydantic.BaseModel):
   title: Optional[str] = None
   query: Optional[str] = None
   query_path: Optional[Union[str, list[str]]] = None
-  context: garf.executors.execution_context.ExecutionContext
+  context: garf.executors.execution_context.ExecutionContext = pydantic.Field(
+    default_factory=garf.executors.execution_context.ExecutionContext
+  )
   enable_cache: bool = False
   cache_ttl_seconds: int = garf.core.cache.DEFAULT_CACHE_TTL
   simulate: bool = False
@@ -84,7 +86,9 @@ class ApiExecutorBatchRequest(pydantic.BaseModel):
 
   source: str
   batch: dict[str, str]
-  context: garf.executors.execution_context.ExecutionContext
+  context: garf.executors.execution_context.ExecutionContext = pydantic.Field(
+    default_factory=garf.executors.execution_context.ExecutionContext
+  )
   enable_cache: bool = False
   cache_ttl_seconds: int = garf.core.cache.DEFAULT_CACHE_TTL
   simulate: bool = False

@@ -553,6 +553,34 @@ def version() -> str:
   raise typer.Exit()
 
 
+@typer_app.command()
+def mcp(
+  transport: Annotated[
+    str,
+    typer.Option(
+      help='Transport protocol to use (stdio, http, sse, streamable-http)'
+    ),
+  ] = 'stdio',
+  host: Annotated[
+    str,
+    typer.Option(help='Host to start the server'),
+  ] = '0.0.0.0',
+  port: Annotated[
+    int,
+    typer.Option('--port', '-p', help='Port to start the server'),
+  ] = 8000,
+) -> None:
+  """Starts garf MCP server."""
+  try:
+    from garf.executors.entrypoints import mcp_server  # noqa: PLC0415
+  except ImportError as e:
+    raise exceptions.GarfExecutorError(
+      'Please install garf-executors with MCP support - '
+      '`pip install garf-executors[mcp]`'
+    ) from e
+  mcp_server.main(transport=transport, host=host, port=port)
+
+
 def _setup_grpc_channel(
   server_url,
   root_crt_path: str | None = os.getenv('GARF_GRPC_ROOT_CERT_KEY'),
