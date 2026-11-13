@@ -243,12 +243,13 @@ class GoogleAdsRowParser(parsers.ProtoParser):
     getter = operator.attrgetter(key)
     row = getter(row)
     if isinstance(row, abc.MutableSequence):
-      parsed_element = [
-        self.parser_chain.parse(element) or element for element in row
-      ]
+      parsed_element = []
+      for element in row:
+        parsed = self.parser_chain.parse(element)
+        parsed_element.append(element if parsed is None else parsed)
     else:
-      parsed_element = self.parser_chain.parse(row) or row
-
+      parsed = self.parser_chain.parse(row)
+      parsed_element = row if parsed is None else parsed
     return parsed_element
 
 
